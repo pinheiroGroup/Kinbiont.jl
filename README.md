@@ -3,7 +3,6 @@
 JMAKi, a versatile software tool that utilizes Ordinary Differential Equations (ODEs) to fit bacterial growth data from plate reader experiments. 
 With JMAKi it is possible to simulate, fit, perform model selection, and conduct sensitivity analysis for multi-well plate reader experiments.
 The parameter fitting in JMAKi is defined as a constrained optimization problem, which is solved using a differential evolution non-linear optimizer.
-For cases with unreliable initial conditions and high noise levels,JMAKi implements Physics-Informed Neural Networks (PINNs) to fit the parameters and initial conditions. 
 
 # Installation & requirements
 ## Manual installation
