@@ -1,9 +1,9 @@
-# JFBC
+# JMAKi
 
-JBFC, a versatile software tool that utilizes Ordinary Differential Equations (ODEs) to fit bacterial growth data from plate reader experiments. 
-With JFBC it is possible to simulate, fit, perform model selection, and conduct sensitivity analysis for multi-well plate reader experiments.
-The parameter fitting in JFBC is defined as a constrained optimization problem, which is solved using a differential evolution non-linear optimizer.
-For cases with unreliable initial conditions and high noise levels,JFBC implements Physics-Informed Neural Networks (PINNs) to fit the parameters and initial conditions. 
+JMAKi, a versatile software tool that utilizes Ordinary Differential Equations (ODEs) to fit bacterial growth data from plate reader experiments. 
+With JMAKi it is possible to simulate, fit, perform model selection, and conduct sensitivity analysis for multi-well plate reader experiments.
+The parameter fitting in JMAKi is defined as a constrained optimization problem, which is solved using a differential evolution non-linear optimizer.
+For cases with unreliable initial conditions and high noise levels,JMAKi implements Physics-Informed Neural Networks (PINNs) to fit the parameters and initial conditions. 
 
 # Installation & requirements
 ## Manual installation
@@ -23,7 +23,7 @@ Next, the user need to copy the project folder in the chosen working directory.
 4. Type the command 
 > activate .
 
-5. To activate the JBFC project, type
+5. To activate the JMAKi project, type
 > instantiate
 
 6. at the start of the code or notebook (where you are going to do analyses) you should write 
@@ -31,7 +31,7 @@ Next, the user need to copy the project folder in the chosen working directory.
 ```
 using DifferentialEquations, Optimization, Plots, Random, CSV,  DataFrames, Statistics, Optim, Zygote, OptimizationBBO, NaNMath, CurveFit, StatsBase, Tables, Distributions
 
-include("your_path_to_jfbc_main_folder/src/functions.jl")
+include("your_path_to_JMAKi_main_folder/src/functions.jl")
 
 
 ```
@@ -58,7 +58,7 @@ this last step is Temporary before the official realese
 16. Distributions.jl
 
 
-# The main functions of JFBC
+# The main functions of JMAKi
 ## Data and annotation formatting
 ## Simulate ODE
 ```
@@ -380,10 +380,10 @@ lb_piece_wise_log =[ 0.0001 , 100.1, 50.00, 0.0 , -0.01   ]
 ```
 Set the paths of data, results, and plots
 ```
-path_to_data = "your_path_to_main_jfbc_folder/data/" ;
+path_to_data = "your_path_to_main_JMAKi_folder/data/" ;
 path_to_plot ="your_path_to_plots/";
 path_to_results ="your_path_to_results/";
-path_to_annotation ="your_path_to_main_jfbc_folder/data/annotation_S8R_green.csv"
+path_to_annotation ="your_path_to_main_JMAKi_folder/data/annotation_S8R_green.csv"
 ```
 Call the function to fit ODE
 ```
@@ -415,15 +415,15 @@ Download the folder data
 
 Set the paths of data, results, and plots
 ```
-path_to_data = "your_path_to_main_jfbc_folder/data/" ;
+path_to_data = "your_path_to_main_JMAKi_folder/data/" ;
 path_to_plot ="your_path_to_plots/";
 path_to_results ="your_path_to_results/";
-path_to_annotation ="your_path_to_main_jfbc_folder/data/annotation_S8R_green.csv"
+path_to_annotation ="your_path_to_main_JMAKi_folder/data/annotation_S8R_green.csv"
 ```
 Call the function to Log Lin model
 ```
 
-path_to_annotation ="G:/JFBC.jl-main/data/annotation_S8R_red.csv"
+path_to_annotation ="G:/JMAKi.jl-main/data/annotation_S8R_red.csv"
 
 results = fit_one_file_Log_Lin(
     "test" , # label of the exp
