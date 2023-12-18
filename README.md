@@ -60,10 +60,9 @@ this last step is Temporary before the official realese
 18. Peaks.jl
 19. ChangePointDetection.jl
 
-# The main functions of JMAKi
 
 
-## Data and annotation formatting
+# Data and annotation formatting
 JMAKi can operate directly on data files or inside the julia notebook.
 
 In particular two API call direclty the files. 
@@ -80,6 +79,7 @@ Instead for all other API the standard file formatting is a 2xn_times Matrix of 
 The first row should be time and the second the quantity to be fitteted (e.g., Optical Density or CFU)
 
 
+# The main functions of JMAKi
 
 ## Simulate ODE
 ```
