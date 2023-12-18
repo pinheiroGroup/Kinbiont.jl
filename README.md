@@ -93,7 +93,7 @@ Time,  A1,     A2,      A3,
 ```
 JMAKi expect a "," as separator between columns
 
-The annotation file instead should be a two column .csv file where the number of rows correspond to the number of wells, note that the name of the well should be the same between the data.csv and annotation.csv:
+The annotation file instead should be a two columns .csv file where the number of rows correspond to the number of wells, note that the name of the well should be the same between the data.csv and annotation.csv:
 
 ```
 A1, b
@@ -107,7 +107,7 @@ as unique_ID the user can insert anything but consider that if two wells has the
 See the folders  XXXXX for some examples. 
 
 
-
+If a OD calibration curved is provided it should have the following format XXXXXXX
 
 
 # The main functions of JMAKi
@@ -115,8 +115,14 @@ See the folders  XXXXX for some examples.
 ## Simulate ODE
 ```
 
-    ODE_sim(model::String, n_start::Vector{Float64}, tstart::Float64, tmax::Float64,
-        delta_t::Float64, integrator::Any, param_of_ode::Vector{Float64})
+   ODE_sim(model::String, 
+    n_start::Vector{Float64}, 
+    tstart::Float64, 
+    tmax::Float64, 
+    delta_t::Float64, 
+    param_of_ode::Vector{Float64}; 
+    integrator = KenCarp4() 
+)
 ```
 This function performs an ODE simulation of a model, considering the initial conditions, time range, and integration parameters.
 
@@ -125,21 +131,30 @@ This function performs an ODE simulation of a model, considering the initial con
 - `tstart::Float64`: The start time of the simulation.
 - `tmax::Float64`: The final time of the simulation.
 - `delta_t::Float64`: The time step of the output.
-- `integrator::Any`: The chosen solver from the SciML ecosystem for ODE integration.
 - `param_of_ode::Vector{Float64}`: The parameters of the ODE model.
-
+The only Key arg. in this case is:
+- `integrator=KenCarp4() `: The chosen solver from the SciML ecosystem for ODE integration, default KenCarp4 algorithm.
 
 
 
 ##  Stochastic simulation
 ```
-    stochastic_sim(model::String, n_start::Int, n_mol_start::Float64, tstart::Float64, tmax::Float64,
-        delta_t::Float64, k_1_val::Float64, k_2_val::Float64, alpha_val::Float64, lambda::Float64,
-        n_mol_per_birth::Float64, volume::Float64)
+    stochastic_sim(model::String,
+         n_start::Int,
+         n_mol_start::Float64,
+        tstart::Float64,
+        tmax::Float64,
+        delta_t::Float64,
+        k_1_val::Float64,
+        k_2_val::Float64,
+        alpha_val::Float64,
+        lambda::Float64,
+        n_mol_per_birth::Float64,
+        volume::Float64)
 ```
 This function performs a stochastic simulation of a model, considering cell growth and nutrient consumption over time.
 
-- `model::String`: The model to simulate.
+- `model::String`: The model to simulate. PUT the options
 - `n_start::Int`: The number of starting cells.
 - `n_mol_start::Float64`: The starting concentration of the limiting nutrient.
 - `tstart::Float64`: The start time of the simulation.
@@ -154,25 +169,39 @@ This function performs a stochastic simulation of a model, considering cell grow
 
 
 ## Fitting growth rate with log-lin fitting for one well
-```
-    fitting_one_well_Log_Lin_Fit(data::Matrix{Float64}, name_well::String, label_exp::String,
-        do_plot::Bool, path_to_plot::String, pt_avg::Int, pt_smoothing_derivative::Int,
-        pt_min_size_of_win::Int, type_of_win::String, threshold_of_exp::Float64, do_error_plot::Bool)
+``` fitting_one_well_Log_Lin(data::Matrix{Float64}, 
+    name_well::String, 
+    label_exp::String; 
+    do_plot=false,
+    path_to_plot="NA", 
+    type_of_smoothing="rolling_avg",
+    pt_avg=7, 
+    pt_smoothing_derivative=7, 
+    pt_min_size_of_win=7, 
+    type_of_win="maximum", 
+    threshold_of_exp=0.9, 
+    multiple_scattering_correction=false,
+    calibration_OD_curve ="NA" 
+    )
 ```
 This function fits a logarithmic-linear model to a single well's data and performs analysis such as plotting and error calculation.
 
 - `data::Matrix{Float64}`: The dataset of OD/fluorescence values.
 - `name_well::String`: The name of the well.
 - `label_exp::String`: The label of the experiment.
-- `do_plot::Bool`: Whether to generate and save plots.
-- `path_to_plot::String`: The path to save the plots.
-- `pt_avg::Int`: The number of points to generate the initial condition.
-- `pt_smoothing_derivative::Int`: The number of points to smooth the derivative.
-- `pt_min_size_of_win::Int`: The minimum size of the exponential windows in the number of smoothed points.
-- `type_of_win::String`: How the exponential phase window is selected ("maximum" or "global_thr").
-- `threshold_of_exp::Float64`: The threshold of the growth rate in quantile to define the exponential windows.
-- `do_error_plot::Bool`: Whether to generate a distribution plot of the goodness of fit in the interval of the fitted growth rate.
 
+The Key arguments are :
+
+- `do_plot=true`: Whether to generate and save plots.
+- `path_to_plot="NA"`: The path to save the plots, used only if `do_plot=true`.
+- `pt_avg=7`: The number of points to do rolling average smoothing.
+- `pt_smoothing_derivative=7`: The number of points of the window to evaluate specific growth rate.
+- `pt_min_size_of_win=7`: The minimum size of the exponential windows in the number of smoothed points.
+- `type_of_win="maximum"`: How the exponential phase window is selected ("maximum" or "global_thr").
+- `threshold_of_exp=0.9`: The threshold of the growth rate in quantile to define the exponential windows.
+- `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
+- `path_to_plot="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- 
 ## Fitting growth rate with log-lin fitting for one file
 ```
     fit_one_file_Log_Lin(label_exp::String, temp_file::String, path_to_data::String,
