@@ -97,11 +97,11 @@ The annotation file instead should be a two column .csv file where the number of
 
 ```
 A1, b
-A2,  X
-A3,   unique_ID
+A2, X
+A3, unique_ID
 
 ```
-as unique_ID the user ca insert anything but consider that if two wells has the same ID the will be considered replicates. 'b' indicates that the well should be cosidered a blank and 'X' that the well should be discarde from any analysis
+as unique_ID the user can insert anything but consider that if two wells has the same ID the will be considered replicates. 'b' indicates that the well should be cosidered a blank and 'X' that the well should be discarded from any analysis
 
 
 See the folders  XXXXX for some examples. 
