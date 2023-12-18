@@ -28,7 +28,7 @@ Next, the user need to copy the project folder in the chosen working directory.
 6. at the start of the code or notebook (where you are going to do analyses) you should write 
 
 ```
-using DifferentialEquations, Optimization, Plots, Random, CSV,  DataFrames, Statistics, Optim, Zygote, OptimizationBBO, NaNMath, CurveFit, StatsBase, Tables, Distributions
+using DifferentialEquations, Optimization, Plots, Random, CSV,  DataFrames, Statistics, Optim, OptimizationBBO, NaNMath, CurveFit, StatsBase, Tables, Distributions,Interpolations,GaussianProcesses,Peaks,ChangePointDetection
 
 include("your_path_to_JMAKi_main_folder/src/functions.jl")
 
@@ -39,7 +39,7 @@ this last step is Temporary before the official realese
 ## Requirements
 ### Dependencies
 
-1. Julia (1.7,1.8)
+1. Julia (1.7,1.8,1.9)
 2. DifferentialEquations.jl
 3. Optimization.jl
 4. Plots.jl
@@ -48,17 +48,38 @@ this last step is Temporary before the official realese
 7. DataFrames.jl
 8. Statistics.jl
 9. Optim.jl
-10. Zygote.jl
-11. OptimizationBBO.jl
-12. NaNMath.jl
-13. CurveFit.jl
-14. StatsBase.jl
-15. Tables.jl
-16. Distributions.jl
-
+10. OptimizationBBO.jl
+11. NaNMath.jl
+12. CurveFit.jl
+13. StatsBase.jl
+14. Tables.jl
+15. Distributions.jl
+16. Interpolations.jl
+17. GaussianProcesses.jl 
+18. Peaks.jl
+19. ChangePointDetection.jl
 
 # The main functions of JMAKi
+
+
 ## Data and annotation formatting
+JMAKi can operate directly on data files or inside the julia notebook.
+
+In particular two API call direclty the files. 
+
+In these cases the user must input  the paths to  a .csv data file and a .csv annotation
+
+Instead for all other API the standard file formatting is a 2xn_times Matrix of Float64 .,e.g.:
+
+```
+ 0.0        2.0       4.0       6.0       8.0        10.0       10.0       12.0       14.0       16.0       18.0       20.0       22.0      24.0      26.0       28.0       30.0       32.0       34.0       36.0       …  
+ 0.0912154  0.107956  0.105468  0.101727  0.0931484   0.106318   0.103697   0.139821   0.173598   0.204888   0.251052   0.289018   0.31298   0.33752   0.359356   0.370861   0.376347   0.383732   0.398496   0.384511 …  
+
+```
+The first row should be time and the second the quantity to be fitteted (e.g., Optical Density or CFU)
+
+
+
 ## Simulate ODE
 ```
 
