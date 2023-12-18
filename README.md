@@ -112,6 +112,9 @@ If a OD calibration curved is provided it should have the following format XXXXX
 
 # The main functions of JMAKi
 
+
+
+
 ## Simulate ODE
 ```
 
@@ -169,7 +172,27 @@ This function performs a stochastic simulation of a model, considering cell grow
 - `n_mol_per_birth::Float64`: The nutrient consumed per division (mass).
 - `volume::Float64`: The volume.
 
-
+## Plotting a dataset from file
+```
+plot_data( label_exp::String, #label of the experiment
+    path_to_data::String, # path to the folder to analyze
+    path_to_annotation::String;# path to the annotation of the wells
+    path_to_plot="NA", # path where to save Plots
+    display_plots=true ,# display plots in julia or not
+    save_plot=false, # save the plot or not
+    overlay_plots=true, # true a single plot for all dataset false one plot per well
+    blank_subtraction="NO", # string on how to use blank (NO,avg_subctraction,time_avg)
+    average_replicate=false, # if true the average between replicates 
+    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
+    )
+    
+```
+## Specific growth rate evaluation
+```
+specific_gr_evaluation(data_smooted::Matrix{Float64},
+     pt_smoothing_derivative::Int)
+```
 ## Fitting growth rate with log-lin fitting for one well
 ``` fitting_one_well_Log_Lin(data::Matrix{Float64}, 
     name_well::String, 
@@ -201,135 +224,308 @@ The Key arguments are :
 - `type_of_win="maximum"`: How the exponential phase window is selected ("maximum" or "global_thr").
 - `threshold_of_exp=0.9`: The threshold of the growth rate in quantile to define the exponential windows.
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
-- `path_to_plot="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 
 ## Fitting growth rate with log-lin fitting for one file
 ```
-    fit_one_file_Log_Lin(label_exp::String, temp_file::String, path_to_data::String,
-        path_to_annotation::String, path_to_results::String, path_to_plot::String,
-        do_plot::Bool, verbose::Bool, write_res::Bool, pt_avg::Int, pt_smoothing_derivative::Int,
-        pt_min_size_of_win::Int, type_of_win::String, threshold_of_exp::Float64,
-        blank_subtraction::String, fit_replicate::Bool, correct_negative::String,
-        thr_negative::Float64, do_error_plot::Bool)
+    fit_one_file_Log_Lin(
+    label_exp::String, 
+    path_to_data::String,
+    path_to_annotation::String;
+    path_to_results = "NA",
+    path_to_plot= "NA",
+    do_plot=false, 
+    verbose=false,
+    write_res=false, 
+    type_of_smoothing="rolling_avg", 
+    pt_avg=7,
+    pt_smoothing_derivative=7, 
+    pt_min_size_of_win=7, 
+    type_of_win="maximum", 
+    threshold_of_exp=0.9, 
+    blank_subtraction="avg_blank", 
+    fit_replicate=false, 
+    correct_negative="thr_correction",
+    thr_negative=0.01, 
+    multiple_scattering_correction=false, 
+    calibration_OD_curve="NA" 
+    )
 ```
 This function fits a logarithmic-linear model to a single file's data. It performs model fitting, error analysis, and provides various options for customization.
 
 - `label_exp::String`: Label of the experiment.
-- `temp_file::String`: Name of the file to analyze.
 - `path_to_data::String`: Path to the folder containing the data.
 - `path_to_annotation::String`: Path to the annotation of the wells.
-- `path_to_results::String`: Path to save the results.
-- `path_to_plot::String`: Path to save the plots.
-- `do_plot::Bool`: Whether to generate and visualize plots of the data.
-- `verbose::Bool`: Whether to enable verbose output.
-- `write_res::Bool`: Whether to write results.
-- `pt_avg::Int`: Number of points to use for smoothing average.
-- `pt_smoothing_derivative::Int`: Number of points to smooth the derivative.
-- `pt_min_size_of_win::Int`: Minimum size of the exponential windows in number of smoothed points.
-- `type_of_win::String`: How the exponential phase window is selected ("maximum" or "global_thr").
-- `threshold_of_exp::Float64`: Threshold of growth rate in quantile to define the exponential windows.
-- `blank_subtraction::String`: How to use blank data for subtraction (options: "NO", "avg_subtraction", "time_avg").
-- `fit_replicate::Bool`: If `true`, fit the average between replicates; if `false`, fit all replicates independently.
-- `correct_negative::String`: Method to correct negative values (options: "thr_correction", "blank_correction").
-- `thr_negative::Float64`: Threshold value used only if `correct_negative == "thr_correction"`.
-- `do_error_plot::Bool`: Generate a distribution plot of goodness of fit in the interval of fitted growth rate.
+
+The Key arguments are :
+
+
+- `path_to_results= "NA"`: Path to save the results.
+- `path_to_plot= "NA"`: Path to save the plots.
+- `do_plot=false`: Whether to generate and visualize plots of the data.
+- `verbose=false`: Whether to enable verbose output.
+- `write_res= false`: Whether to write results.
+- `pt_avg=7`: Number of points to use for smoothing average.
+- `pt_smoothing_derivative=7`: The number of points of the window to evaluate specific growth rate.
+- `pt_min_size_of_win=7`: Minimum size of the exponential windows in number of smoothed points.
+- `type_of_win="maximum`: How the exponential phase window is selected ("maximum" or "global_thr").
+- `threshold_of_exp=0.9`: Threshold of growth rate in quantile to define the exponential windows.
+- `blank_subtraction="NA"`: How to use blank data for subtraction (options: "NO", "avg_subtraction", "time_avg").
+- `fit_replicate=false`: If `true`, fit the average between replicates; if `false`, fit all replicates independently.
+- `correct_negative="thr_correction`: Method to correct negative values (options: "thr_correction", "blank_correction").
+- `thr_negative=0.01`: Threshold value used only if `correct_negative == "thr_correction"`.
+- `do_error_plot=false`: Generate a distribution plot of goodness of fit in the interval of fitted growth rate.
+- `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
+- `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 
 
 
 
 ## Fitting ODE function for one well
 ```
-    fitting_one_well_constrained(data::Matrix{Float64}, name_well::String, label_exp::String,
-        lb_param::Vector{Float64}, ub_param::Vector{Float64}, param::Vector{Float64},
-        model::String, do_plot::Bool, path_to_plot::String, pt_avg::Int, smoothing::Bool,
-        type_of_loss::String, blank_array::Vector{Float64}, verbose::Bool,
-        error_analysis::Bool, write_res::Bool)
+ fitting_one_well_ODE_constrained(data::Matrix{Float64},
+    name_well::String, 
+    label_exp::String,
+    model::String,
+    lb_param::Vector{Float64}, 
+    ub_param::Vector{Float64}; 
+    param= lb_param .+ (ub_param.-lb_param)./2,
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator =KenCarp4(autodiff=true), 
+    do_plot=false, 
+    path_to_plot="NA", 
+    pt_avg=1, 
+    pt_smooth_derivative=7,
+    smoothing=false,
+    type_of_loss="RE",
+    blank_array=zeros(100),
+    multiple_scattering_correction=false, 
+    calibration_OD_curve="NA"  
+    )
 ```
 This function performs constrained parameter fitting on a single well's dataset using an ordinary differential equation (ODE) model. It estimates the model parameters within specified lower and upper bounds.
 
-- `data::Matrix{Float64}`: Dataset of x times y OD/fluorescence.
+- `data::Matrix{Float64}`: Dataset 
+-  `model::String`: ODE model to use
 - `name_well::String`: Name of the well.
 - `label_exp::String`: Label of the experiment.
 - `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
 - `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
-- `param::Vector{Float64}`: Initial guess for the model parameters.
-- `model::String`: ODE model to use.
-- `do_plot::Bool`: Whether to generate plots or not.
-- `path_to_plot::String`: Path to save the plots.
-- `pt_avg::Int`: Number of points to generate the initial condition.
-- `smoothing::Bool`: Whether to apply smoothing to the data or not.
-- `type_of_loss::String`: Type of loss function to be used.
-- `blank_array::Vector{Float64}`: Data of all blanks.
-- `verbose::Bool`: Whether to enable verbose output.
-- `error_analysis::Bool`: Perform error analysis.
-- `write_res::Bool`: Whether to write results.
+
+
+The Key arguments are :
+
+- `param= lb_param .+ (ub_param.-lb_param)./2`: Initial guess for the model parameters.
+- `integrator =KenCarp4(autodiff=true)' sciML integrator
+- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO
+- `do_plot=true`: Whether to generate plots or not.
+- `path_to_plot="NA"`: Path to save the plots.
+- `pt_avg=7`: Number of points to generate the initial condition.
+- `smoothing=false`: Whether to apply smoothing to the data or not.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
+- `blank_array=zeros(100)`: Data of all blanks in single array.
+- `verbose=false`: Whether to enable verbose output.
+- `write_res=true`: Whether to write results.
+- `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
+- `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 
 
 
 ## Fitting ODE function for one file
 ```
-    fit_one_file_ODE(label_exp::String, temp_file::String, path_to_data::String,
-        path_to_annotation::String, path_to_results::String, path_to_plot::String,
-        model::String, loss_type::String, smoothing::Bool, do_plot::Bool, verbose::Bool,
-        write_res::Bool, pt_avg::Int, lb_param::Vector{Float64}, ub_param::Vector{Float64},
-        blank_subtraction::String, fit_replicate::Bool, error_analysis::Bool,
-        correct_negative::String, thr_negative::Float64)
+   fit_file_ODE(
+    label_exp::String, #label of the experiment
+    path_to_data::String, # path to the folder to analyze
+    path_to_annotation::String,# path to the annotation of the wells
+    model::String, # string of the used model
+    lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
+    ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    integrator = KenCarp4(autodiff=true), # selection of sciml integrator
+    path_to_results="NA", # path where save results
+    path_to_plot="NA", # path where to save Plots
+    loss_type="RE", # string of the type of the used loss
+    smoothing=false, # 1 do smoothing of data with rolling average
+    do_plot=false, # 1 do and visulaze the plots of data
+    verbose=false, # 1 true verbose
+    write_res=false, # write results
+    pt_avg=1, # number of points to do smoothing average
+    pt_smooth_derivative=7, # number of points to do ssmooth_derivative
+    blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subctraction,time_avg)
+    fit_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    calibration_OD_curve="NA"  #  the path to calibration curve to fix the data
+    )
 ```
 This function fits an ordinary differential equation (ODE) model to a single file's data. It performs model fitting, error analysis, and provides various options for customization.
 
-- `label_exp::String`: Label of the experiment.
-- `temp_file::String`: Name of the file to analyze.
-- `path_to_data::String`: Path to the folder containing the data.
-- `path_to_annotation::String`: Path to the annotation of the wells.
-- `path_to_results::String`: Path to save the results.
-- `path_to_plot::String`: Path to save the plots.
-- `model::String`: string of the model.
-- `loss_type::String`: Type of the used loss function.
-- `smoothing::Bool`: Whether to perform data smoothing with rolling average or not.
-- `do_plot::Bool`: Whether to generate and visualize plots of the data.
-- `verbose::Bool`: Whether to enable verbose output.
-- `write_res::Bool`: Whether to write results.
-- `pt_avg::Int`: Number of points to use for smoothing average.
-- `lb_param::Vector{Float64}`: Array of the lower bounds of the parameters.
-- `ub_param::Vector{Float64}`: Array of the upper bounds of the parameters.
-- `blank_subtraction::String`: How to use blank data for subtraction (options: "NO", "avg_subtraction", "time_avg").
-- `fit_replicate::Bool`: If `true`, fit the average between replicates; if `false`, fit all replicates independently.
-- `error_analysis::Bool`: Perform error analysis.
-- `correct_negative::String`: Method to correct negative values (options: "thr_correction", "blank_correction").
-- `thr_negative::Float64`: Threshold value used only if `correct_negative == "thr_correction"`.
 
-
-
-## Fitting PINN fucntion
-
-```
-```
-## Sensitivity analysis
-```
-
-    Sensitivity_ODE_Morris(data::Matrix{Float64}, name_well::String, label_exp::String,
-        lb_param::Vector{Float64}, ub_param::Vector{Float64}, model::String, do_plot::Bool,
-        path_to_plot::String, pt_avg::Int, smoothing::Bool, type_of_loss::String,
-        blank_array::Vector{Float64}, N_step_morris::Int, write_res::Bool)
-```
-This function performs sensitivity analysis using the Morris method on an ordinary differential equation (ODE) model. It calculates the sensitivity indices of the model parameters with respect to the observed data.
-
-- `data::Matrix{Float64}`: Dataset of x times y OD/fluorescence.
-- `name_well::String`: Name of the well.
+- `path_to_data::String`: path to the csv file of data
+- `path_to_annotation::String` path to the annotation of the dataset
+-  `model::String`: ODE model to use
 - `label_exp::String`: Label of the experiment.
 - `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
 - `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
-- `model::String`: ODE model to use.
-- `do_plot::Bool`: Whether to generate plots or not.
-- `path_to_plot::String`: Path to save the plots.
-- `pt_avg::Int`: Number of points to generate the initial condition.
-- `smoothing::Bool`: Whether to apply smoothing to the data or not.
-- `type_of_loss::String`: Type of loss function to be used.
-- `blank_array::Vector{Float64}`: Data of all blanks.
-- `N_step_morris::Int`: Number of steps in the Morris method.
-- `write_res::Bool`: Results to be written.
 
 
+The Key arguments are :
+
+- `param= lb_param .+ (ub_param.-lb_param)./2`: Initial guess for the model parameters.
+- `integrator =KenCarp4(autodiff=true)' sciML integrator
+- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO
+- `do_plot=true`: Whether to generate plots or not.
+- `path_to_plot="NA"`: Path to save the plots.
+- `pt_avg=7`: Number of points to generate the initial condition.
+- `smoothing=false`: Whether to apply smoothing to the data or not.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
+- `blank_array=zeros(100)`: Data of all blanks in single array.
+- `verbose=false`: Whether to enable verbose output.
+- `write_res=true`: Whether to write results.
+- `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
+- `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- fit_replicate=false,  if true the average between replicates is fitted. 
+
+## Fitting custom ODE function for one file
+```
+fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row times second row OD
+    name_well::String, # name of the well
+    label_exp::String, #label of the experiment
+    model::Any, # ode model to use 
+    lb_param::Vector{Float64}, # lower bound param
+    ub_param::Vector{Float64}, # upper bound param
+    n_equation::Int; # number ode in the system
+    param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    integrator =KenCarp4(autodiff=true), # selection of sciml integrator
+    do_plot=false, # do plots or no
+    path_to_plot="NA", # where save plots
+    pt_avg=1, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    smoothing=false, # the smoothing is done or not?
+    type_of_loss="RE", # type of used loss 
+    blank_array=zeros(100), # data of all blanks
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    calibration_OD_curve="NA"  #  the path to calibration curve to fix the data
+    )
+```
+
+## Sensitivity analysis
+```
+ one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row times second row OD
+    name_well::String, # name of the well
+    label_exp::String, #label of the experiment
+    model::String, # ode model to use 
+    lb_param::Vector{Float64}, # lower bound param
+    ub_param::Vector{Float64}; # upper bound param
+    N_step_morris =7,
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    integrator =KenCarp4(autodiff=true), # selection of sciml integrator
+    pt_avg=1, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    write_res=false,
+    smoothing=false, # the smoothing is done or not?
+    type_of_loss="RE", # type of used loss 
+    blank_array=zeros(100), # data of all blanks
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    calibration_OD_curve="NA"  #  the path to calibration curve to fix the data
+    )
+```
+This function performs sensitivity analysis using the Morris method on an ordinary differential equation (ODE) model. It calculates the sensitivity indices of the model parameters with respect to the observed data.
+
+
+
+## Model selection
+```
+ODE_Model_selection(data::Matrix{Float64}, # dataset first row times second row OD
+    name_well::String, # name of the well
+    label_exp::String, #label of the experiment
+    models_list::Vector{String}, # ode model to use 
+    lb_param_array::Any, # lower bound param
+    ub_param_array::Any; # upper bound param
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    integrator = KenCarp4(autodiff=true), # selection of sciml integrator
+    pt_avg = 1 , # number of the point to generate intial condition
+    beta_penality = 2.0, # penality for AIC evaluation
+    smoothing= false, # the smoothing is done or not?
+    type_of_loss="L2", # type of used loss 
+    blank_array=zeros(100), # data of all blanks
+    plot_best_model=false, # one wants the results of the best fit to be plotted
+    path_to_plot="NA",
+    pt_smooth_derivative=7,
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    verbose=false
+)
+```
+
+## Change point detection
+```
+cpd_local_detection(data::Matrix{Float64},
+    n_max_cp::Int;
+    type_of_detection="lsdd",
+    type_of_curve="deriv", 
+    pt_derivative = 0,
+    size_win =2)
+
+```
+        perform the analyses with the required change point detection algorithm
+        type_of_detection="lsdd" or piecewise linear fitting on the specific growth rate
+        pt_derivative number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
+        size_win Int size of the used window in all of the methods
+## Fitting segmented ODE with fixed change-point number
+```
+selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dataset first row times second row OD
+    name_well::String, # name of the well
+    label_exp::String, #label of the experiment
+    list_of_models::Vector{String}, # ode models to use 
+    list_lb_param::Any, # lower bound param
+    list_ub_param::Any, # upper bound param
+    n_change_points::Int;
+    type_of_loss="L2", # type of used loss 
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    integrator = KenCarp4(autodiff=true), # selection of sciml integrator
+    type_of_detection =  "lsdd",
+    type_of_curve = "deriv", 
+    smoothing=false,
+    pt_avg=1,
+    do_plot=false, # do plots or no
+    path_to_plot="NA", # where save plots
+    win_size=2, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    beta_smoothing_ms = 2.0 #  parameter of the AIC penality
+    )
+```
+
+## Fitting segmented ODE with direct search for a maximum number of change-points 
+```
+ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dataset x times y OD/fluorescence
+    name_well::String, # name of the well
+    label_exp::String, #label of the experiment
+    list_lb_param::Any, # lower bound param
+    list_ub_param::Any, # upper bound param
+    list_of_models::Vector{String}, # ode model to use
+    n_max_change_points::Int; 
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    integrator = KenCarp4(autodiff=true), # selection of sciml integrator
+    type_of_loss="L2", # type of used loss 
+    type_of_detection =  "lsdd",
+    type_of_curve = "deriv", 
+    pt_avg = pt_avg , # number of the point to generate intial condition
+    smoothing= true, # the smoothing is done or not?
+    do_plot=false, # do plots or no
+    path_to_plot="NA", # where save plots
+    path_to_results="NA",
+    win_size=2, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    penality_parameter=2.0,
+    multiple_scattering_correction="false", # if true uses the given calibration curve to fix the data
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+   save_all_model=false )
+```
 
 
 # The mathematical models
