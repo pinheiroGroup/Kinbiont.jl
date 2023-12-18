@@ -188,6 +188,27 @@ plot_data( label_exp::String, #label of the experiment
     )
     
 ```
+
+This function plot all the data from .csv file 
+- `path_to_data::String`: The path to the .csv of data
+-  `path_to_annotation::String`: The path to the .csv of annotation 
+- `name_well::String`: The name of the well.
+- `label_exp::String`: The label of the experiment.
+
+The Key arguments are :
+- `path_to_plot= "NA"`: Path to save the plots.
+-  `save_plot=false` : save the plot or not
+- ` display_plots=true`: Whether or not diplay the plot in julia
+-    `overlay_plots =true` : true on plot for all dataset false one plot per well
+- `verbose=false`: Whether to enable verbose output.
+- `pt_avg=7`: Number of points to use for smoothing average.
+- ` blank_subtraction="NO"`: 
+- ` average_replicate=false`
+- `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
+- `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+
+
+
 ## Specific growth rate evaluation
 ```
 specific_gr_evaluation(data_smooted::Matrix{Float64},
@@ -270,11 +291,10 @@ The Key arguments are :
 - `pt_min_size_of_win=7`: Minimum size of the exponential windows in number of smoothed points.
 - `type_of_win="maximum`: How the exponential phase window is selected ("maximum" or "global_thr").
 - `threshold_of_exp=0.9`: Threshold of growth rate in quantile to define the exponential windows.
-- `blank_subtraction="NA"`: How to use blank data for subtraction (options: "NO", "avg_subtraction", "time_avg").
+- `blank_subtraction="avg_blank"`: How to use blank data for subtraction (options: "NO", "avg_subtraction", "time_avg").
 - `fit_replicate=false`: If `true`, fit the average between replicates; if `false`, fit all replicates independently.
 - `correct_negative="thr_correction`: Method to correct negative values (options: "thr_correction", "blank_correction").
 - `thr_negative=0.01`: Threshold value used only if `correct_negative == "thr_correction"`.
-- `do_error_plot=false`: Generate a distribution plot of goodness of fit in the interval of fitted growth rate.
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 
