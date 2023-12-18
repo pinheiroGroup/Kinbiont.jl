@@ -132,6 +132,8 @@ This function performs an ODE simulation of a model, considering the initial con
 - `tmax::Float64`: The final time of the simulation.
 - `delta_t::Float64`: The time step of the output.
 - `param_of_ode::Vector{Float64}`: The parameters of the ODE model.
+
+  
 The only Key arg. in this case is:
 - `integrator=KenCarp4() `: The chosen solver from the SciML ecosystem for ODE integration, default KenCarp4 algorithm.
 
@@ -191,7 +193,6 @@ This function fits a logarithmic-linear model to a single well's data and perfor
 - `label_exp::String`: The label of the experiment.
 
 The Key arguments are :
-
 - `do_plot=true`: Whether to generate and save plots.
 - `path_to_plot="NA"`: The path to save the plots, used only if `do_plot=true`.
 - `pt_avg=7`: The number of points to do rolling average smoothing.
@@ -201,7 +202,7 @@ The Key arguments are :
 - `threshold_of_exp=0.9`: The threshold of the growth rate in quantile to define the exponential windows.
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
 - `path_to_plot="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-- 
+
 ## Fitting growth rate with log-lin fitting for one file
 ```
     fit_one_file_Log_Lin(label_exp::String, temp_file::String, path_to_data::String,
