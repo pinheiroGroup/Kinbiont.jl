@@ -1791,7 +1791,7 @@ function ODE_sim(model::String, #string of the model
     tmax::Float64, # final time of the sim
     delta_t::Float64, # delta t for poisson approx
     param_of_ode::Vector{Float64}; # parameters of the ODE model
-    integrator = KenCarp4(), # which sciml solver of ode
+    integrator = KenCarp4() # which sciml solver of ode
 
 )
 
@@ -3764,7 +3764,7 @@ change points functions
 function cpd_local_detection(data::Matrix{Float64},
     n_max_cp::Int;
     type_of_detection="lsdd",
-    type_of_curve="deriv", 
+    type_of_curve="original", 
     pt_derivative = 0,
     size_win =2)
      
@@ -3795,7 +3795,7 @@ function cpd_local_detection(data::Matrix{Float64},
 end
 
 
-function cpd_lsdd_profile(data::Matrix{Float64},n_max::Int; window_size = 2, type_of_curve= "deriv",pt_deriv=0)
+function cpd_lsdd_profile(data::Matrix{Float64},n_max::Int; window_size = 2, type_of_curve= "original",pt_deriv=0)
  
 
 
@@ -3928,6 +3928,10 @@ function peaks_detection(data::Matrix{Float64},
     return index_prominence[index_top_peaks] ,times_top_peaks,values_top_peaks
 end
 
+
+
+
+
 function curve_dissimilitary_lin_fitting( data::Matrix{Float64}, # dataset first row times second row OD
     start_time_Index::Int,
     size_wind::Int, # size sliding window
@@ -4010,7 +4014,7 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
     optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator = KenCarp4(autodiff=true), # selection of sciml integrator
     type_of_detection =  "lsdd",
-    type_of_curve = "deriv", 
+    type_of_curve = "original", 
     smoothing=false,
     pt_avg=1,
     do_plot=false, # do plots or no
@@ -4204,7 +4208,7 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
     integrator = KenCarp4(autodiff=true), # selection of sciml integrator
     type_of_loss="L2", # type of used loss 
     type_of_detection =  "lsdd",
-    type_of_curve = "deriv", 
+    type_of_curve = "original", 
     pt_avg = pt_avg , # number of the point to generate intial condition
     smoothing= true, # the smoothing is done or not?
     do_plot=false, # do plots or no
