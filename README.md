@@ -174,17 +174,17 @@ This function performs a stochastic simulation of a model, considering cell grow
 
 ## Plotting a dataset from file
 ```
-plot_data( label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String;# path to the annotation of the wells
-    path_to_plot="NA", # path where to save Plots
-    display_plots=true ,# display plots in julia or not
-    save_plot=false, # save the plot or not
-    overlay_plots=true, # true a single plot for all dataset false one plot per well
-    blank_subtraction="NO", # string on how to use blank (NO,avg_subctraction,time_avg)
-    average_replicate=false, # if true the average between replicates 
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
+plot_data( label_exp::String, 
+    path_to_data::String, 
+    path_to_annotation::String;
+    path_to_plot="NA", 
+    display_plots=true ,
+    save_plot=false, 
+    overlay_plots=true, 
+    blank_subtraction="NO", 
+    average_replicate=false, 
+    correct_negative="thr_correction", 
+    thr_negative=0.01,
     )
     
 ```
@@ -513,24 +513,24 @@ Key Arguments:
 
 ## Model selection
 ```
-ODE_Model_selection(data::Matrix{Float64}, # dataset first row times second row OD
-    name_well::String, # name of the well
-    label_exp::String, #label of the experiment
-    models_list::Vector{String}, # ode model to use 
-    lb_param_array::Any, # lower bound param
-    ub_param_array::Any; # upper bound param
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator = KenCarp4(autodiff=true), # selection of sciml integrator
-    pt_avg = 1 , # number of the point to generate intial condition
-    beta_penality = 2.0, # penality for AIC evaluation
-    smoothing= false, # the smoothing is done or not?
-    type_of_loss="L2", # type of used loss 
-    blank_array=zeros(100), # data of all blanks
-    plot_best_model=false, # one wants the results of the best fit to be plotted
+ODE_Model_selection(data::Matrix{Float64}, 
+    name_well::String, 
+    label_exp::String,
+    models_list::Vector{String}, 
+    lb_param_array::Any,
+    ub_param_array::Any; 
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator = KenCarp4(autodiff=true), 
+    pt_avg = 1 , 
+    beta_penality = 2.0, 
+    smoothing= false, 
+    type_of_loss="L2",
+    blank_array=zeros(100), 
+    plot_best_model=false, 
     path_to_plot="NA",
     pt_smooth_derivative=7,
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    multiple_scattering_correction=false, 
+    calibration_OD_curve="NA", 
     verbose=false
 )
 ```
