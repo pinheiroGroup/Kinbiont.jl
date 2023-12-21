@@ -740,170 +740,133 @@ Monod,Haldane,Blackman,Tesseir,Moser,Aiba-Edwards,Verhulst
 
 `type_of_loss = "blank_weighted_L2"` : Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data. 
 
-##  Numerical integration and optimization options
+# J-MAKi: Introduction and Tutorial
 
-# Examples and benchmark functions
-## Simulation example
-### ODE simulation
-```
-model= "hyper_gompertz";
-ic=  [0.01];
-tstart = 0.0;
-tend = 100.0;
-delta_t = 0.5;
-param =   [0.02 ,  2  , 1]  ;
+**Objective:** This tutorial introduces the J-MAKi 
 
-sim = ODE_sim( model, 
-        ic ,
-        tstart,
-        tend, 
-        delta_t,
-        Tsit5(),
-        param  
-  )
-  
-  ```
-  The output is the same of a SciML outputs
-  ```
-  plot(sim)
-  ```
-  It is useful to use stiff integrator for piecewise and the more complicated models
-  
-  ```
-model= "triple_piecewise_damped_logistic";
-ic=  [0.02];
-tstart = 0.0;
-tend = 1000.0;
-delta_t = 0.5;
-param =   [0.013 ,  1.1  ,100.0 , 1.5, 0.01, 800.0, 00.0001]  ;
+## Table of Contents
+2. [Simulating Data with J-MAKi](#simulating-data)
+3. [Data Preprocessing](#data-preprocessing)
+4. [Smoothing and Multiple Scattering Correction](#smoothing-correction)
+5. [Model Fitting](#model-fitting)
+    - [Fitting ODE Models](#fitting-ode)
+    - [Custom ODE Fitting](#custom-ode-fitting)
+    - [Sensitivity Analysis](#sensitivity-analysis)
+    - [Model Selection](#model-selection)
+6. [Change Point Detection](#change-point-detection)
+7. [Conclusion](#conclusion)
 
-sim = ODE_sim( model, 
-        ic ,
-        tstart,
-        tend, 
-        delta_t,
-        KenCarp4(),
-        param  
-  )
+<a name="installation"></a>
 
+##  Simulating Data with J-MAKi
 
-plot(sim)
-```
-### Stochastic simulation
-Call the function `stochastic_sim`
-```
-sim = stochastic_sim("Monod", #string of the model
-    2000, # number of starting cells
-    0.900, # starting concentration of the limiting nutrients
-    0.0, # start time of the sim
-    3000.0, # final time of the sim
-    1.0, # delta t for poisson approx
-    0.2,
-    21.3, # monod constant
-    0.02, # massimum possible growth rate
-    342.0, # lag time
-    0.001,# nutrient consumed per division (conc)
-    100.0
-)
-```
-I the dimension 3 of the output you will find the times 
+To demonstrate the package, we'll begin by simulating data using a specific ODE model. The following code snippet simulates a growth curve using a triple-piecewise damped logistic model:
 
-In the dimension 2 of the output you will find the concentration of the limiting nutrients
+```julia
 
-In the dimension 1 of the output you will find the number of cells  
+# Simulating data with a triple-piecewise damped logistic model
+model = "triple_piecewise_damped_logistic"
+n_start = [0.1]
+tstart = 0.0
+tmax = 600.0
+delta_t = 10.0
+integrator = KenCarp4()
+param_of_ode = [0.06, 1.0, 200, 0.5, 0.001, 450, -0.0002]
 
+sim = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
 
-```
-plot(sim[3],sim[2],xlabel="Time", ylabel="# of cells Arb. Units")
-plot(sim[3],sim[1],xlabel="Time", ylabel="[conc of nutrient]Arb. Units")
+# Plotting scatterplot of simulated data
+Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Simulated Data" nothing], color=:blue, size=(300, 300))
 ```
 
-## Fitting one file
-### Fitting ODE
+In the above code, we use the `ODE_sim` function to simulate data based on a specified ODE model and parameters. The resulting data is then plotted.
 
-Download the folder data
-Choose the ODE model 
-```
-model= "piecewise_damped_logistic"
-```
-Set the lower bound of parameter given the choosen model
-```
-ub_piece_wise_log =[ 0.03 , 200000.0 , 1200.0 , 30.0 ,  0.01    ]
-lb_piece_wise_log =[ 0.0001 , 100.1, 50.00, 0.0 , -0.01   ]
-```
-Set the paths of data, results, and plots
-```
-path_to_data = "your_path_to_main_JMAKi_folder/data/" ;
-path_to_plot ="your_path_to_plots/";
-path_to_results ="your_path_to_results/";
-path_to_annotation ="your_path_to_main_JMAKi_folder/data/annotation_S8R_green.csv"
-```
-Call the function to fit ODE
-```
-results_green  = fit_one_file_ODE(  "Green_S8R" , # label of the exp
-  "exp_S8R_Green.csv",# name of the file to analyze
-  path_to_data, # path to the folder to analyze
-  path_to_annotation,# path to the annotation of the wells
-  path_to_results, # path where save results
-  path_to_plot, # path where to save Plots
-  model, # string of the used model to do analysis 
-  "RE", # type of the loss, relative error
-  false, # do smoothing of data with rolling average
-  true, #  do and visulaze the plots of data
-  true, # verbose
-  true , #  write the results
-  7, # number of points to do smoothing average
-  lb_piece_wise_log,# array of the array of the lower bound of the parameters
-  ub_piece_wise_log ,# array of the array of the upper bound of the parameters
-  "avg_blank", # type of blank subtraction
-  false, # avg of replicate
-  false, # error analysis 
-  "blank_correction" , # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-  100.0 # ignored in this case
-) 
-```
-### Fitting Log Lin
+<a name="data-preprocessing"></a>
+##  Data Preprocessing
 
-Download the folder data
+Next, we'll explore data preprocessing steps, including adding noise, smoothing, and multiple scattering correction:
 
-Set the paths of data, results, and plots
-```
-path_to_data = "your_path_to_main_JMAKi_folder/data/" ;
-path_to_plot ="your_path_to_plots/";
-path_to_results ="your_path_to_results/";
-path_to_annotation ="your_path_to_main_JMAKi_folder/data/annotation_S8R_green.csv"
-```
-Call the function to Log Lin model
+```julia
+# ... (Previous code)
+
+# Adding uniform random noise to the simulated data
+noise_uniform = rand(Uniform(-0.05, 0.05), length(sim.t))
+data_t = reduce(hcat, sim.t)
+data_o = reduce(hcat, sim.u)
+data_OD = vcat(data_t, data_o)
+data_OD[2, :] = data_OD[2, :] .+ noise_uniform
+
+# Plotting scatterplot of data with noise
+Plots.scatter(data_OD[1, :], data_OD[2, :], xlabel="Time", ylabel="Arb. Units", label=["Noisy Data" nothing], color=:blue, markersize=2, size=(300, 300))
+
+# Smoothing of the data with rolling average
+data_OD_smooth = smoothing_data(data_OD, 7)
+data_OD_smooth = Matrix(data_OD_smooth)
+
+# Plotting scatterplot of smoothed data
+Plots.scatter(data_OD_smooth[1, :], data_OD_smooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Smoothed Data" nothing], markersize=2, color=:blue, size=(300, 300))
+
+# Multiple scattering correction (requires an external file)
+# Comment out the following line if correction is not needed
+data_OD_smooth2 = correction_OD_multiple_scattering(data_OD_smooth, "/path/to/calibration/file.csv")
+
+# Plotting scatterplot of pre-processed data
+Plots.scatter(data_OD_smooth2[1, :], data_OD_smooth2[2, :], xlabel="Time", ylabel="Arb. Units", label=["Pre-processed Data" nothing], markersize=2, color=:blue, size=(300, 300))
 ```
 
-path_to_annotation ="G:/JMAKi.jl-main/data/annotation_S8R_red.csv"
+In this section, we add noise to the simulated data, smooth it using a rolling average, and perform multiple scattering correction if applicable.
 
-results = fit_one_file_Log_Lin(
-    "test" , # label of the exp
-    "exp_S8R_Red.csv",# name of the file to analyze
-    path_to_data, # path to the folder to analyze
-    path_to_annotation,# path to the annotation of the wells
-    path_to_results, # path where save results
-    path_to_plot, # path where to save Plots
-    true, # 1 do and visulaze the plots of data
-    true, # 1 true verbose
-    true, # write results
-    7, # number of points to do smoothing average
-    9, # number of poits to smooth the derivative
-    4, # minimum size of the exp windows in number of smooted points
-    "maximum" ,  # how the exp. phase win is selected, "maximum" of "global_thr"
-    0.9,# threshold of growth rate in quantile to define the exp windows
-    "avg_blank", # string on how to use blank (NO,avg_blank,time_blank)
-    false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    "thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    200.0,  # used only if correct_negative == "thr_correction"
-    true #  distribution of goodness of fit in the interval of growth rate fitted
-)  
+<a name="model-fitting"></a>
+## Model Fitting
 
+Now, let's explore model fitting using J-MAKi. We'll cover fitting ODE models, custom ODEs, sensitivity analysis, and model selection.
+
+<a name="fitting-ode"></a>
+### Fitting ODE Models
+
+We start by fitting the simulated data with a predefined ODE model:
+
+```julia
+# ... (Previous code)
+
+# Fitting the simulated data with a log-linear model
+path_to_plotting = "/path/to/save/plots/"
+res_log_lin = fitting_one_well_Log_Lin(data_OD_smooth2, "test", "test", do_plot=true, path_to_plot=path_to_plotting)
 ```
 
-## Fitting one Data
-### ODE
-### Log Lin
-## Sensitivity analysis
-## PINN Usage
+In this snippet, the `fitting_one_well_Log_Lin` function is used to fit the data with a log-linear model.
+
+<a name="custom-ode-fitting"></a>
+### Custom ODE Fitting
+
+We can also fit data using a custom ODE. Here, we demonstrate fitting with a custom two-equation ODE:
+
+```julia
+# ... (Previous code)
+
+# Defining the custom ODE function
+function ODE_custom(du, u, param, t)
+    du[1] = u[1] * (1 - u[1]) * param[2] + param[1] * u[1]
+    du[2] = +u[1] * param[2] + param[4] * u[2] * (1 - (u[1] + u[2]) / param[3])
+end
+
+custom_ub = [1.2, 1.1, 2.0, 20]
+custom_lb = [0.0001, 0.00000001, 0.00, 0]
+
+# Fitting data with the custom ODE
+results_custom = fitting_one_well_custom_ODE(data_OD_smooth2, "test", "test_model_custom", ODE_custom, custom_lb, custom_ub, 2, do_plot=true, path_to_plot=path_to_plotting)
+```
+
+In this example, `ODE_custom` represents a custom ODE function with two equations. The `fitting_one_well_custom_ODE` function is used for fitting.
+
+<a name="sensitivity-analysis"></a>
+### Sensitivity Analysis
+
+We can perform sensitivity analysis to evaluate the impact of parameter variations:
+
+```julia
+# ... (Previous code)
+
+# Performing sensitivity analysis using Morris method
+n_step_sensitivity = 3
+sensitivity_test = one_well_morris_sensitivity(data_OD_smooth2
