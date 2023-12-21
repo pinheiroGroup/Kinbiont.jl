@@ -443,6 +443,7 @@ This function is designed for fitting an ordinary differential equation (ODE) mo
 - `lb_param::Vector{Float64}`: Lower bounds for the parameters.
 - `ub_param::Vector{Float64}`: Upper bounds for the parameters.
 - `n_equation::Int`: The number of ODEs in the system.
+  
 Key   Arguments:
 
 - `param= lb_param .+ (ub_param.-lb_param)./2`: Initial guess for the parameters.
@@ -453,7 +454,7 @@ Key   Arguments:
 - `pt_avg=1`: Number of points to generate the initial condition.
 - `pt_smooth_derivative=7`: Number of points for smoothing the derivative.
 - `smoothing=false`: Determines whether smoothing is applied to the data.
-- `type_of_loss="RE"`: Type of loss used for optimization ((options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
+- `type_of_loss="RE"`: Type of loss used for optimization (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
 - `blank_array=zeros(100)`: Data representing blanks for correction.
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
@@ -492,7 +493,9 @@ Arguments:
 - `model::String`: The ODE model to use.
 - `lb_param::Vector{Float64}`: Lower bounds for the parameters.
 - `ub_param::Vector{Float64}`: Upper bounds for the parameters.
-  Key Arguments:
+
+
+Key Arguments:
 
 - `N_step_morris=7`: Number of steps for the Morris sensitivity analysis.
 - `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: The optimization method to use.
@@ -501,7 +504,7 @@ Arguments:
 - `pt_smooth_derivative=7`: Number of points for smoothing the derivative.
 - `write_res=false`: If `true`, writes the sensitivity analysis results to a file.
 - `smoothing=false`: Determines whether smoothing is applied to the data.
-- `type_of_loss="RE"`: Type of loss used for optimization (options: "RE" for relative error).
+- `type_of_loss="RE"`: Type of loss used for optimization (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
 - `blank_array=zeros(100)`: Data representing blanks for correction.
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
@@ -532,72 +535,172 @@ ODE_Model_selection(data::Matrix{Float64}, # dataset first row times second row 
 )
 ```
 
+This function performs model selection based on a dataset representing the growth curve of a microorganism in a well. It evaluates multiple ODE models and selects the best-fitting model using the Akaike Information Criterion (AIC).
+
+Arguments:
+
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
+- `name_well::String`: The name of the well.
+- `label_exp::String`: The label of the experiment.
+- `models_list::Vector{String}`: A vector of ODE models to evaluate.
+- `lb_param_array::Any`: Lower bounds for the parameters (compatible with the models).
+- `ub_param_array::Any`: Upper bounds for the parameters (compatible with the models).
+
+Key Arguments:
+
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: The optimization method to use.
+- `integrator=KenCarp4(autodiff=true)`: The integrator for solving the ODE.
+- `pt_avg=1`: Number of points to generate the initial condition.
+- `beta_penality=2.0`: Penalty for AIC evaluation.
+- `smoothing=false`: Determines whether smoothing is applied to the data.
+- `type_of_loss="L2"`: Type of loss used for optimization (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
+- `blank_array=zeros(100)`: Data representing blanks for correction.
+- `plot_best_model=false`: If `true`, the results of the best-fit model will be plotted.
+- `path_to_plot="NA"`: Path to save the generated plots.
+- `pt_smooth_derivative=7`: Number of points for smoothing the derivative.
+- `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
+- `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
+- `verbose=false`: If `true`, enables verbose output.
+
+
 ## Change point detection
 ```
 cpd_local_detection(data::Matrix{Float64},
     n_max_cp::Int;
     type_of_detection="lsdd",
-    type_of_curve="deriv", 
+    type_of_curve="original", 
     pt_derivative = 0,
     size_win =2)
 
 ```
-        perform the analyses with the required change point detection algorithm
-        type_of_detection="lsdd" or piecewise linear fitting on the specific growth rate
-        pt_derivative number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
-        size_win Int size of the used window in all of the methods
+This function performs change point detection on a dataset, identifying local changes in the growth curve. It uses various algorithms based on user-defined parameters.
+
+Arguments:
+
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
+- `n_max_cp::Int`: The maximum number of change points to detect.
+
+Key Arguments:
+
+- `type_of_detection="lsdd"`: Type of change point detection algorithm. Options are "lsdd" or piecewise linear fitting 
+- `type_of_curve="deriv"`: Type of curve used for the change point detection. Options are "deriv" for the  derivative/specific gr or "orinal" for growth curve.
+- `pt_derivative=0`: Number of points to evaluate the derivative or specific growth rate. If 0, numerical derivative is used; if >1, specific growth rate is calculated with the given window size.
+- `size_win=2`: Size of the sliding window used in all detection methods.
+
 ## Fitting segmented ODE with fixed change-point number
 ```
-selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dataset first row times second row OD
-    name_well::String, # name of the well
-    label_exp::String, #label of the experiment
-    list_of_models::Vector{String}, # ode models to use 
-    list_lb_param::Any, # lower bound param
-    list_ub_param::Any, # upper bound param
+selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, 
+    name_well::String,
+    label_exp::String,
+    list_of_models::Vector{String}, 
+    list_lb_param::Any,
+    list_ub_param::Any, 
     n_change_points::Int;
-    type_of_loss="L2", # type of used loss 
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator = KenCarp4(autodiff=true), # selection of sciml integrator
+    type_of_loss="L2", 
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator = KenCarp4(autodiff=true), 
     type_of_detection =  "lsdd",
-    type_of_curve = "deriv", 
+    type_of_curve = "original", 
     smoothing=false,
     pt_avg=1,
-    do_plot=false, # do plots or no
-    path_to_plot="NA", # where save plots
-    win_size=2, # numebr of the point to generate intial condition
-    pt_smooth_derivative=7,
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-    beta_smoothing_ms = 2.0 #  parameter of the AIC penality
+    do_plot=false, 
+    path_to_plot="NA", 
+    win_size=2, 
+    pt_smooth_derivative=0,
+    multiple_scattering_correction=false, 
+    calibration_OD_curve="NA",
+    beta_smoothing_ms = 2.0 
     )
 ```
 
+This function performs model selection for ordinary differential equation (ODE) models while considering fixed change points in a growth curve dataset. It allows for the evaluation of multiple ODE models and considers a specified number of change points.
+
+Arguments:
+
+- `data_testing::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
+- `name_well::String`: The name of the well.
+- `label_exp::String`: The label of the experiment.
+- `list_of_models::Vector{String}`: A vector of ODE models to evaluate.
+- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
+- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
+
+ Key Arguments:
+
+- `n_change_points::Int`: The number of fixed change points to consider.
+- `type_of_loss="L2"`: Type of loss used for optimization(options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: The optimization method to use.
+- `integrator=KenCarp4(autodiff=true)`: The integrator for solving the ODE.
+- `type_of_detection="lsdd"`: Type of change point detection algorithm. Options are "lsdd" or piecewise linear fitting 
+- `type_of_curve="original"`: Type of curve used for the change point detection. Options are "deriv" for the  derivative/specific gr or "orinal" for growth curve.
+- `smoothing=false`: Determines whether smoothing is applied to the data.
+- `pt_avg=1`: Number of points to generate the initial condition.
+- `do_plot=false`: Whether to generate plots or not.
+- `path_to_plot="NA"`: Path to save the generated plots.
+- `win_size=2`: Number of points for the change point detection algorithm
+- `pt_smooth_derivative=0`: Number of points for smoothing the derivative.
+- `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
+- `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
+- `beta_smoothing_ms=2.0`: Parameter of the Akaike Information Criterion (AIC) penalty for multiple scattering correction.
+
+
 ## Fitting segmented ODE with direct search for a maximum number of change-points 
 ```
-ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dataset x times y OD/fluorescence
-    name_well::String, # name of the well
-    label_exp::String, #label of the experiment
-    list_lb_param::Any, # lower bound param
-    list_ub_param::Any, # upper bound param
-    list_of_models::Vector{String}, # ode model to use
+ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, 
+    name_well::String, 
+    label_exp::String, 
+    list_lb_param::Any, 
+    list_ub_param::Any, 
+    list_of_models::Vector{String}, 
     n_max_change_points::Int; 
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator = KenCarp4(autodiff=true), # selection of sciml integrator
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(),  
+    integrator = KenCarp4(autodiff=true),
     type_of_loss="L2", # type of used loss 
     type_of_detection =  "lsdd",
     type_of_curve = "deriv", 
-    pt_avg = pt_avg , # number of the point to generate intial condition
-    smoothing= true, # the smoothing is done or not?
-    do_plot=false, # do plots or no
-    path_to_plot="NA", # where save plots
+    pt_avg = pt_avg , 
+    smoothing= true, 
+    do_plot=false, 
+    path_to_plot="NA", 
     path_to_results="NA",
-    win_size=2, # numebr of the point to generate intial condition
+    win_size=2, 
     pt_smooth_derivative=7,
     penality_parameter=2.0,
-    multiple_scattering_correction="false", # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    multiple_scattering_correction="false", 
+    calibration_OD_curve="NA",  
    save_all_model=false )
 ```
+This function fits segmented ordinary differential equation (ODE) models to a growth curve dataset using direct search for a maximum number of change-points. It allows for the evaluation of multiple ODE models with a varying number of change-points.
+
+Arguments:
+
+- `data_testing::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD) or fluorescence.
+- `name_well::String`: The name of the well.
+- `label_exp::String`: The label of the experiment.
+- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
+- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
+- `list_of_models::Vector{String}`: A vector of ODE models to evaluate.
+- `n_max_change_points::Int`: The maximum number of change-points to consider.
+
+Key Arguments:
+
+  
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: The optimization method to use.
+- `integrator=KenCarp4(autodiff=true)`: The integrator for solving the ODE.
+- `type_of_loss="L2"`: Type of loss used for optimization (options: "L2" for squared loss).
+- `type_of_detection="lsdd"`: Type of change point detection algorithm. Options are "lsdd" for piecewise linear fitting on the specific growth rate.
+- `type_of_curve="deriv"`: Type of curve used for change point detection. Options are "deriv" for the numerical derivative or "specific_gr" for specific growth rate.
+- `pt_avg=pt_avg`: Number of points to generate the initial condition.
+- `smoothing=true`: Determines whether smoothing is applied to the data.
+- `do_plot=false`: Whether to generate plots or not.
+- `path_to_plot="NA"`: Path to save the generated plots.
+- `path_to_results="NA"`: Path to save the fitting results.
+- `win_size=2`: Number of points for generating the initial condition.
+- `pt_smooth_derivative=7`: Number of points for smoothing the derivative.
+- `penality_parameter=2.0`: Parameter for penalizing the change in the number of parameters.
+- `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
+- `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
+- `save_all_model=false`: If `true`, saves fitting results for all evaluated models.
+
 
 
 # The mathematical models
