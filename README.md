@@ -354,29 +354,29 @@ The Key arguments are :
 ## Fitting ODE function for one file
 ```
    fit_file_ODE(
-    label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String,# path to the annotation of the wells
-    model::String, # string of the used model
-    lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
-    ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator = KenCarp4(autodiff=true), # selection of sciml integrator
-    path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
-    loss_type="RE", # string of the type of the used loss
-    smoothing=false, # 1 do smoothing of data with rolling average
-    do_plot=false, # 1 do and visulaze the plots of data
-    verbose=false, # 1 true verbose
-    write_res=false, # write results
-    pt_avg=1, # number of points to do smoothing average
-    pt_smooth_derivative=7, # number of points to do ssmooth_derivative
-    blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subctraction,time_avg)
-    fit_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA"  #  the path to calibration curve to fix the data
+    label_exp::String,
+    path_to_data::String,
+    path_to_annotation::String,
+    model::String, 
+    lb_param::Vector{Float64},
+    ub_param::Vector{Float64}; 
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    integrator = KenCarp4(autodiff=true), 
+    path_to_results="NA",
+    path_to_plot="NA", 
+    loss_type="RE", 
+    smoothing=false, 
+    do_plot=false,
+    verbose=false, 
+    write_res=false, 
+    pt_avg=1, 
+    pt_smooth_derivative=7,
+    blank_subtraction="avg_blank", 
+    fit_replicate=false, 
+    correct_negative="thr_correction",
+    thr_negative=0.01, 
+    multiple_scattering_correction=false, 
+    calibration_OD_curve="NA"  
     )
 ```
 This function fits an ordinary differential equation (ODE) model to a single file's data. It performs model fitting, error analysis, and provides various options for customization.
@@ -409,50 +409,102 @@ The Key arguments are :
 
 ## Fitting custom ODE function for one file
 ```
-fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row times second row OD
-    name_well::String, # name of the well
-    label_exp::String, #label of the experiment
-    model::Any, # ode model to use 
-    lb_param::Vector{Float64}, # lower bound param
-    ub_param::Vector{Float64}, # upper bound param
-    n_equation::Int; # number ode in the system
-    param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator =KenCarp4(autodiff=true), # selection of sciml integrator
-    do_plot=false, # do plots or no
-    path_to_plot="NA", # where save plots
-    pt_avg=1, # numebr of the point to generate intial condition
+fitting_one_well_custom_ODE(data::Matrix{Float64},
+    name_well::String, 
+    label_exp::String,
+    model::Any, 
+    lb_param::Vector{Float64}, 
+    ub_param::Vector{Float64},
+    n_equation::Int; 
+    param= lb_param .+ (ub_param.-lb_param)./2,
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator =KenCarp4(autodiff=true),
+    do_plot=false, 
+    path_to_plot="NA", 
+    pt_avg=1, 
     pt_smooth_derivative=7,
-    smoothing=false, # the smoothing is done or not?
-    type_of_loss="RE", # type of used loss 
-    blank_array=zeros(100), # data of all blanks
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA"  #  the path to calibration curve to fix the data
+    smoothing=false, 
+    type_of_loss="RE", 
+    blank_array=zeros(100), 
+    multiple_scattering_correction=false,
+    calibration_OD_curve="NA"  
     )
 ```
+### `fitting_one_well_custom_ODE` Function
+
+This function is designed for fitting an ordinary differential equation (ODE) model to a dataset representing the growth curve of a microorganism in a well. It utilizes a customizable ODE model, optimization methods, and integration techniques for parameter estimation.
+
+ Arguments:
+
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
+- `name_well::String`: The name of the well.
+- `label_exp::String`: The label of the experiment.
+- `model::Any`: The ODE model to use.
+- `lb_param::Vector{Float64}`: Lower bounds for the parameters.
+- `ub_param::Vector{Float64}`: Upper bounds for the parameters.
+- `n_equation::Int`: The number of ODEs in the system.
+Key   Arguments:
+
+- `param= lb_param .+ (ub_param.-lb_param)./2`: Initial guess for the parameters.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: The optimization method to use.
+- `integrator=KenCarp4(autodiff=true)`: The integrator for solving the ODE.
+- `do_plot=false`: Whether to generate plots or not.
+- `path_to_plot="NA"`: Path to save the generated plots.
+- `pt_avg=1`: Number of points to generate the initial condition.
+- `pt_smooth_derivative=7`: Number of points for smoothing the derivative.
+- `smoothing=false`: Determines whether smoothing is applied to the data.
+- `type_of_loss="RE"`: Type of loss used for optimization ((options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
+- `blank_array=zeros(100)`: Data representing blanks for correction.
+- `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
+- `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
+
+
 
 ## Sensitivity analysis
 ```
- one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row times second row OD
-    name_well::String, # name of the well
-    label_exp::String, #label of the experiment
-    model::String, # ode model to use 
-    lb_param::Vector{Float64}, # lower bound param
-    ub_param::Vector{Float64}; # upper bound param
+ one_well_morris_sensitivity(data::Matrix{Float64}, 
+    name_well::String,
+    label_exp::String, 
+    model::String, 
+    lb_param::Vector{Float64}, 
+    ub_param::Vector{Float64}; 
     N_step_morris =7,
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator =KenCarp4(autodiff=true), # selection of sciml integrator
-    pt_avg=1, # numebr of the point to generate intial condition
+    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator =KenCarp4(autodiff=true), 
+    pt_avg=1, 
     pt_smooth_derivative=7,
     write_res=false,
-    smoothing=false, # the smoothing is done or not?
-    type_of_loss="RE", # type of used loss 
-    blank_array=zeros(100), # data of all blanks
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA"  #  the path to calibration curve to fix the data
+    smoothing=false,
+    type_of_loss="RE", 
+    blank_array=zeros(100),
+    multiple_scattering_correction=false, 
+    calibration_OD_curve="NA"  
     )
 ```
-This function performs sensitivity analysis using the Morris method on an ordinary differential equation (ODE) model. It calculates the sensitivity indices of the model parameters with respect to the observed data.
+
+This function is designed to perform Morris sensitivity analysis on a dataset representing the growth curve of a microorganism in a well. It assesses the sensitivity of the model to variations in input parameters.
+
+Arguments:
+
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
+- `name_well::String`: The name of the well.
+- `label_exp::String`: The label of the experiment.
+- `model::String`: The ODE model to use.
+- `lb_param::Vector{Float64}`: Lower bounds for the parameters.
+- `ub_param::Vector{Float64}`: Upper bounds for the parameters.
+  Key Arguments:
+
+- `N_step_morris=7`: Number of steps for the Morris sensitivity analysis.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: The optimization method to use.
+- `integrator=KenCarp4(autodiff=true)`: The integrator for solving the ODE.
+- `pt_avg=1`: Number of points to generate the initial condition.
+- `pt_smooth_derivative=7`: Number of points for smoothing the derivative.
+- `write_res=false`: If `true`, writes the sensitivity analysis results to a file.
+- `smoothing=false`: Determines whether smoothing is applied to the data.
+- `type_of_loss="RE"`: Type of loss used for optimization (options: "RE" for relative error).
+- `blank_array=zeros(100)`: Data representing blanks for correction.
+- `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
+- `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
 
 
 
