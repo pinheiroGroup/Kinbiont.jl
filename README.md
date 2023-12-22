@@ -111,10 +111,23 @@ If a OD calibration curved is provided it should have the following format XXXXX
 
 
 # The main functions of JMAKi
+1. [Simulate ODE](#simulating-ODE)
+2. [Stochastic simulation](#simulating-stochastic)
+3. [Plotting a dataset from file](#plot-file)
+4. [Specific growth rate evaluation](#Specific_growth_rate_evaluation)
+5. [Fitting growth rate with log-lin fitting for one well](#log-lin-one-well)
+6. [Fitting growth rate with log-lin fitting for one well](#log-lin-file)
+7. [Fitting ODE function for one well](#ODE-one-well)
+8. [Fitting ODE function for one file](#ODE-file)
+9. [Fitting custom ODE function](#custom-ODE)
+10. [Sensitivity analysis](#Sensitivity-analysis)
+11. [Model selection](#Model-selection)
+12. [Change points detection](#cdp)
+13. [Fitting segmented ODE with fixed change-point number](#cdp-fixed)
+14. [Fitting segmented ODE with direct search for a maximum number of change-points](#cdp-search)
 
 
-
-
+<a name="simulating-ODE"></a>
 ## Simulate ODE
 ```
 
@@ -140,8 +153,7 @@ This function performs an ODE simulation of a model, considering the initial con
 The only Key arg. in this case is:
 - `integrator=KenCarp4() `: The chosen solver from the SciML ecosystem for ODE integration, default KenCarp4 algorithm.
 
-
-
+<a name="simulating-stochastic"></a>
 ##  Stochastic simulation
 ```
     stochastic_sim(model::String,
@@ -172,6 +184,7 @@ This function performs a stochastic simulation of a model, considering cell grow
 - `n_mol_per_birth::Float64`: The nutrient consumed per division (mass).
 - `volume::Float64`: The volume.
 
+<a name="plot-file"></a>
 ## Plotting a dataset from file
 ```
 plot_data( label_exp::String, 
@@ -209,11 +222,16 @@ The Key arguments are :
 
 
 
+
+<a name="Specific-growth-rate-evaluation"></a>
 ## Specific growth rate evaluation
 ```
 specific_gr_evaluation(data_smooted::Matrix{Float64},
      pt_smoothing_derivative::Int)
 ```
+
+
+<a name="log-lin-one-well"></a>
 ## Fitting growth rate with log-lin fitting for one well
 ``` fitting_one_well_Log_Lin(data::Matrix{Float64}, 
     name_well::String, 
@@ -247,6 +265,7 @@ The Key arguments are :
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 
+<a name="log-lin-file"></a>
 ## Fitting growth rate with log-lin fitting for one file
 ```
     fit_one_file_Log_Lin(
@@ -300,7 +319,7 @@ The Key arguments are :
 
 
 
-
+<a name="ODE-one-well"></a>
 ## Fitting ODE function for one well
 ```
  fitting_one_well_ODE_constrained(data::Matrix{Float64},
@@ -350,7 +369,7 @@ The Key arguments are :
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 
 
-
+<a name="ODE-file"></a>
 ## Fitting ODE function for one file
 ```
    fit_file_ODE(
@@ -405,9 +424,10 @@ The Key arguments are :
 - `write_res=true`: Whether to write results.
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-- fit_replicate=false,  if true the average between replicates is fitted. 
-
-## Fitting custom ODE function for one file
+- fit_replicate=false,  if true the average between replicates is fitted.
+  
+<a name="custom-ODE"></a>
+## Fitting custom ODE function for one well
 ```
 fitting_one_well_custom_ODE(data::Matrix{Float64},
     name_well::String, 
@@ -430,7 +450,6 @@ fitting_one_well_custom_ODE(data::Matrix{Float64},
     calibration_OD_curve="NA"  
     )
 ```
-### `fitting_one_well_custom_ODE` Function
 
 This function is designed for fitting an ordinary differential equation (ODE) model to a dataset representing the growth curve of a microorganism in a well. It utilizes a customizable ODE model, optimization methods, and integration techniques for parameter estimation.
 
@@ -460,7 +479,7 @@ Key   Arguments:
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
 
 
-
+<a name="Sensitivity-analysis"></a>
 ## Sensitivity analysis
 ```
  one_well_morris_sensitivity(data::Matrix{Float64}, 
@@ -510,6 +529,7 @@ Key Arguments:
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
 
 
+<a name="Model-selection"></a>
 
 ## Model selection
 ```
@@ -562,7 +582,7 @@ Key Arguments:
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
 - `verbose=false`: If `true`, enables verbose output.
 
-
+<a name="cdp"></a>
 ## Change point detection
 ```
 cpd_local_detection(data::Matrix{Float64},
@@ -586,7 +606,8 @@ Key Arguments:
 - `type_of_curve="deriv"`: Type of curve used for the change point detection. Options are "deriv" for the  derivative/specific gr or "orinal" for growth curve.
 - `pt_derivative=0`: Number of points to evaluate the derivative or specific growth rate. If 0, numerical derivative is used; if >1, specific growth rate is calculated with the given window size.
 - `size_win=2`: Size of the sliding window used in all detection methods.
-
+  
+<a name="cdp-fixed"></a>
 ## Fitting segmented ODE with fixed change-point number
 ```
 selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, 
@@ -642,7 +663,7 @@ Arguments:
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
 - `beta_smoothing_ms=2.0`: Parameter of the Akaike Information Criterion (AIC) penalty for multiple scattering correction.
 
-
+<a name="cdp-search"></a>
 ## Fitting segmented ODE with direct search for a maximum number of change-points 
 ```
 ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, 
@@ -745,24 +766,24 @@ Monod,Haldane,Blackman,Tesseir,Moser,Aiba-Edwards,Verhulst
 **Objective:** This tutorial introduces the J-MAKi 
 
 ## Table of Contents
-2. [Simulating Data with J-MAKi](#simulating-data)
-3. [Data Preprocessing](#data-preprocessing)
-4. [Smoothing and Multiple Scattering Correction](#smoothing-correction)
-5. [Model Fitting](#model-fitting)
+1. [Simulating Data with J-MAKi](#simulating-data)
+2. [Data Preprocessing](#data-preprocessing)
+3. [Smoothing and Multiple Scattering Correction](#smoothing-correction)
+4. [Model Fitting](#model-fitting)
     - [Fitting ODE Models](#fitting-ode)
     - [Custom ODE Fitting](#custom-ode-fitting)
     - [Sensitivity Analysis](#sensitivity-analysis)
     - [Model Selection](#model-selection)
-6. [Change Point Detection](#change-point-detection)
-7. [Conclusion](#conclusion)
+5. [Change Point Detection](#change-point-detection)
+6. [Conclusion](#conclusion)
 
-<a name="installation"></a>
 
 ##  Simulating Data with J-MAKi
 
 To demonstrate the package, we'll begin by simulating data using a specific ODE model. The following code snippet simulates a growth curve using a triple-piecewise damped logistic model:
 
 ```julia
+<a name="simulating-data"></a>
 
 # Simulating data with a triple-piecewise damped logistic model
 model = "triple_piecewise_damped_logistic"
