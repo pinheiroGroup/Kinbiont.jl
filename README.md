@@ -742,25 +742,38 @@ Key Arguments:
 TO DO
 
 The models and their parameters are sumarrized in the following table
+| Model                                  | Ordered Parameters                                       |
+| --------------------------------------- | -------------------------------------------------------- |
+| Diauxic_piecewise_damped_logistic      | gr_1, N_max, shape_1, lag, linear_const, t_shift, gr_2, N_max_2, shape_2, end_second_lag, lag_2_gr |
+| Diauxic_replicator_1                    | gr, N_max, lag, arbitrary_const, linear_const |
+| Diauxic_replicator_2                    | gr, N_max, lag, arbitrary_const, linear_const, growth_stationary |
+| HPM                                    | gr, exit_lag_rate, N_max |
+| HPM_3_death                            | gr, exit_lag_rate, inactivation_rate, death_rate |
+| HPM_3_death_resistance                 | gr, exit_lag_rate, inactivation_rate, death_rate, n_res, n_max |
+| HPM_3_inhibition                       | gr, exit_lag_rate, inactivation_rate |
+| HPM_inhibition                         | gr, inhibition_rate, gr_inhibition, N_max |
+| HPM_exp                                | gr, exit_lag_rate |
+| ODEs_HPM_SR                            | gr, gr_phage, scale, death_rate, resistance_rate |
+| baranyi_exp                            | gr, lag_time, shape |
+| baranyi_richards                       | gr, N_max, lag_time, shape |
+| baranyi_roberts                        | gr, N_max, lag_time, shape_1, shape_2 |
+| bertalanffy_richards                   | gr, N_max, shape |
+| exponential                             | gr |
+| four_piecewise                          | gr, gr_2, gr_3, gr_4, lag, t_decay_gr, t_stationary |
+| gbsm_piecewise                         | gr, a_1, b_1, c, a_2, b_2 |
+| gompertz                               | gr, N_max |
+| hyper_gompertz                         | gr, N_max, shape |
+| hyper_logistic                         | doubling_time, gr, N_max, shape |
+| huang                                  | gr, N_max, lag |
+| logistic                               | gr, N_max |
+| logistic                               | gr, N_max, shape |
+| ode_von_bertalanffy                    | alpha, beta, a, b |
+| piecewise_damped_logistic              | gr, N_max, lag, shape, linear_const |
+| triple_piecewise                       | gr, gr_2, gr_3, lag, t_stationary |
+| triple_piecewise_bertalanffy_richards  | gr, gr_lag, t_lag, t_stationary, gr_stat, shape, N_max |
+| triple_piecewise_damped_logistic       | gr, gr_2, gr_3, lag, t_stationary, N_max |
+| triple_piecewise_sublinear             | gr, gr_2, gr_3, lag, t_stationary, N_max |
 
-| Model              | Parameters                     |
-|--------------------|-------------------------------|
-| "hyper_gompertz"     | gr, N_max, shape              |
-| "hyper_logistic"     |  gr, N_max, shape  TO REDO |
-| "gbsm_piecewise     | gr, a_1, b_1, c, a_2, b_2     |
-| "bertalanffy_richards | gr, N_max, shape              |
-| "logistic"           | gr, N_max                     |
-| "gompertz"           | gr, N_max                     |
-| "baranyi_richards"   | gr, N_max, lag_time, shape    |
-| "baranyi_roberts"    | gr, N_max, lag_time, shape_1, shape_2 |
-| "huang"              | gr, N_max, lag                |
-| "piecewise_damped_logistic" | gr, N_max, lag, shape, linear_const |
-| "triple_piecewise_damped_logistic" | gr, N_max, lag, shape, linear_const, t_stationary, linear_lag |
-| "triple_piecewise"   | gr, gr_2, gr_3, lag, t_stationary |
-| "four_piecewise"     | gr, gr_2, gr_3, gr_4, lag, t_decay_gr, t_stationary |
-| "Diauxic_replicator_1" | gr, N_max, lag, arbitrary_const, linear_const TO REDO|
-| "Diauxic_replicator_2" | gr, N_max, lag, arbitrary_const, linear_const, growth_stationary TO REDO |
-| "Diauxic_piecewise_damped_logistic" | gr, N_max, lag, shape, linear_const, t_stationary, growth_stationary TO REDO|
 
 ## Stochastic models for bacterial growth
 
