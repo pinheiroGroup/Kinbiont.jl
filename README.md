@@ -779,63 +779,64 @@ The models and their parameters are sumarrized in the following table
 
 
 In the stochastic version of the growth models, the growth rate of each population component (denoted as $\mu_i$) is evaluated based on the concentration of the limiting nutrient. The user is required to specify the starting amount of nutrients and the volume of the solution. Various kinetic growth models are considered.
+
 ### Monod Model
 
 The Monod model is described by the following equation:
 
-\begin{equation}
+\[
 \mu([\text{Nut.}]; k_1, \mu_\text{max}) = \mu_\text{max} \frac{[\text{Nut.}]}{k_1 + [\text{Nut.}]}.
-\end{equation}
+\]
 
 ### Haldane Model
 
 The Haldane model is expressed as:
 
-\begin{equation}
+\[
 \mu([\text{Nut.}]; k_1, k_2, \mu_\text{max}) = \mu_\text{max} \frac{[\text{Nut.}]}{k_1 + [\text{Nut.}] + \frac{k_2}{[\text{Nut.}]^2}}.
-\end{equation}
+\]
 
 ### Blackman Model
 
 The Blackman model is given by:
 
-\begin{equation}
+\[
 \mu([\text{Nut.}]; k_1, \mu_\text{max}) = \mu_\text{max} \frac{[\text{Nut.}]}{k_1 + [\text{Nut.}]}.
-\end{equation}
+\]
 
 ### Tessier Model
 
 The Tessier model is represented as:
 
-\begin{equation}
+\[
 \mu([\text{Nut.}]; k_1, \mu_\text{max}) = \mu_\text{max} (1 - e^{k_1[\text{Nut.}] }).
-\end{equation}
+\]
 
 ### Moser Model
 
 The Moser model is defined by:
 
-\begin{equation}
+\[
 \mu([\text{Nut.}]; k_1, k_2, \mu_\text{max}) = \mu_\text{max} \frac{[\text{Nut.}]^{k_2}}{k_1 + [\text{Nut.}]^{k_2}}.
-\end{equation}
+\]
 
 ### Aiba-Edwards Model
 
 The Aiba-Edwards model is given by:
 
-\begin{equation}
+\[
 \mu([\text{Nut.}]; k_1, k_2, \mu_\text{max}) = \mu_\text{max} \frac{[\text{Nut.}]}{k_1 + [\text{Nut.}]} e^{-\frac{[\text{Nut.}]}{k_2}}.
-\end{equation}
+\]
 
 ### Verhulst Model
 
 The Verhulst model is defined as:
 
-\begin{equation}
+\[
 \mu(N; N_\text{max}, \mu_\text{max}) = \mu_\text{max} \left(1 - \frac{N}{N_\text{max}}\right).
-\end{equation}
+\]
 
-Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ is the maximum possible growth rate, $k_1$ and $k_2$ are numerical constants with meanings depending on the model, $N$ is the number of present cells, and $N_\text{max}$ is the carrying capacity for the Verhulst model.
+Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ is the maximum possible growth rate, $k_1$ and $k_2$ are numerical constants with meanings depending
 
 ## Type of loss functions
 
