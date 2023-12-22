@@ -11,7 +11,7 @@ It then automatically assembles and fits a segmented ODE model, resulting in a f
 2. [Data and annotation formatting](#data)
 3. [API](#API)
 4. [The mathematical models](#models)
-4.[Examples and Tutorial](#examples)
+5. [Examples and Tutorial](#examples)
 
 <a name="installation"></a>
 # Installation & requirements
