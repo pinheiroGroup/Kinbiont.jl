@@ -7,10 +7,13 @@ The parameter fitting in JMAKi is defined as a constrained optimization problem,
 To address complex cases,  JMAKi preprocesses data by detecting change points in the differential operator within the time series. 
 It then automatically assembles and fits a segmented ODE model, resulting in a fully interpretable representation of the time series.
 
+1. [Installation](#installation)
+2. [Data and annotation formatting](#data)
+3. [API](#API)
+4. [The mathematical models](#models)
+4.[Examples and Tutorial](#examples)
 
-
-
-
+<a name="installation"></a>
 # Installation & requirements
 ## Manual installation
 Download the folder from Github. 
@@ -67,7 +70,7 @@ this last step is Temporary before the official realese
 19. ChangePointDetection.jl
 
 
-
+<a name="data"></a>
 # Data and annotation formatting
 JMAKi can operate directly on data files or inside the julia notebook.
 When are in a julia notebook the  format of single time series that want to be analyzed is a 2 x n_time_points Matrix of FLoat64, e.g.,
@@ -109,7 +112,7 @@ See the folders  XXXXX for some examples.
 
 If a OD calibration curved is provided it should have the following format XXXXXXX
 
-
+<a name="API"></a>
 # The main functions of JMAKi
 1. [Simulate ODE](#simulating-ODE)
 2. [Stochastic simulation](#simulating-stochastic)
@@ -735,7 +738,7 @@ Key Arguments:
 - `save_all_model=false`: If `true`, saves fitting results for all evaluated models.
 
 
-
+<a name="models"></a>
 # The mathematical models
 ## ODEs for bacterial growth
 
@@ -848,9 +851,9 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
 
 `type_of_loss = "blank_weighted_L2"` : Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data. 
 
-# J-MAKi: Introduction and Tutorial
+<a name="examples"></a>
+# Examples and Tutorial
 
-**Objective:** This tutorial introduces the J-MAKi 
 
 ## Table of Contents
 1. [Simulating Data with J-MAKi](#simulating-data)
