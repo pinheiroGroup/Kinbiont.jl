@@ -142,6 +142,7 @@ If a OD calibration curved is provided it should have the following format XXXXX
 ```
 This function performs an ODE simulation of a model, considering the initial conditions, time range, and integration parameters.
 
+Arguments:
 - `model::String`: The model to simulate.
 - `n_start::Vector{Float64}`: The starting conditions.
 - `tstart::Float64`: The start time of the simulation.
@@ -150,7 +151,7 @@ This function performs an ODE simulation of a model, considering the initial con
 - `param_of_ode::Vector{Float64}`: The parameters of the ODE model.
 
   
-The only Key arg. in this case is:
+Key argument:
 - `integrator=KenCarp4() `: The chosen solver from the SciML ecosystem for ODE integration, default KenCarp4 algorithm.
 
 <a name="simulating-stochastic"></a>
@@ -170,6 +171,8 @@ The only Key arg. in this case is:
         volume::Float64)
 ```
 This function performs a stochastic simulation of a model, considering cell growth and nutrient consumption over time.
+
+Arguments:
 
 - `model::String`: The model to simulate. PUT the options
 - `n_start::Int`: The number of starting cells.
@@ -202,13 +205,15 @@ plot_data( label_exp::String,
     
 ```
 
-This function plot all the data from .csv file 
+This function plot all the data from .csv file
+Arguments:
+
 - `path_to_data::String`: The path to the .csv of data
 -  `path_to_annotation::String`: The path to the .csv of annotation 
 - `name_well::String`: The name of the well.
 - `label_exp::String`: The label of the experiment.
 
-The Key arguments are :
+Key Arguments:
 - `path_to_plot= "NA"`: Path to save the plots.
 -  `save_plot=false` : save the plot or not
 - ` display_plots=true`: Whether or not diplay the plot in julia
@@ -249,12 +254,13 @@ specific_gr_evaluation(data_smooted::Matrix{Float64},
     )
 ```
 This function fits a logarithmic-linear model to a single well's data and performs analysis such as plotting and error calculation.
+Arguments:
 
 - `data::Matrix{Float64}`: The dataset of OD/fluorescence values.
 - `name_well::String`: The name of the well.
 - `label_exp::String`: The label of the experiment.
 
-The Key arguments are :
+Key Arguments:
 - `do_plot=true`: Whether to generate and save plots.
 - `path_to_plot="NA"`: The path to save the plots, used only if `do_plot=true`.
 - `pt_avg=7`: The number of points to do rolling average smoothing.
@@ -292,12 +298,14 @@ The Key arguments are :
     )
 ```
 This function fits a logarithmic-linear model to a single file's data. It performs model fitting, error analysis, and provides various options for customization.
+Arguments:
 
 - `label_exp::String`: Label of the experiment.
 - `path_to_data::String`: Path to the folder containing the data.
 - `path_to_annotation::String`: Path to the annotation of the wells.
 
-The Key arguments are :
+Key Arguments:
+
 
 
 - `path_to_results= "NA"`: Path to save the results.
@@ -344,6 +352,8 @@ The Key arguments are :
 ```
 This function performs constrained parameter fitting on a single well's dataset using an ordinary differential equation (ODE) model. It estimates the model parameters within specified lower and upper bounds.
 
+Arguments:
+
 - `data::Matrix{Float64}`: Dataset 
 -  `model::String`: ODE model to use
 - `name_well::String`: Name of the well.
@@ -352,14 +362,14 @@ This function performs constrained parameter fitting on a single well's dataset 
 - `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
 
 
-The Key arguments are :
+ Key Arguments:
 
 - `param= lb_param .+ (ub_param.-lb_param)./2`: Initial guess for the model parameters.
 - `integrator =KenCarp4(autodiff=true)' sciML integrator
 - `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO
 - `do_plot=true`: Whether to generate plots or not.
 - `path_to_plot="NA"`: Path to save the plots.
-- `pt_avg=7`: Number of points to generate the initial condition.
+- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
 - `blank_array=zeros(100)`: Data of all blanks in single array.
@@ -398,7 +408,9 @@ The Key arguments are :
     calibration_OD_curve="NA"  
     )
 ```
-This function fits an ordinary differential equation (ODE) model to a single file's data. It performs model fitting, error analysis, and provides various options for customization.
+This function fits an ordinary differential equation (ODE) model to a single file's data. 
+
+Arguments:
 
 
 - `path_to_data::String`: path to the csv file of data
@@ -409,14 +421,14 @@ This function fits an ordinary differential equation (ODE) model to a single fil
 - `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
 
 
-The Key arguments are :
+ Key Arguments:
 
 - `param= lb_param .+ (ub_param.-lb_param)./2`: Initial guess for the model parameters.
 - `integrator =KenCarp4(autodiff=true)' sciML integrator
 - `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO
 - `do_plot=true`: Whether to generate plots or not.
 - `path_to_plot="NA"`: Path to save the plots.
-- `pt_avg=7`: Number of points to generate the initial condition.
+- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
 - `blank_array=zeros(100)`: Data of all blanks in single array.
@@ -470,8 +482,8 @@ Key   Arguments:
 - `integrator=KenCarp4(autodiff=true)`: The integrator for solving the ODE.
 - `do_plot=false`: Whether to generate plots or not.
 - `path_to_plot="NA"`: Path to save the generated plots.
-- `pt_avg=1`: Number of points to generate the initial condition.
-- `pt_smooth_derivative=7`: Number of points for smoothing the derivative.
+- `pt_avg=1`: Number of points to generate the initial condition or do the rolling avg smoothing.
+- `pt_smooth_derivative=7`: Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `smoothing=false`: Determines whether smoothing is applied to the data.
 - `type_of_loss="RE"`: Type of loss used for optimization (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
 - `blank_array=zeros(100)`: Data representing blanks for correction.
@@ -502,7 +514,7 @@ Key   Arguments:
     )
 ```
 
-This function is designed to perform Morris sensitivity analysis on a dataset representing the growth curve of a microorganism in a well. It assesses the sensitivity of the model to variations in input parameters.
+This function is designed to perform Morris sensitivity analysis on a dataset representing the growth curve of a microorganism in a well. It assesses the sensitivity of the model to variations in input parameters of the optimization.
 
 Arguments:
 
@@ -519,8 +531,8 @@ Key Arguments:
 - `N_step_morris=7`: Number of steps for the Morris sensitivity analysis.
 - `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: The optimization method to use.
 - `integrator=KenCarp4(autodiff=true)`: The integrator for solving the ODE.
-- `pt_avg=1`: Number of points to generate the initial condition.
-- `pt_smooth_derivative=7`: Number of points for smoothing the derivative.
+- `pt_avg=1`: Number of points to generate the initial condition or do the rolling avg smoothing.
+- `pt_smooth_derivative=7`: Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `write_res=false`: If `true`, writes the sensitivity analysis results to a file.
 - `smoothing=false`: Determines whether smoothing is applied to the data.
 - `type_of_loss="RE"`: Type of loss used for optimization (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
@@ -570,14 +582,14 @@ Key Arguments:
 
 - `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: The optimization method to use.
 - `integrator=KenCarp4(autodiff=true)`: The integrator for solving the ODE.
-- `pt_avg=1`: Number of points to generate the initial condition.
+- `pt_avg=1`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `beta_penality=2.0`: Penalty for AIC evaluation.
 - `smoothing=false`: Determines whether smoothing is applied to the data.
 - `type_of_loss="L2"`: Type of loss used for optimization (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2")
 - `blank_array=zeros(100)`: Data representing blanks for correction.
 - `plot_best_model=false`: If `true`, the results of the best-fit model will be plotted.
 - `path_to_plot="NA"`: Path to save the generated plots.
-- `pt_smooth_derivative=7`: Number of points for smoothing the derivative.
+- `pt_smooth_derivative=7`: Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
 - `verbose=false`: If `true`, enables verbose output.
@@ -603,7 +615,7 @@ Arguments:
 Key Arguments:
 
 - `type_of_detection="lsdd"`: Type of change point detection algorithm. Options are "lsdd" or piecewise linear fitting 
-- `type_of_curve="deriv"`: Type of curve used for the change point detection. Options are "deriv" for the  derivative/specific gr or "orinal" for growth curve.
+- `type_of_curve="deriv"`: Type of curve used for the change point detection. Options are "deriv" for the  derivative/specific gr or "original" for growth curve.
 - `pt_derivative=0`: Number of points to evaluate the derivative or specific growth rate. If 0, numerical derivative is used; if >1, specific growth rate is calculated with the given window size.
 - `size_win=2`: Size of the sliding window used in all detection methods.
   
@@ -652,16 +664,16 @@ Arguments:
 - `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: The optimization method to use.
 - `integrator=KenCarp4(autodiff=true)`: The integrator for solving the ODE.
 - `type_of_detection="lsdd"`: Type of change point detection algorithm. Options are "lsdd" or piecewise linear fitting 
-- `type_of_curve="original"`: Type of curve used for the change point detection. Options are "deriv" for the  derivative/specific gr or "orinal" for growth curve.
+- `type_of_curve="original"`: Type of curve used for the change point detection. Options are "deriv" for the  derivative/specific gr or "original" for growth curve.
 - `smoothing=false`: Determines whether smoothing is applied to the data.
-- `pt_avg=1`: Number of points to generate the initial condition.
+- `pt_avg=1`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `do_plot=false`: Whether to generate plots or not.
 - `path_to_plot="NA"`: Path to save the generated plots.
-- `win_size=2`: Number of points for the change point detection algorithm
-- `pt_smooth_derivative=0`: Number of points for smoothing the derivative.
+- `win_size=2`: Number of points for the  window of the change point detection algorithm.
+- `pt_smooth_derivative=0`: Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
-- `beta_smoothing_ms=2.0`: Parameter of the Akaike Information Criterion (AIC) penalty for multiple scattering correction.
+- `beta_smoothing_ms=2.0`: Penality parameter of the Akaike Information Criterion (AIC) penalty.
 
 <a name="cdp-search"></a>
 ## Fitting segmented ODE with direct search for a maximum number of change-points 
@@ -709,14 +721,14 @@ Key Arguments:
 - `integrator=KenCarp4(autodiff=true)`: The integrator for solving the ODE.
 - `type_of_loss="L2"`: Type of loss used for optimization (options: "L2" for squared loss).
 - `type_of_detection="lsdd"`: Type of change point detection algorithm. Options are "lsdd" for piecewise linear fitting on the specific growth rate.
-- `type_of_curve="deriv"`: Type of curve used for change point detection. Options are "deriv" for the numerical derivative or "specific_gr" for specific growth rate.
-- `pt_avg=pt_avg`: Number of points to generate the initial condition.
+- `type_of_curve="original"`: Type of curve used for the change point detection. Options are "deriv" for the  derivative/specific gr or "original" for growth curve.
+- `pt_avg=pt_avg`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=true`: Determines whether smoothing is applied to the data.
 - `do_plot=false`: Whether to generate plots or not.
 - `path_to_plot="NA"`: Path to save the generated plots.
 - `path_to_results="NA"`: Path to save the fitting results.
-- `win_size=2`: Number of points for generating the initial condition.
-- `pt_smooth_derivative=7`: Number of points for smoothing the derivative.
+- `win_size=2`: Number of points for the  window of the change point detection algorithm.
+- `pt_smooth_derivative=0`: Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `penality_parameter=2.0`: Parameter for penalizing the change in the number of parameters.
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
@@ -726,6 +738,9 @@ Key Arguments:
 
 # The mathematical models
 ## ODEs for bacterial growth
+
+TO DO
+
 The models and their parameters are sumarrized in the following table
 
 | Model              | Parameters                     |
