@@ -871,7 +871,7 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
     - [Log-Lin fitting](#fitting-log-lin-file)
     - [Fitting ODE Models](#fitting-ode-file)
 
-6. [Change Point Detection](#change-point-detection)
+6. [Change Points Detection](#change-point-detection)
 7. [ODE segmentation with fixed number of change points](#ODE-segmented-fixed)
 8. [ODE segmentation](#ODE-segmented)
 
@@ -882,7 +882,7 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
 ## Simulating Data with stochastic simulations
 
 <a name="preprocessing"></a>
-## Data Preprocessing]
+## Data Preprocessing
 
 <a name="model-fitting"></a>
 ## Fitting single well
@@ -912,7 +912,7 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
 ###   Fitting ODE Models
 
 <a name="change-point-detection"></a>
-## Change Point Detection
+## Change Points Detection
 
 <a name="#ODE-segmented-fixed"></a>
 ## ODE segmentation with fixed number of change points
