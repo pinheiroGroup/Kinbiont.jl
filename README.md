@@ -951,6 +951,30 @@ results_lin_log_fit = [label_exp, name_well, start_exp_win, end_exp_win, time_ma
 <a name="fitting-ode"></a>
 ###    Fitting ODE Models
 
+Before fitting, upper and lower bounds for the ODE parameters are defined 
+```julia
+
+# Upper bounds of the parameters of the ODE
+ub_dhpm = [1.2, 1.1, 2.0, 20]
+
+# Lower bounds of the parameters of the ODE
+lb_dhpm = [0.0001, 0.00000001, 0.00, 0]
+```
+The actual fitting is accomplished through the fitting_one_well_ODE_constrained function. This function takes the preprocessed dataset (data_OD), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the upper and lower bounds for the ODE parameters. Additionally, the function allows for plotting the results (do_plot=true) and specifying the path to save the generated plots (path_to_plot=path_to_plotting).
+```
+# Performing ODE fitting
+results_ODE_fit = fitting_one_well_ODE_constrained(
+    data_OD, "", "", "dHPM", lb_dhpm, ub_dhpm,
+    do_plot=true, path_to_plot="path_to_plotting"
+)
+
+```
+The results are stored in 'results_ODE_fit' with the following format
+```
+ param_names = ["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]
+```
+
+
 <a name="custom-ode-fitting"></a>
 ###   Custom ODE Fitting
 
