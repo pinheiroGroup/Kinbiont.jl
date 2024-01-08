@@ -909,20 +909,20 @@ Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], 
 ## Data Preprocessing
 One method employed is the smoothing of the data using a rolling average. This technique, implemented through the smoothing_data function, helps reduce noise. In the example, a rolling window of size 7 is applied to the original data (data_OD). 
 ```
-data_OD_smooth = smoothing_data(data_OD, 7)
-data_OD_smooth = Matrix(data_OD_smooth)
+data_ODsmooth = smoothing_data(data_OD, 7)
+data_ODsmooth = Matrix(data_ODsmooth)
 
 # Plotting scatterplot of smoothed data
-Plots.scatter(data_OD_smooth[1, :], data_OD_smooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Smoothed data " nothing], markersize=2, color=:blue, size=(300, 300))
+Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Smoothed data " nothing], markersize=2, color=:blue, size=(300, 300))
 ```
 Furthermore, to address potential external influences, a correction for multiple scattering is applied to the smoothed data. This correction is executed through the correction_OD_multiple_scattering function, requiring an external file (calibration_curve.csv). While this step is essential for certain datasets, it is marked as optional in the provided example. 
 ```
 
 # Multiple scattering correction (optional, comment out if not needed)
-data_OD_smooth = correction_OD_multiple_scattering(data_OD_smooth, "/your_path/calibration_curve.csv")
+data_ODsmooth = correction_OD_multiple_scattering(data_ODsmooth, "/your_path/calibration_curve.csv")
 
 # Plotting scatterplot of preprocessed data
-Plots.scatter(data_OD_smooth[1, :], data_OD_smooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Pre-processed data" nothing], markersize=2, color=:blue, size=(300, 300))
+Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Pre-processed data" nothing], markersize=2, color=:blue, size=(300, 300))
 ```
 
 
@@ -936,7 +936,7 @@ This code snippet performs log-linear fitting using the fitting_one_well_Log_Lin
 
 ```julia
 res_log_lin = fitting_one_well_Log_Lin(
-    data_OD_smooth2,  # dataset, first row times, second row OD
+    data_OD,  # dataset, first row times, second row OD
     "test",           # name of the well
     "test"            # label of the experiment
 )
@@ -980,11 +980,86 @@ where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE
 <a name="custom-ode-fitting"></a>
 ###   Custom ODE Fitting
 
+The custom ODE function (ODE_custom) is defined with specific dynamics tailored to the characteristics of the microbial system. In this example, the function computes the rates of change (du) for two state variables (u) based on the provided parameters (param) and time (t). The specific structure of this function should be adjusted to match the dynamics of the microbial system under investigation.
+```
+
+# Custom ODE function
+function ODE_custom(du, u, param, t)
+    du[1] = u[1] * (1 - u[1]) * param[2] + param[1] * u[1]
+    du[2] = u[1] * param[2] + param[4] * u[2] * (1 - (u[1] + u[2]) / param[3])
+end
+
+```
+The upper and lower bounds for the custom ODE parameters (custom_ub and custom_lb) are defined, and the fitting process is initiated using the fitting_one_well_custom_ODE function. This function takes the preprocessed dataset (data_OD), the name and label of the well, the custom ODE function (ODE_custom), and the upper and lower bounds for the ODE parameters. Additionally, the number of ODEs in the system is specified (2 in this example). The results can be visualized through plotting (do_plot=true) with the option to save the generated plots (path_to_plot=path_to_plotting).
+
+```
+# Bounds for the custom ODE parameters
+custom_ub = [1.2, 1.1, 2.0, 20]
+custom_lb = [0.0001, 0.00000001, 0.00, 0]
+
+# Performing custom ODE fitting
+results_ODE_fit = fitting_one_well_custom_ODE(
+    data_OD, "test", "test_model_custom", ODE_custom,
+    custom_lb, custom_ub, 2,
+    do_plot=true, path_to_plot=path_to_plotting
+)
+```
+The results are stored in 'results_ODE_fit' with the same format of the previous examples
+
+
 <a name="sensitivity-analysis"></a>
 ###   Sensitivity Analysis
 
+The sensitivity analysis is initiated with the one_well_morris_sensitivity function. This function takes the preprocessed dataset (data_OD), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (n_step_sensitivity) is specified to control the granularity of the analysis.
+
+```
+# Number of steps for Morris sensitivity analysis
+n_step_sensitivity = 3
+
+# Performing Morris sensitivity analysis
+sensitivity_test = one_well_morris_sensitivity(
+    data_OD, "test", "test_sensitivity", "dHPM", lb_dhpm, ub_dhpm,
+    N_step_morris=n_step_sensitivity
+)
+
+```
+
+
 <a name="model-selection"></a>
 ###   ODE Model Selection
+### Model Selection
+
+
+Several ODE models are considered for the selection process, each defined by upper (`list_ub`) and lower (`list_lb`) bounds for their respective parameters. The models include "dHPM," "piecewise_damped_logistic," "triple_piecewise," and "baranyi_roberts."
+
+```julia
+# Model candidates and their parameter bounds
+list_of_models = ["dHPM", "piecewise_damped_logistic", "triple_piecewise", "baranyi_roberts"]
+list_ub = [ub_dhpm, ub_piece_wise_logistic, ub_triple_exp, ub_baranyi_roberts]
+list_lb = [lb_dhpm, lb_piece_wise_logistic, lb_triple_exp, lb_baranyi_roberts]
+```
+
+
+The model selection process is initiated with the `ODE_Model_selection` function. This function takes the preprocessed dataset (`data_OD`), the name and label of the well, the list of models, and their respective upper and lower bounds. Additionally, the function allows for plotting the results of the best-fit model (`plot_best_model=true`) and specifies the path to save the generated plots (`path_to_plot=path_to_plotting`). The `verbose=true` option provides detailed output during the model selection process.
+
+```julia
+# Performing model selection
+results_ms = ODE_Model_selection(
+    data_OD, "test", "test_model_selection",
+    list_of_models, list_lb, list_ub,
+    plot_best_model=true, path_to_plot=path_to_plotting, verbose=true
+)
+```
+
+
+
+
+The results of the model selection process are stored in the `results_ms` variable.
+
+results_ms[1]
+
+results_ms[2]
+
 
 <a name="model-fitting-plate"></a>
 ## Fitting one file (a plate)
