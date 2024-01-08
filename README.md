@@ -952,7 +952,7 @@ res_log_lin = fitting_one_well_Log_Lin(
 ```
  The results are stored in the res_log_lin variable. With the following form
 ```
-results_lin_log_fit = [label_exp, name_well, start_exp_win, end_exp_win, time_max_gr ,gr_of_max gr_log_lin_fitting, 2_sigma_confidence_gr, doubling time , doubling time  - 2 sigma,  doubling time  + 2 sigma, intercept log-lin fitting, ntercept log-lin fitting 2 sigma ,R^2]
+results_lin_log_fit = [label_exp, name_well, start_exp_win, end_exp_win, time_max_gr ,gr_of_max, gr_log_lin_fitting, 2_sigma_confidence_gr, doubling time , doubling time  - 2 sigma,  doubling time  + 2 sigma, intercept log-lin fitting, ntercept log-lin fitting 2 sigma ,R^2]
 
 ```
 
@@ -1188,7 +1188,8 @@ Using the same code as the previous example to generate the data the  fit  is pe
     list_ub_param,
     list_of_models,
    3;
-
-    do_plot=true, path_to_plot=path_to_plotting, pt_smooth_derivative=0
+    do_plot=true,
+ path_to_plot=path_to_plotting,
+ pt_smooth_derivative=0)
 ```
 results are stored in test_cdp with the following format XXXXXD
