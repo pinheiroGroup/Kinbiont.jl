@@ -868,11 +868,13 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
     - [ODE Model Selection](#model-selection)
   
 5. [Fitting one file (a plate)](#model-fitting-plate)
-    - [Log-Lin fitting](#fitting-log-lin-file)
+
+     - [Plot one file](#plot-file)
+     - [Log-Lin fitting](#fitting-log-lin-file)
     - [Fitting ODE Models](#fitting-ode-file)
 
-6. [ODE segmentation with fixed number of change points](#ODE-segmented-fixed)
-7. [ODE segmentation](#ODE-segmented)
+7. [ODE segmentation with fixed number of change points](#ODE-segmented-fixed)
+8. [ODE segmentation](#ODE-segmented)
 
 <a name="simulating-data-ODE"></a>
 ## Simulating Data with ODEs
@@ -1026,7 +1028,6 @@ sensitivity_test = one_well_morris_sensitivity(
 
 <a name="model-selection"></a>
 ###   ODE Model Selection
-### Model Selection
 
 
 Several ODE models are considered for the selection process, each defined by upper (`list_ub`) and lower (`list_lb`) bounds for their respective parameters. The models include "dHPM," "piecewise_damped_logistic," "triple_piecewise," and "baranyi_roberts."
@@ -1062,6 +1063,11 @@ results_ms[2]
 
 <a name="model-fitting-plate"></a>
 ## Fitting one file (a plate)
+The next three functions work directly on a file. So in this case are mandatory the .csv of data and annotation (see  [Data and annotation formatting](#data) ). Aslo in XXXXX the user can download an examples of data and annotation.
+
+
+<a name="plot-file"></a>
+### Plot one file
 
 <a name="fitting-log-lin-file"></a>
 ### Log-Lin fitting
