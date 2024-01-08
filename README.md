@@ -742,6 +742,12 @@ Key Arguments:
 
 <a name="models"></a>
 # The mathematical models
+
+1. [ODEs for bacterial growth](#ODE_list)
+2. [ Stochastic models for bacterial growth](#stoch_model)
+3. [Type of loss](#loss)
+
+<a name="ODE_list"></a>
 ## ODEs for bacterial growth
 
 TO DO
@@ -779,7 +785,7 @@ The models and their parameters are sumarrized in the following table
 | triple_piecewise_damped_logistic       | gr, gr_2, gr_3, lag, t_stationary, N_max |
 | triple_piecewise_sublinear             | gr, gr_2, gr_3, lag, t_stationary, N_max |
 
-
+<a name="stoch_model"></a>
 ## Stochastic models for bacterial growth
 
 
@@ -842,6 +848,8 @@ The Verhulst model is defined as:
 \]
 
 Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ is the maximum possible growth rate, $k_1$ and $k_2$ are numerical constants with meanings depending
+
+<a name="loss"></a>
 
 ## Type of loss functions
 
@@ -975,7 +983,7 @@ The results are stored in 'results_ODE_fit' with the following format
  results_ODE_fit = ["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]
 ```
 
-where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in this [table](#models)
+where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in this [table](#ODE_list)
 
 
 <a name="custom-ode-fitting"></a>
