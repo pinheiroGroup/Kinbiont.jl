@@ -974,7 +974,7 @@ The results are stored in 'results_ODE_fit' with the following format
  results_ODE_fit = ["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]
 ```
 
-where '"param_1","param_2",..,"param_n"' are the parameter of the selected ODE as in the table of this read me
+where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in this [table](#models)
 
 
 <a name="custom-ode-fitting"></a>
