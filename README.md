@@ -1043,6 +1043,16 @@ Several ODE models are considered for the selection process, each defined by upp
 ```julia
 # Model candidates and their parameter bounds
 list_of_models = ["dHPM", "piecewise_damped_logistic", "triple_piecewise", "baranyi_roberts"]
+
+ub_piece_wise_logistic =[ 0.06 , 2.0 , 500.0 , 10.0 ,  0.001    ]
+lb_piece_wise_logistic =[ 0.0001 , 0.001,0.0  , 0.001 ,  - 0.001  ]
+ub_baranyi_roberts =[ 0.06 , 2.0 , 500.0 , 10.0,  10   ]
+lb_baranyi_roberts =[ 0.0001 , 0.001, 0.0 ,  0.01 , 0  ]
+ub_triple_exp =[ 1.2 , 0.001 ,  0.2 , 500.0  , 2000   ]
+lb_triple_exp =[ 0.0001 , -0.001, 0.0  , 00.0 ,  200.0   ]
+ub_dhpm =[ 1.2 , 1.1 , 2.0  ,20  ]
+lb_dhpm =[ 0.0001 , 0.00000001, 0.00 ,0 ]
+
 list_ub = [ub_dhpm, ub_piece_wise_logistic, ub_triple_exp, ub_baranyi_roberts]
 list_lb = [lb_dhpm, lb_piece_wise_logistic, lb_triple_exp, lb_baranyi_roberts]
 ```
