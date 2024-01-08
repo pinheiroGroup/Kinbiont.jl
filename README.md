@@ -971,8 +971,10 @@ results_ODE_fit = fitting_one_well_ODE_constrained(
 ```
 The results are stored in 'results_ODE_fit' with the following format
 ```
- param_names = ["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]
+ results_ODE_fit = ["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]
 ```
+
+where '"param_1","param_2",..,"param_n"' are the parameter of the selected ODE as in the table of this read me
 
 
 <a name="custom-ode-fitting"></a>
