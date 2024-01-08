@@ -1,5 +1,6 @@
-![Model](https://github.com/ang-one/JMAKi.jl/blob/main/static/jmaki_logo.png)
-
+<p align="center">
+  <img width="600" height="200" src="https://github.com/ang-one/JMAKi.jl/blob/main/static/jmaki_logo.png">
+</p>
 # JMAKi.jl
 
 JMAKi, a versatile software tool that utilizes Ordinary Differential Equations (ODEs) to fit bacterial growth data from plate reader experiments. 
