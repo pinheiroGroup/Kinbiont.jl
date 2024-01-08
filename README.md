@@ -121,7 +121,7 @@ If a OD calibration curved is provided it should have the following format XXXXX
 3. [Plotting a dataset from file](#plot-file)
 4. [Specific growth rate evaluation](#Specific_growth_rate_evaluation)
 5. [Fitting growth rate with log-lin fitting for one well](#log-lin-one-well)
-6. [Fitting growth rate with log-lin fitting for one well](#log-lin-file)
+6. [Fitting growth rate with log-lin fitting for one file](#log-lin-file)
 7. [Fitting ODE function for one well](#ODE-one-well)
 8. [Fitting ODE function for one file](#ODE-file)
 9. [Fitting custom ODE function](#custom-ODE)
