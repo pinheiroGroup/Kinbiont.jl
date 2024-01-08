@@ -1153,10 +1153,26 @@ list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
 
 # Fitting with a fixed number of change points
 test_fixed_cdp = selection_ODE_fixed_change_points(
-    data_OD, "test", "test", list_of_models, list_lb_param, list_ub_param, 3;
+    data_OD, "test", "test", list_of_models, list_lb_param, list_ub_param, 2;
     do_plot=true, path_to_plot=path_to_plotting, pt_smooth_derivative=0
 )
 ```
 
+results are stored in test_fixed_cdp with the following format XXXXXD
+
 <a name="#ODE-segmented"></a>
 ## ODE segmentation
+Using the same code as the previous example to generate the data the  fit  is performed with 
+```
+# Fitting with direct search on the number of change points
+ test_cdp = ODE_selection_NMAX_change_points(data_OD,
+    "test",
+    "test",
+    list_lb_param,
+    list_ub_param,
+    list_of_models,
+   3;
+
+    do_plot=true, path_to_plot=path_to_plotting, pt_smooth_derivative=0
+```
+results are stored in test_cdp with the following format XXXXXD
