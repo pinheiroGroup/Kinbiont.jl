@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="300" height="800" src="https://github.com/ang-one/JMAKi.jl/blob/main/static/jmaki_logo.png">
+  <img width="500" height="700" src="https://github.com/ang-one/JMAKi.jl/blob/main/static/jmaki_logo.png">
 </p>
 # JMAKi.jl
 
