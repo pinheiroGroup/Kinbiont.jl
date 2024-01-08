@@ -878,6 +878,29 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
 <a name="simulating-data-ODE"></a>
 ## Simulating Data with ODEs
 
+### Simulating Data with ODEs
+
+To simulate data using Ordinary Differential Equations (ODEs), begin by specifying the ODE model.
+
+The simulation function (`ODE_sim`) is then called, incorporating the specified model, initial conditions, time range, delta_t, integrator, and ODE parameters. The resulting simulation is visualized through a scatterplot
+
+```julia
+# Simulating data with an ODE
+model = "triple_piecewise_damped_logistic"
+n_start = [0.1]
+tstart = 0.0
+tmax = 600.0
+delta_t = 10.0
+integrator = KenCarp4()
+
+param_of_ode = [0.06, 1.0, 200, 0.5, 0.001, 450, -0.0002]
+
+# Calling the simulation function
+sim = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
+
+# Plotting scatterplot of data
+Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, size=(300, 300))
+
 <a name="simulating-data-stochastic"></a>
 ## Simulating Data with stochastic simulations
 
@@ -918,4 +941,4 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
 ## ODE segmentation with fixed number of change points
 
 <a name="#ODE-segmented"></a>
-##ODE segmentation
+## ODE segmentation
