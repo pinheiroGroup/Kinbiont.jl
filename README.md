@@ -694,8 +694,8 @@ ODE_selection_NMAX_change_points(data_testing::Matrix{Float64},
     integrator = KenCarp4(autodiff=true),
     type_of_loss="L2", # type of used loss 
     type_of_detection =  "lsdd",
-    type_of_curve = "deriv", 
-    pt_avg = pt_avg , 
+    type_of_curve = "original", 
+    pt_avg = 1 , 
     smoothing= true, 
     do_plot=false, 
     path_to_plot="NA", 
@@ -727,7 +727,7 @@ Key Arguments:
 - `type_of_loss="L2"`: Type of loss used for optimization (options: "L2" for squared loss).
 - `type_of_detection="lsdd"`: Type of change point detection algorithm. Options are "lsdd" for piecewise linear fitting on the specific growth rate.
 - `type_of_curve="original"`: Type of curve used for the change point detection. Options are "deriv" for the  derivative/specific gr or "original" for growth curve.
-- `pt_avg=pt_avg`: Number of points to generate the initial condition or do the rolling avg smoothing.
+- `pt_avg=1`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=true`: Determines whether smoothing is applied to the data.
 - `do_plot=false`: Whether to generate plots or not.
 - `path_to_plot="NA"`: Path to save the generated plots.
