@@ -1,4 +1,6 @@
-# JMAKi
+![Model](https://github.com/ang-one/JMAKi.jl/blob/main/static/jmaki_logo.png)
+
+# JMAKi.jl
 
 JMAKi, a versatile software tool that utilizes Ordinary Differential Equations (ODEs) to fit bacterial growth data from plate reader experiments. 
 With JMAKi it is possible to simulate, fit, perform model selection, and conduct sensitivity analysis for multi-well plate reader experiments.
