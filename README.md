@@ -1135,14 +1135,6 @@ data_OD = Matrix(transpose(hcat(times_sim, sol_sim)))
 deriv = specific_gr_evaluation(data_OD, 0)
 Plots.scatter(deriv, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, size=(300, 300))
 
-# Performing change point detection
-profile = ChangePointDetection.lsdd_profile(deriv; window = 2)
-Plots.scatter(profile, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, size=(300, 300))
-change_points = ChangePointDetection.changepoints(deriv; threshold = mean(profile), window = 2)
-
-# Highlighting detected change points
-Plots.vline!(change_points, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:red, size=(300, 300))
-
 # Adding uniform noise to the dataset
 noise_uniform = rand(Uniform(-0.01, 0.01), length(sol_sim))
 data_OD = Matrix(transpose(hcat(times_sim, sol_sim)))
