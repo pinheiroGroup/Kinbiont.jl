@@ -1,7 +1,6 @@
 <p align="center">
   <img src="https://github.com/ang-one/JMAKi.jl/blob/main/static/jmaki_logo.png">
 </p>
-# JMAKi.jl
 
 JMAKi, a versatile software tool that utilizes Ordinary Differential Equations (ODEs) to fit bacterial growth data from plate reader experiments. 
 With JMAKi it is possible to simulate, fit, perform model selection, and conduct sensitivity analysis for multi-well plate reader experiments.
@@ -858,129 +857,65 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
 # Examples and Tutorial
 
 
-## Table of Contents
-1. [Simulating Data with J-MAKi](#simulating-data)
-2. [Data Preprocessing](#data-preprocessing)
-3. [Smoothing and Multiple Scattering Correction](#smoothing-correction)
-4. [Model Fitting](#model-fitting)
+1. [Simulating Data with ODEs](#simulating-data-ODE)
+2. [Simulating Data with stochastic simulations](#simulating-data-stochastic)
+3. [Data Preprocessing](#data-preprocessing)
+4. [Fitting single well](#model-fitting)
+    - [Log-Lin fitting](#fitting-log-lin)
     - [Fitting ODE Models](#fitting-ode)
     - [Custom ODE Fitting](#custom-ode-fitting)
     - [Sensitivity Analysis](#sensitivity-analysis)
-    - [Model Selection](#model-selection)
-5. [Change Point Detection](#change-point-detection)
-6. [Conclusion](#conclusion)
+    - [ODE Model Selection](#model-selection)
+  
+5. [Fitting one file (a plate)](#model-fitting-plate)
+    - [Log-Lin fitting](#fitting-log-lin-file)
+    - [Fitting ODE Models](#fitting-ode-file)
 
+6. [Change Point Detection](#change-point-detection)
+7. [ODE segmentation with fixed number of change points](#ODE-segmented-fixed)
+8. [ODE segmentation](#ODE-segmented)
 
-##  Simulating Data with J-MAKi
+<a name="simulating-data-ODE"></a>
+## Simulating Data with ODEs
 
-To demonstrate the package, we'll begin by simulating data using a specific ODE model. The following code snippet simulates a growth curve using a triple-piecewise damped logistic model:
+<a name="simulating-data-stochastic"></a>
+## Simulating Data with stochastic simulations
 
-```julia
-<a name="simulating-data"></a>
-
-# Simulating data with a triple-piecewise damped logistic model
-model = "triple_piecewise_damped_logistic"
-n_start = [0.1]
-tstart = 0.0
-tmax = 600.0
-delta_t = 10.0
-integrator = KenCarp4()
-param_of_ode = [0.06, 1.0, 200, 0.5, 0.001, 450, -0.0002]
-
-sim = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
-
-# Plotting scatterplot of simulated data
-Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Simulated Data" nothing], color=:blue, size=(300, 300))
-```
-
-In the above code, we use the `ODE_sim` function to simulate data based on a specified ODE model and parameters. The resulting data is then plotted.
-
-<a name="data-preprocessing"></a>
-##  Data Preprocessing
-
-Next, we'll explore data preprocessing steps, including adding noise, smoothing, and multiple scattering correction:
-
-```julia
-# ... (Previous code)
-
-# Adding uniform random noise to the simulated data
-noise_uniform = rand(Uniform(-0.05, 0.05), length(sim.t))
-data_t = reduce(hcat, sim.t)
-data_o = reduce(hcat, sim.u)
-data_OD = vcat(data_t, data_o)
-data_OD[2, :] = data_OD[2, :] .+ noise_uniform
-
-# Plotting scatterplot of data with noise
-Plots.scatter(data_OD[1, :], data_OD[2, :], xlabel="Time", ylabel="Arb. Units", label=["Noisy Data" nothing], color=:blue, markersize=2, size=(300, 300))
-
-# Smoothing of the data with rolling average
-data_OD_smooth = smoothing_data(data_OD, 7)
-data_OD_smooth = Matrix(data_OD_smooth)
-
-# Plotting scatterplot of smoothed data
-Plots.scatter(data_OD_smooth[1, :], data_OD_smooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Smoothed Data" nothing], markersize=2, color=:blue, size=(300, 300))
-
-# Multiple scattering correction (requires an external file)
-# Comment out the following line if correction is not needed
-data_OD_smooth2 = correction_OD_multiple_scattering(data_OD_smooth, "/path/to/calibration/file.csv")
-
-# Plotting scatterplot of pre-processed data
-Plots.scatter(data_OD_smooth2[1, :], data_OD_smooth2[2, :], xlabel="Time", ylabel="Arb. Units", label=["Pre-processed Data" nothing], markersize=2, color=:blue, size=(300, 300))
-```
-
-In this section, we add noise to the simulated data, smooth it using a rolling average, and perform multiple scattering correction if applicable.
+<a name="preprocessing"></a>
+## Data Preprocessing]
 
 <a name="model-fitting"></a>
-## Model Fitting
+## Fitting single well
 
-Now, let's explore model fitting using J-MAKi. We'll cover fitting ODE models, custom ODEs, sensitivity analysis, and model selection.
+<a name="fitting-log-lin"></a>
+### Log-Lin fitting
 
 <a name="fitting-ode"></a>
-### Fitting ODE Models
-
-We start by fitting the simulated data with a predefined ODE model:
-
-```julia
-# ... (Previous code)
-
-# Fitting the simulated data with a log-linear model
-path_to_plotting = "/path/to/save/plots/"
-res_log_lin = fitting_one_well_Log_Lin(data_OD_smooth2, "test", "test", do_plot=true, path_to_plot=path_to_plotting)
-```
-
-In this snippet, the `fitting_one_well_Log_Lin` function is used to fit the data with a log-linear model.
+###    Fitting ODE Models
 
 <a name="custom-ode-fitting"></a>
-### Custom ODE Fitting
-
-We can also fit data using a custom ODE. Here, we demonstrate fitting with a custom two-equation ODE:
-
-```julia
-# ... (Previous code)
-
-# Defining the custom ODE function
-function ODE_custom(du, u, param, t)
-    du[1] = u[1] * (1 - u[1]) * param[2] + param[1] * u[1]
-    du[2] = +u[1] * param[2] + param[4] * u[2] * (1 - (u[1] + u[2]) / param[3])
-end
-
-custom_ub = [1.2, 1.1, 2.0, 20]
-custom_lb = [0.0001, 0.00000001, 0.00, 0]
-
-# Fitting data with the custom ODE
-results_custom = fitting_one_well_custom_ODE(data_OD_smooth2, "test", "test_model_custom", ODE_custom, custom_lb, custom_ub, 2, do_plot=true, path_to_plot=path_to_plotting)
-```
-
-In this example, `ODE_custom` represents a custom ODE function with two equations. The `fitting_one_well_custom_ODE` function is used for fitting.
+###   Custom ODE Fitting
 
 <a name="sensitivity-analysis"></a>
-### Sensitivity Analysis
+###   Sensitivity Analysis
 
-We can perform sensitivity analysis to evaluate the impact of parameter variations:
+<a name="model-selection"></a>
+###   ODE Model Selection
 
-```julia
-# ... (Previous code)
+<a name="model-fitting-plate"></a>
+## Fitting one file (a plate)
 
-# Performing sensitivity analysis using Morris method
-n_step_sensitivity = 3
-sensitivity_test = one_well_morris_sensitivity(data_OD_smooth2
+<a name="fitting-log-lin-file"></a>
+### Log-Lin fitting
+
+<a name="fitting-ode-file"></a>
+###   Fitting ODE Models
+
+<a name="change-point-detection"></a>
+## Change Point Detection
+
+<a name="#ODE-segmented-fixed"></a>
+## ODE segmentation with fixed number of change points
+
+<a name="#ODE-segmented"></a>
+##ODE segmentation
