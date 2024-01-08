@@ -900,12 +900,31 @@ sim = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
 
 # Plotting scatterplot of data
 Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, size=(300, 300))
+```
 
 <a name="simulating-data-stochastic"></a>
 ## Simulating Data with stochastic simulations
 
 <a name="preprocessing"></a>
 ## Data Preprocessing
+One method employed is the smoothing of the data using a rolling average. This technique, implemented through the smoothing_data function, helps reduce noise. In the example, a rolling window of size 7 is applied to the original data (data_OD). 
+```
+data_OD_smooth = smoothing_data(data_OD, 7)
+data_OD_smooth = Matrix(data_OD_smooth)
+
+# Plotting scatterplot of smoothed data
+Plots.scatter(data_OD_smooth[1, :], data_OD_smooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Smoothed data " nothing], markersize=2, color=:blue, size=(300, 300))
+```
+Furthermore, to address potential external influences, a correction for multiple scattering is applied to the smoothed data. This correction is executed through the correction_OD_multiple_scattering function, requiring an external file (calibration_curve.csv). While this step is essential for certain datasets, it is marked as optional in the provided example. 
+```
+
+# Multiple scattering correction (optional, comment out if not needed)
+data_OD_smooth = correction_OD_multiple_scattering(data_OD_smooth, "/your_path/calibration_curve.csv")
+
+# Plotting scatterplot of preprocessed data
+Plots.scatter(data_OD_smooth[1, :], data_OD_smooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Pre-processed data" nothing], markersize=2, color=:blue, size=(300, 300))
+```
+
 
 <a name="model-fitting"></a>
 ## Fitting single well
@@ -913,6 +932,22 @@ Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], 
 <a name="fitting-log-lin"></a>
 ### Log-Lin fitting
 
+This code snippet performs log-linear fitting using the fitting_one_well_Log_Lin function. 
+
+```julia
+res_log_lin = fitting_one_well_Log_Lin(
+    data_OD_smooth2,  # dataset, first row times, second row OD
+    "test",           # name of the well
+    "test"            # label of the experiment
+)
+```
+ The results are stored in the res_log_lin variable. With the following form
+```
+results_lin_log_fit = [label_exp, name_well, start_exp_win, end_exp_win, time_max_gr ,gr_of_max gr_log_lin_fitting, 2_sigma_confidence_gr, doubling time , doubling time  - 2 sigma,  doubling time  + 2 sigma, intercept log-lin fitting, ntercept log-lin fitting 2 sigma ,R^2]
+
+```
+
+ 
 <a name="fitting-ode"></a>
 ###    Fitting ODE Models
 
