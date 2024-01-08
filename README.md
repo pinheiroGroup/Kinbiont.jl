@@ -871,9 +871,8 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
     - [Log-Lin fitting](#fitting-log-lin-file)
     - [Fitting ODE Models](#fitting-ode-file)
 
-6. [Change Points Detection](#change-point-detection)
-7. [ODE segmentation with fixed number of change points](#ODE-segmented-fixed)
-8. [ODE segmentation](#ODE-segmented)
+6. [ODE segmentation with fixed number of change points](#ODE-segmented-fixed)
+7. [ODE segmentation](#ODE-segmented)
 
 <a name="simulating-data-ODE"></a>
 ## Simulating Data with ODEs
@@ -1070,11 +1069,94 @@ results_ms[2]
 <a name="fitting-ode-file"></a>
 ###   Fitting ODE Models
 
-<a name="change-point-detection"></a>
-## Change Points Detection
 
 <a name="#ODE-segmented-fixed"></a>
 ## ODE segmentation with fixed number of change points
+
+In this example, we demonstrate the process of fitting a dataset with a sequence of ODEs using a segmentation approach. The dataset is generated with three segments, each modeled by a different ODE.
+the we fit it with the 'selection_ODE_fixed_change_points' function
+
+ ```
+# First segment ODE
+model = "exponential"
+n_start = [0.1]
+tstart = 0.0
+tmax = 10.0
+delta_t = 2.0
+param_of_ode = [0.00]
+sim_1 = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
+sol_1 = reduce(vcat, sim_1)
+
+# Second segment ODE
+model = "logistic"
+n_start = [sol_1[end]]
+tstart = 10.0
+tmax = 80.0
+delta_t = 2.0
+param_of_ode = [0.2, 0.4]
+sim_2 = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
+sol_2 = reduce(vcat, sim_2)
+
+# Third segment ODE
+model = "logistic"
+n_start = [sol_2[end]]
+tstart = 80.0
+tmax = 200.0
+delta_t = 2.0
+param_of_ode = [0.1, 0.8]
+sim_3 = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
+sol_3 = reduce(vcat, sim_3)
+
+# Concatenating simulations
+times_sim = vcat(sim_1.t, sim_2.t)
+times_sim = vcat(times_sim, sim_3.t)
+sol_sim = vcat(sol_1, sol_2)
+sol_sim = vcat(sol_sim, sol_3)
+
+# Plotting the generated dataset
+Plots.scatter(sol_sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, size=(300, 300))
+
+# Computing and visualizing the first derivative
+data_OD = Matrix(transpose(hcat(times_sim, sol_sim)))
+deriv = specific_gr_evaluation(data_OD, 0)
+Plots.scatter(deriv, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, size=(300, 300))
+
+# Performing change point detection
+profile = ChangePointDetection.lsdd_profile(deriv; window = 2)
+Plots.scatter(profile, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, size=(300, 300))
+change_points = ChangePointDetection.changepoints(deriv; threshold = mean(profile), window = 2)
+
+# Highlighting detected change points
+Plots.vline!(change_points, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:red, size=(300, 300))
+
+# Adding uniform noise to the dataset
+noise_uniform = rand(Uniform(-0.01, 0.01), length(sol_sim))
+data_OD = Matrix(transpose(hcat(times_sim, sol_sim)))
+data_OD[2, :] = data_OD[2, :] .+ noise_uniform
+
+# Plotting the noisy dataset
+Plots.scatter(data_OD[1, :], data_OD[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, markersize=2, size=(300, 300))
+
+# Initializing all the models for selection
+ub_exp = [0.1]
+lb_exp = [-0.01]
+ub_logistic = [0.9, 5.0]
+lb_logistic = [0.0001, 0.001]
+ub_hpm = [0.1, 20.0, 50.001]
+lb_hpm = [0.0001, 0.000001, 0.001]
+ub_hpm_exp = [0.1, 20.0]
+lb_hpm_exp = [0.0001, 0.0000001]
+
+list_of_models = ["exponential", "HPM", "HPM_exp", "logistic"]
+list_ub_param = [ub_exp, ub_hpm, ub_hpm_exp, ub_logistic]
+list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
+
+# Fitting with a fixed number of change points
+test_fixed_cdp = selection_ODE_fixed_change_points(
+    data_OD, "test", "test", list_of_models, list_lb_param, list_ub_param, 3;
+    do_plot=true, path_to_plot=path_to_plotting, pt_smooth_derivative=0
+)
+```
 
 <a name="#ODE-segmented"></a>
 ## ODE segmentation
