@@ -607,7 +607,9 @@ cpd_local_detection(data::Matrix{Float64},
     type_of_detection="lsdd",
     type_of_curve="original", 
     pt_derivative = 0,
-    size_win =2)
+    size_win =2,
+method= "peaks_prominence",
+number_of_bin = 40)
 
 ```
 This function performs change point detection on a dataset, identifying local changes in the growth curve. It uses various algorithms based on user-defined parameters.
@@ -623,7 +625,9 @@ Key Arguments:
 - `type_of_curve="deriv"`: Type of curve used for the change point detection. Options are "deriv" for the  derivative/specific gr or "original" for growth curve.
 - `pt_derivative=0`: Number of points to evaluate the derivative or specific growth rate. If 0, numerical derivative is used; if >1, specific growth rate is calculated with the given window size.
 - `size_win=2`: Size of the sliding window used in all detection methods.
-  
+- `method = "peaks_prominence"` : method to detect peak on the dissimilarity curve. Option "peaks_prominence" use prominece of peaks to score them. `"thr_scan"` grid scan with a threshold to detect peaks.
+- `number_of_bin = 40`: number of bins for the grid search. used only if `method = "thr_scan"`
+
 <a name="cdp-fixed"></a>
 ## Fitting segmented ODE with fixed change-point number
 ```
@@ -647,7 +651,9 @@ selection_ODE_fixed_change_points(data_testing::Matrix{Float64},
     pt_smooth_derivative=0,
     multiple_scattering_correction=false, 
     calibration_OD_curve="NA",
-    beta_smoothing_ms = 2.0 
+    beta_smoothing_ms = 2.0,
+method_peaks_detection= "peaks_prominence",
+n_bins = 40
     )
 ```
 
@@ -679,6 +685,8 @@ Arguments:
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
 - `beta_smoothing_ms=2.0`: Penality parameter of the Akaike Information Criterion (AIC) penalty.
+- `method_peaks_detection = "peaks_prominence"` : method to detect peak on the dissimilarity curve. Option "peaks_prominence" use prominece of peaks to score them. `"thr_scan"` grid scan with a threshold to detect peaks.
+- `n_bins = 40`: number of bins for the grid search. used only if `method_peaks_detection = "thr_scan"`
 
 <a name="cdp-search"></a>
 ## Fitting segmented ODE with direct search for a maximum number of change-points 
@@ -705,7 +713,9 @@ ODE_selection_NMAX_change_points(data_testing::Matrix{Float64},
     penality_parameter=2.0,
     multiple_scattering_correction="false", 
     calibration_OD_curve="NA",  
-   save_all_model=false )
+   save_all_model=false,
+    method_peaks_detection= "peaks_prominence",
+    n_bins = 40 )
 ```
 This function fits segmented ordinary differential equation (ODE) models to a growth curve dataset using direct search for a maximum number of change-points. It allows for the evaluation of multiple ODE models with a varying number of change-points.
 
@@ -738,6 +748,9 @@ Key Arguments:
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
 - `save_all_model=false`: If `true`, saves fitting results for all evaluated models.
+- `method_peaks_detection = "peaks_prominence"` : method to detect peak on the dissimilarity curve. Option "peaks_prominence" use prominece of peaks to score them. `"thr_scan"` grid scan with a threshold to detect peaks.
+- `n_bins = 40`: number of bins for the grid search. used only if `method_peaks_detection = "thr_scan"`
+
 
 
 <a name="models"></a>
