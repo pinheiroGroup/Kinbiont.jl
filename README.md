@@ -385,9 +385,9 @@ Arguments:
 - `write_res=true`: Whether to write results.
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-   - ` PopulationSize =100`: Size of the population of the optimization
-  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
-  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- ` PopulationSize =100`: Size of the population of the optimization
+-  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+- `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
 
 
@@ -452,9 +452,9 @@ Arguments:
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - fit_replicate=false,  if true the average between replicates is fitted.
-   - ` PopulationSize =100`: Size of the population of the optimization
-  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
-  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- ` PopulationSize =100`: Size of the population of the optimization
+-  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+- `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
   
 <a name="custom-ODE"></a>
@@ -511,9 +511,9 @@ Key   Arguments:
 - `blank_array=zeros(100)`: Data representing blanks for correction.
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
-   - ` PopulationSize =100`: Size of the population of the optimization
-  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
-  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- ` PopulationSize =100`: Size of the population of the optimization
+-  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+- `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
 
 
@@ -568,9 +568,9 @@ Key Arguments:
 - `blank_array=zeros(100)`: Data representing blanks for correction.
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
-  - ` PopulationSize =100`: Size of the population of the optimization
-  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
-  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- ` PopulationSize =100`: Size of the population of the optimization
+-  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+- `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
 
 
@@ -629,9 +629,9 @@ Key Arguments:
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
 - `verbose=false`: If `true`, enables verbose output.
-   - ` PopulationSize =100`: Size of the population of the optimization
-  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
-  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- ` PopulationSize =100`: Size of the population of the optimization
+-  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+- `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
 
 <a name="cdp"></a>
@@ -662,9 +662,6 @@ Key Arguments:
 - `size_win=2`: Size of the sliding window used in all detection methods.
 - `method = "peaks_prominence"` : method to detect peak on the dissimilarity curve. Option "peaks_prominence" use prominece of peaks to score them. `"thr_scan"` grid scan with a threshold to detect peaks.
 - `number_of_bin = 40`: number of bins for the grid search. used only if `method = "thr_scan"`
- - ` PopulationSize =100`: Size of the population of the optimization
-  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
-  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
 
 <a name="cdp-fixed"></a>
@@ -729,9 +726,9 @@ Arguments:
 - `beta_smoothing_ms=2.0`: Penality parameter of the Akaike Information Criterion (AIC) penalty.
 - `method_peaks_detection = "peaks_prominence"` : method to detect peak on the dissimilarity curve. Option "peaks_prominence" use prominece of peaks to score them. `"thr_scan"` grid scan with a threshold to detect peaks.
 - `n_bins = 40`: number of bins for the grid search. used only if `method_peaks_detection = "thr_scan"`
-  - ` PopulationSize =100`: Size of the population of the optimization
-  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
-  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- ` PopulationSize =100`: Size of the population of the optimization
+-  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+- `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
 
 <a name="cdp-search"></a>
@@ -799,9 +796,9 @@ Key Arguments:
 - `save_all_model=false`: If `true`, saves fitting results for all evaluated models.
 - `method_peaks_detection = "peaks_prominence"` : method to detect peak on the dissimilarity curve. Option "peaks_prominence" use prominece of peaks to score them. `"thr_scan"` grid scan with a threshold to detect peaks.
 - `n_bins = 40`: number of bins for the grid search. used only if `method_peaks_detection = "thr_scan"`
- - ` PopulationSize =100`: Size of the population of the optimization
-  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
-  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- ` PopulationSize =100`: Size of the population of the optimization
+-  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+- `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
 
 <a name="models"></a>
