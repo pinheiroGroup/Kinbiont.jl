@@ -3758,6 +3758,42 @@ end
 """
 change points functions
 """
+# function from changepoints detections.jl with modification of thr usage
+
+
+function getpoints_mod(profile; number_of_bin = 100)
+
+    points_list = ()
+    # list of points 
+    min_profile = minimum(profile)
+    max_profile = maximum(profile)
+    delta_profile =(max_profile-min_profile)/number_of_bin
+    seq_thr = min_profile:delta_profile:max_profile
+
+    for thr_temp in seq_thr[2:end]
+        points = Int[]
+        exceeded = false
+        for (index, value) in enumerate(profile)
+            if (value > thr_temp) && exceeded == false
+                push!(points, index)
+                exceeded = true
+            elseif (value < thr_temp) && exceeded == true
+                exceeded = false
+            end
+        end
+
+        if thr_temp == seq_thr[2]
+            points_list= [points]
+        else 
+            points_list= push!(points_list,points)
+
+        end      
+
+    end   
+
+  
+    return reverse(points_list[1:(end-1)])
+end
 
 
 function cpd_local_detection(data::Matrix{Float64},
@@ -3765,7 +3801,9 @@ function cpd_local_detection(data::Matrix{Float64},
     type_of_detection="lsdd",
     type_of_curve="original", 
     pt_derivative = 0,
-    size_win =2)
+    size_win =2,
+    method= "peaks_prominence",
+    number_of_bin = 40)
      
 
     """
@@ -3777,15 +3815,15 @@ function cpd_local_detection(data::Matrix{Float64},
 
 
     if type_of_detection == "lsdd" &&  type_of_curve=="deriv"
-        list_of_cdps = cpd_lsdd_profile(data,n_max_cp;pt_deriv=pt_derivative,window_size=size_win)
+        list_of_cdps = cpd_lsdd_profile(data,n_max_cp;pt_deriv=pt_derivative,window_size=size_win,method= method,number_of_bin = number_of_bin)
 
     elseif type_of_detection == "lsdd"  && type_of_curve !="deriv"
 
-        list_of_cdps = cpd_lsdd_profile(data,n_max_cp;pt_deriv=pt_derivative,window_size=size_win, type_of_curve="original")
+        list_of_cdps = cpd_lsdd_profile(data,n_max_cp;pt_deriv=pt_derivative,window_size=size_win, type_of_curve="original",method= method,number_of_bin = number_of_bin)
 
 
     else    
-        list_of_cdps= detect_list_change_points(data,n_max_cp;win_size=size_win)
+        list_of_cdps= detect_list_change_points(data,n_max_cp;win_size=size_win,method= method,number_of_bin = number_of_bin)
 
     end
 
@@ -3794,7 +3832,7 @@ function cpd_local_detection(data::Matrix{Float64},
 end
 
 
-function cpd_lsdd_profile(data::Matrix{Float64},n_max::Int; window_size = 2, type_of_curve= "original",pt_deriv=0)
+function cpd_lsdd_profile(data::Matrix{Float64},n_max::Int; window_size = 2, type_of_curve= "original",pt_deriv=0,method= "peaks_prominence",number_of_bin = 40)
  
 
 
@@ -3822,14 +3860,14 @@ function cpd_lsdd_profile(data::Matrix{Float64},n_max::Int; window_size = 2, typ
     profile = convert.(Float64,profile)
     data_dissim = Matrix(transpose(hcat(data[1,1:length(profile)], profile)))
 
-    selected_change_point_index = peaks_detection(data_dissim,n_max)
+    selected_change_point_index = peaks_detection(data_dissim,n_max;method= method,number_of_bin = number_of_bin)
    
     return selected_change_point_index
 end
 
 
 
-function detect_list_change_points( data::Matrix{Float64},n_max::Int;win_size=2)
+function detect_list_change_points( data::Matrix{Float64},n_max::Int;win_size=2,method= "peaks_prominence",number_of_bin = 40)
 
   
    
@@ -3847,7 +3885,7 @@ function detect_list_change_points( data::Matrix{Float64},n_max::Int;win_size=2)
        data_dissim = Matrix(transpose(hcat(data[1,convert.(Int,curve_dissimilitary_deriv[1,:])], curve_dissimilitary_deriv[2,:])));
    
            
-       selected_change_point_index = peaks_detection(data_dissim,n_max)
+       selected_change_point_index = peaks_detection(data_dissim,n_max;method= method,number_of_bin =number_of_bin)
    
        return selected_change_point_index
          
@@ -3856,75 +3894,68 @@ function detect_list_change_points( data::Matrix{Float64},n_max::Int;win_size=2)
        
 end
 
-function detect_list_change_points_derivative( data::Matrix{Float64},n_max::Int,win_size::Int,pt_smoothing_derivative::Int
-)
-
-
- if pt_smoothing_derivative == 0
-
-
-    derivative_interpolation = specific_gr_interpol_evaluation(data)
-    data_deriv =      Matrix(transpose(hcat(data[1,:], derivative_interpolation)));
-
- else
-
-    derivative_interpolation = specific_gr_evaluation(data,pt_smoothing_derivative)
-
-    specific_gr_times = [(data[1, r] + data[1, (r+pt_smoothing_derivative)]) / 2 for r in 1:1:(length(data[2, :])-pt_smoothing_derivative)]
-   
-    data_deriv =      Matrix(transpose(hcat(specific_gr_times, derivative_interpolation)));
-
- end
-
-
-
-    curve_dissimilitary_deriv = curve_dissimilitary_lin_fitting( data_deriv, # dataset first row times second row OD
-    1, # index of start
-    win_size, # size sliding window
-    )
-    data_dissim = Matrix(transpose(hcat(data_deriv[1,convert.(Int,curve_dissimilitary_deriv[1,:])], curve_dissimilitary_deriv[2,:])));
-
-        
-    selected_change_point_index = peaks_detection(data_dissim,n_max)
-
-    return selected_change_point_index
-      
-
-
-    
-end
 
 
 
 function peaks_detection(data::Matrix{Float64},
-    n_max::Int)
+    n_max::Int;method= "peaks_prominence",number_of_bin = 40)
 
     """
     peaks detection
     n_max maximum number of peaks 
     size_win Int size of the used window in all of the methods
    """
+    if method == "peaks_prominence"
+      index_of_peaks =  findmaxima(data[2,:]; strict=true)
 
-    index_of_peaks =  findmaxima(data[2,:]; strict=true)
+        array_prominence = peakproms(index_of_peaks[1],data[2,:])[2]
+        index_prominence = peakproms(index_of_peaks[1],data[2,:])[1]
 
-    array_prominence = peakproms(index_of_peaks[1],data[2,:])[2]
-    index_prominence = peakproms(index_of_peaks[1],data[2,:])[1]
-
-    if length(array_prominence) < n_max
-        println("Warning: the max number of peaks is too much")
-        top_prominence = sort(array_prominence)
+        if length(array_prominence) < n_max
+            println("Warning: the max number of peaks is too much")
+            top_prominence = sort(array_prominence)
     
-    else
-        top_prominence = sort(array_prominence)[((end - n_max)+1):end]
+        else
+            top_prominence = sort(array_prominence)[((end - n_max)+1):end]
 
+        end
+    
+        index_top_peaks = [ findall(array_prominence .== i)[1] for i in top_prominence]
+        selected_change_point_index =  index_prominence[index_top_peaks] 
+
+        times_top_peaks = data[1,   selected_change_point_index   ]
+        values_top_peaks = data[2,    selected_change_point_index  ]
     end
-    # new filtering on peaks belong same peak
-    
-    index_top_peaks = [ findall(array_prominence .== i)[1] for i in top_prominence]
-    times_top_peaks = data[1,    index_prominence[index_top_peaks]    ]
-    values_top_peaks = data[2,    index_prominence[index_top_peaks]    ]
 
-    return index_prominence[index_top_peaks] ,times_top_peaks,values_top_peaks
+    if method == "thr_scan"
+
+        selected_change_point_list = getpoints_mod(data[2,:],number_of_bin = number_of_bin)
+        lenght_cdp_list = length.(selected_change_point_list)
+
+        if n_max > maximum(lenght_cdp_list)
+            println("Warning: this number of peaks is to much selecting the max number detected")
+
+            selected_change_point_index =  selected_change_point_list[end]
+
+
+        else
+            
+            selected_change_point_index = selected_change_point_list[maximum(findlast(lenght_cdp_list .<= n_max))]
+           
+           
+            if length(selected_change_point_index) != n_max
+                println("Warning: this number of peaks is not detected changing to nearest one smaller")
+ 
+            end
+            times_top_peaks = data[1,    selected_change_point_index  ]
+            values_top_peaks = data[2,   selected_change_point_index  ]
+        end    
+        
+    end
+    
+    
+
+    return selected_change_point_index,times_top_peaks,values_top_peaks
 end
 
 
@@ -3933,7 +3964,7 @@ end
 
 function curve_dissimilitary_lin_fitting( data::Matrix{Float64}, # dataset first row times second row OD
     start_time_Index::Int,
-    size_wind::Int, # size sliding window
+    size_wind::Int # size sliding window
 )
     discrepancy_measure_curve = [start_time_Index,0.0]
     ending = convert(Int, (length(data[2,:]) - floor(size_wind/2)*2))
@@ -4022,8 +4053,9 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
     pt_smooth_derivative=7,
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-    beta_smoothing_ms = 2.0 #  parameter of the AIC penality
-    )
+    beta_smoothing_ms = 2.0, #  parameter of the AIC penality
+    method_peaks_detection= "peaks_prominence",
+    n_bins = 40)
     # inizialization penality  function
 
     if smoothing == true
@@ -4047,7 +4079,7 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
                                 type_of_detection = type_of_detection,
                                 type_of_curve = type_of_curve, 
                                 pt_derivative = pt_smooth_derivative,
-                                size_win =win_size)
+                                size_win =win_size,method= method_peaks_detection,number_of_bin = n_bins)
      
     
     interval_changepoints = push!( list_change_points_dev[2],data_testing[1,1])
@@ -4218,7 +4250,10 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
     penality_parameter=2.0,
     multiple_scattering_correction="false", # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-   save_all_model=false )
+   save_all_model=false ,
+   method_peaks_detection= "peaks_prominence",
+   n_bins = 40
+   )
 
     # fitting single models
     length_dataset = length(data_testing[1,:])
@@ -4295,8 +4330,9 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
             pt_smooth_derivative=pt_smooth_derivative,
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
-            beta_smoothing_ms =penality_parameter #  parameter of the AIC penality
-            )
+            beta_smoothing_ms =penality_parameter, #  parameter of the AIC penality
+            method_peaks_detection= method_peaks_detection,
+            n_bins = n_bins)
 
 
 
