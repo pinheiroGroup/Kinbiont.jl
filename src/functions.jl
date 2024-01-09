@@ -2570,9 +2570,9 @@ function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first
     blank_array=zeros(100), # data of all blanks
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize =100,
-    maxiters = 10000,
-     abstol = 0.001)
+   PopulationSize = 300,
+    maxiters = 20000,
+     abstol = 0.00001 )
 
 
     if  multiple_scattering_correction == true
@@ -3030,9 +3030,9 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
     blank_array=zeros(100), # data of all blanks
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize =100,
-    maxiters = 10000,
-     abstol = 0.001)
+   PopulationSize = 300,
+    maxiters = 20000,
+     abstol = 0.00001 )
 
 
     if  multiple_scattering_correction == true
@@ -3265,9 +3265,9 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     verbose=false,
-    PopulationSize =100,
-    maxiters = 10000,
-     abstol = 0.001)
+   PopulationSize = 300,
+    maxiters = 20000,
+     abstol = 0.00001 )
 
     if  multiple_scattering_correction == true
 
@@ -3553,9 +3553,9 @@ function one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row 
     blank_array=zeros(100), # data of all blanks
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize =100,
-    maxiters = 10000,
-     abstol = 0.001)
+   PopulationSize = 300,
+    maxiters = 20000,
+     abstol = 0.00001 )
     # inizializing the results of sensitivity
 
     results_sensitivity =inzialize_df_results(model)
@@ -4084,9 +4084,9 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
     beta_smoothing_ms = 2.0, #  parameter of the AIC penality
     method_peaks_detection= "peaks_prominence",
     n_bins = 40,
-    PopulationSize =100,
-          maxiters = 10000,
-           abstol = 0.001)
+   PopulationSize = 300,
+          maxiters = 20000,
+           abstol = 0.00001 )
     # inizialization penality  function
 
     if smoothing == true
@@ -4286,9 +4286,9 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
    save_all_model=false ,
    method_peaks_detection= "peaks_prominence",
    n_bins = 40,
-   PopulationSize =100,
-          maxiters = 10000,
-           abstol = 0.001
+  PopulationSize = 300,
+          maxiters = 20000,
+           abstol = 0.00001 
    )
 
     # fitting single models
