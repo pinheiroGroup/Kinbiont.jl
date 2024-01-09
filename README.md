@@ -352,7 +352,10 @@ Key Arguments:
     type_of_loss="RE",
     blank_array=zeros(100),
     multiple_scattering_correction=false, 
-    calibration_OD_curve="NA"  
+    calibration_OD_curve="NA" ,
+ PopulationSize =100,
+          maxiters = 10000,
+           abstol = 0.001
     )
 ```
 This function performs constrained parameter fitting on a single well's dataset using an ordinary differential equation (ODE) model. It estimates the model parameters within specified lower and upper bounds.
@@ -382,6 +385,10 @@ Arguments:
 - `write_res=true`: Whether to write results.
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+   - ` PopulationSize =100`: Size of the population of the optimization
+  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+
 
 
 <a name="ODE-file"></a>
@@ -410,7 +417,10 @@ Arguments:
     correct_negative="thr_correction",
     thr_negative=0.01, 
     multiple_scattering_correction=false, 
-    calibration_OD_curve="NA"  
+    calibration_OD_curve="NA" ,
+   PopulationSize =100,
+          maxiters = 10000,
+           abstol = 0.001 
     )
 ```
 This function fits an ordinary differential equation (ODE) model to a single file's data. 
@@ -442,6 +452,10 @@ Arguments:
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - fit_replicate=false,  if true the average between replicates is fitted.
+   - ` PopulationSize =100`: Size of the population of the optimization
+  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+
   
 <a name="custom-ODE"></a>
 ## Fitting custom ODE function for one well
@@ -464,7 +478,10 @@ fitting_one_well_custom_ODE(data::Matrix{Float64},
     type_of_loss="RE", 
     blank_array=zeros(100), 
     multiple_scattering_correction=false,
-    calibration_OD_curve="NA"  
+    calibration_OD_curve="NA"  ,
+   PopulationSize =100,
+          maxiters = 10000,
+           abstol = 0.001
     )
 ```
 
@@ -494,6 +511,10 @@ Key   Arguments:
 - `blank_array=zeros(100)`: Data representing blanks for correction.
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
+   - ` PopulationSize =100`: Size of the population of the optimization
+  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+
 
 
 <a name="Sensitivity-analysis"></a>
@@ -515,7 +536,10 @@ Key   Arguments:
     type_of_loss="RE", 
     blank_array=zeros(100),
     multiple_scattering_correction=false, 
-    calibration_OD_curve="NA"  
+    calibration_OD_curve="NA"  ,
+   PopulationSize =100,
+          maxiters = 10000,
+           abstol = 0.001
     )
 ```
 
@@ -544,6 +568,10 @@ Key Arguments:
 - `blank_array=zeros(100)`: Data representing blanks for correction.
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
+  - ` PopulationSize =100`: Size of the population of the optimization
+  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+
 
 
 <a name="Model-selection"></a>
@@ -568,7 +596,10 @@ ODE_Model_selection(data::Matrix{Float64},
     pt_smooth_derivative=7,
     multiple_scattering_correction=false, 
     calibration_OD_curve="NA", 
-    verbose=false
+    verbose=false,
+   PopulationSize =100,
+          maxiters = 10000,
+           abstol = 0.001
 )
 ```
 
@@ -598,6 +629,10 @@ Key Arguments:
 - `multiple_scattering_correction=false`: If `true`, uses a given calibration curve to correct the data.
 - `calibration_OD_curve="NA"`: The path to the calibration curve used for data correction.
 - `verbose=false`: If `true`, enables verbose output.
+   - ` PopulationSize =100`: Size of the population of the optimization
+  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+
 
 <a name="cdp"></a>
 ## Change point detection
@@ -627,6 +662,10 @@ Key Arguments:
 - `size_win=2`: Size of the sliding window used in all detection methods.
 - `method = "peaks_prominence"` : method to detect peak on the dissimilarity curve. Option "peaks_prominence" use prominece of peaks to score them. `"thr_scan"` grid scan with a threshold to detect peaks.
 - `number_of_bin = 40`: number of bins for the grid search. used only if `method = "thr_scan"`
+ - ` PopulationSize =100`: Size of the population of the optimization
+  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+
 
 <a name="cdp-fixed"></a>
 ## Fitting segmented ODE with fixed change-point number
@@ -653,7 +692,10 @@ selection_ODE_fixed_change_points(data_testing::Matrix{Float64},
     calibration_OD_curve="NA",
     beta_smoothing_ms = 2.0,
 method_peaks_detection= "peaks_prominence",
-n_bins = 40
+n_bins = 40,
+   PopulationSize =100,
+          maxiters = 10000,
+           abstol = 0.001
     )
 ```
 
@@ -687,6 +729,10 @@ Arguments:
 - `beta_smoothing_ms=2.0`: Penality parameter of the Akaike Information Criterion (AIC) penalty.
 - `method_peaks_detection = "peaks_prominence"` : method to detect peak on the dissimilarity curve. Option "peaks_prominence" use prominece of peaks to score them. `"thr_scan"` grid scan with a threshold to detect peaks.
 - `n_bins = 40`: number of bins for the grid search. used only if `method_peaks_detection = "thr_scan"`
+  - ` PopulationSize =100`: Size of the population of the optimization
+  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+
 
 <a name="cdp-search"></a>
 ## Fitting segmented ODE with direct search for a maximum number of change-points 
@@ -715,7 +761,10 @@ ODE_selection_NMAX_change_points(data_testing::Matrix{Float64},
     calibration_OD_curve="NA",  
    save_all_model=false,
     method_peaks_detection= "peaks_prominence",
-    n_bins = 40 )
+    n_bins = 40,
+   PopulationSize =100,
+          maxiters = 10000,
+           abstol = 0.001 )
 ```
 This function fits segmented ordinary differential equation (ODE) models to a growth curve dataset using direct search for a maximum number of change-points. It allows for the evaluation of multiple ODE models with a varying number of change-points.
 
@@ -750,7 +799,9 @@ Key Arguments:
 - `save_all_model=false`: If `true`, saves fitting results for all evaluated models.
 - `method_peaks_detection = "peaks_prominence"` : method to detect peak on the dissimilarity curve. Option "peaks_prominence" use prominece of peaks to score them. `"thr_scan"` grid scan with a threshold to detect peaks.
 - `n_bins = 40`: number of bins for the grid search. used only if `method_peaks_detection = "thr_scan"`
-
+ - ` PopulationSize =100`: Size of the population of the optimization
+  -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
+  - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
 
 <a name="models"></a>
