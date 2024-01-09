@@ -2569,8 +2569,10 @@ function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first
     type_of_loss="RE", # type of used loss 
     blank_array=zeros(100), # data of all blanks
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA"  #  the path to calibration curve to fix the data
-    )
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    PopulationSize =100,
+    maxiters = 10000,
+     abstol = 0.001)
 
 
     if  multiple_scattering_correction == true
@@ -2726,7 +2728,9 @@ function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first
 
     
     optprob_const = Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
-    res = Optimization.solve(optprob_const, optmizator)
+    #res = Optimization.solve(optprob_const, optmizator )
+
+    res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
 
 
     #revalution of solution for plot an loss evaluation 
@@ -2973,8 +2977,11 @@ function fit_file_ODE(
                 type_of_loss=loss_type, # type of used loss 
                 blank_array=blank_array, # data of all blanks
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-                calibration_OD_curve=calibration_OD_curve  #  the path to calibration curve to fix the data
-        )
+                calibration_OD_curve=calibration_OD_curve , #  the path to calibration curve to fix the data
+                PopulationSize =PopulationSize,
+                maxiters = maxiters,
+                 abstol = abstol)
+            
 
         if verbose == true
             println("the results are:")
@@ -3022,8 +3029,10 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
     type_of_loss="RE", # type of used loss 
     blank_array=zeros(100), # data of all blanks
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA"  #  the path to calibration curve to fix the data
-    )
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    PopulationSize =100,
+    maxiters = 10000,
+     abstol = 0.001)
 
 
     if  multiple_scattering_correction == true
@@ -3181,7 +3190,9 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
 
     
     optprob_const = Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
-    res = Optimization.solve(optprob_const, optmizator)
+   # res = Optimization.solve(optprob_const, optmizator)
+   res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
+
 
 
     #revalution of solution for plot an loss evaluation 
@@ -3253,8 +3264,11 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
     pt_smooth_derivative=7,
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-    verbose=false
-)
+    verbose=false,
+    PopulationSize =100,
+    maxiters = 10000,
+     abstol = 0.001)
+
     if  multiple_scattering_correction == true
 
         data = correction_OD_multiple_scattering(data,calibration_OD_curve)
@@ -3424,7 +3438,9 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
     
         # solving optimization problem
         optprob_const = Optimization.OptimizationProblem(optf, temp_start_param, u0, lb=temp_param_lb, ub=temp_param_ub)
-        res = Optimization.solve(optprob_const, optmizator)
+       # res = Optimization.solve(optprob_const, optmizator)
+       res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
+
     
     
         #revalution of solution for plot an loss evaluation 
@@ -3536,8 +3552,10 @@ function one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row 
     type_of_loss="RE", # type of used loss 
     blank_array=zeros(100), # data of all blanks
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA"  #  the path to calibration curve to fix the data
-    )
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    PopulationSize =100,
+    maxiters = 10000,
+     abstol = 0.001)
     # inizializing the results of sensitivity
 
     results_sensitivity =inzialize_df_results(model)
@@ -3703,7 +3721,9 @@ function one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row 
         param = param_combination[:,i]
 
         optprob_const = Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
-        res = Optimization.solve(optprob_const, optmizator)
+        res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
+
+       # res = Optimization.solve(optprob_const, optmizator)
 
 
         #revalution of solution for plot an loss evaluation 
@@ -3928,29 +3948,37 @@ function peaks_detection(data::Matrix{Float64},
     end
 
     if method == "thr_scan"
+        if n_max == 1
 
-        selected_change_point_list = getpoints_mod(data[2,:],number_of_bin = number_of_bin)
-        lenght_cdp_list = length.(selected_change_point_list)
+            selected_change_point_index= findfirst(x -> x == maximum(data[2,:]), data[2,:])
 
-        if n_max > maximum(lenght_cdp_list)
-            println("Warning: this number of peaks is to much selecting the max number detected")
+        else    
+          selected_change_point_list = getpoints_mod(data[2,:],number_of_bin = number_of_bin)
+            lenght_cdp_list = length.(selected_change_point_list)
 
-            selected_change_point_index =  selected_change_point_list[end]
+         if n_max > maximum(lenght_cdp_list)
+                println("Warning: this number of peaks is to much selecting the max number detected")
+
+                selected_change_point_index =  selected_change_point_list[end]
 
 
-        else
+           else
             
-            selected_change_point_index = selected_change_point_list[maximum(findlast(lenght_cdp_list .<= n_max))]
+                selected_change_point_index = selected_change_point_list[maximum(findlast(lenght_cdp_list .<= n_max))]
            
            
-            if length(selected_change_point_index) != n_max
-                println("Warning: this number of peaks is not detected changing to nearest one smaller")
+                if length(selected_change_point_index) != n_max
+                    println("Warning: this number of peaks is not detected changing to nearest one smaller")
  
-            end
-            times_top_peaks = data[1,    selected_change_point_index  ]
-            values_top_peaks = data[2,   selected_change_point_index  ]
-        end    
+                end
+
+            end    
+
         
+        end    
+
+        times_top_peaks = data[1,    selected_change_point_index  ]
+        values_top_peaks = data[2,   selected_change_point_index  ]
     end
     
     
@@ -4055,7 +4083,10 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     beta_smoothing_ms = 2.0, #  parameter of the AIC penality
     method_peaks_detection= "peaks_prominence",
-    n_bins = 40)
+    n_bins = 40,
+    PopulationSize =100,
+          maxiters = 10000,
+           abstol = 0.001)
     # inizialization penality  function
 
     if smoothing == true
@@ -4130,8 +4161,10 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
           pt_smooth_derivative=pt_smooth_derivative,
           multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
           calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-          verbose=false
-        )
+          verbose=false,
+          PopulationSize =PopulationSize,
+          maxiters = maxiters,
+           abstol = abstol)
     
         # selection of te model
         model =  model_selection_results[6]
@@ -4252,7 +4285,10 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
    save_all_model=false ,
    method_peaks_detection= "peaks_prominence",
-   n_bins = 40
+   n_bins = 40,
+   PopulationSize =100,
+          maxiters = 10000,
+           abstol = 0.001
    )
 
     # fitting single models
@@ -4277,7 +4313,10 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
         pt_smooth_derivative=pt_smooth_derivative,
         multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
         calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
-        verbose=false
+        verbose=false,
+        PopulationSize =PopulationSize,
+          maxiters = maxiters,
+           abstol = abstol
     )
 
     if save_all_model == true
