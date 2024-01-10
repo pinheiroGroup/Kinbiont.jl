@@ -913,7 +913,7 @@ function smoothing_data(data::Matrix{Float64},
     """
     times = [sum(@view data[1, i:(i+pt_avg-1)]) / pt_avg for i in 1:(length(data[1, :])-(pt_avg-1))]
     values = [sum(@view data[2, i:(i+pt_avg-1)]) / pt_avg for i in 1:(length(data[2, :])-(pt_avg-1))]
-    smoothed_data = transpose(hcat(times, values))
+    smoothed_data = Matrix(transpose(hcat(times, values)))
     return smoothed_data
 
 end
@@ -2810,8 +2810,10 @@ function fit_file_ODE(
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA"  #  the path to calibration curve to fix the data
-    )
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    PopulationSize = 300,
+    maxiters = 20000,
+     abstol = 0.00001)
 
 
     if write_res == true
