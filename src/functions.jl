@@ -2594,6 +2594,8 @@ function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first
     if smoothing == true
 
         data = smoothing_data(data, pt_avg)
+        data = Matrix(data)
+
     end
 
     # setting initial conditions
@@ -2945,15 +2947,15 @@ function fit_file_ODE(
         if smoothing == true
 
             data = smoothing_data(data, pt_avg)
+            data = Matrix(data)
+
+            
         end
         # defining time steps of the inference
 
         max_t = data[1, end]
         min_t = data[1, 1]
-        # attention, this is necessart if data are not float
-        #println(typeof(data[2,:]) )
-        #data[2,:] = parse(Float64,data[2,:] )
-        # guessing  parameters
+  
 
         data = Matrix(data)
 
@@ -3056,6 +3058,8 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
     if smoothing == true
 
         data = smoothing_data(data, pt_avg)
+        data = Matrix(data)
+
     end
 
 
@@ -3281,6 +3285,8 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
     if smoothing == true
 
         data = smoothing_data(data, pt_avg)
+        data = Matrix(data)
+
     end
 
  
@@ -3585,6 +3591,8 @@ function one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row 
     if smoothing == true
 
         data = smoothing_data(data, pt_avg)
+        data = Matrix(data)
+
     end
 
     # setting initial conditions
@@ -3837,15 +3845,15 @@ function cpd_local_detection(data::Matrix{Float64},
 
 
     if type_of_detection == "lsdd" &&  type_of_curve=="deriv"
-        list_of_cdps = cpd_lsdd_profile(data,n_max_cp;pt_deriv=pt_derivative,window_size=size_win,method= method,number_of_bin = number_of_bin)
+        list_of_cdps = cpd_lsdd_profile(data,n_max_cp; type_of_curve="deriv",pt_deriv=pt_derivative,window_size=size_win,method= method,number_of_bin = number_of_bin)
 
     elseif type_of_detection == "lsdd"  && type_of_curve !="deriv"
 
         list_of_cdps = cpd_lsdd_profile(data,n_max_cp;pt_deriv=pt_derivative,window_size=size_win, type_of_curve="original",method= method,number_of_bin = number_of_bin)
 
 
-    else    
-        list_of_cdps= detect_list_change_points(data,n_max_cp;win_size=size_win,method= method,number_of_bin = number_of_bin)
+    else    type_of_detection != "lsdd" 
+        list_of_cdps= detect_list_change_points(data,n_max_cp;pt_deriv=pt_derivative,type_of_curve=type_of_curve,win_size=size_win,method= method,number_of_bin = number_of_bin)
 
     end
 
@@ -3889,7 +3897,7 @@ end
 
 
 
-function detect_list_change_points( data::Matrix{Float64},n_max::Int;win_size=2,method= "peaks_prominence",number_of_bin = 40)
+function detect_list_change_points( data::Matrix{Float64},n_max::Int;win_size=2,method= "peaks_prominence",number_of_bin = 40,type_of_curve = "original",pt_deriv = 7)
 
   
    
@@ -3898,11 +3906,15 @@ function detect_list_change_points( data::Matrix{Float64},n_max::Int;win_size=2,
          n_max
          size_win Int size of the used window in all of the methods
         """
-   
+      if type_of_curve == "deriv"
+            data_s = specific_gr_evaluation(data_smooted, pt_deriv)
+            data_times = [(data_smooted[1, r] + data_smooted[1, (r+pt_deriv)]) / 2 for r in 1:1:(length(data_smooted[2, :])-pt_deriv)]
+            data = Matrix(hcat(data_s,data_times))
+        end  
    
        curve_dissimilitary_deriv = curve_dissimilitary_lin_fitting( data, # dataset first row times second row OD
        1, # index of start
-       win_size, # size sliding window
+       win_size # size sliding window
        )
        data_dissim = Matrix(transpose(hcat(data[1,convert.(Int,curve_dissimilitary_deriv[1,:])], curve_dissimilitary_deriv[2,:])));
    
@@ -4089,11 +4101,11 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
    PopulationSize = 300,
           maxiters = 20000,
            abstol = 0.00001 )
-    # inizialization penality  function
 
     if smoothing == true
 
         data_testing = smoothing_data(data_testing, pt_avg)
+        data_testing = Matrix(data_testing)
     end
 
 
@@ -4112,7 +4124,9 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
                                 type_of_detection = type_of_detection,
                                 type_of_curve = type_of_curve, 
                                 pt_derivative = pt_smooth_derivative,
-                                size_win =win_size,method= method_peaks_detection,number_of_bin = n_bins)
+                                size_win =win_size,
+                                method= method_peaks_detection,
+                                number_of_bin = n_bins)
      
     
     interval_changepoints = push!( list_change_points_dev[2],data_testing[1,1])
@@ -4253,7 +4267,7 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
         mkpath(path_to_plot)
         
         display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-        display( Plots.vline!(interval_changepoints[2:end], c=:black, label=["change points derivative" nothing]))
+        display( Plots.vline!(interval_changepoints[2:end], c=:black, label=["change points" nothing]))
         display(Plots.plot!(reduce(vcat,composed_time), reduce(vcat,composed_sol), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
         png(string(path_to_plot, label_exp, "_model_selecetion_seg_",n_change_points,"_", name_well, ".png"))
 
@@ -4416,7 +4430,7 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
         mkpath(path_to_plot)
         
         display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-        display( Plots.vline!(change_point_to_plot[2:end], c=:black, label=["change points derivative" nothing]))
+        display( Plots.vline!(change_point_to_plot[2:end], c=:black, label=["change points" nothing]))
         display(Plots.plot!(reduce(vcat,time_points_to_plot), reduce(vcat,sol_to_plot), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
         png(string(path_to_plot, label_exp, "_model_selecetion_seg_",length(change_point_to_plot[2:end]),"_", name_well, ".png"))
 
