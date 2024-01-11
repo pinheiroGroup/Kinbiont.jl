@@ -1145,7 +1145,39 @@ The next three functions work directly on a file. So in this case are mandatory 
 
 <a name="fitting-ode-file"></a>
 ###   Fitting ODE Models
+ The provided code appears to be an example of fitting a differential equation model to experimental data:
 
+```julia
+# Define upper and lower bounds for the parameters of the ODE model
+ub_dhpm = [0.1, 0.1, 2.0, 5.0]
+lb_dhpm = [0.001, 0.00001, 0.01, 0.5]
+
+# Paths to data, annotation, results, and plots
+path_to_data = "/example/data_channel_1.csv"
+path_to_annotation = "/example/annotation_channel_1_media_M9 + 0.2% Glucose.csv"
+path_to_results = "/example/results/"
+path_to_plot = "/example/plots/"
+
+# Fit the ODE model to the experimental data
+res = fit_file_ODE(
+    "WT_CHL_dose_reponse",  # label of the experiment
+    path_to_data,            # path to the data
+    path_to_annotation,      # path to the annotation of the wells
+    "dHPM",                   # string of the used model
+    lb_dhpm,                  # array of the lower bound of the parameters
+    ub_dhpm;                 # array of the upper bound of the parameters
+    path_to_results = path_to_results,  # path where to save results
+    path_to_plot = path_to_plot,        # path where to save plots
+    do_plot = true,          # do and visualize the plots of data
+    write_res = true,        # write results
+    pt_avg = 2,              # number of points to do smoothing average
+    PopulationSize = 500,    # population size for optimization
+    maxiters = 500000,       # maximum number of iterations
+    abstol = 0.00000000001   # absolute tolerance for optimization
+)
+```
+
+This example is fitting an ODE model (specifically the "dHPM" model) to experimental data provided in CSV files.
 
 <a name="#ODE-segmented-fixed"></a>
 ## ODE segmentation with fixed number of change points
