@@ -1310,7 +1310,7 @@ This example is fitting an ODE model (specifically the "dHPM" model) to experime
 ## ODE segmentation with fixed number of change points
 
 In this example, we demonstrate the process of fitting a dataset with a sequence of ODEs using a segmentation approach. The dataset is generated with three segments, each modeled by a different ODE.
-the we fit it with the 'selection_ODE_fixed_change_points' function
+Then we fit it with the 'selection_ODE_fixed_change_points' function
 
  ```julia
 # First segment ODE
