@@ -293,8 +293,9 @@ Key Arguments:
 
 Output:
 
-- this function return an array with the following contents:
-`results_lin_log_fit = [label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR, $2\sigma$  CI of GR, doubling time,doubling time -$2\sigma$ ,doubling time + $2\sigma$  , intercept log-lin fitting,$2\sigma$ intercept ,$R^2$]`
+- an array with the following contents:
+`results_lin_log_fit = [label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
+- The plots of the log-linear fitting and of the dynamics of specific growth rate if `do_plot=true`
 
 <a name="log-lin-file"></a>
 ## Fitting growth rate with log-lin fitting for one file
@@ -322,7 +323,7 @@ Output:
     calibration_OD_curve="NA" 
     )
 ```
-This function fits a logarithmic-linear model to a single file's data. It performs model fitting, error analysis, and provides various options for customization.
+This function fits a logarithmic-linear model to a single file's data. 
 Arguments:
 
 - `label_exp::String`: Label of the experiment.
@@ -350,7 +351,11 @@ Key Arguments:
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 
+Output:
 
+- a matrix wich each column has  the following contents:
+`results_lin_log_fit[:,1] = [label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
+- The plots of the log-linear fitting and of the dynamics of specific growth rate if `do_plot=true`
 
 <a name="ODE-one-well"></a>
 ## Fitting ODE function for one well
@@ -410,6 +415,14 @@ Arguments:
 - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
 
+Output (if `results_ODE_fit =fitting_one_well_ODE_constrained(...)`:
+
+- `results_ODE_fit[1]` an array with the following contents: `["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`
+where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in this [table](#ODE_list)
+- `results_ODE_fit[2]` the times of the fitted ODE
+- `results_ODE_fit[3]` the numerical solution of the fitted ODE
+
+- The plot of the  fitting  if `do_plot=true`
 
 <a name="ODE-file"></a>
 ## Fitting ODE function for one file
