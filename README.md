@@ -354,7 +354,7 @@ Key Arguments:
 Output:
 
 - a matrix wich each column has  the following contents:
-`results_lin_log_fit[:,1] = [label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
+`results_lin_log_fit[:,1] = [label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`. It can be saved into a .csv if `write_res=true`.
 - The plots of the log-linear fitting and of the dynamics of specific growth rate if `do_plot=true`
 
 <a name="ODE-one-well"></a>
@@ -489,6 +489,11 @@ Arguments:
 -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
 - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
+Output (if `results_ODE_fit =fit_file_ODE(...)`:
+
+- `results_ODE_fit[1]` a matrix with the following contents for each column: `["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`. It can be saved into a .csv if `write_res=true`.
+where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in this [table](#ODE_list)
+- The plot of the  fitting  if `do_plot=true`
   
 <a name="custom-ODE"></a>
 ## Fitting custom ODE function for one well
@@ -529,6 +534,12 @@ This function is designed for fitting an ordinary differential equation (ODE) mo
 - `lb_param::Vector{Float64}`: Lower bounds for the parameters.
 - `ub_param::Vector{Float64}`: Upper bounds for the parameters.
 - `n_equation::Int`: The number of ODEs in the system.
+
+Output (if `results_ODE_fit =fitting_one_well_custom_ODE(...)`:
+
+- `results_ODE_fit[1]` a matrix with the following contents for each column: `["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`. It can be saved into a .csv if `write_res=true`.
+where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in this [table](#ODE_list)
+- The plot of the  fitting  if `do_plot=true`
   
 Key   Arguments:
 
@@ -605,7 +616,11 @@ Key Arguments:
 -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
 - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
-
+Output (if `results_ODE_morris_sensitivity =one_well_morris_sensitivity(...)`:
+- `results_ODE_morris_sensitivity[1]` a with in each column the initial guess for the parameters of the optimization in the same order of [table](#ODE_list)
+- `results_ODE_morris_sensitivity[2]` a matrix with the following contents for each column: `["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`. It can be saved into a .csv if `write_res=true`.
+where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in this [table](#ODE_list)
+- The plot of the  fitting  if `do_plot=true`
 
 <a name="Model-selection"></a>
 
@@ -666,6 +681,17 @@ Key Arguments:
 -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
 - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
+Output (if `Model_selection =ODE_Model_selection(...)`:
+
+- `Model_selection[1]` a Matrix containing the loss and the AIC score for each model.
+- `Model_selection[2]` a Tuple containing all the fitted models.
+- `Model_selection[3]` the AIC score of the best model
+- `Model_selection[4]` , the loss of the best model
+- `Model_selection[5]` , the parameter of the best model
+- `Model_selection[6]` , the string of the best model
+- `Model_selection[7]` , the numerical solution of the fitted ODE
+- The plot of the  fitting of the best model if `do_plot=true`
+
 
 <a name="cdp"></a>
 ## Change point detection
@@ -696,6 +722,9 @@ Key Arguments:
 - `method = "peaks_prominence"` : method to detect peak on the dissimilarity curve. Option "peaks_prominence" use prominece of peaks to score them. `"thr_scan"` grid scan with a threshold to detect peaks.
 - `number_of_bin = 40`: number of bins for the grid search. used only if `method = "thr_scan"`
 
+Output (if `cdps =cpd_local_detection(...)`:
+
+- `cdps[1]` Indexes of the detected change points
 
 <a name="cdp-fixed"></a>
 ## Fitting segmented ODE with fixed change-point number
@@ -762,6 +791,14 @@ Arguments:
 - ` PopulationSize =100`: Size of the population of the optimization
 -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
 - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+
+Output (if `res =selection_ODE_fixed_change_points(...)`:
+
+- `res[1]`. Parameters of each segment
+- `res[2]`. Interval of the ODE segment
+- `res[3]`. Time of the fitted solution
+- `res[4]`. Numerical fitted solution
+- The plot of the  fitting if `do_plot=true`
 
 
 <a name="cdp-search"></a>
@@ -833,6 +870,14 @@ Key Arguments:
 -  ` maxiters = 10000`: stop criterion, the optimization is stopped when the number of iteration is bigger than `abstol`
 - `abstol = 0.001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 
+
+Output (if `res =ODE_selection_NMAX_change_points(...)`:
+
+- `res[1]`. The  parameters of each segment of the top model
+- `res[2]`. Time of the fitted solution
+- `res[3]`. Numerical fitted solution
+- The plot of the  fitting if `do_plot=true`
+- For number of segments the results can be saved using `save_all_model=true`
 
 <a name="models"></a>
 # The mathematical models
@@ -941,12 +986,20 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
 
 `type_of_loss = "L2"`: Minimize the L2 norm of the difference between the numerical solution of an ODE and the given data.
 
+
+ $$
+ \mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2.
+ $$
 `type_of_loss = "L2_derivative"`: Minimize the L2 norm of the difference between the derivatives of the numerical solution of an ODE and the corresponding derivatives of the data.
 
 `type_of_loss ="RE" `: Minimize the relative error between the solution and data 
-
+$$
+ \mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = 0.5 \cdot \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2.
+$$
 `type_of_loss = "blank_weighted_L2"` : Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data. 
-
+$$
+   \mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = (1 - P(D(t_i) - \bar{N}(t_i, \{P\})|\text{noise})) \cdot \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2.
+$$
 <a name="examples"></a>
 # Examples and Tutorial
 
@@ -986,12 +1039,11 @@ n_start = [0.1]
 tstart = 0.0
 tmax = 600.0
 delta_t = 10.0
-integrator = KenCarp4()
 
 param_of_ode = [0.06, 1.0, 200, 0.5, 0.001, 450, -0.0002]
 
 # Calling the simulation function
-sim = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
+sim = ODE_sim(model, n_start, tstart, tmax, delta_t, param_of_ode)
 
 # Plotting scatterplot of data
 Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, size=(300, 300))
