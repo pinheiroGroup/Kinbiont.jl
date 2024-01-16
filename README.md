@@ -390,7 +390,8 @@ This function performs constrained parameter fitting on a single well's dataset 
 
 Arguments:
 
-- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see [data formatting](#data).-  `model::String`: ODE model to use
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see [data formatting](#data).
+-  `model::String`: ODE model to use
 - `name_well::String`: Name of the well.
 - `label_exp::String`: Label of the experiment.
 - `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
