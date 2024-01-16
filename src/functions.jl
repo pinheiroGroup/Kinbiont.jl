@@ -1951,7 +1951,7 @@ function plot_data( label_exp::String, #label of the experiment
     display_plots=true ,# display plots in julia or not
     save_plot=false, # save the plot or not
     overlay_plots=true, # true a single plot for all dataset false one plot per well
-    blank_subtraction="NO", # string on how to use blank (NO,avg_subctraction,time_avg)
+    blank_subtraction="NO", # string on how to use blank (NO,avg_subtraction,time_avg)
     average_replicate=false, # if true the average between replicates 
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
@@ -2360,7 +2360,7 @@ function fit_one_file_Log_Lin(
     pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
     type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
     threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
-    blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subctraction,time_avg)
+    blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
     fit_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01, # used only if correct_negative == "thr_correction"
@@ -2571,7 +2571,7 @@ function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
    PopulationSize = 300,
-    maxiters = 20000,
+    maxiters = 2000000,
      abstol = 0.00001 )
 
 
@@ -2807,14 +2807,14 @@ function fit_file_ODE(
     write_res=false, # write results
     pt_avg=1, # number of points to do smoothing average
     pt_smooth_derivative=7, # number of points to do ssmooth_derivative
-    blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subctraction,time_avg)
+    blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
     fit_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     PopulationSize = 300,
-    maxiters = 20000,
+    maxiters = 2000000,
      abstol = 0.00001)
 
 
@@ -3035,7 +3035,7 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
    PopulationSize = 300,
-    maxiters = 20000,
+    maxiters = 2000000,
      abstol = 0.00001 )
 
 
@@ -3272,7 +3272,7 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     verbose=false,
    PopulationSize = 300,
-    maxiters = 20000,
+    maxiters = 2000000,
      abstol = 0.00001 )
 
     if  multiple_scattering_correction == true
@@ -3536,8 +3536,7 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
     
     end
 
-    return rss_array,df_res_optimization, min_AIC, minimum(rss_array[2,2:end]) ,param_min, model, sol_t
-
+ 
 end
 #######################################################################
 
@@ -3562,7 +3561,7 @@ function one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row 
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
    PopulationSize = 300,
-    maxiters = 20000,
+    maxiters = 2000000,
      abstol = 0.00001 )
     # inizializing the results of sensitivity
 
@@ -3779,7 +3778,7 @@ function one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row 
 
     end
 
-    return results_sensitivity
+    return param_combination,results_sensitivity
 
 end
 
@@ -4097,7 +4096,7 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
     method_peaks_detection= "peaks_prominence",
     n_bins = 40,
    PopulationSize = 300,
-          maxiters = 20000,
+          maxiters = 2000000,
            abstol = 0.00001 )
 
     if smoothing == true
@@ -4301,7 +4300,7 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
    method_peaks_detection= "peaks_prominence",
    n_bins = 40,
    PopulationSize = 300,
-    maxiters = 20000,
+    maxiters = 2000000,
     abstol = 0.00001 
    )
 
