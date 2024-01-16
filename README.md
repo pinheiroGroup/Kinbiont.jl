@@ -1003,7 +1003,7 @@ $\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = (1 - P(D(t_i) - \bar{N}(t_i, \{P\})|
 
 <a name="examples"></a>
 # Examples and Tutorial
-
+This section provides some copy-and-paste examples of JMAKi.jl
 
 1. [Simulating Data with ODEs](#simulating-data-ODE)
 2. [Simulating Data with stochastic simulations](#simulating-data-stochastic)
@@ -1029,9 +1029,7 @@ $\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = (1 - P(D(t_i) - \bar{N}(t_i, \{P\})|
 
 ### Simulating Data with ODEs
 
-To simulate data using Ordinary Differential Equations (ODEs), begin by specifying the ODE model.
-
-The simulation function (`ODE_sim`) is then called, incorporating the specified model, initial conditions, time range, delta_t, integrator, and ODE parameters. The resulting simulation is visualized through a scatterplot
+To simulate data using Ordinary Differential Equations (ODEs):
 
 ```julia
 # Simulating data with an ODE
@@ -1055,7 +1053,7 @@ Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], 
 
 <a name="preprocessing"></a>
 ## Data Preprocessing
-One method employed is the smoothing of the data using a rolling average. This technique, implemented through the smoothing_data function, helps reduce noise. In the example, a rolling window of size 7 is applied to the original data (data_OD). 
+We start applying a rolling average smoothing to the data. In the example, a rolling window of size 7 is applied to the original data (data_OD generated in the previous examples). 
 ```julia
 data_ODsmooth = smoothing_data(data_OD, 7)
 data_ODsmooth = Matrix(data_ODsmooth)
@@ -1063,7 +1061,7 @@ data_ODsmooth = Matrix(data_ODsmooth)
 # Plotting scatterplot of smoothed data
 Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Smoothed data " nothing], markersize=2, color=:blue, size=(300, 300))
 ```
-Furthermore, to address potential external influences, a correction for multiple scattering is applied to the smoothed data. This correction is executed through the correction_OD_multiple_scattering function, requiring an external file (calibration_curve.csv). While this step is essential for certain datasets, it is marked as optional in the provided example. 
+Furthermore, to address potential external influences, a correction for multiple scattering is applied to the smoothed data. This correction is executed through the correction_OD_multiple_scattering function, requiring an external file (calibration_curve.csv).  it is  optional in the provided example. 
 ```julia
 
 # Multiple scattering correction (optional, comment out if not needed)
@@ -1080,7 +1078,7 @@ Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="A
 <a name="fitting-log-lin"></a>
 ### Log-Lin fitting
 
-This code snippet performs log-linear fitting using the fitting_one_well_Log_Lin function. 
+This code snippet performs log-linear fitting using the fitting_one_well_Log_Lin function (of data generated in the previous examples). 
 
 ```julia
 res_log_lin = fitting_one_well_Log_Lin(
@@ -1108,7 +1106,8 @@ ub_dhpm = [1.2, 1.1, 2.0, 20]
 # Lower bounds of the parameters of the ODE
 lb_dhpm = [0.0001, 0.00000001, 0.00, 0]
 ```
-The actual fitting is accomplished through the fitting_one_well_ODE_constrained function. This function takes the preprocessed dataset (data_OD), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the upper and lower bounds for the ODE parameters. Additionally, the function allows for plotting the results (do_plot=true) and specifying the path to save the generated plots (path_to_plot=path_to_plotting).
+The actual fitting is accomplished through the fitting_one_well_ODE_constrained function. This function takes the 
+dataset (data_OD generated in the previous examples), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the upper and lower bounds for the ODE parameters. Additionally, the function allows for plotting the results (do_plot=true) and specifying the path to save the generated plots (path_to_plot=path_to_plotting).
 ```julia
 # Performing ODE fitting
 results_ODE_fit = fitting_one_well_ODE_constrained(
@@ -1138,7 +1137,7 @@ function ODE_custom(du, u, param, t)
 end
 
 ```
-The upper and lower bounds for the custom ODE parameters (custom_ub and custom_lb) are defined, and the fitting process is initiated using the fitting_one_well_custom_ODE function. This function takes the preprocessed dataset (data_OD), the name and label of the well, the custom ODE function (ODE_custom), and the upper and lower bounds for the ODE parameters. Additionally, the number of ODEs in the system is specified (2 in this example). The results can be visualized through plotting (do_plot=true) with the option to save the generated plots (path_to_plot=path_to_plotting).
+The upper and lower bounds for the custom ODE parameters (custom_ub and custom_lb) are defined, and the fitting process is initiated using the fitting_one_well_custom_ODE function. This function takes the  dataset (data_OD  generated in the previous examples), the name and label of the well, the custom ODE function (ODE_custom), and the upper and lower bounds for the ODE parameters. Additionally, the number of ODEs in the system is specified (2 in this example). The results can be visualized through plotting (do_plot=true) with the option to save the generated plots (path_to_plot=path_to_plotting).
 
 ```julia
 # Bounds for the custom ODE parameters
@@ -1158,7 +1157,7 @@ The results are stored in 'results_ODE_fit' with the same format of the previous
 <a name="sensitivity-analysis"></a>
 ###   Sensitivity Analysis
 
-The sensitivity analysis is initiated with the one_well_morris_sensitivity function. This function takes the preprocessed dataset (data_OD), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (n_step_sensitivity) is specified to control the granularity of the analysis.
+The sensitivity analysis is initiated with the one_well_morris_sensitivity function. This function takes the preprocessed dataset (data_OD generated in the previous examples), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (n_step_sensitivity) is specified to control the granularity of the analysis.
 
 ```julia
 # Number of steps for Morris sensitivity analysis
@@ -1197,7 +1196,7 @@ list_lb = [lb_dhpm, lb_piece_wise_logistic, lb_triple_exp, lb_baranyi_roberts]
 ```
 
 
-The model selection process is initiated with the `ODE_Model_selection` function. This function takes the preprocessed dataset (`data_OD`), the name and label of the well, the list of models, and their respective upper and lower bounds. Additionally, the function allows for plotting the results of the best-fit model (`plot_best_model=true`) and specifies the path to save the generated plots (`path_to_plot=path_to_plotting`). The `verbose=true` option provides detailed output during the model selection process.
+The model selection process is initiated with the `ODE_Model_selection` function. This function takes the preprocessed dataset (`data_OD` generated in the previous examples), the name and label of the well, the list of models, and their respective upper and lower bounds. Additionally, the function allows for plotting the results of the best-fit model (`plot_best_model=true`) and specifies the path to save the generated plots (`path_to_plot=path_to_plotting`). The `verbose=true` option provides detailed output during the model selection process.
 
 ```julia
 # Performing model selection
@@ -1213,9 +1212,6 @@ results_ms = ODE_Model_selection(
 
 The results of the model selection process are stored in the `results_ms` variable.
 
-results_ms[1]
-
-results_ms[2]
 
 
 <a name="model-fitting-plate"></a>
@@ -1386,7 +1382,7 @@ test_fixed_cdp = selection_ODE_fixed_change_points(
 )
 ```
 
-results are stored in test_fixed_cdp with the following format XXXXXD
+results are stored in test_fixed_cdp.
 
 <a name="#ODE-segmented"></a>
 ## ODE segmentation
@@ -1404,4 +1400,4 @@ Using the same code as the previous example to generate the data the  fit  is pe
  path_to_plot=path_to_plotting,
  pt_smooth_derivative=0)
 ```
-results are stored in test_cdp with the following format XXXXXD
+results are stored in test_cdp.
