@@ -252,8 +252,11 @@ Output:
 specific_gr_evaluation(data_smooted::Matrix{Float64},
      pt_smoothing_derivative::Int)
 ```
+This function evaluate the specific growth rate of a growth curve
 
-
+Arguments:
+- `data_smooted::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see [data formatting](#data).
+-  `pt_smoothing_derivative::Int` Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 <a name="log-lin-one-well"></a>
 ## Fitting growth rate with log-lin fitting for one well
 ```julia
@@ -275,7 +278,7 @@ specific_gr_evaluation(data_smooted::Matrix{Float64},
 This function fits a logarithmic-linear model to a single well's data and performs analysis such as plotting and error calculation.
 Arguments:
 
-- `data::Matrix{Float64}`: The dataset of OD/fluorescence values.
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see [data formatting](#data).
 - `name_well::String`: The name of the well.
 - `label_exp::String`: The label of the experiment.
 
@@ -283,7 +286,7 @@ Key Arguments:
 - `do_plot=true`: Whether to generate and save plots.
 - `path_to_plot="NA"`: The path to save the plots, used only if `do_plot=true`.
 - `pt_avg=7`: The number of points to do rolling average smoothing.
-- `pt_smoothing_derivative=7`: The number of points of the window to evaluate specific growth rate.
+- `pt_smoothing_derivative=7`:  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `pt_min_size_of_win=7`: The minimum size of the exponential windows in the number of smoothed points.
 - `type_of_win="maximum"`: How the exponential phase window is selected ("maximum" or "global_thr").
 - `threshold_of_exp=0.9`: The threshold of the growth rate in quantile to define the exponential windows.
@@ -340,7 +343,7 @@ Key Arguments:
 - `verbose=false`: Whether to enable verbose output.
 - `write_res= false`: Whether to write results.
 - `pt_avg=7`: Number of points to use for smoothing average.
-- `pt_smoothing_derivative=7`: The number of points of the window to evaluate specific growth rate.
+- `pt_smoothing_derivative=7`:  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `pt_min_size_of_win=7`: Minimum size of the exponential windows in number of smoothed points.
 - `type_of_win="maximum`: How the exponential phase window is selected ("maximum" or "global_thr").
 - `threshold_of_exp=0.9`: Threshold of growth rate in quantile to define the exponential windows.
@@ -348,7 +351,7 @@ Key Arguments:
 - `fit_replicate=false`: If `true`, fit the average between replicates; if `false`, fit all replicates independently.
 - `correct_negative="thr_correction`: Method to correct negative values (options: "thr_correction", "blank_correction").
 - `thr_negative=0.01`: Threshold value used only if `correct_negative == "thr_correction"`.
-- `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
+- `multiple_scattering_correction=false`: Whether or not correct the data with a calibration curve.
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 
 Output:
@@ -387,8 +390,7 @@ This function performs constrained parameter fitting on a single well's dataset 
 
 Arguments:
 
-- `data::Matrix{Float64}`: Dataset 
--  `model::String`: ODE model to use
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see [data formatting](#data).-  `model::String`: ODE model to use
 - `name_well::String`: Name of the well.
 - `label_exp::String`: Label of the experiment.
 - `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
@@ -527,7 +529,7 @@ This function is designed for fitting an ordinary differential equation (ODE) mo
 
  Arguments:
 
-- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see [data formatting](#data).
 - `name_well::String`: The name of the well.
 - `label_exp::String`: The label of the experiment.
 - `model::Any`: The ODE model to use.
@@ -987,19 +989,18 @@ Where $[\text{Nut.}]$ is the limiting nutrient concentration, $\mu_\text{max}$ i
 `type_of_loss = "L2"`: Minimize the L2 norm of the difference between the numerical solution of an ODE and the given data.
 
 
- $$
- \mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2.
- $$
+ $\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2$
+ 
 `type_of_loss = "L2_derivative"`: Minimize the L2 norm of the difference between the derivatives of the numerical solution of an ODE and the corresponding derivatives of the data.
 
 `type_of_loss ="RE" `: Minimize the relative error between the solution and data 
-$$
- \mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = 0.5 \cdot \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2.
-$$
+
+$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = 0.5 \cdot \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2$
+
 `type_of_loss = "blank_weighted_L2"` : Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data. 
-$$
-   \mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = (1 - P(D(t_i) - \bar{N}(t_i, \{P\})|\text{noise})) \cdot \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2.
-$$
+
+$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = (1 - P(D(t_i) - \bar{N}(t_i, \{P\})|\text{noise})) \cdot \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2$
+
 <a name="examples"></a>
 # Examples and Tutorial
 
