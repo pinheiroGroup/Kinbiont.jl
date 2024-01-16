@@ -2779,7 +2779,7 @@ function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first
 
 
 
-    return res_param
+    return res_param,remade_solution.t, sol_fin[1, 1:end]
 
 end
 
@@ -3907,9 +3907,7 @@ function detect_list_change_points( data::Matrix{Float64},n_max::Int;win_size=2,
          size_win Int size of the used window in all of the methods
         """
       if type_of_curve == "deriv"
-            data_s = specific_gr_evaluation(data_smooted, pt_deriv)
-            data_times = [(data_smooted[1, r] + data_smooted[1, (r+pt_deriv)]) / 2 for r in 1:1:(length(data_smooted[2, :])-pt_deriv)]
-            data = Matrix(hcat(data_s,data_times))
+            data = specific_gr_evaluation(data, pt_deriv)
         end  
    
        curve_dissimilitary_deriv = curve_dissimilitary_lin_fitting( data, # dataset first row times second row OD
@@ -4289,7 +4287,7 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
     type_of_loss="L2", # type of used loss 
     type_of_detection =  "lsdd",
     type_of_curve = "original", 
-    pt_avg = pt_avg , # number of the point to generate intial condition
+    pt_avg = 1 , # number of the point to generate intial condition
     smoothing= true, # the smoothing is done or not?
     do_plot=false, # do plots or no
     path_to_plot="NA", # where save plots
@@ -4302,9 +4300,9 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
    save_all_model=false ,
    method_peaks_detection= "peaks_prominence",
    n_bins = 40,
-  PopulationSize = 300,
-          maxiters = 20000,
-           abstol = 0.00001 
+   PopulationSize = 300,
+    maxiters = 20000,
+    abstol = 0.00001 
    )
 
     # fitting single models
