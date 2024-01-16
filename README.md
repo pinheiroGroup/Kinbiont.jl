@@ -1049,8 +1049,29 @@ Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], 
 ```
 
 <a name="simulating-data-stochastic"></a>
-## Simulating Data with stochastic simulations
+### Simulating Data with stochastic simulations
 
+To simulate data using  stochastic models:
+
+```julia
+sim =stochastic_sim("Monod", #string of the model
+   1, # number of starting cells
+   10000.1, # starting # molecules (in "biomass units") of the limiting nutrients
+    0.0, # start time of the sim
+    2000.0, # final time of the sim
+    0.1, # delta t for poisson approx
+    11.1,
+    10.1, # monod constant
+    0.06, # massimum possible growth rate
+   10.0, # lag time
+    0.0000001,# nutrient consumed per division (conc)
+    1000.0 #volume
+)
+plot(sim[3],sim[1], xlabel="Time",ylabel="# of indivuals")
+plot(sim[3],sim[2], xlabel="Time",ylabel="nutrients/volume")
+
+data_OD = Matrix(transpose(hcat(sim[3],sim[1])))
+```
 <a name="preprocessing"></a>
 ## Data Preprocessing
 We start applying a rolling average smoothing to the data. In the example, a rolling window of size 7 is applied to the original data (data_OD generated in the previous examples). 
