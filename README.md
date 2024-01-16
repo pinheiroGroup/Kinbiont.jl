@@ -1224,13 +1224,54 @@ The next three functions work directly on a file. So in this case are mandatory 
 
 <a name="plot-file"></a>
 ### Plot one file
+The provided code  is an example of plotting experimental data in a .csv file:
 
+
+```julia
+
+# Paths to data, annotation, results, and plots
+path_to_data = "/example/data_channel_1.csv"
+path_to_annotation = "/example/annotation_channel_1_media_M9 + 0.2% Glucose.csv"
+path_to_plot = "/example/plots/"
+
+plot_data(   "example", #label of the experiment
+    path_to_data, # path to the folder to analyze
+    path_to_annotation;# path to the annotation of the wells
+    path_to_plot=path_to_plot, # path where to save Plots
+    display_plots=true ,# display plots in julia or not
+    save_plot=true, # save the plot or not
+    overlay_plots=true, # true a single plot for all dataset false one plot per well
+    blank_subtraction="avg_blank" # string on how to use blank (NO,avg_blank,time_avg)
+)
+```
 <a name="fitting-log-lin-file"></a>
 ### Log-Lin fitting
 
+ The provided code  is an example of Log-Lin fitting of experimental data in a .csv file:
+
+
+```julia
+
+# Paths to data, annotation, results, and plots
+path_to_data = "/example/data_channel_1.csv"
+path_to_annotation = "/example/annotation_channel_1_media_M9 + 0.2% Glucose.csv"
+path_to_results = "/example/results/"
+path_to_plot = "/example/plots/"
+
+res = fit_one_file_Log_Lin(
+    "log_lin_WT_CHL_dose_reponse", #label of the experiment
+    path_to_data, # path to the folder to analyze
+    path_to_annotation;
+  path_to_results = path_to_results,  # path where to save results
+    path_to_plot = path_to_plot,        # path where to save plots
+    do_plot = true,          # do and visualize the plots of data
+    write_res = true,        # write results
+    )
+```
+
 <a name="fitting-ode-file"></a>
 ###   Fitting ODE Models
- The provided code appears to be an example of fitting a differential equation model to experimental data:
+ The provided code  is an example of fitting a differential equation model to experimental data in a .csv file:
 
 ```julia
 # Define upper and lower bounds for the parameters of the ODE model
