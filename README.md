@@ -880,7 +880,7 @@ Output (if `res =ODE_selection_NMAX_change_points(...)`:
 - `res[2]`. Time of the fitted solution
 - `res[3]`. Numerical fitted solution
 - The plot of the  fitting if `do_plot=true`
-- For number of segments the results can be saved using `save_all_model=true`
+- If `save_all_model=true` the best segnmented model is saved for each number of change points between 0 and `n_max_change_points`
 
 <a name="models"></a>
 # The mathematical models
