@@ -134,7 +134,7 @@ If a OD calibration curved is provided it should have the following format XXXXX
 
 <a name="simulating-ODE"></a>
 ## Simulate ODE
-```
+```julia
 
    ODE_sim(model::String, 
     n_start::Vector{Float64}, 
@@ -165,7 +165,7 @@ Output:
 
 <a name="simulating-stochastic"></a>
 ##  Stochastic simulation
-```
+```julia
     stochastic_sim(model::String,
          n_start::Int,
          n_mol_start::Float64,
@@ -205,7 +205,7 @@ Output (if `sim =stochastic_sim(...)`):
 
 <a name="plot-file"></a>
 ## Plotting a dataset from file
-```
+```julia
 plot_data( label_exp::String, 
     path_to_data::String, 
     path_to_annotation::String;
@@ -256,7 +256,8 @@ specific_gr_evaluation(data_smooted::Matrix{Float64},
 
 <a name="log-lin-one-well"></a>
 ## Fitting growth rate with log-lin fitting for one well
-``` fitting_one_well_Log_Lin(data::Matrix{Float64}, 
+```julia
+ fitting_one_well_Log_Lin(data::Matrix{Float64}, 
     name_well::String, 
     label_exp::String; 
     do_plot=false,
@@ -292,12 +293,12 @@ Key Arguments:
 
 Output:
 
-- this function return an array with the following contents:'    results_lin_log_fit = [label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR, $2\sigma$  CI of GR, doubling time,doubling time -$2\sigma$ ,doubling time + $2\sigma$  , intercept log-lin fitting,$2\sigma$ intercept ,$R^2$]
-'
+- this function return an array with the following contents:
+`results_lin_log_fit = [label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR, $2\sigma$  CI of GR, doubling time,doubling time -$2\sigma$ ,doubling time + $2\sigma$  , intercept log-lin fitting,$2\sigma$ intercept ,$R^2$]`
 
 <a name="log-lin-file"></a>
 ## Fitting growth rate with log-lin fitting for one file
-```
+```julia
     fit_one_file_Log_Lin(
     label_exp::String, 
     path_to_data::String,
@@ -353,7 +354,7 @@ Key Arguments:
 
 <a name="ODE-one-well"></a>
 ## Fitting ODE function for one well
-```
+```julia
  fitting_one_well_ODE_constrained(data::Matrix{Float64},
     name_well::String, 
     label_exp::String,
@@ -412,7 +413,7 @@ Arguments:
 
 <a name="ODE-file"></a>
 ## Fitting ODE function for one file
-```
+```julia
    fit_file_ODE(
     label_exp::String,
     path_to_data::String,
@@ -478,7 +479,7 @@ Arguments:
   
 <a name="custom-ODE"></a>
 ## Fitting custom ODE function for one well
-```
+```julia
 fitting_one_well_custom_ODE(data::Matrix{Float64},
     name_well::String, 
     label_exp::String,
@@ -538,7 +539,7 @@ Key   Arguments:
 
 <a name="Sensitivity-analysis"></a>
 ## Sensitivity analysis
-```
+```julia
  one_well_morris_sensitivity(data::Matrix{Float64}, 
     name_well::String,
     label_exp::String, 
@@ -596,7 +597,7 @@ Key Arguments:
 <a name="Model-selection"></a>
 
 ## Model selection
-```
+```julia
 ODE_Model_selection(data::Matrix{Float64}, 
     name_well::String, 
     label_exp::String,
@@ -655,7 +656,7 @@ Key Arguments:
 
 <a name="cdp"></a>
 ## Change point detection
-```
+```julia
 cpd_local_detection(data::Matrix{Float64},
     n_max_cp::Int;
     type_of_detection="lsdd",
@@ -685,7 +686,7 @@ Key Arguments:
 
 <a name="cdp-fixed"></a>
 ## Fitting segmented ODE with fixed change-point number
-```
+```julia
 selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, 
     name_well::String,
     label_exp::String,
@@ -752,7 +753,7 @@ Arguments:
 
 <a name="cdp-search"></a>
 ## Fitting segmented ODE with direct search for a maximum number of change-points 
-```
+```julia
 ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, 
     name_well::String, 
     label_exp::String, 
@@ -989,7 +990,7 @@ Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], 
 <a name="preprocessing"></a>
 ## Data Preprocessing
 One method employed is the smoothing of the data using a rolling average. This technique, implemented through the smoothing_data function, helps reduce noise. In the example, a rolling window of size 7 is applied to the original data (data_OD). 
-```
+```julia
 data_ODsmooth = smoothing_data(data_OD, 7)
 data_ODsmooth = Matrix(data_ODsmooth)
 
@@ -997,7 +998,7 @@ data_ODsmooth = Matrix(data_ODsmooth)
 Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Smoothed data " nothing], markersize=2, color=:blue, size=(300, 300))
 ```
 Furthermore, to address potential external influences, a correction for multiple scattering is applied to the smoothed data. This correction is executed through the correction_OD_multiple_scattering function, requiring an external file (calibration_curve.csv). While this step is essential for certain datasets, it is marked as optional in the provided example. 
-```
+```julia
 
 # Multiple scattering correction (optional, comment out if not needed)
 data_ODsmooth = correction_OD_multiple_scattering(data_ODsmooth, "/your_path/calibration_curve.csv")
@@ -1023,7 +1024,7 @@ res_log_lin = fitting_one_well_Log_Lin(
 )
 ```
  The results are stored in the res_log_lin variable. With the following form
-```
+```julia
 results_lin_log_fit = [label_exp, name_well, start_exp_win, end_exp_win, time_max_gr ,gr_of_max, gr_log_lin_fitting, 2_sigma_confidence_gr, doubling time , doubling time  - 2 sigma,  doubling time  + 2 sigma, intercept log-lin fitting, ntercept log-lin fitting 2 sigma ,R^2]
 
 ```
@@ -1042,7 +1043,7 @@ ub_dhpm = [1.2, 1.1, 2.0, 20]
 lb_dhpm = [0.0001, 0.00000001, 0.00, 0]
 ```
 The actual fitting is accomplished through the fitting_one_well_ODE_constrained function. This function takes the preprocessed dataset (data_OD), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the upper and lower bounds for the ODE parameters. Additionally, the function allows for plotting the results (do_plot=true) and specifying the path to save the generated plots (path_to_plot=path_to_plotting).
-```
+```julia
 # Performing ODE fitting
 results_ODE_fit = fitting_one_well_ODE_constrained(
     data_OD, "", "", "dHPM", lb_dhpm, ub_dhpm,
@@ -1051,7 +1052,7 @@ results_ODE_fit = fitting_one_well_ODE_constrained(
 
 ```
 The results are stored in 'results_ODE_fit' with the following format
-```
+```julia
  results_ODE_fit = ["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]
 ```
 
@@ -1062,7 +1063,7 @@ where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE
 ###   Custom ODE Fitting
 
 The custom ODE function (ODE_custom) is defined with specific dynamics tailored to the characteristics of the microbial system. In this example, the function computes the rates of change (du) for two state variables (u) based on the provided parameters (param) and time (t). The specific structure of this function should be adjusted to match the dynamics of the microbial system under investigation.
-```
+```julia
 
 # Custom ODE function
 function ODE_custom(du, u, param, t)
@@ -1073,7 +1074,7 @@ end
 ```
 The upper and lower bounds for the custom ODE parameters (custom_ub and custom_lb) are defined, and the fitting process is initiated using the fitting_one_well_custom_ODE function. This function takes the preprocessed dataset (data_OD), the name and label of the well, the custom ODE function (ODE_custom), and the upper and lower bounds for the ODE parameters. Additionally, the number of ODEs in the system is specified (2 in this example). The results can be visualized through plotting (do_plot=true) with the option to save the generated plots (path_to_plot=path_to_plotting).
 
-```
+```julia
 # Bounds for the custom ODE parameters
 custom_ub = [1.2, 1.1, 2.0, 20]
 custom_lb = [0.0001, 0.00000001, 0.00, 0]
@@ -1093,7 +1094,7 @@ The results are stored in 'results_ODE_fit' with the same format of the previous
 
 The sensitivity analysis is initiated with the one_well_morris_sensitivity function. This function takes the preprocessed dataset (data_OD), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (n_step_sensitivity) is specified to control the granularity of the analysis.
 
-```
+```julia
 # Number of steps for Morris sensitivity analysis
 n_step_sensitivity = 3
 
@@ -1204,7 +1205,7 @@ This example is fitting an ODE model (specifically the "dHPM" model) to experime
 In this example, we demonstrate the process of fitting a dataset with a sequence of ODEs using a segmentation approach. The dataset is generated with three segments, each modeled by a different ODE.
 the we fit it with the 'selection_ODE_fixed_change_points' function
 
- ```
+ ```julia
 # First segment ODE
 model = "exponential"
 n_start = [0.1]
@@ -1283,7 +1284,7 @@ results are stored in test_fixed_cdp with the following format XXXXXD
 <a name="#ODE-segmented"></a>
 ## ODE segmentation
 Using the same code as the previous example to generate the data the  fit  is performed with 
-```
+```julia
 # Fitting with direct search on the number of change points
  test_cdp = ODE_selection_NMAX_change_points(data_OD,
     "test",
