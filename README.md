@@ -159,6 +159,10 @@ Arguments:
 Key argument:
 - `integrator=KenCarp4() `: The chosen solver from the SciML ecosystem for ODE integration, default KenCarp4 algorithm.
 
+Output:
+
+- it returns a standard SciML output (i.e., if `sim =ODE_sim(...)`, then `sim.t` is the array of times and `sim.u` is the array of the simulation)
+
 <a name="simulating-stochastic"></a>
 ##  Stochastic simulation
 ```
@@ -191,6 +195,13 @@ Arguments:
 - `lambda::Float64`: The lag time.
 - `n_mol_per_birth::Float64`: The nutrient consumed per division (mass).
 - `volume::Float64`: The volume.
+
+
+Output (if `sim =stochastic_sim(...)`):
+
+- `sim[1]`: array of the number of individuals in the population.
+- `sim[2]`: array of the number of biomass equivalent mass of the limiting nutrient concentration.
+- `sim[3]`: array of the times of the simulation. 
 
 <a name="plot-file"></a>
 ## Plotting a dataset from file
@@ -231,8 +242,10 @@ Key Arguments:
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 
 
+Output:
 
-
+- For this function the output are saved or displayed depending on the values of key arguments.
+  
 <a name="Specific-growth-rate-evaluation"></a>
 ## Specific growth rate evaluation
 ```
@@ -275,6 +288,12 @@ Key Arguments:
 - `threshold_of_exp=0.9`: The threshold of the growth rate in quantile to define the exponential windows.
 - `multiple_scattering_correction=false`: Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+
+
+Output:
+
+- this function return an array with the following contents:'    results_lin_log_fit = [label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR, $2\sigma$  CI of GR, doubling time,doubling time -$2\sigma$ ,doubling time + $2\sigma$  , intercept log-lin fitting,$2\sigma$ intercept ,$R^2$]
+'
 
 <a name="log-lin-file"></a>
 ## Fitting growth rate with log-lin fitting for one file
