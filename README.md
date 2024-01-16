@@ -1006,28 +1006,30 @@ $\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = (1 - P(D(t_i) - \bar{N}(t_i, \{P\})|
 # Examples and Tutorial
 This section provides some copy-and-paste examples of JMAKi.jl
 
-1. [Simulating Data with ODEs](#simulating-data-ODE)
-2. [Simulating Data with stochastic simulations](#simulating-data-stochastic)
-3. [Data Preprocessing](#data-preprocessing)
-4. [Fitting single well](#model-fitting)
+1. [Simulating Data with ODEs](#simulating-data)
+   -[Simulating Data with ODEs](#simulating-data-ODE)
+   -[Simulating Data with stochastic simulations](#simulating-data-stochastic)
+2. [Data Preprocessing](#data-preprocessing)
+3. [Fitting single well](#model-fitting)
     - [Log-Lin fitting](#fitting-log-lin)
     - [Fitting ODE Models](#fitting-ode)
     - [Custom ODE Fitting](#custom-ode-fitting)
     - [Sensitivity Analysis](#sensitivity-analysis)
     - [ODE Model Selection](#model-selection)
   
-5. [Fitting one file (a plate)](#model-fitting-plate)
+4. [Fitting one file (a plate)](#model-fitting-plate)
 
      - [Plot one file](#plot-file)
      - [Log-Lin fitting](#fitting-log-lin-file)
     - [Fitting ODE Models](#fitting-ode-file)
 
-7. [ODE segmentation with fixed number of change points](#ODE-segmented-fixed)
-8. [ODE segmentation](#ODE-segmented)
+5. [ODE segmentation with fixed number of change points](#ODE-segmented-fixed)
+6. [ODE segmentation](#ODE-segmented)
+
+<a name="simulating-data"></a>
+## Simulating Data 
 
 <a name="simulating-data-ODE"></a>
-## Simulating Data with ODEs
-
 ### Simulating Data with ODEs
 
 To simulate data using Ordinary Differential Equations (ODEs):
