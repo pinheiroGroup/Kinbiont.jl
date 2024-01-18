@@ -901,6 +901,7 @@ The models and their parameters are sumarrized in the following table
 | Diauxic_replicator_1                    | gr, N_max, lag, arbitrary_const, linear_const |
 | Diauxic_replicator_2                    | gr, N_max, lag, arbitrary_const, linear_const, growth_stationary |
 | HPM                                    | gr, exit_lag_rate, N_max |
+| dHPM                                    | gr, exit_lag_rate, N_max,shape |
 | HPM_3_death                            | gr, exit_lag_rate, inactivation_rate, death_rate |
 | HPM_3_death_resistance                 | gr, exit_lag_rate, inactivation_rate, death_rate, n_res, n_max |
 | HPM_3_inhibition                       | gr, exit_lag_rate, inactivation_rate |
