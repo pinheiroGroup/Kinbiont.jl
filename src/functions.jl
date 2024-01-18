@@ -2989,10 +2989,10 @@ function fit_file_ODE(
 
         if verbose == true
             println("the results are:")
-            println(temp_results_1)
+            println(temp_results_1[1])
         end
 
-        parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1)
+        parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[1])
 
     end
 
