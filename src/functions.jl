@@ -2831,7 +2831,7 @@ function fit_file_ODE(
  
 
     ## reading annotation here
-    annotation = CSV.File(string(path_to_annotation))
+    annotation = CSV.File(string(path_to_annotation),header=false)
     names_of_annotated_df = [annotation[l][1] for l in 1:length(annotation)]
     # selcting blank wells
     properties_of_annotation = [annotation[l][2] for l in 1:length(annotation)]
@@ -2852,7 +2852,9 @@ function fit_file_ODE(
 
 
     # excluding blank data and discarded wells 
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    if length(list_of_blank)>0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
 
     if length(list_of_discarded)>0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
