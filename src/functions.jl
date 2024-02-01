@@ -1962,7 +1962,7 @@ function plot_data( label_exp::String, #label of the experiment
     """
 
 
-        annotation = CSV.File(string(path_to_annotation))
+        annotation = CSV.File(string(path_to_annotation),header=false)
         names_of_annotated_df = [annotation[l][1] for l in 1:length(annotation)]
         # selcting blank wells
         properties_of_annotation = [annotation[l][2] for l in 1:length(annotation)]
