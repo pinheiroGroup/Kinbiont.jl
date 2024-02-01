@@ -1969,7 +1969,6 @@ function plot_data( label_exp::String, #label of the experiment
         list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
         list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
         list_of_blank = Symbol.(list_of_blank)
-        list_of_blank = Symbol.(list_of_blank)
     
     
     
@@ -3538,7 +3537,8 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
     
     end
 
- 
+    return rss_array,df_res_optimization, min_AIC, minimum(rss_array[2,2:end]) ,param_min,model,data_th
+
 end
 #######################################################################
 
