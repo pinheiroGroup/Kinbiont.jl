@@ -2,920 +2,105 @@
  Declaring the ODE models
 """
 
-
-########################## No CONSTRAIN
-# heterogeneous population model (HPM) with dormant active and starving population
-
-
-
-
-function HPM_3_inhibition(du, u, param, t)
-          
-    du[1] = - u[1] * param[2]
-          
-    du[2] = u[1] * param[2] + param[1] * u[2] -  param[3]*  u[2]
-    
-    du[3] = param[3]*  u[2]# - param[4]*  u[3]
-
-          
-end
-
-function HPM_3_death(du, u, param, t)
-          
-    du[1] = - u[1] * param[2]
-          
-    du[2] = u[1] * param[2] + param[1] * u[2] -  param[3]*  u[2]
-    
-    du[3] = param[3]*  u[2] - param[4]*  u[3]
-
-          
-end
-
-function HPM_3_death_resistance_old(du, u, param, t)
-          
-    du[1] = - u[1] * param[2]
-          
-    du[2] = u[1] * param[2] + param[1] * u[2] * (1 - (u[3]+u[1]+u[2])/param[6]) -  param[3]*  u[2] 
-
-    
-    du[3] = param[3]*  u[2] + param[4]*  u[3]* (1 - (u[3]+u[1]+u[2])/param[5])
-
-          
-end
-
-function dHPM_3_death_resistance(du, u, param, t)
-          
-    du[1] = - u[1] * param[2]
-          
-    du[2] = u[1] * param[2] + param[1] * u[2]  -  param[3]*  u[2]#*(1-u[2])
-    
-    du[3] = param[3]*  u[2]  + param[4]*  u[3]* (1 - NaNMath.pow((u[3]+u[1]+u[2])/param[5],param[6]))
-
-          
-end
-
-
-
-# McKellar (1997): heterogeneous population model (HPM).
-
-function ODEs_McKellar(du, u, param, t)
-
-    du[1] = - u[1] * (param[2]) 
-
-    du[2] = u[1] * (param[2])  +  param[1] *  u[2] * ( 1 - (u[1] + u[2])/param[3]) 
-
-end
-function ODEs_HPM_exp(du, u, param, t)
-
-    du[1] = - u[1] * (param[2]) 
-
-    du[2] = u[1] * (param[2])  +  param[1] *  u[2] 
-
-end
-function ODEs_HPM_inhibition(du, u, param, t)
-
-    du[1] =  - u[1] * (param[2])  +  param[1] *  u[1] 
-
-    du[2] = + u[1] * (param[2]) + param[4] * u[2]* ( 1 - (u[1] + u[2])/param[3]) 
-
-end
-
-function ODEs_dHPM_inhibition(du, u, param, t)
-
-    du[1] =  - u[1] * (param[2])  +  param[1] *  u[1] 
-
-    du[2] = + u[1] * (param[2]) + param[4] * u[2]* ( 1 -  NaNMath.pow( (u[1] + u[2])/param[3],param[5])) 
-
-end
-
-
-function ODEs_HPM_SR(du, u, param, t)
-
-
-
-    du[1] =  -  param[4]  / (1+ param[3] * exp(- param[2] * t) )*  u[1] +  param[1] *  u[1] -   param[5]  * u[1] 
-
-    du[2] =  +  param[5]  * u[1] 
-
-end
-
-# damped heterogeneous population model (dHPM).
-
-function ODEs_damped_McKellar(du, u, param, t)
-
-    du[1] = - u[1] * (param[2]) 
-
-    du[2] = u[1] * (param[2])  +  param[1] *  u[2] * ( 1 - NaNMath.pow( (u[1] + u[2])/param[3],param[4])) 
-
-end
-
-# Diauxic  replicator model 1 from "Diauxic behaviour for biological processes at various timescales"
-
-
-function ODE_Diauxic_replicator_1(du, u, param, t)
-
-    if t <= param[3]
-        du[1] = param[5]
-
-    else
-
-        du[1] = u[1] * (param[2] - u[1]) * (NaNMath.pow(u[1] - param[1], 2) + param[4])
-
-    end
-
-end
-
-# Diauxic  replicator model 2    "Diauxic behaviour for biological processes at various timescales"
-
-
-
-function ODE_Diauxic_replicator_2(du, u, param, t)
-
-    if t <= param[3]
-        du[1] = param[5]
-
-    else
-
-
-        du[1] = u[1] * (param[2] - u[1]) * (NaNMath.pow(u[1] - param[1], 2) * NaNMath.pow(u[1] - param[6], 2) + param[4])
-
-
-
-    end
-
-end
-
-# empirical Diauxic
-
-
-
-function ODE_Diauxic_piecewise_damped_logistic(du, u, param, t)
-
-    if (t <=  param[4] && t <= param[6] && t <= param[10])
-        du[1] = u[1] * param[5]
-
-    elseif (t > param[4] && t <= param[6] && t <= param[10])
-
-        du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[3]))
-
-    elseif (t > param[4] && t > param[6] && t <= param[10] )
-
-        du[1] = u[1] * param[11]  
-
-    elseif (t > param[4] && t > param[6] && t> param[10] )
-        du[1] = u[1] * param[7] * (1 - NaNMath.pow((u[1] / param[8]), param[9]))
-
-    end
-
-
-end
-
-
-
-function ODE_Diauxic_piecewise_damped_logistic_bk(du, u, param, t)
-
-    if (t <=  param[4] && t <= param[6] && t <= param[10])
-        du[1] = u[1] * param[5]
-
-    elseif (t > param[4] && t <= param[6] && t <= param[10])
-
-        du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[3]))
-    elseif (t > param[4] && t > param[6] && t <= param[10] )
-
-        du[1] = u[1] * param[11]
-
-    elseif (t > param[4] && t > param[6] && t> param[10] )
-        du[1] = u[1] * param[7] * (1 - NaNMath.pow((u[1] / param[8]), param[9]))
-
-    end
-
-
-end
-
-
-# global optimizator piecewise 
-
-
-
-# custom piecewise model
-function ODE_exponential(du, u, param, t)
-
-        du[1] = param[1]*u[1]
-
-
-end
-function ODE_piecewise_damped_logistic(du, u, param, t)
-
-    if t <= param[3]
-        du[1] = param[5]
-
-    else
-
-        du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[4]))
-
-
-    end
-
-end
-function ODE_triple_piecewise_damped_logistic(du, u, param, t)
-
-    if t <= param[3]
-        du[1] = u[1] * param[5]
-
-    elseif ( t <=  param[6] && t > param[3] )
-
-
-        du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[4]))
-
-
-    elseif  ( t >  param[6] && t > param[3] ) 
-        du[1] = u[1] * param[7]
-    end
-
-end
-
-
-function ODE_triple_piecewise(du, u, param, t)
-
-    if t <= param[4]
-
-        du[1] = u[1] * param[2]
-
-    elseif (t <= param[5] && t > param[4] )
-
-        du[1] = u[1] * param[1]
-
-
-    elseif (t > param[5] && t > param[4] )
-
-        du[1] = u[1] * param[3]
-    end
-
-end
-
-
-function ODE_triple_piecewise_sub_linear(du, u, param, t)
-
-    if t <= param[4]
-
-        du[1] = u[1] * param[2]
-
-    elseif t <= param[5]
-
-        du[1] = u[1] * param[1]
-
-
-    else
-
-        du[1] =(1- NaNMath.log( u[1]/param[6] ))  * param[3]
-    end
-
-end
-
-
-function ODE_gbsm_piecewise(du, u, param, t)
-
-    if t <= param[4]
-
-        du[1] = param[1] * (1 / (1 + NaNMath.pow(abs((t - param[4]) / param[2]), 2 * param[3])))
-
-    else
-
-        du[1] = param[1] * (1 / (1 + NaNMath.pow(abs((t - param[4]) / param[5]), 2 * param[6])))
-
-
-    end
-
-end
-
-function ODE_four_piecewise(du, u, param, t)
-
-    if t <= param[5]
-
-        du[1] = u[1] * param[2]
-
-    elseif (t <= param[6] && t > param[5])
-
-        du[1] = u[1] * param[1]
-
-    elseif (t <= param[7] && t >  param[6] && t >  param[5])
-
-        du[1] = u[1] * param[3]
-
-    elseif (t > param[7] && t >  param[6] && t >  param[5])
-
-        du[1] = u[1] * param[4]
-    end
-
-end
-
-# hyper gompertz curve from "A Theory of Growth" Turner, Brandley and Kirk 1976
-
-function hyper_gompertz(du, u, param, t)
-    du[1] = param[1] * u[1] * NaNMath.pow(NaNMath.log(max(param[2], u[1]) / u[1]), 1 + param[3])
-end
-
-# hyper logistic curve from "A Theory of Growth" Turner, Brandley and Kirk 1976
-
-function hyper_logistic(du, u, param, t)
-    du[1] = (param[1] / param[2]) * NaNMath.pow(u[1], (1 - param[3])) * NaNMath.pow(max(param[2], u[1] + 0.00001) - u[1], 1 + param[3])
-
-end
-
-
-# Bertalanffy Richards curve from "A Theory of Growth" Turner, Brandley and Kirk 1976
-
-function bertalanffy_richards(du, u, param, t)
-    du[1] = NaNMath.pow(param[1] / param[2], param[3]) * u[1] * (NaNMath.pow(max(param[2], u[1] + 0.00001), param[3]) - NaNMath.pow(u[1], param[3]))
-
-end
-# Multiplicative modelling of four-phase microbial growth, ODE von Bertalanffy
-
-function ODE_von_bertalanffy(du, u, param, t)
-    du[1] = u[1] * ( param[1] * param[2] * t ^(param[2] - 1 ) - param[3] * param[4] * t ^(param[4] - 1 ))
-
-end
-
-# third part from A general model for ontogenetic growth
-function ODE_triple_piecewise_bertalanffy_richards(du, u, param, t)
-
-    if t <= param[3]
-
-        du[1] = u[1] * param[2]
-
-    elseif t <= param[4]
-
-        du[1] = u[1] * param[1]
-
-
-    else
-
-        du[1] = param[5]*  NaNMath.pow(u[1],param[6]) * ( 1 - NaNMath.pow(u[1]/param[7],param[6]) )
-    end
-
-end
-
-
-# Logistic curve 
-
-function logistic(du, u, param, t)
-    du[1] = (param[1] / param[2]) * u[1] * (param[2] - u[1])
-
-end
-# dLogistic curve 
-
-function dlogistic(du, u, param, t)
-    du[1] = (param[1] ) * u[1] * ( 1 - NaNMath.pow(u[1]/param[2],param[3]) )
-
-end
-
-# Gompertz  curve 
-
-
-function gompertz(du, u, param, t)
-    du[1] = (param[1]) * u[1] * log(param[2] / u[1])
-
-end
-
-# Baranyi-Richards model from Baranyi, Roberts, and   McClure. "A non-autonomous differential equation to model bacterial growth" 1993
-
-
-function baranyi_richards(du, u, param, t)
-    du[1] = param[1] * (1 - (u[1] / param[2])) * (t^param[4]) / ((param[3])^(param[4]) + t^(param[4])) * u[1]
-end
-function baranyi_exp(du, u, param, t)
-    du[1] = param[1] *  (t^param[3]) / ((param[2])^(param[3]) + t^(param[3])) * u[1]
-end
-#  Baranyi-Roberts model from: Baranyi and Roberts. "A dynamic approach to predicting bacterial growth in food" 1994
-
-function baranyi_roberts(du, u, param, t)
-    du[1] = param[1] * (1 - NaNMath.pow(u[1] / max(param[2], u[1] + 0.00001), param[5])) * (NaNMath.pow(t, param[4]) / (NaNMath.pow(param[3], param[4]) + NaNMath.pow(t, param[4]))) * u[1]
-end
-
-# Huang model from Huang "Optimization of a new mathematical model for bacterial growth" 2013
-
-function huang(du, u, param, t)
-    du[1] = param[1] * (1 - exp(u[1] - param[2])) / (1 + exp(4.0 * (t - param[3])))
-end
-
-
-
-
-
 #######################################################################
+#
+
+include("models.jl")
 
 """
 Internal functions
 """
 
-function model_selector(model::String,u0,tspan)
+function model_selector(model::String, u0, tspan)
 
-    """
+  """
     generate sciML OD problem for fitting the ODE
-   
-   """
+  """
 
+  if model == "huang"
+    u0 = [log(u0)]
+  end
 
-    if model == "exponetial"
+  ODE_prob = ODEProblem(models[model], u0, tspan, nothing)
 
-
-        ODE_prob = ODEProblem(ODE_exponential, u0, tspan, nothing)
-
-
-    end
-    
-    if model == "hyper_gompertz"
-
-
-        ODE_prob = ODEProblem(hyper_gompertz, u0, tspan, nothing)
-
-
-    end
-
-    if model == "hyper_logistic"
-        ODE_prob = ODEProblem(hyper_logistic, u0, tspan, nothing)
-
-    end
-
-    if model == "bertalanffy_richards"
-
-        ODE_prob = ODEProblem(bertalanffy_richards, u0, tspan, nothing)
-
-    end
-    if model == "ode_von_bertalanffy"
-
-        ODE_prob = ODEProblem(ODE_von_bertalanffy, u0, tspan, nothing)
-
-    end
-    if model == "triple_piecewise_bertalanffy_richards"
-
-        ODE_prob = ODEProblem(ODE_triple_piecewise_bertalanffy_richards, u0, tspan, nothing)
-
-    end
-
-    if model == "gbsm_piecewise"
-
-        ODE_prob = ODEProblem(ODE_gbsm_piecewise, u0, tspan, nothing)
-
-    end
-    if model == "logistic"
-
-        ODE_prob = ODEProblem(logistic, u0, tspan, nothing)
-
-    end 
-
-    if model == "dlogistic"
-
-        ODE_prob = ODEProblem(dlogistic, u0, tspan, nothing)
-
-    end 
-    if model == "exponential"
-
-        ODE_prob = ODEProblem(ODE_exponential, u0, tspan, nothing)
-
-    end
-
-    if model == "gompertz"
-
-        ODE_prob = ODEProblem(gompertz, u0, tspan, nothing)
-
-    end
-
-    if model == "baranyi_richards"
-
-        ODE_prob = ODEProblem(baranyi_richards, u0, tspan, nothing)
-
-    end
- 
-
-    if model == "baranyi_exp"
-
-        ODE_prob = ODEProblem(baranyi_exp, u0, tspan, nothing)
-
-    end
-    if model == "baranyi_roberts"
-
-        ODE_prob = ODEProblem(baranyi_roberts, u0, tspan, nothing)
-
-    end
-
-
-    if model == "huang"
-        ## attention!!!!!
-        u0 = [log(u0)]
-
-        ODE_prob = ODEProblem(huang, u0, tspan, nothing)
-
-
-    end
-
-    if model == "piecewise_damped_logistic"
-
-
-        ODE_prob = ODEProblem(ODE_piecewise_damped_logistic, u0, tspan, nothing)
-
-
-    end
-
-
-
-    if model == "Diauxic_replicator_1"
-
-
-        ODE_prob = ODEProblem(ODE_Diauxic_replicator_1, u0, tspan, nothing)
-
-
-    end
-    if model == "Diauxic_replicator_2"
-
-
-        ODE_prob = ODEProblem(ODE_Diauxic_replicator_2, u0, tspan, nothing)
-
-
-    end
-    if model == "Diauxic_piecewise_damped_logistic"
-
-
-        ODE_prob = ODEProblem(ODE_Diauxic_piecewise_damped_logistic, u0, tspan, nothing)
-
-
-    end
-    if model == "triple_piecewise_damped_logistic"
-
-
-        ODE_prob = ODEProblem(ODE_triple_piecewise_damped_logistic, u0, tspan, nothing)
-
-
-    end
-
-
-    if model == "triple_piecewise"
-
-
-        ODE_prob = ODEProblem(ODE_triple_piecewise, u0, tspan, nothing)
-
-    end
-    if model == "triple_piecewise_sublinear"
-
-
-        ODE_prob = ODEProblem(ODE_triple_piecewise_sub_linear, u0, tspan, nothing)
-
-    end
-
-
-
-    if model == "four_piecewise"
-
-
-        ODE_prob = ODEProblem(ODE_four_piecewise, u0, tspan, nothing)
-
-    end
-    if model == "HPM_3_death"
-
-
-        ODE_prob = ODEProblem(HPM_3_death, u0, tspan, nothing)
-
-    end
-
-    if model == "HPM_3_death_resistance"
-
-
-        ODE_prob = ODEProblem(HPM_3_death_resistance, u0, tspan, nothing)
-
-    end
-    
-    if model == "dHPM_3_death_resistance"
-
-
-        ODE_prob = ODEProblem(dHPM_3_death_resistance, u0, tspan, nothing)
-
-    end
-    if model == "HPM_3_inhibition"
-
-
-        ODE_prob = ODEProblem(HPM_3_inhibition, u0, tspan, nothing)
-
-    end
-    if model == "HPM"
-            
-        ODE_prob = ODEProblem(ODEs_McKellar, u0, tspan, nothing)
-    end
-    if model == "HPM_exp"
-            
-        ODE_prob = ODEProblem(ODEs_HPM_exp, u0, tspan, nothing)
-    end
-
-    if model == "dHPM"
-        
-        ODE_prob = ODEProblem(ODEs_damped_McKellar, u0, tspan, nothing)
-    end
-        # defining the loss functions for this case
-
-    if model == "HPM_inhibition"
-        
-            ODE_prob = ODEProblem(ODEs_HPM_inhibition, u0, tspan, nothing)
-    end
-    if model == "dHPM_inhibition"
-        
-           ODE_prob = ODEProblem(ODEs_dHPM_inhibition, u0, tspan, nothing)
-    end
-    if model == "ODEs_HPM_SR"
-        
-        ODE_prob = ODEProblem(ODEs_HPM_SR, u0, tspan, nothing)
-    end
-
-
-    return ODE_prob
+  return ODE_prob
 
 end   
 
-function model_selector_sim(model::String,u0,tspan,param)
+function model_selector(model::String, u0, tspan, param)
     
-    """ 
+  """ 
     generate sciML ODE problem for simulations
-   """
-    if model == "hyper_gompertz"
+  """
 
+  if model == "huang"
+    ## attention!!!!!
+    u0 = [log(u0)]
+  end
 
-        ODE_prob = ODEProblem(hyper_gompertz, u0, tspan, param)
-
-
-    end
-
-    if model == "hyper_logistic"
-        ODE_prob = ODEProblem(hyper_logistic, u0, tspan, param)
-
-    end
-
-    if model == "bertalanffy_richards"
-
-        ODE_prob = ODEProblem(bertalanffy_richards, u0, tspan, param)
-
-    end
-    if model == "ode_von_bertalanffy"
-
-        ODE_prob = ODEProblem(ODE_von_bertalanffy, u0, tspan, param)
-
-    end
-    if model == "triple_piecewise_bertalanffy_richards"
-
-        ODE_prob = ODEProblem(ODE_triple_piecewise_bertalanffy_richards, u0, tspan, param)
-
-    end
-
-    if model == "gbsm_piecewise"
-
-        ODE_prob = ODEProblem(ODE_gbsm_piecewise, u0, tspan, param)
-
-    end
-    if model == "logistic"
-
-        ODE_prob = ODEProblem(logistic, u0, tspan, param)
-
-    end
-    if model == "dlogistic"
-
-        ODE_prob = ODEProblem(dlogistic, u0, tspan, param)
-
-    end
-    if model == "exponential"
-
-        ODE_prob = ODEProblem(ODE_exponential, u0, tspan, param)
-
-    end
-
-    if model == "gompertz"
-
-        ODE_prob = ODEProblem(gompertz, u0, tspan, param)
-
-    end
-
-    if model == "baranyi_richards"
-
-        ODE_prob = ODEProblem(baranyi_richards, u0, tspan, param)
-
-    end
-    if model == "baranyi_exp"
-
-        ODE_prob = ODEProblem(baranyi_exp, u0, tspan, param)
-
-    end
-
-    if model == "baranyi_roberts"
-
-        ODE_prob = ODEProblem(baranyi_roberts, u0, tspan, param)
-
-    end
-
-
-    if model == "huang"
-        ## attention!!!!!
-        u0 = [log(u0)]
-
-
-
-        function loss_ode_L2_relative_huang(p)
-
-            sol = solve(ODE_prob, KenCarp4(autodiff=false), p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-            sol_t = reduce(hcat, sol.u)
-            lossa = 0.5 * NaNMath.sum(abs2.(1.0 .- (log.(data[2, :]) ./ sol_t[1, 1:end]))) / length(data[2, :])
-
-            return lossa, sol
-        end
-
-        ODE_prob = ODEProblem(huang, u0, tspan, param)
-
-
-    end
-
-    if model == "piecewise_damped_logistic"
-
-
-        ODE_prob = ODEProblem(ODE_piecewise_damped_logistic, u0, tspan, param)
-
-
-    end
-
-
-
-    if model == "Diauxic_replicator_1"
-
-
-        ODE_prob = ODEProblem(ODE_Diauxic_replicator_1, u0, tspan, param)
-
-
-    end
-    if model == "Diauxic_replicator_2"
-
-
-        ODE_prob = ODEProblem(ODE_Diauxic_replicator_2, u0, tspan, param)
-
-
-    end
-    if model == "Diauxic_piecewise_damped_logistic"
-
-
-        ODE_prob = ODEProblem(ODE_Diauxic_piecewise_damped_logistic, u0, tspan, param)
-
-
-    end
-    if model == "triple_piecewise_damped_logistic"
-
-
-        ODE_prob = ODEProblem(ODE_triple_piecewise_damped_logistic, u0, tspan, param)
-
-
-    end
-
-
-    if model == "triple_piecewise"
-
-
-        ODE_prob = ODEProblem(ODE_triple_piecewise, u0, tspan, param)
-
-    end
-    if model == "triple_piecewise_sublinear"
-
-
-        ODE_prob = ODEProblem(ODE_triple_piecewise_sub_linear, u0, tspan, param)
-
-    end
-
-
-
-    if model == "four_piecewise"
-
-
-        ODE_prob = ODEProblem(ODE_four_piecewise, u0, tspan, param)
-
-    end
+  ODE_prob = ODEProblem(models[model], u0, tspan, param)
   
-    if model == "HPM_3_death"
-
-
-        ODE_prob = ODEProblem(HPM_3_death, u0, tspan, param)
-
-    end
-
-    if model == "HPM_3_death_resistance"
-
-
-        ODE_prob = ODEProblem(HPM_3_death_resistance, u0, tspan, param)
-
-    end
-
-    if model == "dHPM_3_death_resistance"
-
-
-        ODE_prob = ODEProblem(dHPM_3_death_resistance, u0, tspan, param)
-
-    end
-      
-    if model == "HPM_3_inhibition"
-
-
-        ODE_prob = ODEProblem(HPM_3_inhibition, u0, tspan, param)
-
-    end
-    if model == "HPM"
-            
-        ODE_prob = ODEProblem(ODEs_McKellar, u0, tspan, param)
-    end
-
-    if model == "HPM_exp"
-            
-        ODE_prob = ODEProblem(ODEs_HPM_exp, u0, tspan, param)
-    end
-
-    if model == "dHPM"
-        
-        ODE_prob = ODEProblem(ODEs_damped_McKellar, u0, tspan, param)
-    end
-        # defining the loss functions for this case
-
-    if model == "HPM_inhibition"
-        
-            ODE_prob = ODEProblem(ODEs_HPM_inhibition, u0, tspan, param)
-    end
-    if model == "dHPM_inhibition"
-        
-           ODE_prob = ODEProblem(ODEs_dHPM_inhibition, u0, tspan, param)
-    end
-    if model == "ODEs_HPM_SR"
-        
-        ODE_prob = ODEProblem(ODEs_HPM_SR, u0, tspan, param)
-    end
-
-
-    return ODE_prob
-
+  return ODE_prob
 end  
 
 function gaussian_smoothing(data::Matrix{Float64};optimize_gp=false)
 
 
-    """
+  """
     Gaussian smoothing 
-   """
-    xtrain = data[1,:];
-     ytrain = data[2,:];
-
-     kernel = SE(4.0,4.0) +   RQ(0.0,0.0,-1.0) + SE(-2.0,-2.0);#GaussianProcesses.Periodic(0.0,1.0,0.0)*SE(4.0,0.0)
-         gp = GP(xtrain,ytrain,MeanZero(),kernel,-2.0)   #Fit the GP
+  """
+  xtrain = data[1,:];
+  ytrain = data[2,:];
+  kernel = SE(4.0,4.0) +   RQ(0.0,0.0,-1.0) + SE(-2.0,-2.0);#GaussianProcesses.Periodic(0.0,1.0,0.0)*SE(4.0,0.0)
+  gp = GP(xtrain,ytrain,MeanZero(),kernel,-2.0)   #Fit the GP
     
-    if optimize_gp == true
-        optimize!(gp) 
-    end
-    μ, Σ = predict_y(gp,range(data[1,1],stop=data[1,end],length=500));
+  if optimize_gp == true
+      optimize!(gp) 
+  end
+  μ, Σ = predict_y(gp, range(data[1,1], stop=data[1,end], length=500));
+  μ, Σ = predict_y(gp,xtrain);
+  range_vec = [a[i] for i in 1:length(a)]
 
-    μ, Σ = predict_y(gp,xtrain);
-    #a = range(data[1,1],stop=data[1,end],length=500)
-   # range_vec = [ a[i] for i in 1:length(a)]
-
-  return xtrain ,μ, Σ
+  return xtrain, μ, Σ
 end
 
 function specific_gr_evaluation(data_smooted::Any,
      pt_smoothing_derivative::Int)
 
+  """
+  specific gr evaluation with slinding window log-lin fitting
+  data_smooted = matrix of data
+  pt_smoothing_derivative = size of the win, if <2 the the numerical derivative of (log) data is evaluate with interpolation algorithm
+  """
+  if pt_smoothing_derivative > 1
+      specific_gr = [curve_fit(LinearFit, data_smooted[1, r:(r+pt_smoothing_derivative)], log.(data_smooted[2, r:(r+pt_smoothing_derivative)])).coefs[2] for r in 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)]
+  else
+      itp = interpolate((data_smooted[1,:],), log.(data_smooted[2,:]), Gridded(Linear()));
+      specific_gr = only.(Interpolations.gradient.(Ref(itp), data_smooted[1,:]))
+  end
 
-    """
-    specific gr evaluation with slinding window log-lin fitting
-    data_smooted = matrix of data
-    pt_smoothing_derivative = size of the win, if <2 the the numerical derivative of (log) data is evaluate with interpolation algorithm
-    """
-    if pt_smoothing_derivative > 1
-        specific_gr = [curve_fit(LinearFit, data_smooted[1, r:(r+pt_smoothing_derivative)], log.(data_smooted[2, r:(r+pt_smoothing_derivative)])).coefs[2] for r in 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)]
-
-    else
-        
-        itp = interpolate((data_smooted[1,:],), log.(data_smooted[2,:]), Gridded(Linear()));
-        specific_gr = only.(Interpolations.gradient.(Ref(itp), data_smooted[1,:]))
-    end
-
-
-    return specific_gr
+  return specific_gr
 end
 
 function specific_gr_interpol_evaluation(data_testing)
-    
-    itp = interpolate((data_testing[1,:],), data_testing[2,:], Gridded(Linear()));
-    specific_gr_interpol = only.(Interpolations.gradient.(Ref(itp), data_testing[1,:]))
-    return specific_gr_interpol
+  itp = interpolate((data_testing[1,:],), data_testing[2,:], Gridded(Linear()));
+  specific_gr_interpol = only.(Interpolations.gradient.(Ref(itp), data_testing[1,:]))
+
+  return specific_gr_interpol
 end
 
 function smoothing_data(data::Matrix{Float64},
-    pt_avg::Int)
-    """
-    rolling average smoothing of the data
-    data  = matrix of data
-    pt_avg = size of the windows of the rolling average
-    """
-    times = [sum(@view data[1, i:(i+pt_avg-1)]) / pt_avg for i in 1:(length(data[1, :])-(pt_avg-1))]
-    values = [sum(@view data[2, i:(i+pt_avg-1)]) / pt_avg for i in 1:(length(data[2, :])-(pt_avg-1))]
-    smoothed_data = Matrix(transpose(hcat(times, values)))
-    return smoothed_data
+  pt_avg::Int)
+  """
+  rolling average smoothing of the data
+  data  = matrix of data
+  pt_avg = size of the windows of the rolling average
+  """
+  times = [sum(@view data[1, i:(i+pt_avg-1)]) / pt_avg for i in 1:(length(data[1, :])-(pt_avg-1))]
+  values = [sum(@view data[2, i:(i+pt_avg-1)]) / pt_avg for i in 1:(length(data[2, :])-(pt_avg-1))]
+  smoothed_data = Matrix(transpose(hcat(times, values)))
 
+  return smoothed_data
 end
 
 function vectorize_df_results(well_name::String,
@@ -928,489 +113,16 @@ function vectorize_df_results(well_name::String,
         internal function to reder as vector the results of the hardcoded ODE 
     """
 
-
-    
-
-    if model == "HPM_3_inhibition"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # rate exit lag
-            res[3], # inhibition rate
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-    if model == "HPM_3_death"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # rate exit lag
-            res[3], # inhibitionrate
-            res[4], # death rate
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-
-    if model == "HPM_3_death_resistance"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # rate exit lag
-            res[3], # inhibitionrate
-            res[4], # death rate
-            res[5], # n_res
-            res[6], # n_max
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-
-    
-    if model == "dHPM_3_death_resistance"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # rate exit lag
-            res[3], # inhibitionrate
-            res[4], # death rate
-            res[5], # n_res
-            res[6], # shape
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-
-    if model == "HPM"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # rate exit lag
-            res[3], # N max
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-    if model == "HPM_exp"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # rate exit lag
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-
-    if model == "HPM_inhibition"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # rate inhibition
-            res[3],# growth inibithed
-            res[4], # N max
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-
-    if model == "dHPM_inhibition"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # rate inhibiti
-            res[3],# growth inibithed
-            res[4], # N max
-            res[5], # shape
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-    if model == "ODEs_HPM_SR"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # growth of the phages
-            res[3], # maximum poin of the growth of phages
-            res[4], # maximum death rate
-            res[5], # resistance rate
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-
-    if model == "dHPM"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # rate exit lag
-            res[3], # N max
-            res[4], # shape
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-
-
-    if model == "hyper_gompertz"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # shape factor
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-
-    if model == "hyper_logistic"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # shape factor
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-
-    end
-
-
-    if model == "gbsm_piecewise"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # a_1
-            res[3], # b_1
-            res[4], # c
-            res[5], # a_1
-            res[6], # b_1
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-
-    if model == "bertalanffy_richards"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # shape factor
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-
-
-    if model == "ode_von_bertalanffy"
-
-        res_param = [model,
-            well_name,
-            res[1], # alpha
-            res[2], # beta
-            res[3], # a
-            res[4], # b
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-
-    if model == "triple_piecewise_bertalanffy_richards"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # lag growth
-            res[3], # lag time
-            res[4], # stat time 
-            res[5], # growth stat
-            res[6], # shape factor
-            res[7], # n max
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-    if model == "exponential"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-
-
-    if model == "logistic"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-    if model == "dlogistic"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # shape
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-    if model == "gompertz"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            th_gr,
-            em_gr,
-            loss]  # error function 
-    end
-
-
-
-
-    if model == "piecewise_damped_logistic"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # lag time
-            res[4], # shape factor 
-            res[5], # linear factor 
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-
-    end
-
-    if model == "triple_piecewise_damped_logistic"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # lag time
-            res[4], # shape factor 
-            res[5], # linear factor 
-            res[6], # stationary start
-            res[7], # linear param of stationary phase
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-
-    end
-
-    if model == "triple_piecewise"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate 1
-            res[2], # growth rate 2
-            res[3], # growth rate 3
-            res[4], # lag
-            res[5], # stationary start      
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-
-    end
-    if model == "triple_piecewise_sublinear"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate 1
-            res[2], # growth rate 2
-            res[3], # growth rate 3
-            res[4], # lag
-            res[5], # stationary start
-            res[6], # carrying        
-            th_gr,
-            em_gr,   
-            loss]  # error function 
-
-
-    end
-
-
-    if model == "four_piecewise"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate 1
-            res[2], # growth rate 2
-            res[3], # growth rate 3
-            res[4], # growth rate 4
-            res[5], # lag
-            res[6], # decrease of gr start  
-            res[7], # stationary start  
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-
-    end
-
-    if model == "triple_piecewise"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate 1
-            res[2], # growth rate 2
-            res[3], # growth rate 3
-            res[4], # lag
-            res[5], # stationary start      
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-
-    end
-    if model == "baranyi_richards"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # lag time
-            res[4], # shape factor
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-    if model == "baranyi_exp"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # lag time
-            res[3], # shape factor
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-    if model == "baranyi_roberts"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # lag time
-            res[4], # shape factor 1
-            res[5], # shape factor 1
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-
-
-    if model == "huang"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # lag time
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-
-
-
-    if model == "Diauxic_replicator_1"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # lag time
-            res[4], # arbritrary small constrain
-            res[5], #growth stationary phase
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-
-
-
-    if model == "Diauxic_replicator_2"
-
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # lag time
-            res[4], # arbritrary small constrain
-            res[5], #growth stationary phase
-            res[6], #growth second phase
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
-
-
-
-    if model == "Diauxic_piecewise_damped_logistic"
-        res_param = [model,
-            well_name,
-            res[1], # growth rate
-            res[2], # carrying capacity
-            res[3], # shape
-            res[4], # lag time 
-            res[5], # linear factor 
-            res[6], # diaux shift 
-            res[7], # growth second part
-            res[8], # carrying capacity 2
-            res[9],#  shape 2
-            res[10],# end second lag
-            res[11],# gr second lag
-            th_gr,
-            em_gr,
-            loss]  # error function 
-
-    end
+    res_param = [
+        [model,
+         well_name];
+        res[1:length(models[model].params) - 5];
+        [th_gr,
+        em_gr,
+        loss]
+       ]
 
     return res_param
-
 end
 
 function inzialize_df_results(model::String)
@@ -1419,198 +131,7 @@ function inzialize_df_results(model::String)
         internal function to name the vectors the results of the hardcoded ODE 
     """
 
-
-    if model == "HPM_3_death_resistance"
-
-        param_names = ["model", "well", "gr", "exit_lag_rate", "inactivation_rate","death_rate","n_res","n_max","th_max_gr","emp_max_gr","loss"]
-
-    end
-
-    if model == "dHPM_3_death_resistance"
-
-        param_names = ["model", "well", "gr", "exit_lag_rate", "inactivation_rate","death_rate","n_res","shape","th_max_gr","emp_max_gr","loss"]
-
-    end
-    if model == "HPM_3_inhibition"
-
-        param_names = ["model", "well", "gr", "exit_lag_rate", "inactivation_rate", "th_max_gr","emp_max_gr","loss"]
-
-    end
-
-    if model == "HPM_3_death"
-
-        param_names = ["model", "well", "gr", "exit_lag_rate", "inactivation_rate","death_rate","th_max_gr","emp_max_gr","loss"]
-    
-    end
-
-    if model == "HPM"
-
-        param_names = ["model", "well", "gr", "exit_lag_rate", "N_max","th_max_gr","emp_max_gr","loss"]
-
-    end
-    if model == "HPM_exp"
-
-        param_names = ["model", "well", "gr", "exit_lag_rate","th_max_gr","emp_max_gr","loss"]
-
-    end
-    if model == "ODEs_HPM_SR"
-
-        param_names = ["model", "well", "gr", "gr_phage","scale", "death_rate","resistance_rate","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-    if model == "HPM_inhibition"
-
-        param_names = ["model", "well", "gr", "inhibition_rate", "gr_inhibition","N_max","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-
-    if model == "dHPM"
-
-        param_names = ["model", "well", "gr", "exit_lag_rate", "N_max", "shape" ,"th_max_gr","emp_max_gr", "loss"]
-
-    end
-    if model == "dHPM_inhibition"
-
-        param_names = ["model", "well", "gr", "inhibition_rate", "gr_inhibition","N_max", "shape","th_max_gr","emp_max_gr" , "loss"]
-
-    end
-    if model == "hyper_gompertz"
-
-        param_names = ["model", "well", "gr", "N_max", "shape","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-    if model == "hyper_logistic"
-        param_names = ["model", "well", "doubling_time", "gr", "N_max", "shape","th_max_gr","emp_max_gr", "loss"]
-
-
-    end
-
-
-    if model == "gbsm_piecewise"
-        param_names = ["model", "well", "gr", "a_1", "b_1", "c", "a_2", "b_2","th_max_gr","emp_max_gr", "loss"]
-
-
-    end
-
-    if model == "bertalanffy_richards"
-        param_names = ["model", "well", "gr", "N_max", "shape","th_max_gr","emp_max_gr", "loss"]
-
-
-    end
-
-    
-    if model == "ode_von_bertalanffy"
-        param_names = ["model", "well", "alpha", "beta", "a","b","th_max_gr","emp_max_gr", "loss"]
-
-
-    end
-
-    if model == "triple_piecewise_bertalanffy_richards"
-        param_names = ["model", "well", "gr", "gr_lag","t_lag","t_stationary","gr_stat", "shape", "N_max","th_max_gr","emp_max_gr","loss"]
-
-
-    end
-
-    if model == "logistic"
-        param_names = ["model", "well", "gr", "N_max","th_max_gr","emp_max_gr", "loss"]
-
-
-    end
-    if model == "logistic"
-        param_names = ["model", "well", "gr", "N_max","shape","th_max_gr","emp_max_gr", "loss"]
-
-
-    end
-
-    if model == "exponential"
-        param_names = ["model", "well", "gr", "th_max_gr","emp_max_gr", "loss"]
-
-
-    end
-
-    if model == "gompertz"
-        param_names = ["model", "well", "gr", "N_max","th_max_gr","emp_max_gr", "loss"]
-
-
-
-    end
-
-    if model == "baranyi_richards"
-        param_names = ["model", "well", "gr", "N_max", "lag_time", "shape","th_max_gr","emp_max_gr", "loss"]
-
-
-    end
-    if model == "baranyi_exp"
-        param_names = ["model", "well", "gr", "lag_time", "shape","th_max_gr","emp_max_gr", "loss"]
-
-
-    end
-    if model == "baranyi_roberts"
-        param_names = ["model", "well", "gr", "N_max", "lag_time", "shape_1", "shape_2","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-
-    if model == "huang"
-        param_names = ["model", "well", "gr", "N_max", "lag","th_max_gr","emp_max_gr", "loss"]
-
-
-
-    end
-
-
-    if model == "piecewise_damped_logistic"
-
-        param_names = ["model", "well", "gr", "N_max", "lag", "shape", "linear_const","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-    if model == "triple_piecewise_damped_logistic"
-
-        param_names = ["model", "well", "gr", "N_max", "lag", "shape", "linear_const", "t_stationary", "linear_lag","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-    if model == "triple_piecewise"
-
-        param_names = ["model", "well", "gr", "gr_2", "gr_3", "lag", "t_stationary","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-    if model == "triple_piecewise_sublinear"
-
-        param_names = ["model", "well", "gr", "gr_2", "gr_3", "lag", "t_stationary","N_max","th_max_gr","emp_max_gr", "loss"]
-
-    end
-    if model == "four_piecewise"
-
-        param_names = ["model", "well", "gr", "gr_2", "gr_3", "gr_4", "lag", "t_decay_gr", "t_stationary","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-    if model == "Diauxic_replicator_1"
-
-        param_names = ["model", "well", "gr", "N_max", "lag", "arbitrary_const", "linear_const","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-    if model == "Diauxic_replicator_2"
-
-        param_names = ["model", "well", "gr", "N_max", "lag", "arbitrary_const", "linear_const", "growth_stationary","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-    if model == "Diauxic_piecewise_damped_logistic"
-
-        param_names = ["model", "well", "gr_1", "N_max", "shape_1", "lag", "linear_const", "t_shift", "gr_2","N_max_2","shape_2","end_second_lag","lag_2_gr","th_max_gr","emp_max_gr", "loss"]
-
-    end
-
-
-
+    param_names = models[model].params
 
     return param_names
 
@@ -1622,7 +143,7 @@ function guess_param(
     """
     internal function to set the start of the optimization problem in the middle of the  box constrains
     """
-  param = lb_param .+ (ub_param-lb_param)./2
+    param = lb_param .+ (ub_param-lb_param)./2
 
     return param
 
@@ -1656,8 +177,6 @@ function blank_distrib_negative_correction(data::Matrix{Float64}, # dataset firs
     data_corrected = transpose(hcat(times, values))
 
     return data_corrected
-
-
 end
 
 function generation_of_combination_of_IC_morris(lb_param::Vector{Float64},
@@ -1666,37 +185,24 @@ function generation_of_combination_of_IC_morris(lb_param::Vector{Float64},
 )
 
     starting_guess = copy(lb_param)
-
-
     delta_vec = [(ub_param[i] - lb_param[i]) / (N_step_morris + 1) for i in 1:length(ub_param)]
 
     # generating combinations of all possible parameters values
-
     combinations_par = copy(starting_guess)
     combinations_tot = copy(combinations_par)
 
     for k in 1:N_step_morris
         for ll in 1:(size(delta_vec)[1])
-
-
             combinations_par[ll] = combinations_par[ll] + delta_vec[ll]
             combinations_tot = hcat(combinations_tot, combinations_par)
-
         end
     end
 
-
-
-
-
     return combinations_tot
-
 
 end
 
 function generating_IC(data::Matrix{Float64}, model::String,smoothing::Bool,pt_avg::Int)
-
-    
     
      # "starting condition  using data if smoothing average is used skip this part
     
@@ -1737,33 +243,23 @@ function generating_IC(data::Matrix{Float64}, model::String,smoothing::Bool,pt_a
     return u0
 end
 
-
-
-
-
-    function generating_IC_custom_ODE(data::Matrix{Float64}, n_equation::Int,smoothing::Bool,pt_avg::Int
+function generating_IC_custom_ODE(data::Matrix{Float64}, n_equation::Int,smoothing::Bool,pt_avg::Int
         )
         
-          u0 =zeros(n_equation)
-         # "starting condition  using data if smoothing average is used skip this part
+  u0 = zeros(n_equation)
+  # "starting condition  using data if smoothing average is used skip this part
          
-            if smoothing == true
+  if smoothing == true
+    u0[1] = data[2, 1]
+  else
+    u0[1] = Statistics.mean(data[2, 1:pt_avg])
+  end
         
-                u0[1] = data[2, 1]
-        
-            else
-                u0[1] = Statistics.mean(data[2, 1:pt_avg])
-            end
-        
-
-        return u0
+  return u0
 end
 
 function correction_OD_multiple_scattering(data::Matrix{Float64},
     calibration_curve::String)
-
-
-
 
     od_calib = CSV.File(calibration_curve)
     names_of_cols = propertynames(od_calib)
@@ -1775,8 +271,6 @@ function correction_OD_multiple_scattering(data::Matrix{Float64},
     corrected_data = [ extrap_spline(k) for k in data[2,:] ]
     data_fin = Matrix(transpose(hcat(data[1,:],corrected_data)))
     return data_fin
-
-
 end   
 
     
@@ -1798,16 +292,9 @@ function ODE_sim(model::String, #string of the model
     # defining time stepping
     t_steps = tstart:delta_t:tmax
     tspan = (tstart, tmax)
-
     u0 = n_start
-
-    ODE_prob =model_selector_sim(model,u0,tspan,param_of_ode)
-
-
-
+    ODE_prob = model_selector(model,u0,tspan,param_of_ode)
     sim = solve(ODE_prob, integrator, saveat=t_steps)
-
-
 
     return sim
 end
@@ -1822,13 +309,8 @@ function ODE_sim_for_iterate(model::String, #string of the model
     # defining time stepping
     t_steps = array_time
     tspan = (array_time[1],array_time[end])
-
     u0 = n_start
-
-    ODE_prob =model_selector_sim(model,u0,tspan,param_of_ode)
-
-
-
+    ODE_prob =model_selector(model,u0,tspan,param_of_ode)
     sim = solve(ODE_prob, integrator, saveat=t_steps)
 
     return sim
@@ -3501,40 +1983,29 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
 
     # string of the model choosen
     model = rss_array[1,index_minimal_AIC_model]
+
     # param of the best model
     param_min = df_res_optimization[index_minimal_AIC_model-1]
-
     param_min = param_min[3:(end-3)]
 
         
-     tsteps = data[1, :]
+    tsteps = data[1, :]
+    tspan = (data[1, 1], data[1, end])
+    u0 = generating_IC(data, model,smoothing,pt_avg)
+    ODE_prob = model_selector(model,u0,tspan,param_min)
+    
+    sim = solve(ODE_prob, integrator, saveat=tsteps)
 
-        tspan = (data[1, 1], data[1, end])
-    
-        u0 = generating_IC(data, model,smoothing,pt_avg)
-    
-        ODE_prob =model_selector_sim(model,u0,tspan,param_min)
-    
-    
-    
-        sim = solve(ODE_prob, integrator, saveat=tsteps)
-
-
-        sol_t = reduce(hcat, sim.u)
-        sol_time = reduce(hcat, sim.t)
-        sol_t = sum(sol_t,dims=1)
+    sol_t = reduce(hcat, sim.u)
+    sol_time = reduce(hcat, sim.t)
+    sol_t = sum(sol_t,dims=1)
 
     if plot_best_model == true
         data_th = vcat(sol_time,sol_t)
-
         mkpath(path_to_plot)
-
-
         display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
         display(Plots.plot!(data_th[1,:], data_th[2,:], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
         png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
-
-    
     end
 
     return rss_array,df_res_optimization, min_AIC, minimum(rss_array[2,2:end]) ,param_min,model,data_th
