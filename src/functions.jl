@@ -16,34 +16,9 @@ function model_selector(model::String, u0, tspan, param=nothing)
     generate sciML ODE problem
   """
 
-  if model == "huang"
-    u0 = [log(u0)]
-  end
-
   ODE_prob = ODEProblem(models[model].func, u0, tspan, param)
 
   return ODE_prob
-end
-
-function gaussian_smoothing(data::Matrix{Float64};optimize_gp=false)
-  """
-    Gaussian smoothing
-  """
-
-  xtrain = data[1,:];
-  ytrain = data[2,:];
-  kernel = SE(4.0,4.0) +   RQ(0.0,0.0,-1.0) + SE(-2.0,-2.0);#GaussianProcesses.Periodic(0.0,1.0,0.0)*SE(4.0,0.0)
-  gp = GP(xtrain,ytrain,MeanZero(),kernel,-2.0)   #Fit the GP
-
-  if optimize_gp == true
-      optimize!(gp)
-  end
-
-  μ, Σ = predict_y(gp, range(data[1,1], stop=data[1,end], length=500));
-  μ, Σ = predict_y(gp,xtrain);
-  range_vec = [a[i] for i in 1:length(a)]
-
-  return xtrain, μ, Σ
 end
 
 function specific_gr_evaluation(data_smooted::Any,
@@ -55,7 +30,7 @@ function specific_gr_evaluation(data_smooted::Any,
   """
 
   if pt_smoothing_derivative > 1
-    specific_gr = [curve_fit(LinearFit, data_smooted[1, r:(r+pt_smoothing_derivative)], log.(data_smooted[2, r:(r+pt_smoothing_derivative)])).coefs[2] for r in 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)]
+    specific_gr = [CurveFit.curve_fit(LinearFit, data_smooted[1, r:(r+pt_smoothing_derivative)], log.(data_smooted[2, r:(r+pt_smoothing_derivative)])).coefs[2] for r in 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)]
   else
     itp = interpolate((data_smooted[1,:],), log.(data_smooted[2,:]), Gridded(Linear()));
     specific_gr = only.(Interpolations.gradient.(Ref(itp), data_smooted[1,:]))
@@ -189,7 +164,7 @@ function generating_IC(data::Matrix{Float64}, model::String,smoothing::Bool,pt_a
     u0 = [Statistics.mean(data[2, 1:pt_avg])]
   end
 
-  if model == "HPM" ||  model == "dHPM" ||  model == "HPM_inhibition" ||  model == "dHPM_inhibition" || model == "ODEs_HPM_SR" || model == "HPM_exp"
+  if model == "HPM" ||  model == "aHPM" ||  model == "HPM_inhibition" ||  model == "aHPM_inhibition" || model == "ODEs_HPM_SR" || model == "HPM_exp"
     # specific initial condition for system of ODEs
     # all the biomass starts as dormient
     if smoothing == true
@@ -200,7 +175,7 @@ function generating_IC(data::Matrix{Float64}, model::String,smoothing::Bool,pt_a
   end
   # "starting condition  using data if the model is an 3 state HPM the first equation is set equal to the starting pop and the other to zero
 
-  if model == "HPM_3_death" || model == "HPM_3_inhibition"|| model == "HPM_3_death_resistance"|| model == "dHPM_3_death_resistance"
+  if model == "HPM_3_death" || model == "HPM_3_inhibition"|| model == "HPM_3_death_resistance"|| model == "aHPM_3_death_resistance"
     if smoothing == true
       u0 = [data[2, 1],0.0,0.0]
     else
@@ -527,7 +502,8 @@ fitting single data functions log-lin
 function fitting_one_well_Log_Lin(data::Matrix{Float64}, # dataset first row times second row OD
   name_well::String, # name of the well
   label_exp::String; #label of the experiment
-  do_plot=false, # do plots or no
+  display_plots=false, # do plots or no
+  save_plot=false,
   path_to_plot="NA", # where save plots
   type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
   pt_avg=7, # number of the point for rolling avg not used in the other cases
@@ -536,7 +512,8 @@ function fitting_one_well_Log_Lin(data::Matrix{Float64}, # dataset first row tim
   type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
   threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
   multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-  calibration_OD_curve ="NA" #  the path to calibration curve to fix the data
+  calibration_OD_curve ="NA", #  the path to calibration curve to fix the data
+  thr_lowess  = 0.05 # keyword argument of lowees smoothing
   )
 
   if multiple_scattering_correction == true
@@ -545,9 +522,10 @@ function fitting_one_well_Log_Lin(data::Matrix{Float64}, # dataset first row tim
 
   if type_of_smoothing == "rolling_avg"
     data_smooted = smoothing_data(data, pt_avg)
-  elseif type_of_smoothing =="gaussian"
-    temp =  gaussian_smoothing(data)
-    data_smooted = Matrix(transpose(hcat(temp[1], temp[2])))
+  elseif type_of_smoothing == "lowess"
+    # lowess call here
+    model_fit = lowess_model(data[1,:], data[2,:],thr_lowess)
+    data_smooted = Matrix(transpose(hcat(data[1,:], model_fit )))
   else
     data_smooted = data
   end
@@ -626,7 +604,7 @@ function fitting_one_well_Log_Lin(data::Matrix{Float64}, # dataset first row tim
   # fitting data
   data_to_fit_times = data_smooted[1, index_of_t_start:index_of_t_end]
   data_to_fit_values = log.(data_smooted[2, index_of_t_start:index_of_t_end])
-  fitting_results = curve_fit(LinearFit, data_to_fit_times, data_to_fit_values)
+  fitting_results = CurveFit.curve_fit(LinearFit, data_to_fit_times, data_to_fit_values)
 
   # residual calculation
   residual = [ ((data_to_fit_values[ll] -    fitting_results.coefs[2] *data_to_fit_times[ll] -  fitting_results.coefs[1])^2) for ll in 1 : length(data_to_fit_values)   ]
@@ -655,7 +633,7 @@ function fitting_one_well_Log_Lin(data::Matrix{Float64}, # dataset first row tim
   results_lin_log_fit = [label_exp, name_well, data_to_fit_times[1], data_to_fit_times[end], specific_gr_times[index_of_max],gr_max ,fitting_results.coefs[2], confidence_coeff_2, log(2)/( fitting_results.coefs[2]) ,log(2)/( fitting_results.coefs[2] -confidence_coeff_2 ) , log(2)/( fitting_results.coefs[2] + confidence_coeff_2 ) ,fitting_results.coefs[1],confidence_coeff_1,rsquared]
 
   # plotting if requested
-  if do_plot == true
+  if display_plots == true && save_plot == true
     mkpath(path_to_plot)
     display(Plots.scatter(data_smooted[1, :], log.(data_smooted[2, :]), xlabel="Time", ylabel="Log(Arb. Units)", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
     display(Plots.plot!(data_to_fit_times, fitted_line,ribbon= confidence_band, xlabel="Time ", ylabel="Log(Arb. Units)", label=[string("Fitting Log-Lin ") nothing], c=:red))
@@ -663,6 +641,25 @@ function fitting_one_well_Log_Lin(data::Matrix{Float64}, # dataset first row tim
     png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".png"))
     display(Plots.scatter(specific_gr_times, specific_gr, xlabel="Time ", ylabel="1 /time ", label=[string("Dynamics growth rate ") nothing], c=:red))
     display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
+    png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
+  end
+
+  if display_plots == true && save_plot ==  false 
+    display(Plots.scatter(data_smooted[1, :], log.(data_smooted[2, :]), xlabel="Time", ylabel="Log(Arb. Units)", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
+    display(Plots.plot!(data_to_fit_times, fitted_line,ribbon= confidence_band, xlabel="Time ", ylabel="Log(Arb. Units)", label=[string("Fitting Log-Lin ") nothing], c=:red))
+    display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
+    display(Plots.scatter(specific_gr_times, specific_gr, xlabel="Time ", ylabel="1 /time ", label=[string("Dynamics growth rate ") nothing], c=:red))
+    display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
+  end
+
+  if display_plots == false && save_plot ==  true 
+    mkpath(path_to_plot)
+    Plots.scatter(data_smooted[1, :], log.(data_smooted[2, :]), xlabel="Time", ylabel="Log(Arb. Units)", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well))
+    Plots.plot!(data_to_fit_times, fitted_line,ribbon= confidence_band, xlabel="Time ", ylabel="Log(Arb. Units)", label=[string("Fitting Log-Lin ") nothing], c=:red)
+    Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing])
+    png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".png"))
+    Plots.scatter(specific_gr_times, specific_gr, xlabel="Time ", ylabel="1 /time ", label=[string("Dynamics growth rate ") nothing], c=:red)
+    Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing])
     png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
   end
 
@@ -681,7 +678,8 @@ function fit_one_file_Log_Lin(
   path_to_annotation::String;# path to the annotation of the wells
   path_to_results = "NA",# path where save results
   path_to_plot= "NA",# path where to save Plots
-  do_plot=false, # 1 do and visulaze the plots of data
+  display_plots=true, # 1 do and visulaze the plots of data
+  save_plot=false, # save the plot or not    verbose=false, # 1 true verbose
   verbose=false, # 1 true verbose
   write_res=false, # write results
   type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
@@ -695,10 +693,11 @@ function fit_one_file_Log_Lin(
   correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
   thr_negative=0.01, # used only if correct_negative == "thr_correction"
   multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-  calibration_OD_curve="NA" #  the path to calibration curve to fix the data
+  calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+  thr_lowess  = 0.05 # keyword argument of lowees smoothing
   )
 
-  if do_plot == true
+  if save_plot == true
     mkpath(path_to_plot)
   end
 
@@ -789,7 +788,8 @@ function fit_one_file_Log_Lin(
     temp_results_1 = fitting_one_well_Log_Lin(data, # dataset first row times second row OD
       string(well_name), # name of the well
       label_exp; #label of the experiment
-      do_plot=do_plot, # do plots or no
+      display_plots=display_plots ,# display plots in julia or not
+      save_plot=save_plot, # save the plot or not    verbose=false, # 1 true verbose
       path_to_plot=path_to_plot, # where save plots
       type_of_smoothing=type_of_smoothing, # option, NO, gaussian, rolling avg
       pt_avg=pt_avg, # number of the point for rolling avg not used in the other cases
@@ -928,18 +928,22 @@ function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first
   param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
   optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
   integrator =KenCarp4(autodiff=true), # selection of sciml integrator
-  do_plot=false, # do plots or no
+  display_plots=true, # display plots in julia or not
+  save_plot=false,
   path_to_plot="NA", # where save plots
   pt_avg=1, # numebr of the point to generate intial condition
   pt_smooth_derivative=7,
   smoothing=false, # the smoothing is done or not?
+  type_of_smoothing = "rolling_avg",
   type_of_loss="RE", # type of used loss
   blank_array=zeros(100), # data of all blanks
   multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
   calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
   PopulationSize = 300,
   maxiters = 2000000,
-  abstol = 0.00001 )
+  abstol = 0.00001,
+  thr_lowess = 0.05 
+  )
 
   if  multiple_scattering_correction == true
       data = correction_OD_multiple_scattering(data,calibration_OD_curve)
@@ -953,9 +957,14 @@ function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first
   tsteps = data[1, :]
 
   # smoothing data if required
-  if smoothing == true
+  if type_of_smoothing == "rolling_avg"
     data = smoothing_data(data, pt_avg)
-    data = Matrix(data)
+  elseif  type_of_smoothing =="lowess"
+    # lowess call here
+    model_fit = lowess_model(data[1,:], data[2,:],thr_lowess)
+    data = Matrix(transpose(hcat(data[1,:], model_fit )))
+  else
+    data = data
   end
 
   # setting initial conditions
@@ -977,11 +986,22 @@ function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first
   sol_fin = sum(sol_fin,dims=1)
 
   # plotting if required
-  if do_plot == true
+  if display_plots == true && save_plot ==    true
     mkpath(path_to_plot)
     display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
     display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
     png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+  end
+
+  if display_plots == false && save_plot ==    true
+    mkpath(path_to_plot)
+    Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well))
+    Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red)
+    png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+  end
+  if display_plots == true  && save_plot ==    false
+    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+    display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
   end
 
   # here problem
@@ -1024,7 +1044,9 @@ function fit_file_ODE(
   path_to_plot="NA", # path where to save Plots
   loss_type="RE", # string of the type of the used loss
   smoothing=false, # 1 do smoothing of data with rolling average
-  do_plot=false, # 1 do and visulaze the plots of data
+  type_of_smoothing ="lowess",
+  display_plots=true ,# display plots in julia or not
+  save_plot=false,
   verbose=false, # 1 true verbose
   write_res=false, # write results
   pt_avg=1, # number of points to do smoothing average
@@ -1037,14 +1059,14 @@ function fit_file_ODE(
   calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
   PopulationSize = 300,
   maxiters = 2000000,
-  abstol = 0.00001)
-
+  abstol = 0.00001,
+  thr_lowess = 0.05)
 
   if write_res == true
     mkpath(path_to_results)
   end
 
-  if do_plot == true
+  if save_plot == true
     mkpath(path_to_plot)
   end
 
@@ -1130,11 +1152,6 @@ function fit_file_ODE(
       data = blank_distrib_negative_correction(data, blank_array)
     end
 
-    if smoothing == true
-      data = smoothing_data(data, pt_avg)
-      data = Matrix(data)
-    end
-
     # defining time steps of the inference
     max_t = data[1, end]
     min_t = data[1, 1]
@@ -1150,7 +1167,6 @@ function fit_file_ODE(
       param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
       optmizator = optmizator, # selection of optimization method
       integrator =integrator, # selection of sciml integrator
-      do_plot=do_plot, # do plots or no
       path_to_plot=path_to_plot, # where save plots
       pt_avg=pt_avg, # numebr of the point to generate intial condition
       pt_smooth_derivative=pt_smooth_derivative,
@@ -1161,7 +1177,11 @@ function fit_file_ODE(
       calibration_OD_curve=calibration_OD_curve , #  the path to calibration curve to fix the data
       PopulationSize =PopulationSize,
       maxiters = maxiters,
-      abstol = abstol)
+      abstol = abstol,
+      thr_lowess =thr_lowess,
+      display_plots=display_plots ,# display plots in julia or not
+      save_plot=save_plot,
+      type_of_smoothing = type_of_smoothing)
 
     if verbose == true
       println("the results are:")
@@ -1193,7 +1213,8 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
   param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
   optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
   integrator =KenCarp4(autodiff=true), # selection of sciml integrator
-  do_plot=false, # do plots or no
+  display_plots=false, # do plots or no
+  save_plot=false,
   path_to_plot="NA", # where save plots
   pt_avg=1, # numebr of the point to generate intial condition
   pt_smooth_derivative=7,
@@ -1204,7 +1225,9 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
   calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
   PopulationSize = 300,
   maxiters = 2000000,
-  abstol = 0.00001 )
+  abstol = 0.00001,
+  thr_lowess = 0.05,
+  type_of_smoothing = "lowess")
 
   if  multiple_scattering_correction == true
     data = correction_OD_multiple_scattering(data,calibration_OD_curve)
@@ -1217,9 +1240,14 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
   tsteps = data[1, :]
 
   # smoothing data if required
-  if smoothing == true
+  if type_of_smoothing == "rolling_avg"   && smoothing == true
     data = smoothing_data(data, pt_avg)
-    data = Matrix(data)
+  elseif type_of_smoothing =="lowess"  && smoothing == true
+    # lowess call here
+    model_fit = lowess_model(data[1,:], data[2,:],thr_lowess)
+    data = Matrix(transpose(hcat(data[1,:], model_fit )))
+  else
+    data = copy(data)
   end
 
   u0 = generating_IC_custom_ODE(data, n_equation,smoothing,pt_avg)
@@ -1239,14 +1267,25 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
   sol_fin = sum(sol_fin,dims=1)
 
   # plotting if required
-  if do_plot == true
+  if display_plots == true && save_plot = false
     mkpath(path_to_plot)
     display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
     display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting custom model") nothing], c=:red))
     png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".png"))
   end
 
-  # here problem
+  if display_plots == true && save_plot==false
+    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+    display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting custom model") nothing], c=:red))
+  end
+
+  if display_plots == false && save_plot==true
+    mkpath(path_to_plot)
+    (Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+    (Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting custom model") nothing], c=:red))
+    png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".png"))
+  end
+
   #max_theoretical gr
   data_th = vcat(sol_time,sol_fin)
   max_th_gr = maximum( specific_gr_evaluation(  Matrix(data_th), pt_smooth_derivative))
@@ -1282,10 +1321,13 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
   integrator = KenCarp4(autodiff=true), # selection of sciml integrator
   pt_avg = 1 , # number of the point to generate intial condition
   beta_penality = 2.0, # penality for AIC evaluation
-  smoothing= false, # the smoothing is done or not?
+  smoothing = false, # the smoothing is done or not?
+  type_of_smoothing ="lowess",
+  thr_lowess = 0.05,
   type_of_loss="L2", # type of used loss
   blank_array=zeros(100), # data of all blanks
-  plot_best_model=false, # one wants the results of the best fit to be plotted
+  display_plot_best_model=false, # one wants the results of the best fit to be plotted
+  save_plot_best_model=false,
   path_to_plot="NA",
   pt_smooth_derivative=7,
   multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
@@ -1300,9 +1342,14 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
   end
 
   # smooting if required
-  if smoothing == true
+  if type_of_smoothing == "rolling_avg" && smoothing == true
     data = smoothing_data(data, pt_avg)
-    data = Matrix(data)
+  elseif  type_of_smoothing =="lowess"  && smoothing == true
+    # lowess call here
+    model_fit = lowess_model(data[1,:], data[2,:],thr_lowess)
+    data = Matrix(transpose(hcat(data[1,:], model_fit )))
+  else
+    data = copy(data)
   end
 
   # inizialization of array of results
@@ -1384,6 +1431,7 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
 
   # param of the best model
   param_min = df_res_optimization[index_minimal_AIC_model-1]
+  param_out_full = copy(param_min)
   param_min = param_min[3:(end-3)]
   tsteps = data[1, :]
   tspan = (data[1, 1], data[1, end])
@@ -1393,8 +1441,9 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
   sol_t = reduce(hcat, sim.u)
   sol_time = reduce(hcat, sim.t)
   sol_t = sum(sol_t,dims=1)
+  data_th = vcat(sol_time,sol_t)
 
-  if plot_best_model == true
+  if save_plot_best_model == true && display_plot_best_model == true
     data_th = vcat(sol_time,sol_t)
     mkpath(path_to_plot)
     display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
@@ -1402,8 +1451,19 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
     png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
   end
 
-  return rss_array,df_res_optimization, min_AIC, minimum(rss_array[2,2:end]) ,param_min,model,data_th
+  if save_plot_best_model == false && display_plot_best_model == true
+    mkpath(path_to_plot)
+    (Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+    (Plots.plot!(data_th[1,:], data_th[2,:], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
+    png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+  end
 
+  if save_plot_best_model == true && display_plot_best_model == false
+    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+    display(Plots.plot!(data_th[1,:], data_th[2,:], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
+  end
+
+  return rss_array,df_res_optimization, min_AIC, minimum(rss_array[2,2:end]) ,param_min,model,data_th,param_out_full
 end
 #######################################################################
 
@@ -1411,25 +1471,26 @@ end
 morris sensitivity function
 """
 function one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row times second row OD
-    name_well::String, # name of the well
-    label_exp::String, #label of the experiment
-    model::String, # ode model to use
-    lb_param::Vector{Float64}, # lower bound param
-    ub_param::Vector{Float64}; # upper bound param
-    N_step_morris =7,
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator =KenCarp4(autodiff=true), # selection of sciml integrator
-    pt_avg=1, # numebr of the point to generate intial condition
-    pt_smooth_derivative=7,
-    write_res=false,
-    smoothing=false, # the smoothing is done or not?
-    type_of_loss="RE", # type of used loss
-    blank_array=zeros(100), # data of all blanks
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-   PopulationSize = 300,
-    maxiters = 2000000,
-     abstol = 0.00001 )
+  name_well::String, # name of the well
+  label_exp::String, #label of the experiment
+  model::String, # ode model to use
+  lb_param::Vector{Float64}, # lower bound param
+  ub_param::Vector{Float64}; # upper bound param
+  N_step_morris =7,
+  optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+  integrator =KenCarp4(autodiff=true), # selection of sciml integrator
+  pt_avg=1, # numebr of the point to generate intial condition
+  pt_smooth_derivative=7,
+  write_res=false,
+  smoothing=false, # the smoothing is done or not?
+  type_of_smoothing ="lowess",
+  type_of_loss="RE", # type of used loss
+  blank_array=zeros(100), # data of all blanks
+  multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+  calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+  PopulationSize = 300,
+  maxiters = 2000000,
+  abstol = 0.00001 )
 
   # inizializing the results of sensitivity
   results_sensitivity = initialize_df_results(model)
@@ -1449,9 +1510,14 @@ function one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row 
   tsteps = data[1, :]
 
   # smoothing data if required
-  if smoothing == true
+  if type_of_smoothing == "rolling_avg" && smoothing == true
     data = smoothing_data(data, pt_avg)
-    data = Matrix(data)
+  elseif type_of_smoothing =="lowess"  && smoothing == true
+    # lowess call here
+    model_fit = lowess_model(data[1,:], data[2,:],thr_lowess)
+    data = Matrix(transpose(hcat(data[1,:], model_fit )))
+  else
+    data = copy(data)
   end
 
   # setting initial conditions
@@ -1689,21 +1755,21 @@ function curve_dissimilitary_lin_fitting( data::Matrix{Float64}, # dataset first
 
     #fitting total data
     data_total = Matrix(transpose(hcat(win_tot_times, win_tot_data)));
-    fit_total =  curve_fit(LinearFit, data_total[1,:], data_total[2,:])
+    fit_total = CurveFit.curve_fit(LinearFit, data_total[1,:], data_total[2,:])
 
     # residual calculation
     res_total = sum([ abs((data_total[2,ll] -    fit_total.coefs[2] *data_total[1,ll] -  fit_total.coefs[1])) for ll in 1 : length(data_total[1,:]) ])
 
     #fitting win 1
     data_1 = Matrix(transpose(hcat(win_1_times, win_1_data)));
-    fit_1 = curve_fit(LinearFit, data_1[1,:], data_1[2,:])
+    fit_1 = CurveFit.curve_fit(LinearFit, data_1[1,:], data_1[2,:])
 
     # residual calculation
     res_win_1 = sum([ abs((data_1[2,ll] -    fit_1.coefs[2] *data_1[1,ll] -  fit_1.coefs[1])) for ll in 1 : length(data_1[1,:]) ])
 
     #fitting win 2
     data_2 = Matrix(transpose(hcat(win_2_times, win_2_data)));
-    fit_2 = curve_fit(LinearFit, data_2[1,:], data_2[2,:])
+    fit_2 = CurveFit.curve_fit(LinearFit, data_2[1,:], data_2[2,:])
 
     # residual calculation
     res_win_2 = sum([ abs((data_2[2,ll] -    fit_2.coefs[2] *data_2[1,ll] -  fit_2.coefs[1])) for ll in 1 : length(data_2[1,:]) ])
@@ -1736,8 +1802,11 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
   type_of_detection =  "lsdd",
   type_of_curve = "original",
   smoothing=false,
+  type_of_smoothing = "lowess" ,
+  thr_lowess = 0.05,
   pt_avg=1,
-  do_plot=false, # do plots or no
+  save_plot=false, # do plots or no
+  display_plots=false,
   path_to_plot="NA", # where save plots
   win_size=2, # numebr of the point to generate intial condition
   pt_smooth_derivative=7,
@@ -1748,11 +1817,18 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
   n_bins = 40,
   PopulationSize = 300,
   maxiters = 2000000,
-  abstol = 0.00001 )
+  abstol = 0.00001,
+  type_of_smoothing = type_of_smoothing, 
+  thr_lowess = thr_lowess)
 
-  if smoothing == true
+  if type_of_smoothing == "rolling_avg" && smoothing == true
     data_testing = smoothing_data(data_testing, pt_avg)
-    data_testing = Matrix(data_testing)
+  elseif type_of_smoothing =="lowess"  && smoothing == true
+    # lowess call here
+    model_fit = lowess_model(data_testing[1,:], data_testing[2,:],thr_lowess)
+    data_testing = Matrix(transpose(hcat(data[1,:], model_fit )))
+  else
+    data_testing = copy(data_testing)
   end
 
   if multiple_scattering_correction == true
@@ -1870,12 +1946,26 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
     end
   end
 
-  if do_plot == true
+  if save_plot == true && display_plot == true
     mkpath(path_to_plot)
     display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-    display( Plots.vline!(interval_changepoints[2:end], c=:black, label=["change points" nothing]))
+    display(Plots.vline!(interval_changepoints[2:end], c=:black, label=["change points" nothing]))
     display(Plots.plot!(reduce(vcat,composed_time), reduce(vcat,composed_sol), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
-    png(string(path_to_plot, label_exp, "_model_selecetion_seg_",n_change_points,"_", name_well, ".png"))
+    png(string(path_to_plot, label_exp, "_model_selection_seg_",n_change_points,"_", name_well, ".png"))
+  end
+
+  if save_plot == true  && display_plot == false
+    mkpath(path_to_plot)
+    (Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
+    (Plots.vline!(interval_changepoints[2:end], c=:black, label=["change points" nothing]))
+    (Plots.plot!(reduce(vcat,composed_time), reduce(vcat,composed_sol), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
+    png(string(path_to_plot, label_exp, "_model_selection_seg_",n_change_points,"_", name_well, ".png"))
+  end
+
+  if save_plot == false  && display_plot == true
+    display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
+    display(Plots.vline!(interval_changepoints[2:end], c=:black, label=["change points" nothing]))
+    display(Plots.plot!(reduce(vcat,composed_time), reduce(vcat,composed_sol), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
   end
 
   return param_out,interval_changepoints,composed_time,composed_sol
@@ -1895,7 +1985,8 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
   type_of_curve = "original",
   pt_avg = 1 , # number of the point to generate intial condition
   smoothing= true, # the smoothing is done or not?
-  do_plot=false, # do plots or no
+  save_plot=false, # do plots or no
+  display_plot=false, # do plots or no
   path_to_plot="NA", # where save plots
   path_to_results="NA",
   win_size=2, # numebr of the point to generate intial condition
@@ -1908,7 +1999,9 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
   n_bins = 40,
   PopulationSize = 300,
   maxiters = 2000000,
-  abstol = 0.00001)
+  abstol = 0.00001,
+  type_of_smoothing = "lowess" ,
+  thr_lowess = 0.05)
 
   # fitting single models
   length_dataset = length(data_testing[1,:])
@@ -1927,7 +2020,8 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
     smoothing= smoothing, # the smoothing is done or not?
     type_of_loss=type_of_loss, # type of used loss
     blank_array=zeros(100), # data of all blanks
-    plot_best_model=false, # one wants the results of the best fit to be plotted
+    display_plot_best_model=false, # one wants the results of the best fit to be plotted
+    save_plot_best_model=false,
     path_to_plot="NA",
     pt_smooth_derivative=pt_smooth_derivative,
     multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
@@ -1935,7 +2029,9 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
     verbose=false,
     PopulationSize =PopulationSize,
     maxiters = maxiters,
-    abstol = abstol
+    abstol = abstol,
+    type_of_smoothing = type_of_smoothing,
+    thr_lowess = thr_lowess
   )
 
   if save_all_model == true
@@ -1969,7 +2065,8 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
       type_of_curve = type_of_curve,
       smoothing=smoothing,
       pt_avg=pt_avg,
-      do_plot=false, # do plots or no
+      save_plot=false, # do plots or no
+      display_plots=false, # do plots or no
       path_to_plot="NA", # where save plots
       win_size=win_size, # numebr of the point to generate intial condition
       pt_smooth_derivative=pt_smooth_derivative,
@@ -1977,7 +2074,9 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
       calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
       beta_smoothing_ms =penality_parameter, #  parameter of the AIC penality
       method_peaks_detection= method_peaks_detection,
-      n_bins = n_bins)
+      n_bins = n_bins,
+      type_of_smoothing = type_of_smoothing ,
+      thr_lowess = thr_lowess)
 
       # composing piecewise penality
       loss_penality = sum([direct_search_results[1][kk][(end-2)] for kk in 1:length(direct_search_results[1])])
@@ -2000,13 +2099,169 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
   end
 
   # plotting best model if required
-  if do_plot == true
+  if save_plot == true && display_plot == true
     mkpath(path_to_plot)
     display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
     display( Plots.vline!(change_point_to_plot[2:end], c=:black, label=["change points" nothing]))
     display(Plots.plot!(reduce(vcat,time_points_to_plot), reduce(vcat,sol_to_plot), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
-    png(string(path_to_plot, label_exp, "_model_selecetion_seg_",length(change_point_to_plot[2:end]),"_", name_well, ".png"))
+    png(string(path_to_plot, label_exp, "_model_selection_seg_",length(change_point_to_plot[2:end]),"_", name_well, ".png"))
+  end
+
+  if save_plot == true  && display_plot == false
+    mkpath(path_to_plot)
+    (Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
+    (Plots.vline!(change_point_to_plot[2:end], c=:black, label=["change points" nothing]))
+    (Plots.plot!(reduce(vcat,time_points_to_plot), reduce(vcat,sol_to_plot), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
+    png(string(path_to_plot, label_exp, "_model_selection_seg_",length(change_point_to_plot[2:end]),"_", name_well, ".png"))
+  end
+  if save_plot == false  && display_plot == true
+    display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
+    display( Plots.vline!(change_point_to_plot[2:end], c=:black, label=["change points" nothing]))
+    display(Plots.plot!(reduce(vcat,time_points_to_plot), reduce(vcat,sol_to_plot), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
   end
 
   return top_model,time_points_to_plot,sol_to_plot
+end
+
+"
+Testing part
+"
+function inizialize_res_segmentation(data_df::Matrix{Float64},
+  list_of_model_parameters::Any,
+  number_of_segment:: Any
+  )
+
+  # evaluation of the number of columns
+  ncols =  size(data_df,2) *(number_of_segment +1) + 1
+  # evaluation of the number of rows
+  nrow = maximum(length.(list_of_model_parameters)) + 7
+
+  # inizialization of the matrix as full of missing
+  matrix_result = missings(Any, nrow, ncols)
+  # generation of the names of the rows
+  matrix_result[1] = "well"
+  matrix_result[2] = "label_exp"
+  matrix_result[3] = "model"
+  matrix_result[(end - 3) ] = "th_gr"
+  matrix_result[(end - 2) ] = "em_gr"
+  matrix_result[(end -1)] = "loss"
+
+  for i in 4:(4 + maximum(length.(list_of_model_parameters)))
+    matrix_result[i,1] = string("param_",i)
+  end
+
+  return matrix_result
+end
+
+# function to inizialize the df for results of  model selection
+function inizialize_res_model_selection( list_of_model_parameters::Any)
+  matrix_result = missings(Any, nrow)
+  nmax_param =  maximum(length.(list_of_model_parameters))
+  # evaluation of the number of rows
+  nrow = maximum(length.(list_of_model_parameters)) + 7
+  # inizialization of the matrix as full of missing
+  matrix_result = missings(Any, nrow)
+  # generation of the names of the rows
+  matrix_result[1] = "well"
+  matrix_result[2] = "label_exp"
+  matrix_result[3] = "model"
+  matrix_result[(end - 2) ] = "loss"
+  matrix_result[(end - 1) ] = "th_gr"
+  matrix_result[(end)] =   "em_gr"
+
+  for i in 4:(4 + nmax_param-1)
+    matrix_result[i] = string("param_",i-3)
+  end
+
+  return matrix_result
+end
+
+# function to inizialize the df for results of  model selection
+function inizialize_res_segmentation(
+  list_of_model_parameters::Any
+  )
+
+  matrix_result = missings(Any, nrow)
+  nmax_param =  maximum(length.(list_of_model_parameters))
+
+  # evaluation of the number of columns
+  # evaluation of the number of rows
+  nrow = maximum(length.(list_of_model_parameters)) + 7
+
+  # inizialization of the matrix as full of missing
+  matrix_result = missings(Any, nrow)
+
+  # generation of the names of the rows
+  matrix_result[1] = "well"
+  matrix_result[2] = "label_exp"
+  matrix_result[3] = "model"
+  matrix_result[(end - 3) ] = "loss"
+  matrix_result[(end - 2) ] = "th_gr"
+  matrix_result[(end -1)] =   "em_gr"
+  matrix_result[end] = "segment"
+
+  for i in 4:(4 + nmax_param-1)
+    matrix_result[i] = string("param_",i-3)
+  end
+
+  return matrix_result
+end
+
+# given optimization results for model selection add missing to mach the size  of the model of
+function expand_res_model_selection(param_res::Array{Float64},
+  list_of_model_parameters::Any,
+  names_of_the_well::String,
+  )
+
+  n_param = length(param_res) -5
+  nmax_param =  maximum(length.(list_of_model_parameters))
+  temp_output = missings(Any, nmax_param +6)
+  temp_output[1] =names_of_the_well
+  temp_output[2] = param_res[1]
+  temp_output[3] = param_res[2]
+  temp_output[(end - 2) ] =  param_res[(end ) ]
+  temp_output[(end - 1) ] = param_res[(end - 2) ]
+  temp_output[(end ) ] = param_res[(end)-1 ]
+
+  for i in 3:(3 + n_param )
+    temp_output[i] = param_res[i-1]
+  end
+
+  return temp_output
+end
+
+# here the function to construct segmentation
+function expand_res_segmentation(param_res::Any,
+  list_of_model_parameters::Any,
+  number_of_segment::Int,
+  names_of_the_well::String,
+  label_exp::String
+  )
+
+  nmax_param =  maximum(length.(list_of_model_parameters))
+  fin_output = Matrix{Any}
+
+  for s in 1:number_of_segment
+    n_param = length(param_res[s]) -5
+    temp_output = missings(Any, nmax_param + 7)
+    temp_output[1] =names_of_the_well
+    temp_output[2] = label_exp
+    temp_output[3] =  param_res[s][1]
+    temp_output[(end - 3) ] =  param_res[s][(end - 3) ]
+    temp_output[(end - 2) ] =  param_res[s][(end - 2) ]
+    temp_output[(end - 1) ] = param_res[s][(end - 1) ]
+    temp_output[(end ) ] = param_res[s][(end) ]
+
+    for i in 4:(4 + n_param-1)
+      temp_output[i] = param_res[s][i-2]
+    end
+
+    if s ==1
+      fin_output = temp_output
+    else
+      fin_output = hcat(fin_output,temp_output)
+    end
+  end
+
+  return fin_output
 end

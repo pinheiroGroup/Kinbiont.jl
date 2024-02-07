@@ -25,7 +25,7 @@ function HPM_3_death_resistance_old(du, u, param, t)
   du[3] = param[3]*  u[2] + param[4]*  u[3]* (1 - (u[3]+u[1]+u[2])/param[5])
 end
 
-function dHPM_3_death_resistance(du, u, param, t)
+function aHPM_3_death_resistance(du, u, param, t)
   du[1] = - u[1] * param[2]
   du[2] = u[1] * param[2] + param[1] * u[2]  -  param[3]*  u[2]#*(1-u[2])
   du[3] = param[3]*  u[2]  + param[4]*  u[3]* (1 - NaNMath.pow((u[3]+u[1]+u[2])/param[5],param[6]))
@@ -47,7 +47,7 @@ function ODEs_HPM_inhibition(du, u, param, t)
   du[2] = + u[1] * (param[2]) + param[4] * u[2]* ( 1 - (u[1] + u[2])/param[3]) 
 end
 
-function ODEs_dHPM_inhibition(du, u, param, t)
+function ODEs_aHPM_inhibition(du, u, param, t)
   du[1] =  - u[1] * (param[2])  +  param[1] *  u[1] 
   du[2] = + u[1] * (param[2]) + param[4] * u[2]* ( 1 -  NaNMath.pow( (u[1] + u[2])/param[3],param[5])) 
 end
@@ -57,8 +57,8 @@ function ODEs_HPM_SR(du, u, param, t)
   du[2] =  +  param[5]  * u[1] 
 end
 
-# damped heterogeneous population model (dHPM).
-function ODEs_damped_McKellar(du, u, param, t)
+# adjusted heterogeneous population model (aHPM).
+function ODEs_adjusted_McKellar(du, u, param, t)
   du[1] = - u[1] * (param[2]) 
   du[2] = u[1] * (param[2])  +  param[1] *  u[2] * ( 1 - NaNMath.pow( (u[1] + u[2])/param[3],param[4])) 
 end
@@ -82,7 +82,7 @@ function ODE_Diauxic_replicator_2(du, u, param, t)
 end
 
 # empirical Diauxic
-function ODE_Diauxic_piecewise_damped_logistic(du, u, param, t)
+function ODE_Diauxic_piecewise_adjusted_logistic(du, u, param, t)
   if (t <=  param[4] && t <= param[6] && t <= param[10])
     du[1] = u[1] * param[5]
   elseif (t > param[4] && t <= param[6] && t <= param[10])
@@ -94,7 +94,7 @@ function ODE_Diauxic_piecewise_damped_logistic(du, u, param, t)
   end
 end
 
-function ODE_Diauxic_piecewise_damped_logistic_bk(du, u, param, t)
+function ODE_Diauxic_piecewise_adjusted_logistic_bk(du, u, param, t)
   if (t <=  param[4] && t <= param[6] && t <= param[10])
     du[1] = u[1] * param[5]
 
@@ -113,7 +113,7 @@ function ODE_exponential(du, u, param, t)
   du[1] = param[1]*u[1]
 end
 
-function ODE_piecewise_damped_logistic(du, u, param, t)
+function ODE_piecewise_adjusted_logistic(du, u, param, t)
   if t <= param[3]
     du[1] = param[5]
   else
@@ -121,7 +121,7 @@ function ODE_piecewise_damped_logistic(du, u, param, t)
   end
 end
 
-function ODE_triple_piecewise_damped_logistic(du, u, param, t)
+function ODE_triple_piecewise_adjusted_logistic(du, u, param, t)
   if t <= param[3]
     du[1] = u[1] * param[5]
   elseif ( t <=  param[6] && t > param[3] )
@@ -208,8 +208,8 @@ function logistic(du, u, param, t)
   du[1] = (param[1] / param[2]) * u[1] * (param[2] - u[1])
 end
 
-# dLogistic curve 
-function dlogistic(du, u, param, t)
+# aLogistic curve 
+function alogistic(du, u, param, t)
   du[1] = (param[1] ) * u[1] * ( 1 - NaNMath.pow(u[1]/param[2],param[3]) )
 end
 
@@ -232,11 +232,6 @@ function baranyi_roberts(du, u, param, t)
   du[1] = param[1] * (1 - NaNMath.pow(u[1] / max(param[2], u[1] + 0.00001), param[5])) * (NaNMath.pow(t, param[4]) / (NaNMath.pow(param[3], param[4]) + NaNMath.pow(t, param[4]))) * u[1]
 end
 
-# Huang model from Huang "Optimization of a new mathematical model for bacterial growth" 2013
-function huang(du, u, param, t)
-  du[1] = param[1] * (1 - exp(u[1] - param[2])) / (1 + exp(4.0 * (t - param[3])))
-end
-
 models_list = [
   JModel(
     "HPM_3_inhibition",
@@ -249,8 +244,8 @@ models_list = [
     ["model", "well", "gr", "exit_lag_rate", "inactivation_rate","death_rate","th_max_gr","emp_max_gr","loss"]
   ),
   JModel(
-    "dHPM_3_death_resistance",
-    dHPM_3_death_resistance,
+    "aHPM_3_death_resistance",
+    aHPM_3_death_resistance,
     ["model", "well", "gr", "exit_lag_rate", "inactivation_rate","death_rate","n_res","shape","th_max_gr","emp_max_gr","loss"]
    ),
   JModel(
@@ -269,8 +264,8 @@ models_list = [
     ["model", "well", "gr", "inhibition_rate", "gr_inhibition","N_max","th_max_gr","emp_max_gr", "loss"]
    ),
   JModel(
-    "dHPM_inhibition",
-    ODEs_dHPM_inhibition,
+    "aHPM_inhibition",
+    ODEs_aHPM_inhibition,
     ["model", "well", "gr", "inhibition_rate", "gr_inhibition","N_max", "shape","th_max_gr","emp_max_gr" , "loss"]
    ),
   JModel(
@@ -279,8 +274,8 @@ models_list = [
     ["model", "well", "gr", "gr_phage","scale", "death_rate","resistance_rate","th_max_gr","emp_max_gr", "loss"]
    ),
   JModel(
-    "dHPM",
-    ODEs_damped_McKellar,
+    "aHPM",
+    ODEs_adjusted_McKellar,
     ["model", "well", "gr", "exit_lag_rate", "N_max", "shape" ,"th_max_gr","emp_max_gr", "loss"]
    ),
   JModel(
@@ -294,8 +289,8 @@ models_list = [
     ["model", "well", "gr", "N_max", "lag", "arbitrary_const", "linear_const", "growth_stationary","th_max_gr","emp_max_gr", "loss"]
    ),
   JModel(
-    "Diauxic_piecewise_damped_logistic",
-    ODE_Diauxic_piecewise_damped_logistic,
+    "Diauxic_piecewise_adjusted_logistic",
+    ODE_Diauxic_piecewise_adjusted_logistic,
     ["model", "well", "gr_1", "N_max", "shape_1", "lag", "linear_const", "t_shift", "gr_2","N_max_2","shape_2","end_second_lag","lag_2_gr","th_max_gr","emp_max_gr", "loss"]
    ),
   JModel(
@@ -304,13 +299,13 @@ models_list = [
     ["model", "well", "gr", "th_max_gr","emp_max_gr", "loss"]
    ),
   JModel(
-    "piecewise_damped_logistic",
-    ODE_piecewise_damped_logistic,
+    "piecewise_adjusted_logistic",
+    ODE_piecewise_adjusted_logistic,
     ["model", "well", "gr", "N_max", "lag", "shape", "linear_const","th_max_gr","emp_max_gr", "loss"]
    ),
   JModel(
-    "triple_piecewise_damped_logistic",
-    ODE_triple_piecewise_damped_logistic,
+    "triple_piecewise_adjusted_logistic",
+    ODE_triple_piecewise_adjusted_logistic,
     ["model", "well", "gr", "N_max", "lag", "shape", "linear_const", "t_stationary", "linear_lag","th_max_gr","emp_max_gr", "loss"]
    ),
   JModel(
@@ -364,8 +359,8 @@ models_list = [
     ["model", "well", "gr", "N_max","th_max_gr","emp_max_gr", "loss"]
    ),
   JModel(
-    "dlogistic",
-    dlogistic,
+    "alogistic",
+    alogistic,
     ["model", "well", "gr", "N_max","shape","th_max_gr","emp_max_gr", "loss"]
    ),
   JModel(
@@ -387,11 +382,6 @@ models_list = [
     "baranyi_roberts",
     baranyi_roberts,
     ["model", "well", "gr", "N_max", "lag_time", "shape_1", "shape_2","th_max_gr","emp_max_gr", "loss"]
-   ),
-  JModel(
-    "huang",
-    huang,
-    ["model", "well", "gr", "N_max", "lag","th_max_gr","emp_max_gr", "loss"]
    )
 ]
 
