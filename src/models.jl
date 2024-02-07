@@ -8,392 +8,233 @@ struct JModel
 end
 
 function HPM_3_inhibition(du, u, param, t)
-          
-    du[1] = - u[1] * param[2]
-          
-    du[2] = u[1] * param[2] + param[1] * u[2] -  param[3]*  u[2]
-    
-    du[3] = param[3]*  u[2]# - param[4]*  u[3]
-
-          
+  du[1] = - u[1] * param[2]
+  du[2] = u[1] * param[2] + param[1] * u[2] -  param[3]*  u[2]
+  du[3] = param[3]*  u[2]# - param[4]*  u[3]
 end
 
 function HPM_3_death(du, u, param, t)
-          
-    du[1] = - u[1] * param[2]
-          
-    du[2] = u[1] * param[2] + param[1] * u[2] -  param[3]*  u[2]
-    
-    du[3] = param[3]*  u[2] - param[4]*  u[3]
-
-          
+  du[1] = - u[1] * param[2]
+  du[2] = u[1] * param[2] + param[1] * u[2] -  param[3]*  u[2]
+  du[3] = param[3]*  u[2] - param[4]*  u[3]
 end
 
 function HPM_3_death_resistance_old(du, u, param, t)
-          
-    du[1] = - u[1] * param[2]
-          
-    du[2] = u[1] * param[2] + param[1] * u[2] * (1 - (u[3]+u[1]+u[2])/param[6]) -  param[3]*  u[2] 
-
-    
-    du[3] = param[3]*  u[2] + param[4]*  u[3]* (1 - (u[3]+u[1]+u[2])/param[5])
-
-          
+  du[1] = - u[1] * param[2]
+  du[2] = u[1] * param[2] + param[1] * u[2] * (1 - (u[3]+u[1]+u[2])/param[6]) -  param[3]*  u[2] 
+  du[3] = param[3]*  u[2] + param[4]*  u[3]* (1 - (u[3]+u[1]+u[2])/param[5])
 end
 
 function dHPM_3_death_resistance(du, u, param, t)
-          
-    du[1] = - u[1] * param[2]
-          
-    du[2] = u[1] * param[2] + param[1] * u[2]  -  param[3]*  u[2]#*(1-u[2])
-    
-    du[3] = param[3]*  u[2]  + param[4]*  u[3]* (1 - NaNMath.pow((u[3]+u[1]+u[2])/param[5],param[6]))
-
-          
+  du[1] = - u[1] * param[2]
+  du[2] = u[1] * param[2] + param[1] * u[2]  -  param[3]*  u[2]#*(1-u[2])
+  du[3] = param[3]*  u[2]  + param[4]*  u[3]* (1 - NaNMath.pow((u[3]+u[1]+u[2])/param[5],param[6]))
 end
-
-
 
 # McKellar (1997): heterogeneous population model (HPM).
-
 function ODEs_McKellar(du, u, param, t)
-
-    du[1] = - u[1] * (param[2]) 
-
-    du[2] = u[1] * (param[2])  +  param[1] *  u[2] * ( 1 - (u[1] + u[2])/param[3]) 
-
+  du[1] = - u[1] * (param[2]) 
+  du[2] = u[1] * (param[2])  +  param[1] *  u[2] * ( 1 - (u[1] + u[2])/param[3]) 
 end
+
 function ODEs_HPM_exp(du, u, param, t)
-
-    du[1] = - u[1] * (param[2]) 
-
-    du[2] = u[1] * (param[2])  +  param[1] *  u[2] 
-
+  du[1] = - u[1] * (param[2]) 
+  du[2] = u[1] * (param[2])  +  param[1] *  u[2] 
 end
+
 function ODEs_HPM_inhibition(du, u, param, t)
-
-    du[1] =  - u[1] * (param[2])  +  param[1] *  u[1] 
-
-    du[2] = + u[1] * (param[2]) + param[4] * u[2]* ( 1 - (u[1] + u[2])/param[3]) 
-
+  du[1] =  - u[1] * (param[2])  +  param[1] *  u[1] 
+  du[2] = + u[1] * (param[2]) + param[4] * u[2]* ( 1 - (u[1] + u[2])/param[3]) 
 end
 
 function ODEs_dHPM_inhibition(du, u, param, t)
-
-    du[1] =  - u[1] * (param[2])  +  param[1] *  u[1] 
-
-    du[2] = + u[1] * (param[2]) + param[4] * u[2]* ( 1 -  NaNMath.pow( (u[1] + u[2])/param[3],param[5])) 
-
+  du[1] =  - u[1] * (param[2])  +  param[1] *  u[1] 
+  du[2] = + u[1] * (param[2]) + param[4] * u[2]* ( 1 -  NaNMath.pow( (u[1] + u[2])/param[3],param[5])) 
 end
 
-
 function ODEs_HPM_SR(du, u, param, t)
-
-
-
-    du[1] =  -  param[4]  / (1+ param[3] * exp(- param[2] * t) )*  u[1] +  param[1] *  u[1] -   param[5]  * u[1] 
-
-    du[2] =  +  param[5]  * u[1] 
-
+  du[1] =  -  param[4]  / (1+ param[3] * exp(- param[2] * t) )*  u[1] +  param[1] *  u[1] -   param[5]  * u[1] 
+  du[2] =  +  param[5]  * u[1] 
 end
 
 # damped heterogeneous population model (dHPM).
-
 function ODEs_damped_McKellar(du, u, param, t)
-
-    du[1] = - u[1] * (param[2]) 
-
-    du[2] = u[1] * (param[2])  +  param[1] *  u[2] * ( 1 - NaNMath.pow( (u[1] + u[2])/param[3],param[4])) 
-
+  du[1] = - u[1] * (param[2]) 
+  du[2] = u[1] * (param[2])  +  param[1] *  u[2] * ( 1 - NaNMath.pow( (u[1] + u[2])/param[3],param[4])) 
 end
 
 # Diauxic  replicator model 1 from "Diauxic behaviour for biological processes at various timescales"
-
-
 function ODE_Diauxic_replicator_1(du, u, param, t)
-
-    if t <= param[3]
-        du[1] = param[5]
-
-    else
-
-        du[1] = u[1] * (param[2] - u[1]) * (NaNMath.pow(u[1] - param[1], 2) + param[4])
-
-    end
-
+  if t <= param[3]
+    du[1] = param[5]
+  else
+    du[1] = u[1] * (param[2] - u[1]) * (NaNMath.pow(u[1] - param[1], 2) + param[4])
+  end
 end
 
 # Diauxic  replicator model 2    "Diauxic behaviour for biological processes at various timescales"
-
-
-
 function ODE_Diauxic_replicator_2(du, u, param, t)
-
-    if t <= param[3]
-        du[1] = param[5]
-
-    else
-
-
-        du[1] = u[1] * (param[2] - u[1]) * (NaNMath.pow(u[1] - param[1], 2) * NaNMath.pow(u[1] - param[6], 2) + param[4])
-
-
-
-    end
-
+  if t <= param[3]
+    du[1] = param[5]
+  else
+    du[1] = u[1] * (param[2] - u[1]) * (NaNMath.pow(u[1] - param[1], 2) * NaNMath.pow(u[1] - param[6], 2) + param[4])
+  end
 end
 
 # empirical Diauxic
-
-
-
 function ODE_Diauxic_piecewise_damped_logistic(du, u, param, t)
-
-    if (t <=  param[4] && t <= param[6] && t <= param[10])
-        du[1] = u[1] * param[5]
-
-    elseif (t > param[4] && t <= param[6] && t <= param[10])
-
-        du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[3]))
-
-    elseif (t > param[4] && t > param[6] && t <= param[10] )
-
-        du[1] = u[1] * param[11]  
-
-    elseif (t > param[4] && t > param[6] && t> param[10] )
-        du[1] = u[1] * param[7] * (1 - NaNMath.pow((u[1] / param[8]), param[9]))
-
-    end
-
-
+  if (t <=  param[4] && t <= param[6] && t <= param[10])
+    du[1] = u[1] * param[5]
+  elseif (t > param[4] && t <= param[6] && t <= param[10])
+    du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[3]))
+  elseif (t > param[4] && t > param[6] && t <= param[10] )
+    du[1] = u[1] * param[11]  
+  elseif (t > param[4] && t > param[6] && t> param[10] )
+    du[1] = u[1] * param[7] * (1 - NaNMath.pow((u[1] / param[8]), param[9]))
+  end
 end
-
-
 
 function ODE_Diauxic_piecewise_damped_logistic_bk(du, u, param, t)
+  if (t <=  param[4] && t <= param[6] && t <= param[10])
+    du[1] = u[1] * param[5]
 
-    if (t <=  param[4] && t <= param[6] && t <= param[10])
-        du[1] = u[1] * param[5]
-
-    elseif (t > param[4] && t <= param[6] && t <= param[10])
-
-        du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[3]))
-    elseif (t > param[4] && t > param[6] && t <= param[10] )
-
-        du[1] = u[1] * param[11]
-
-    elseif (t > param[4] && t > param[6] && t> param[10] )
-        du[1] = u[1] * param[7] * (1 - NaNMath.pow((u[1] / param[8]), param[9]))
-
-    end
-
-
+  elseif (t > param[4] && t <= param[6] && t <= param[10])
+    du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[3]))
+  elseif (t > param[4] && t > param[6] && t <= param[10] )
+    du[1] = u[1] * param[11]
+  elseif (t > param[4] && t > param[6] && t> param[10] )
+    du[1] = u[1] * param[7] * (1 - NaNMath.pow((u[1] / param[8]), param[9]))
+  end
 end
-
 
 # global optimizator piecewise 
-
-
-
 # custom piecewise model
 function ODE_exponential(du, u, param, t)
-
-        du[1] = param[1]*u[1]
-
-
+  du[1] = param[1]*u[1]
 end
+
 function ODE_piecewise_damped_logistic(du, u, param, t)
-
-    if t <= param[3]
-        du[1] = param[5]
-
-    else
-
-        du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[4]))
-
-
-    end
-
+  if t <= param[3]
+    du[1] = param[5]
+  else
+    du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[4]))
+  end
 end
+
 function ODE_triple_piecewise_damped_logistic(du, u, param, t)
-
-    if t <= param[3]
-        du[1] = u[1] * param[5]
-
-    elseif ( t <=  param[6] && t > param[3] )
-
-
-        du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[4]))
-
-
-    elseif  ( t >  param[6] && t > param[3] ) 
-        du[1] = u[1] * param[7]
-    end
-
+  if t <= param[3]
+    du[1] = u[1] * param[5]
+  elseif ( t <=  param[6] && t > param[3] )
+    du[1] = param[1] * u[1] * (1 - NaNMath.pow((u[1] / param[2]), param[4]))
+  elseif ( t >  param[6] && t > param[3] ) 
+    du[1] = u[1] * param[7]
+  end
 end
-
 
 function ODE_triple_piecewise(du, u, param, t)
-
-    if t <= param[4]
-
-        du[1] = u[1] * param[2]
-
-    elseif (t <= param[5] && t > param[4] )
-
-        du[1] = u[1] * param[1]
-
+  if t <= param[4]
+    du[1] = u[1] * param[2]
+  elseif (t <= param[5] && t > param[4] )
+    du[1] = u[1] * param[1]
 
     elseif (t > param[5] && t > param[4] )
-
-        du[1] = u[1] * param[3]
+      du[1] = u[1] * param[3]
     end
-
 end
-
 
 function ODE_triple_piecewise_sub_linear(du, u, param, t)
-
-    if t <= param[4]
-
-        du[1] = u[1] * param[2]
-
-    elseif t <= param[5]
-
-        du[1] = u[1] * param[1]
-
-
-    else
-
-        du[1] =(1- NaNMath.log( u[1]/param[6] ))  * param[3]
-    end
-
+  if t <= param[4]
+    du[1] = u[1] * param[2]
+  elseif t <= param[5]
+    du[1] = u[1] * param[1]
+  else
+    du[1] =(1- NaNMath.log( u[1]/param[6] ))  * param[3]
+  end
 end
 
-
 function ODE_gbsm_piecewise(du, u, param, t)
-
-    if t <= param[4]
-
-        du[1] = param[1] * (1 / (1 + NaNMath.pow(abs((t - param[4]) / param[2]), 2 * param[3])))
-
-    else
-
-        du[1] = param[1] * (1 / (1 + NaNMath.pow(abs((t - param[4]) / param[5]), 2 * param[6])))
-
-
-    end
-
+  if t <= param[4]
+    du[1] = param[1] * (1 / (1 + NaNMath.pow(abs((t - param[4]) / param[2]), 2 * param[3])))
+  else
+    du[1] = param[1] * (1 / (1 + NaNMath.pow(abs((t - param[4]) / param[5]), 2 * param[6])))
+  end
 end
 
 function ODE_four_piecewise(du, u, param, t)
-
-    if t <= param[5]
-
-        du[1] = u[1] * param[2]
-
-    elseif (t <= param[6] && t > param[5])
-
-        du[1] = u[1] * param[1]
-
-    elseif (t <= param[7] && t >  param[6] && t >  param[5])
-
-        du[1] = u[1] * param[3]
-
-    elseif (t > param[7] && t >  param[6] && t >  param[5])
-
-        du[1] = u[1] * param[4]
-    end
-
+  if t <= param[5]
+    du[1] = u[1] * param[2]
+  elseif (t <= param[6] && t > param[5])
+    du[1] = u[1] * param[1]
+  elseif (t <= param[7] && t >  param[6] && t >  param[5])
+    du[1] = u[1] * param[3]
+  elseif (t > param[7] && t >  param[6] && t >  param[5])
+    du[1] = u[1] * param[4]
+  end
 end
 
 # hyper gompertz curve from "A Theory of Growth" Turner, Brandley and Kirk 1976
-
 function hyper_gompertz(du, u, param, t)
-    du[1] = param[1] * u[1] * NaNMath.pow(NaNMath.log(max(param[2], u[1]) / u[1]), 1 + param[3])
+  du[1] = param[1] * u[1] * NaNMath.pow(NaNMath.log(max(param[2], u[1]) / u[1]), 1 + param[3])
 end
 
 # hyper logistic curve from "A Theory of Growth" Turner, Brandley and Kirk 1976
-
 function hyper_logistic(du, u, param, t)
-    du[1] = (param[1] / param[2]) * NaNMath.pow(u[1], (1 - param[3])) * NaNMath.pow(max(param[2], u[1] + 0.00001) - u[1], 1 + param[3])
-
+  du[1] = (param[1] / param[2]) * NaNMath.pow(u[1], (1 - param[3])) * NaNMath.pow(max(param[2], u[1] + 0.00001) - u[1], 1 + param[3])
 end
-
 
 # Bertalanffy Richards curve from "A Theory of Growth" Turner, Brandley and Kirk 1976
-
 function bertalanffy_richards(du, u, param, t)
-    du[1] = NaNMath.pow(param[1] / param[2], param[3]) * u[1] * (NaNMath.pow(max(param[2], u[1] + 0.00001), param[3]) - NaNMath.pow(u[1], param[3]))
-
+  du[1] = NaNMath.pow(param[1] / param[2], param[3]) * u[1] * (NaNMath.pow(max(param[2], u[1] + 0.00001), param[3]) - NaNMath.pow(u[1], param[3]))
 end
+
 # Multiplicative modelling of four-phase microbial growth, ODE von Bertalanffy
-
 function ODE_von_bertalanffy(du, u, param, t)
-    du[1] = u[1] * ( param[1] * param[2] * t ^(param[2] - 1 ) - param[3] * param[4] * t ^(param[4] - 1 ))
-
+  du[1] = u[1] * ( param[1] * param[2] * t ^(param[2] - 1 ) - param[3] * param[4] * t ^(param[4] - 1 ))
 end
 
 # third part from A general model for ontogenetic growth
 function ODE_triple_piecewise_bertalanffy_richards(du, u, param, t)
-
-    if t <= param[3]
-
-        du[1] = u[1] * param[2]
-
-    elseif t <= param[4]
-
-        du[1] = u[1] * param[1]
-
-
-    else
-
-        du[1] = param[5]*  NaNMath.pow(u[1],param[6]) * ( 1 - NaNMath.pow(u[1]/param[7],param[6]) )
-    end
-
+  if t <= param[3]
+    du[1] = u[1] * param[2]
+  elseif t <= param[4]
+    du[1] = u[1] * param[1]
+  else
+    du[1] = param[5]*  NaNMath.pow(u[1],param[6]) * ( 1 - NaNMath.pow(u[1]/param[7],param[6]) )
+  end
 end
-
 
 # Logistic curve 
-
 function logistic(du, u, param, t)
-    du[1] = (param[1] / param[2]) * u[1] * (param[2] - u[1])
-
+  du[1] = (param[1] / param[2]) * u[1] * (param[2] - u[1])
 end
+
 # dLogistic curve 
-
 function dlogistic(du, u, param, t)
-    du[1] = (param[1] ) * u[1] * ( 1 - NaNMath.pow(u[1]/param[2],param[3]) )
-
+  du[1] = (param[1] ) * u[1] * ( 1 - NaNMath.pow(u[1]/param[2],param[3]) )
 end
 
 # Gompertz  curve 
-
-
 function gompertz(du, u, param, t)
-    du[1] = (param[1]) * u[1] * log(param[2] / u[1])
-
+  du[1] = (param[1]) * u[1] * log(param[2] / u[1])
 end
 
 # Baranyi-Richards model from Baranyi, Roberts, and   McClure. "A non-autonomous differential equation to model bacterial growth" 1993
-
-
 function baranyi_richards(du, u, param, t)
-    du[1] = param[1] * (1 - (u[1] / param[2])) * (t^param[4]) / ((param[3])^(param[4]) + t^(param[4])) * u[1]
+  du[1] = param[1] * (1 - (u[1] / param[2])) * (t^param[4]) / ((param[3])^(param[4]) + t^(param[4])) * u[1]
 end
-function baranyi_exp(du, u, param, t)
-    du[1] = param[1] *  (t^param[3]) / ((param[2])^(param[3]) + t^(param[3])) * u[1]
-end
-#  Baranyi-Roberts model from: Baranyi and Roberts. "A dynamic approach to predicting bacterial growth in food" 1994
 
+function baranyi_exp(du, u, param, t)
+  du[1] = param[1] *  (t^param[3]) / ((param[2])^(param[3]) + t^(param[3])) * u[1]
+end
+
+#  Baranyi-Roberts model from: Baranyi and Roberts. "A dynamic approach to predicting bacterial growth in food" 1994
 function baranyi_roberts(du, u, param, t)
-    du[1] = param[1] * (1 - NaNMath.pow(u[1] / max(param[2], u[1] + 0.00001), param[5])) * (NaNMath.pow(t, param[4]) / (NaNMath.pow(param[3], param[4]) + NaNMath.pow(t, param[4]))) * u[1]
+  du[1] = param[1] * (1 - NaNMath.pow(u[1] / max(param[2], u[1] + 0.00001), param[5])) * (NaNMath.pow(t, param[4]) / (NaNMath.pow(param[3], param[4]) + NaNMath.pow(t, param[4]))) * u[1]
 end
 
 # Huang model from Huang "Optimization of a new mathematical model for bacterial growth" 2013
-
 function huang(du, u, param, t)
-    du[1] = param[1] * (1 - exp(u[1] - param[2])) / (1 + exp(4.0 * (t - param[3])))
+  du[1] = param[1] * (1 - exp(u[1] - param[2])) / (1 + exp(4.0 * (t - param[3])))
 end
 
 models_list = [
