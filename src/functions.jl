@@ -11,37 +11,21 @@ include("models.jl")
 Internal functions
 """
 
-function model_selector(model::String, u0, tspan)
+function model_selector(model::String, u0, tspan, param=nothing)
 
   """
-    generate sciML OD problem for fitting the ODE
-  """
-
-  if model == "huang"
-    u0 = [log(u0)]
-  end
-
-  ODE_prob = ODEProblem(models[model], u0, tspan, nothing)
-
-  return ODE_prob
-
-end   
-
-function model_selector(model::String, u0, tspan, param)
-    
-  """ 
-    generate sciML ODE problem for simulations
+    generate sciML ODE problem
   """
 
   if model == "huang"
-    ## attention!!!!!
     u0 = [log(u0)]
   end
 
   ODE_prob = ODEProblem(models[model], u0, tspan, param)
-  
+
   return ODE_prob
-end  
+
+end   
 
 function gaussian_smoothing(data::Matrix{Float64};optimize_gp=false)
 
