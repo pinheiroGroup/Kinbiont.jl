@@ -21,7 +21,7 @@ function model_selector(model::String, u0, tspan, param=nothing)
     u0 = [log(u0)]
   end
 
-  ODE_prob = ODEProblem(models[model], u0, tspan, param)
+  ODE_prob = ODEProblem(models[model].func, u0, tspan, param)
 
   return ODE_prob
 
@@ -1743,26 +1743,19 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
      abstol = 0.00001 )
 
     if  multiple_scattering_correction == true
-
         data = correction_OD_multiple_scattering(data,calibration_OD_curve)
     end
 
 
     # smooting if required
     if smoothing == true
-
         data = smoothing_data(data, pt_avg)
         data = Matrix(data)
-
     end
 
- 
-
     # inizialization of array of results
-
     df_res_optimization = Array{Any}(nothing, length(models_list))
     rss_array = ["model", "Loss", "AIC_standard"]
-
 
     # generating time interval
     max_t = data[1, end]
@@ -1892,7 +1885,7 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
    
         #  definition  ode symbolic problem
 
-        ODE_prob =model_selector(temp_model,u0,tspan)
+        ODE_prob = model_selector(temp_model, u0, tspan)
         
         # def optimization problem
         if type_of_loss == "L2"

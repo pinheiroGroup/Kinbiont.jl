@@ -418,8 +418,9 @@ models_list = [
     ["model", "well", "gr", "exit_lag_rate", "N_max","th_max_gr","emp_max_gr","loss"]
    ),
   JModel(
-    "ODEs_HPM_exp",
+    "HPM_exp",
     ODEs_HPM_exp,
+    ["model", "well", "gr", "exit_lag_rate","th_max_gr","emp_max_gr","loss"]
    ),
   JModel(
     "HPM_inhibition",
