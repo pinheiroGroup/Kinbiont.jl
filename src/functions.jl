@@ -12,7 +12,6 @@ Internal functions
 """
 
 function model_selector(model::String, u0, tspan, param=nothing)
-
   """
     generate sciML ODE problem
   """
@@ -24,15 +23,13 @@ function model_selector(model::String, u0, tspan, param=nothing)
   ODE_prob = ODEProblem(models[model].func, u0, tspan, param)
 
   return ODE_prob
-
 end   
 
 function gaussian_smoothing(data::Matrix{Float64};optimize_gp=false)
-
-
   """
     Gaussian smoothing 
   """
+
   xtrain = data[1,:];
   ytrain = data[2,:];
   kernel = SE(4.0,4.0) +   RQ(0.0,0.0,-1.0) + SE(-2.0,-2.0);#GaussianProcesses.Periodic(0.0,1.0,0.0)*SE(4.0,0.0)
@@ -41,6 +38,7 @@ function gaussian_smoothing(data::Matrix{Float64};optimize_gp=false)
   if optimize_gp == true
       optimize!(gp) 
   end
+
   μ, Σ = predict_y(gp, range(data[1,1], stop=data[1,end], length=500));
   μ, Σ = predict_y(gp,xtrain);
   range_vec = [a[i] for i in 1:length(a)]
@@ -49,18 +47,18 @@ function gaussian_smoothing(data::Matrix{Float64};optimize_gp=false)
 end
 
 function specific_gr_evaluation(data_smooted::Any,
-     pt_smoothing_derivative::Int)
-
+  pt_smoothing_derivative::Int)
   """
   specific gr evaluation with slinding window log-lin fitting
   data_smooted = matrix of data
   pt_smoothing_derivative = size of the win, if <2 the the numerical derivative of (log) data is evaluate with interpolation algorithm
   """
+
   if pt_smoothing_derivative > 1
-      specific_gr = [curve_fit(LinearFit, data_smooted[1, r:(r+pt_smoothing_derivative)], log.(data_smooted[2, r:(r+pt_smoothing_derivative)])).coefs[2] for r in 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)]
+    specific_gr = [curve_fit(LinearFit, data_smooted[1, r:(r+pt_smoothing_derivative)], log.(data_smooted[2, r:(r+pt_smoothing_derivative)])).coefs[2] for r in 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)]
   else
-      itp = interpolate((data_smooted[1,:],), log.(data_smooted[2,:]), Gridded(Linear()));
-      specific_gr = only.(Interpolations.gradient.(Ref(itp), data_smooted[1,:]))
+    itp = interpolate((data_smooted[1,:],), log.(data_smooted[2,:]), Gridded(Linear()));
+    specific_gr = only.(Interpolations.gradient.(Ref(itp), data_smooted[1,:]))
   end
 
   return specific_gr
@@ -88,143 +86,129 @@ function smoothing_data(data::Matrix{Float64},
 end
 
 function vectorize_df_results(well_name::String,
-    model::String,
-    res::Any,
-    th_gr::Any,
-    em_gr::Any,
-    loss::Float64)
-    """
-        internal function to reder as vector the results of the hardcoded ODE 
-    """
+  model::String,
+  res::Any,
+  th_gr::Any,
+  em_gr::Any,
+  loss::Float64)
+  """
+      internal function to reder as vector the results of the hardcoded ODE 
+  """
 
-    res_param = [
-        [model,
-         well_name];
-        res[1:length(models[model].params) - 5];
-        [th_gr,
-        em_gr,
-        loss]
-       ]
+  res_param = [
+      [model,
+       well_name];
+      res[1:length(models[model].params) - 5];
+      [th_gr,
+      em_gr,
+      loss]
+     ]
 
-    return res_param
+  return res_param
 end
 
-function inzialize_df_results(model::String)
+function initialize_df_results(model::String)
+  """
+      internal function to name the vectors the results of the hardcoded ODE 
+  """
 
-    """
-        internal function to name the vectors the results of the hardcoded ODE 
-    """
+  param_names = models[model].params
 
-    param_names = models[model].params
-
-    return param_names
-
+  return param_names
 end
 
 function guess_param(
-    lb_param::Vector{Float64},
-    ub_param::Vector{Float64})
-    """
-    internal function to set the start of the optimization problem in the middle of the  box constrains
-    """
-    param = lb_param .+ (ub_param-lb_param)./2
+  lb_param::Vector{Float64},
+  ub_param::Vector{Float64})
+  """
+  internal function to set the start of the optimization problem in the middle of the  box constrains
+  """
+  param = lb_param .+ (ub_param-lb_param)./2
 
-    return param
-
+  return param
 end
 
 function thr_negative_correction(data::Matrix{Float64}, # dataset first row times second row OD ,
-    thr_negative::Float64 # the value at which data are setted if negative
-    )
-    times = data[1, :]
-    values = data[2, :]
-    index_neg = findall(x -> x < thr_negative, values)
-    values[index_neg] .= thr_negative
-    data_corrected = transpose(hcat(times, values))
+  thr_negative::Float64 # the value at which data are setted if negative
+  )
 
-    return data_corrected
+  times = data[1, :]
+  values = data[2, :]
+  index_neg = findall(x -> x < thr_negative, values)
+  values[index_neg] .= thr_negative
+  data_corrected = transpose(hcat(times, values))
 
+  return data_corrected
 end
 
 function blank_distrib_negative_correction(data::Matrix{Float64}, # dataset first row times second row OD ,
-    blank_array::Vector{Float64}
-    )
+  blank_array::Vector{Float64}
+  )
 
-    times = data[1, :]
-    values = data[2, :]
-    #println(values)
-    index_neg = findall(x -> x < 0.0, values)
+  times = data[1, :]
+  values = data[2, :]
+  #println(values)
+  index_neg = findall(x -> x < 0.0, values)
 
-    number_of_neg = length(index_neg)
-    replacement_values = abs.(sample(blank_array, number_of_neg) .- mean(blank_array))
-    values[index_neg] .= replacement_values
-    data_corrected = transpose(hcat(times, values))
+  number_of_neg = length(index_neg)
+  replacement_values = abs.(sample(blank_array, number_of_neg) .- mean(blank_array))
+  values[index_neg] .= replacement_values
+  data_corrected = transpose(hcat(times, values))
 
-    return data_corrected
+  return data_corrected
 end
 
 function generation_of_combination_of_IC_morris(lb_param::Vector{Float64},
-    ub_param::Vector{Float64},
-    N_step_morris::Int
+  ub_param::Vector{Float64},
+  N_step_morris::Int
 )
 
-    starting_guess = copy(lb_param)
-    delta_vec = [(ub_param[i] - lb_param[i]) / (N_step_morris + 1) for i in 1:length(ub_param)]
+  starting_guess = copy(lb_param)
+  delta_vec = [(ub_param[i] - lb_param[i]) / (N_step_morris + 1) for i in 1:length(ub_param)]
 
-    # generating combinations of all possible parameters values
-    combinations_par = copy(starting_guess)
-    combinations_tot = copy(combinations_par)
+  # generating combinations of all possible parameters values
+  combinations_par = copy(starting_guess)
+  combinations_tot = copy(combinations_par)
 
-    for k in 1:N_step_morris
-        for ll in 1:(size(delta_vec)[1])
-            combinations_par[ll] = combinations_par[ll] + delta_vec[ll]
-            combinations_tot = hcat(combinations_tot, combinations_par)
-        end
+  for k in 1:N_step_morris
+    for ll in 1:(size(delta_vec)[1])
+      combinations_par[ll] = combinations_par[ll] + delta_vec[ll]
+      combinations_tot = hcat(combinations_tot, combinations_par)
     end
+  end
 
-    return combinations_tot
-
+  return combinations_tot
 end
 
 function generating_IC(data::Matrix{Float64}, model::String,smoothing::Bool,pt_avg::Int)
-    
-     # "starting condition  using data if smoothing average is used skip this part
-    
-        if smoothing == true
-    
-            u0 = [data[2, 1]]
-    
-        else
-            u0 = [Statistics.mean(data[2, 1:pt_avg])]
-        end
-    
-        if model == "HPM" ||  model == "dHPM" ||  model == "HPM_inhibition" ||  model == "dHPM_inhibition" || model == "ODEs_HPM_SR" || model == "HPM_exp"
-          # specific initial condition for system of ODEs
-          # all the biomass starts as dormient
-    
-    
-        
-         if smoothing == true
-    
-             u0 = [data[2, 1],0.0]
-    
-         else
-             u0 = [Statistics.mean(data[2, 1:pt_avg]),0.0]
-          end
-        end
-        # "starting condition  using data if the model is an 3 state HPM the first equation is set equal to the starting pop and the other to zero
-    
-        if model == "HPM_3_death" || model == "HPM_3_inhibition"|| model == "HPM_3_death_resistance"|| model == "dHPM_3_death_resistance"
-         if smoothing == true
-    
-                u0 = [data[2, 1],0.0,0.0]
-    
-         else
-             u0 = [Statistics.mean(data[2, 1:pt_avg]),0.0,0.0]
-         end
-        end    
-    
-    return u0
+  # "starting condition  using data if smoothing average is used skip this part
+  
+  if smoothing == true
+    u0 = [data[2, 1]]
+  else
+    u0 = [Statistics.mean(data[2, 1:pt_avg])]
+  end
+  
+  if model == "HPM" ||  model == "dHPM" ||  model == "HPM_inhibition" ||  model == "dHPM_inhibition" || model == "ODEs_HPM_SR" || model == "HPM_exp"
+    # specific initial condition for system of ODEs
+    # all the biomass starts as dormient
+    if smoothing == true
+      u0 = [data[2, 1],0.0]
+    else
+      u0 = [Statistics.mean(data[2, 1:pt_avg]),0.0]
+    end
+  end
+  # "starting condition  using data if the model is an 3 state HPM the first equation is set equal to the starting pop and the other to zero
+  
+  if model == "HPM_3_death" || model == "HPM_3_inhibition"|| model == "HPM_3_death_resistance"|| model == "dHPM_3_death_resistance"
+    if smoothing == true
+      u0 = [data[2, 1],0.0,0.0]
+    else
+      u0 = [Statistics.mean(data[2, 1:pt_avg]),0.0,0.0]
+    end
+  end    
+
+  return u0
 end
 
 function generating_IC_custom_ODE(data::Matrix{Float64}, n_equation::Int,smoothing::Bool,pt_avg::Int
@@ -243,18 +227,19 @@ function generating_IC_custom_ODE(data::Matrix{Float64}, n_equation::Int,smoothi
 end
 
 function correction_OD_multiple_scattering(data::Matrix{Float64},
-    calibration_curve::String)
+  calibration_curve::String)
 
-    od_calib = CSV.File(calibration_curve)
-    names_of_cols = propertynames(od_calib)
-    Od_real = od_calib[names_of_cols[1]]
-    od_calib_array = Matrix(transpose(hcat(Od_real, od_calib[names_of_cols[2]])))
-    soterd_calib =sort!(od_calib_array, rev = false,dims=2)
-    itp = interpolate(soterd_calib[1,:], soterd_calib[2,:], SteffenMonotonicInterpolation())
-    extrap_spline = extrapolate( itp,0)
-    corrected_data = [ extrap_spline(k) for k in data[2,:] ]
-    data_fin = Matrix(transpose(hcat(data[1,:],corrected_data)))
-    return data_fin
+  od_calib = CSV.File(calibration_curve)
+  names_of_cols = propertynames(od_calib)
+  Od_real = od_calib[names_of_cols[1]]
+  od_calib_array = Matrix(transpose(hcat(Od_real, od_calib[names_of_cols[2]])))
+  soterd_calib =sort!(od_calib_array, rev = false,dims=2)
+  itp = interpolate(soterd_calib[1,:], soterd_calib[2,:], SteffenMonotonicInterpolation())
+  extrap_spline = extrapolate( itp,0)
+  corrected_data = [ extrap_spline(k) for k in data[2,:] ]
+  data_fin = Matrix(transpose(hcat(data[1,:],corrected_data)))
+
+  return data_fin
 end   
 
     
@@ -264,354 +249,275 @@ sim ODE functions
 """
 
 function ODE_sim(model::String, #string of the model
-    n_start::Vector{Float64}, # starting condition
-    tstart::Float64, # start time of the sim
-    tmax::Float64, # final time of the sim
-    delta_t::Float64, # delta t for poisson approx
-    param_of_ode::Vector{Float64}; # parameters of the ODE model
-    integrator = KenCarp4() # which sciml solver of ode
-
+  n_start::Vector{Float64}, # starting condition
+  tstart::Float64, # start time of the sim
+  tmax::Float64, # final time of the sim
+  delta_t::Float64, # delta t for poisson approx
+  param_of_ode::Vector{Float64}; # parameters of the ODE model
+  integrator = KenCarp4() # which sciml solver of ode
 )
 
-    # defining time stepping
-    t_steps = tstart:delta_t:tmax
-    tspan = (tstart, tmax)
-    u0 = n_start
-    ODE_prob = model_selector(model,u0,tspan,param_of_ode)
-    sim = solve(ODE_prob, integrator, saveat=t_steps)
+  # defining time stepping
+  t_steps = tstart:delta_t:tmax
+  tspan = (tstart, tmax)
+  u0 = n_start
+  ODE_prob = model_selector(model,u0,tspan,param_of_ode)
+  sim = solve(ODE_prob, integrator, saveat=t_steps)
 
-    return sim
+  return sim
 end
 
 function ODE_sim_for_iterate(model::String, #string of the model
-    n_start::Vector{Float64}, # starting condition
-    array_time::Vector{Float64},
-    integrator::Any, # which sciml solver of ode
-    param_of_ode::Any # parameters of the ODE model
+  n_start::Vector{Float64}, # starting condition
+  array_time::Vector{Float64},
+  integrator::Any, # which sciml solver of ode
+  param_of_ode::Any # parameters of the ODE model
 )
 
-    # defining time stepping
-    t_steps = array_time
-    tspan = (array_time[1],array_time[end])
-    u0 = n_start
-    ODE_prob =model_selector(model,u0,tspan,param_of_ode)
-    sim = solve(ODE_prob, integrator, saveat=t_steps)
+  # defining time stepping
+  t_steps = array_time
+  tspan = (array_time[1],array_time[end])
+  u0 = n_start
+  ODE_prob =model_selector(model,u0,tspan,param_of_ode)
+  sim = solve(ODE_prob, integrator, saveat=t_steps)
 
-    return sim
+  return sim
 end
-
 
 #######################################################################
 """
 sim stochastic function
 """
 
-
 function stochastic_sim(model::String, #string of the model
-    n_start::Int, # number of starting cells
-    n_mol_start::Float64, # starting concentration of the limiting nutrients
-    tstart::Float64, # start time of the sim
-    tmax::Float64, # final time of the sim
-    delta_t::Float64, # delta t for poisson approx
-    k_1_val::Float64,
-    k_2_val::Float64, # monod constant
-    alpha_val::Float64, # massimum possible growth rate
-    lambda::Float64, # lag time
-    n_mol_per_birth::Float64,# nutrient consumed per division (conc)
-    volume::Float64
+  n_start::Int, # number of starting cells
+  n_mol_start::Float64, # starting concentration of the limiting nutrients
+  tstart::Float64, # start time of the sim
+  tmax::Float64, # final time of the sim
+  delta_t::Float64, # delta t for poisson approx
+  k_1_val::Float64,
+  k_2_val::Float64, # monod constant
+  alpha_val::Float64, # massimum possible growth rate
+  lambda::Float64, # lag time
+  n_mol_per_birth::Float64,# nutrient consumed per division (conc)
+  volume::Float64
 )
 
+  #inizialization of times 
+  tot_pop = [copy(n_start)]
+  times = [copy(tstart)]
+  conc_of_nutriens = [copy(n_mol_start / volume)]
+  n_times = floor((tmax - tstart) / delta_t)
 
-    #inizialization of times 
-    tot_pop = [copy(n_start)]
-    times = [copy(tstart)]
+  for i in 2:n_times
+    # if for defining the lag phase
 
-    conc_of_nutriens = [copy(n_mol_start / volume)]
-    n_times = floor((tmax - tstart) / delta_t)
+    if i * delta_t < lambda
+        rate_per_cell = 0.0
+    else
 
+      if model == "Monod"
+        factor = conc_of_nutriens[end] / (k_1_val + conc_of_nutriens[end])
+      end
 
+      if model == "Haldane"
+        factor = conc_of_nutriens[end] / (k_1_val + conc_of_nutriens[end] + (conc_of_nutriens[end])^2 / k_2_val)
+      end
 
+      if model == "Blackman"
+        factor = conc_of_nutriens[end] / (k_1_val)
+      end
 
-    for i in 2:n_times
+      if model == "Tesseir"
+        factor = 1 - exp(conc_of_nutriens[end] * k_1_val)
+      end
 
-        # if for defining the lag phase
+      if model == "Moser"
+        factor = conc_of_nutriens[end]^k_2_val / (conc_of_nutriens[end]^k_2_val + k_1_val)
+      end
 
-        if i * delta_t < lambda
-            rate_per_cell = 0.0
-        else
+      if model == "Aiba-Edwards"
+        factor = exp(-k_2_val / conc_of_nutriens[end]) * conc_of_nutriens[end] / (conc_of_nutriens[end] + k_1_val)
+      end
 
-            if model == "Monod"
-                factor = conc_of_nutriens[end] / (k_1_val + conc_of_nutriens[end])
-            end
+      if model == "Verhulst"
+        factor = 1 - tot_pop[end] / k_1_val
+      end
 
-            if model == "Haldane"
-                factor = conc_of_nutriens[end] / (k_1_val + conc_of_nutriens[end] + (conc_of_nutriens[end])^2 / k_2_val)
-
-            end
-
-            if model == "Blackman"
-                factor = conc_of_nutriens[end] / (k_1_val)
-            end
-
-
-
-            if model == "Tesseir"
-                factor = 1 - exp(conc_of_nutriens[end] * k_1_val)
-            end
-
-            if model == "Moser"
-                factor = conc_of_nutriens[end]^k_2_val / (conc_of_nutriens[end]^k_2_val + k_1_val)
-            end
-
-
-
-            if model == "Aiba-Edwards"
-                factor = exp(-k_2_val / conc_of_nutriens[end]) * conc_of_nutriens[end] / (conc_of_nutriens[end] + k_1_val)
-            end
-
-            if model == "Verhulst"
-                factor = 1 - tot_pop[end] / k_1_val
-            end
-
-            rate_per_cell = alpha_val * factor
-        end
-
-
-        # evaluating the number of birth events with poisson approx
-
-        total_birth_rate = rate_per_cell .* tot_pop[end] .* delta_t
-
-
-        n_birth = rand(Poisson(total_birth_rate), 1)
-
-
-
-
-        # updating states 
-        new_conc = max(0, conc_of_nutriens[end] - n_birth[1] * n_mol_per_birth / volume)
-        net_pop_variation = n_birth[1]
-
-        new_pop = max(0, tot_pop[end] + net_pop_variation)
-        conc_of_nutriens = push!(conc_of_nutriens, new_conc)
-        tot_pop = push!(tot_pop, new_pop)
-        times = push!(times, times[end] + delta_t)
-
-
-
-
+      rate_per_cell = alpha_val * factor
     end
 
-    return tot_pop, conc_of_nutriens, times
+    # evaluating the number of birth events with poisson approx
+    total_birth_rate = rate_per_cell .* tot_pop[end] .* delta_t
+    n_birth = rand(Poisson(total_birth_rate), 1)
 
+    # updating states 
+    new_conc = max(0, conc_of_nutriens[end] - n_birth[1] * n_mol_per_birth / volume)
+    net_pop_variation = n_birth[1]
 
+    new_pop = max(0, tot_pop[end] + net_pop_variation)
+    conc_of_nutriens = push!(conc_of_nutriens, new_conc)
+    tot_pop = push!(tot_pop, new_pop)
+    times = push!(times, times[end] + delta_t)
+
+  end
+
+  return tot_pop, conc_of_nutriens, times
 end
+
 #######################################################################
 
 """
 plotting functions
 """
 function plot_data( label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String;# path to the annotation of the wells
-    path_to_plot="NA", # path where to save Plots
-    display_plots=true ,# display plots in julia or not
-    save_plot=false, # save the plot or not
-    overlay_plots=true, # true a single plot for all dataset false one plot per well
-    blank_subtraction="NO", # string on how to use blank (NO,avg_subtraction,time_avg)
-    average_replicate=false, # if true the average between replicates 
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
-    )
-    
-    """
-    function that plot a dataset
-    """
+  path_to_data::String, # path to the folder to analyze
+  path_to_annotation::String;# path to the annotation of the wells
+  path_to_plot="NA", # path where to save Plots
+  display_plots=true ,# display plots in julia or not
+  save_plot=false, # save the plot or not
+  overlay_plots=true, # true a single plot for all dataset false one plot per well
+  blank_subtraction="NO", # string on how to use blank (NO,avg_subtraction,time_avg)
+  average_replicate=false, # if true the average between replicates 
+  correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+  thr_negative=0.01,  # used only if correct_negative == "thr_correction"
+  )
+  
+  """
+  function that plot a dataset
+  """
+  annotation = CSV.File(string(path_to_annotation),header=false)
+  names_of_annotated_df = [annotation[l][1] for l in 1:length(annotation)]
+  # selcting blank wells
+  properties_of_annotation = [annotation[l][2] for l in 1:length(annotation)]
+  list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
+  list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
+  list_of_blank = Symbol.(list_of_blank)
+  
+  # reading files
+  dfs_data = CSV.File(path_to_data)
+  
+  # shaping df for the inference
+  names_of_cols = propertynames(dfs_data)
+  
+  # excluding blank data and discarded wells 
+  names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+  if length(list_of_discarded)>0
+    names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
+  end
+  
+  times_data = dfs_data[names_of_cols[1]]
+  if length(list_of_blank) > 0
+    blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
+    blank_array = convert(Vector{Float64}, blank_array)
+  else
+    blank_array = 0.0
+  end    
 
-
-        annotation = CSV.File(string(path_to_annotation),header=false)
-        names_of_annotated_df = [annotation[l][1] for l in 1:length(annotation)]
-        # selcting blank wells
-        properties_of_annotation = [annotation[l][2] for l in 1:length(annotation)]
-        list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-        list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-        list_of_blank = Symbol.(list_of_blank)
-    
-    
-    
-        # reading files
-        dfs_data = CSV.File(path_to_data)
-    
-    
-        # shaping df for the inference
-    
-        names_of_cols = propertynames(dfs_data)
-    
-    
-        # excluding blank data and discarded wells 
-        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
-        if length(list_of_discarded)>0
-            names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
-        end
-    
-        times_data = dfs_data[names_of_cols[1]]
-        if length(list_of_blank) > 0
-            blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
-            blank_array = convert(Vector{Float64}, blank_array)
-        else
-            blank_array = 0.0
-        end    
-        ## BLANK ANALYSIS HERE 
-        if blank_subtraction == "avg_blank"
-    
-            blank_value = mean([mean(dfs_data[k]) for k in list_of_blank])
-    
-        elseif blank_subtraction == "time_blank"
-    
-            blank_value = [mean([dfs_data[k][j] for k in list_of_blank]) for j in 1:length(times_data)]
-    
-        else
-    
-            blank_value = zeros(length(times_data))
-    
-        end
-    
-    
-    
-    
-        ## considering replicates
-        list_replicate = unique(properties_of_annotation)
-        list_replicate = filter!(e -> e != "b", list_replicate)
-    
-        if average_replicate == true
-            new_data = times_data
-    
-            list_replicate = unique(properties_of_annotation)
-            list_replicate = filter!(e -> e != "b", list_replicate)
-    
-    
-            for replicate_temp in list_replicate
-    
-                names_of_replicate_temp = Symbol.(names_of_annotated_df[findall(x -> x == replicate_temp, properties_of_annotation)])
-                replicate_mean = [mean([dfs_data[k][j] for k in names_of_replicate_temp]) for j in 1:length(times_data)]
-    
-                new_data = hcat(new_data, replicate_mean)
-    
-            end
-            new_data = DataFrame(new_data, :auto)
-            rename!(new_data, vcat(:Time, reduce(vcat, Symbol.(list_replicate))))
-            names_of_cols = propertynames(new_data)
-            dfs_data = new_data
-    
-    
-        end
-    
-    
-    
-        # creating the folder of data if one wants to save
-        if save_plot == true
-    
-            mkpath(path_to_plot)
-    
-    
-        end   
-    
-        for well_name in names_of_cols[2:end]
-    
-    
-            name_well = string(well_name)
-    
-            if average_replicate == true
-    
-                data_values = copy(dfs_data[!, well_name])
-    
-            else
-                data_values = copy(dfs_data[well_name])
-            end
-    
-            # blank subtraction 
-            data_values = data_values .- blank_value
-            data = Matrix(transpose(hcat(times_data, data_values)))
-    
-    
-            if correct_negative == "thr_correction"
-    
-                data = thr_negative_correction(data, thr_negative)
-    
-            end
-    
-            if correct_negative == "blank_correction"
-    
-                data = blank_distrib_negative_correction(data, blank_array)
-    
-            end
-            # save & not plot overlayed plot
-    
-            if save_plot == true  && display_plots  == false && overlay_plots == true
-    
-                if well_name == names_of_cols[2]
-                    Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well], title=string(label_exp),legend = :outertopright)
-    
-    
-                else
-                    Plots.plot!(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well],   title=string(label_exp),legend = :outertopright)
-    
-                end
-                png(string(path_to_plot, label_exp, ".png"))
-            end
-    
-            # save & not plot single plot
-            if save_plot == true  && display_plots  == false && overlay_plots == false
-                Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:black, title=string(label_exp, " ", name_well))
-                png(string(path_to_plot, label_exp, "_", name_well, ".png"))
-            end
-            # not save &  plot overlayed plot
-    
-            if save_plot == false  && display_plots  == true && overlay_plots == true
-    
-                if well_name == names_of_cols[2]
-                    display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[name_well],  title=string(label_exp),legend = :outertopright))
-    
-    
-                else
-                    display(Plots.plot!(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well],legend = :outertopright))
-    
-                end
-           
-            end
-            # not save &  plot single plot
-    
-            if save_plot == false  && display_plots  == true && overlay_plots == false
-                display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-            end
-    
-            #  save &  plot overlayed plot
-            if save_plot == true  && display_plots  == true && overlay_plots == true
-    
-                if well_name == names_of_cols[2]
-                    display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well] , title=string(label_exp, " ") ,legend = :outertopright ) )
-    
-    
-                else
-                    display(Plots.plot!(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well],legend = :outertopright))
-    
-                end
-                png(string(path_to_plot, label_exp, ".png"))
-                
-           
-            end
-    
-            #  save &  plot single plot
-    
-            if save_plot == true  && display_plots  == true && overlay_plots == false
-                display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-                png(string(path_to_plot, label_exp, "_", name_well, ".png"))
-            end
-    
-      
-        end
-     
-    
+  ## BLANK ANALYSIS HERE 
+  if blank_subtraction == "avg_blank"
+    blank_value = mean([mean(dfs_data[k]) for k in list_of_blank])
+  elseif blank_subtraction == "time_blank"
+    blank_value = [mean([dfs_data[k][j] for k in list_of_blank]) for j in 1:length(times_data)]
+  else
+    blank_value = zeros(length(times_data))
+  end
+  
+  ## considering replicates
+  list_replicate = unique(properties_of_annotation)
+  list_replicate = filter!(e -> e != "b", list_replicate)
+  
+  if average_replicate == true
+    new_data = times_data
+    list_replicate = unique(properties_of_annotation)
+    list_replicate = filter!(e -> e != "b", list_replicate)
+  
+    for replicate_temp in list_replicate
+      names_of_replicate_temp = Symbol.(names_of_annotated_df[findall(x -> x == replicate_temp, properties_of_annotation)])
+      replicate_mean = [mean([dfs_data[k][j] for k in names_of_replicate_temp]) for j in 1:length(times_data)]
+      new_data = hcat(new_data, replicate_mean)
     end
+
+    new_data = DataFrame(new_data, :auto)
+    rename!(new_data, vcat(:Time, reduce(vcat, Symbol.(list_replicate))))
+    names_of_cols = propertynames(new_data)
+    dfs_data = new_data
+  end
+  
+  # creating the folder of data if one wants to save
+  if save_plot == true
+    mkpath(path_to_plot)
+  end   
+  
+  for well_name in names_of_cols[2:end]
+    name_well = string(well_name)
+  
+    if average_replicate == true
+      data_values = copy(dfs_data[!, well_name])
+    else
+      data_values = copy(dfs_data[well_name])
+    end
+  
+    # blank subtraction 
+    data_values = data_values .- blank_value
+    data = Matrix(transpose(hcat(times_data, data_values)))
+  
+    if correct_negative == "thr_correction"
+      data = thr_negative_correction(data, thr_negative)
+    end
+  
+    if correct_negative == "blank_correction"
+      data = blank_distrib_negative_correction(data, blank_array)
+    end
+
+    # save & not plot overlayed plot
+    if save_plot == true  && display_plots  == false && overlay_plots == true
+      if well_name == names_of_cols[2]
+        Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well], title=string(label_exp),legend = :outertopright)
+      else
+        Plots.plot!(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well],   title=string(label_exp),legend = :outertopright)
+      end
+
+      png(string(path_to_plot, label_exp, ".png"))
+    end
+  
+    # save & not plot single plot
+    if save_plot == true  && display_plots  == false && overlay_plots == false
+      Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:black, title=string(label_exp, " ", name_well))
+      png(string(path_to_plot, label_exp, "_", name_well, ".png"))
+    end
+    # not save &  plot overlayed plot
+  
+    if save_plot == false  && display_plots  == true && overlay_plots == true
+      if well_name == names_of_cols[2]
+        display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[name_well],  title=string(label_exp),legend = :outertopright))
+      else
+        display(Plots.plot!(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well],legend = :outertopright))
+      end
+    end
+    # not save &  plot single plot
+  
+    if save_plot == false  && display_plots  == true && overlay_plots == false
+      display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+    end
+  
+    #  save &  plot overlayed plot
+    if save_plot == true  && display_plots  == true && overlay_plots == true
+      if well_name == names_of_cols[2]
+        display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well] , title=string(label_exp, " ") ,legend = :outertopright ) )
+      else
+        display(Plots.plot!(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well],legend = :outertopright))
+      end
+      png(string(path_to_plot, label_exp, ".png"))
+    end
+  
+    #  save &  plot single plot
+    if save_plot == true  && display_plots  == true && overlay_plots == false
+      display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+      png(string(path_to_plot, label_exp, "_", name_well, ".png"))
+    end
+  end
+end
     
 #######################################################################
 """
@@ -619,189 +525,148 @@ fitting single data functions log-lin
 """
 
 function fitting_one_well_Log_Lin(data::Matrix{Float64}, # dataset first row times second row OD
-    name_well::String, # name of the well
-    label_exp::String; #label of the experiment
-    do_plot=false, # do plots or no
-    path_to_plot="NA", # where save plots
-    type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
-    pt_avg=7, # number of the point for rolling avg not used in the other cases
-    pt_smoothing_derivative=7, # number of poits to smooth the derivative
-    pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
-    type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
-    threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve ="NA" #  the path to calibration curve to fix the data
-    )
+  name_well::String, # name of the well
+  label_exp::String; #label of the experiment
+  do_plot=false, # do plots or no
+  path_to_plot="NA", # where save plots
+  type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
+  pt_avg=7, # number of the point for rolling avg not used in the other cases
+  pt_smoothing_derivative=7, # number of poits to smooth the derivative
+  pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
+  type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
+  threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
+  multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+  calibration_OD_curve ="NA" #  the path to calibration curve to fix the data
+  )
 
+  if multiple_scattering_correction == true
+    data = correction_OD_multiple_scattering(data,calibration_OD_curve)
+  end
 
-    if  multiple_scattering_correction == true
+  if type_of_smoothing == "rolling_avg"
+    data_smooted = smoothing_data(data, pt_avg)
+  elseif type_of_smoothing =="gaussian"
+    temp =  gaussian_smoothing(data)
+    data_smooted = Matrix(transpose(hcat(temp[1], temp[2])))
+  else 
+    data_smooted = data
+  end
 
-        data = correction_OD_multiple_scattering(data,calibration_OD_curve)
-    
-    
-    end
+  # local fitting generating of specific growth rate (derivative)
+  specific_gr = specific_gr_evaluation(data_smooted, pt_smoothing_derivative)
+  specific_gr_times = [(data_smooted[1, r] + data_smooted[1, (r+pt_smoothing_derivative)]) / 2 for r in 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)]
+  
+  # selecting the max
+  gr_max = maximum(specific_gr)
+  index_of_max = findall(x -> x == gr_max, specific_gr)[1]
 
+  # selecting the windows
+  # lower threshold of the exp phase using quantile
+  lb_of_distib = quantile(specific_gr, threshold_of_exp)
 
-    if type_of_smoothing == "rolling_avg"
+  # searching for t_start_exp 
+  t_start = 0.0
 
-        data_smooted = smoothing_data(data, pt_avg)
-
-    elseif  type_of_smoothing =="gaussian"
-
-         temp =  gaussian_smoothing(data)
-        data_smooted = Matrix(transpose(hcat(temp[1], temp[2])))
-
-    else 
-
-        data_smooted = data
-
-    end
-
-    # local fitting generating of specific growth rate (derivative)
-
-    specific_gr = specific_gr_evaluation(data_smooted, pt_smoothing_derivative)
-
-    specific_gr_times = [(data_smooted[1, r] + data_smooted[1, (r+pt_smoothing_derivative)]) / 2 for r in 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)]
-    # selecting the max
-
-    gr_max = maximum(specific_gr)
-    index_of_max = findall(x -> x == gr_max, specific_gr)[1]
-
-    # selecting the windows
-    # lower threshold of the exp phase using quantile
-    lb_of_distib = quantile(specific_gr, threshold_of_exp)
-
-    # searching for t_start_exp 
-    t_start = 0.0
-
-    if type_of_win == "maximum"
-        for yy in 1:(index_of_max-2)
-            if specific_gr[index_of_max-yy] >= lb_of_distib
-                t_start = copy(specific_gr_times[index_of_max-yy])
-            else
-
-                if specific_gr[(index_of_max-yy-1)] < lb_of_distib
-                    break
-                end
-
-            end
-
+  if type_of_win == "maximum"
+    for yy in 1:(index_of_max-2)
+      if specific_gr[index_of_max-yy] >= lb_of_distib
+        t_start = copy(specific_gr_times[index_of_max-yy])
+      else
+        if specific_gr[(index_of_max-yy-1)] < lb_of_distib
+          break
         end
 
-        # index of start
-        index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
+      end
+    end
 
+    # index of start
+    index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
 
-        # searching t_end of the exp phase
+    # searching t_end of the exp phase
+    t_end = specific_gr_times[end]
 
-        t_end = specific_gr_times[end]
-
-        for yy in index_of_max:(length(specific_gr)-1)
-
-            if specific_gr[yy] >= lb_of_distib
-                t_end = copy(specific_gr_times[yy])
-            else
-                if specific_gr[(yy+1)] < lb_of_distib
-                    break
-                end
-            end
-
-
+    for yy in index_of_max:(length(specific_gr)-1)
+      if specific_gr[yy] >= lb_of_distib
+        t_end = copy(specific_gr_times[yy])
+      else
+        if specific_gr[(yy+1)] < lb_of_distib
+          break
         end
-
-
-
-        index_of_t_end = findfirst(x -> x > t_end, data_smooted[1, :])[1]
+      end
     end
 
-    # selection of exp win with a global thr on the growht rate
-    if type_of_win == "global_thr"
-        index_of_max = findfirst(x -> x == maximum(specific_gr), specific_gr)[1]
-        index_gr_max = index_of_max + findfirst(x -> x < lb_of_distib, specific_gr[index_of_max:end])[1]
-        index_gr_min = findlast(x -> x > lb_of_distib, specific_gr[1:index_of_max])[1]
+    index_of_t_end = findfirst(x -> x > t_end, data_smooted[1, :])[1]
+  end
 
-        t_start = specific_gr_times[index_gr_min]
+  # selection of exp win with a global thr on the growht rate
+  if type_of_win == "global_thr"
+    index_of_max = findfirst(x -> x == maximum(specific_gr), specific_gr)[1]
+    index_gr_max = index_of_max + findfirst(x -> x < lb_of_distib, specific_gr[index_of_max:end])[1]
+    index_gr_min = findlast(x -> x > lb_of_distib, specific_gr[1:index_of_max])[1]
+    t_start = specific_gr_times[index_gr_min]
+    t_end = specific_gr_times[index_gr_max]
+    index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
+    index_of_t_end = findall(x -> x > t_end, data_smooted[1, :])[1]
+  end
+  
+  # checking the minimum size of the window before fitting
+  if (index_of_t_end - index_of_t_start) < pt_min_size_of_win
+    index_of_t_start = convert(Int, index_of_max - floor(pt_min_size_of_win / 2))
+    index_of_t_end = convert(Int, index_of_max + floor(pt_min_size_of_win / 2))
 
-        t_end = specific_gr_times[index_gr_max]
+    if index_of_t_start < 1
+      index_of_t_start = 2
+    end   
 
-
-        index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
-        index_of_t_end = findall(x -> x > t_end, data_smooted[1, :])[1]
-
+    if index_of_t_end > length(data_smooted[1,:])
+      index_of_t_end = length(data_smooted[1,:]) -1
     end
-    # checking the minimum size of the window before fitting
+  end
+
+  # fitting data
+  data_to_fit_times = data_smooted[1, index_of_t_start:index_of_t_end]
+  data_to_fit_values = log.(data_smooted[2, index_of_t_start:index_of_t_end])
+  fitting_results = curve_fit(LinearFit, data_to_fit_times, data_to_fit_values)
+
+  # residual calculation
+  residual = [ ((data_to_fit_values[ll] -    fitting_results.coefs[2] *data_to_fit_times[ll] -  fitting_results.coefs[1])^2) for ll in 1 : length(data_to_fit_values)   ] 
+  # sum_of_squares calculation
+  sum_of_squares =  [ ((data_to_fit_values[ll] -   mean(data_to_fit_values) )^2) for ll in 1 : length(data_to_fit_values)   ]
+  # coeff of determination 
+  rsquared = 1 - sum(residual) / sum(sum_of_squares)
+  # confidence interval growth rate
+  a = ((1/(length(residual)-2))*sum(residual))
+  std_error = sqrt( a/sum(sum_of_squares  ))
+  p95 = ccdf(TDist(length(sum_of_squares)-2),(1-0.05/2))
+  confidence_coeff_2 = std_error * p95
+  # confidence interval intercept
+  a_1 = sqrt( (1/(length(residual))) *  sum(data_to_fit_values.^2))
+  std_error_intercept = std_error * a_1
+  confidence_coeff_1 = std_error_intercept * p95
     
-    if (index_of_t_end - index_of_t_start) < pt_min_size_of_win
+  ###
+  # EVALUATING CONFIDENCE BANDS
+  term_1 =  ((1/(length(residual)-2))*sum(residual))
+  term_2 = (1/(length(residual))) .+ ( data_to_fit_times .-mean(data_to_fit_values))./(sum(sum_of_squares))
+  confidence_band = p95 .* sqrt.( term_1 .*  term_2)
+  fitted_line = [fitting_results.coefs[2] * data_to_fit_times[ll] + fitting_results.coefs[1] for ll in 1:length(data_to_fit_times)]
+  # storing results
 
-        index_of_t_start = convert(Int, index_of_max - floor(pt_min_size_of_win / 2))
-        index_of_t_end = convert(Int, index_of_max + floor(pt_min_size_of_win / 2))
+  results_lin_log_fit = [label_exp, name_well, data_to_fit_times[1], data_to_fit_times[end], specific_gr_times[index_of_max],gr_max ,fitting_results.coefs[2], confidence_coeff_2, log(2)/( fitting_results.coefs[2]) ,log(2)/( fitting_results.coefs[2] -confidence_coeff_2 ) , log(2)/( fitting_results.coefs[2] + confidence_coeff_2 ) ,fitting_results.coefs[1],confidence_coeff_1,rsquared]
 
-        if index_of_t_start < 1
-            index_of_t_start = 2
-        end   
-        if index_of_t_end > length(data_smooted[1,:])
-            index_of_t_end = length(data_smooted[1,:]) -1
-        end
+  # plotting if requested
+  if do_plot == true
+    mkpath(path_to_plot)
+    display(Plots.scatter(data_smooted[1, :], log.(data_smooted[2, :]), xlabel="Time", ylabel="Log(Arb. Units)", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
+    display(Plots.plot!(data_to_fit_times, fitted_line,ribbon= confidence_band, xlabel="Time ", ylabel="Log(Arb. Units)", label=[string("Fitting Log-Lin ") nothing], c=:red))
+    display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
+    png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".png"))
+    display(Plots.scatter(specific_gr_times, specific_gr, xlabel="Time ", ylabel="1 /time ", label=[string("Dynamics growth rate ") nothing], c=:red))
+    display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
+    png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
+  end
 
-    end
-
-
-    # fitting data
-
-    data_to_fit_times = data_smooted[1, index_of_t_start:index_of_t_end]
-    data_to_fit_values = log.(data_smooted[2, index_of_t_start:index_of_t_end])
-
-    fitting_results = curve_fit(LinearFit, data_to_fit_times, data_to_fit_values)
-
-
-    # residual calculation
-    residual = [ ((data_to_fit_values[ll] -    fitting_results.coefs[2] *data_to_fit_times[ll] -  fitting_results.coefs[1])^2) for ll in 1 : length(data_to_fit_values)   ] 
-    # sum_of_squares calculation
-    sum_of_squares =  [ ((data_to_fit_values[ll] -   mean(data_to_fit_values) )^2) for ll in 1 : length(data_to_fit_values)   ]
-    # coeff of determination 
-    rsquared = 1 - sum(residual) / sum(sum_of_squares)
-    # confidence interval growth rate
-    a = ((1/(length(residual)-2))*sum(residual))
-    std_error = sqrt( a/sum(sum_of_squares  ))
-    p95 = ccdf(TDist(length(sum_of_squares)-2),(1-0.05/2))
-    confidence_coeff_2 = std_error * p95
-    # confidence interval intercept
-    a_1 = sqrt( (1/(length(residual))) *  sum(data_to_fit_values.^2))
-    std_error_intercept = std_error * a_1
-    confidence_coeff_1 = std_error_intercept * p95
-      
-
-    ###
-    # EVALUATING CONFIDENCE BANDS
-    term_1 =  ((1/(length(residual)-2))*sum(residual))
-    term_2 = (1/(length(residual))) .+ ( data_to_fit_times .-mean(data_to_fit_values))./(sum(sum_of_squares))
-    confidence_band = p95 .* sqrt.( term_1 .*  term_2)
-    
-    fitted_line = [fitting_results.coefs[2] * data_to_fit_times[ll] + fitting_results.coefs[1] for ll in 1:length(data_to_fit_times)]
-    # storing results
-
-    results_lin_log_fit = [label_exp, name_well, data_to_fit_times[1], data_to_fit_times[end], specific_gr_times[index_of_max],gr_max ,fitting_results.coefs[2], confidence_coeff_2, log(2)/( fitting_results.coefs[2]) ,log(2)/( fitting_results.coefs[2] -confidence_coeff_2 ) , log(2)/( fitting_results.coefs[2] + confidence_coeff_2 ) ,fitting_results.coefs[1],confidence_coeff_1,rsquared]
-
-    # plotting if requested
-    if do_plot == true
-
-        mkpath(path_to_plot)
-        display(Plots.scatter(data_smooted[1, :], log.(data_smooted[2, :]), xlabel="Time", ylabel="Log(Arb. Units)", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-        display(Plots.plot!(data_to_fit_times, fitted_line,ribbon= confidence_band, xlabel="Time ", ylabel="Log(Arb. Units)", label=[string("Fitting Log-Lin ") nothing], c=:red))
-        display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
-        png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".png"))
-
-        display(Plots.scatter(specific_gr_times, specific_gr, xlabel="Time ", ylabel="1 /time ", label=[string("Dynamics growth rate ") nothing], c=:red))
-        display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
-        png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
-
-
-
-    end
-
-
-    return results_lin_log_fit
-
+  return results_lin_log_fit
 end
 
 #######################################################################
@@ -811,204 +676,242 @@ end
 fitting  dataset functions log-lin
 """
 function fit_one_file_Log_Lin(
-    label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String;# path to the annotation of the wells
-    path_to_results = "NA",# path where save results
-    path_to_plot= "NA",# path where to save Plots
-    do_plot=false, # 1 do and visulaze the plots of data
-    verbose=false, # 1 true verbose
-    write_res=false, # write results
-    type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
-    pt_avg=7, # number of points to do smoothing average
-    pt_smoothing_derivative=7, # number of poits to smooth the derivative
-    pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
-    type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
-    threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
-    blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    fit_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01, # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA" #  the path to calibration curve to fix the data
-    )
+  label_exp::String, #label of the experiment
+  path_to_data::String, # path to the folder to analyze
+  path_to_annotation::String;# path to the annotation of the wells
+  path_to_results = "NA",# path where save results
+  path_to_plot= "NA",# path where to save Plots
+  do_plot=false, # 1 do and visulaze the plots of data
+  verbose=false, # 1 true verbose
+  write_res=false, # write results
+  type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
+  pt_avg=7, # number of points to do smoothing average
+  pt_smoothing_derivative=7, # number of poits to smooth the derivative
+  pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
+  type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
+  threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
+  blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
+  fit_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+  correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+  thr_negative=0.01, # used only if correct_negative == "thr_correction"
+  multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+  calibration_OD_curve="NA" #  the path to calibration curve to fix the data
+  )
 
+  if do_plot == true
+    mkpath(path_to_plot)
+  end
 
+  # reading files
+  # dfs_data = CSV.File(path_to_data,header=true,sep=",")
+  dfs_data = CSV.File(path_to_data)
 
-    if do_plot == true
-        mkpath(path_to_plot)
-    end
+  # TEMPORARY results df
+  results_Log_Lin = ["label_exp", "well_name", "t_start", "t_end", "t_of_max",  "empirical_max_Growth_rate" ,"Growth_rate", "2sigma_gr","dt","95_confidence_dt_upper","95_confidence_dt_lower","intercept","2sigma_intercept","R^2"]
 
+  # shaping df for the inference
+  names_of_cols = propertynames(dfs_data)
+  times_data = dfs_data[names_of_cols[1]]
+  annotation = CSV.File(string(path_to_annotation),header=false)
+  names_of_annotated_df = [annotation[l][1] for l in 1:length(annotation)]
 
+  # selcting blank wells
+  properties_of_annotation = [annotation[l][2] for l in 1:length(annotation)]
+  list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
+  list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
+  list_of_blank = Symbol.(list_of_blank)
+  list_of_discarded = Symbol.(list_of_discarded)
 
+  # excluding blank data and discarded wells 
+  names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+  if length(list_of_discarded)>0
+    names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
+  end
 
+  times_data = dfs_data[names_of_cols[1]]
+  ## BLANK ANALYSIS HERE 
 
-    # reading files
-   # dfs_data = CSV.File(path_to_data,header=true,sep=",")
-   dfs_data = CSV.File(path_to_data)
+  blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
+  blank_array = convert(Vector{Float64}, blank_array)
 
-    # TEMPORARY results df
-    results_Log_Lin = ["label_exp", "well_name", "t_start", "t_end", "t_of_max",  "empirical_max_Growth_rate" ,"Growth_rate", "2sigma_gr","dt","95_confidence_dt_upper","95_confidence_dt_lower","intercept","2sigma_intercept","R^2"]
+  if blank_subtraction == "avg_blank"
+    blank_value = mean([mean(dfs_data[k]) for k in list_of_blank])
+  elseif blank_subtraction == "time_blank"
+    blank_value = [mean([dfs_data[k][j] for k in list_of_blank]) for j in 1:length(times_data)]
+  else
+    blank_value = zeros(length(times_data))
+  end
 
+  ## considering replicates
+  list_replicate = unique(properties_of_annotation)
+  list_replicate = filter!(e -> e != "b", list_replicate)
 
-    # shaping df for the inference
-
-    names_of_cols = propertynames(dfs_data)
-    times_data = dfs_data[names_of_cols[1]]
-    annotation = CSV.File(string(path_to_annotation),header=false)
-    names_of_annotated_df = [annotation[l][1] for l in 1:length(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in 1:length(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
-    list_of_discarded = Symbol.(list_of_discarded)
-
-
-
-
-
-
-    # excluding blank data and discarded wells 
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
-    if length(list_of_discarded)>0
-        names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
-    end
-
-
-    times_data = dfs_data[names_of_cols[1]]
-    ## BLANK ANALYSIS HERE 
-
-
-    blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
-    blank_array = convert(Vector{Float64}, blank_array)
-
-
-    if blank_subtraction == "avg_blank"
-
-        blank_value = mean([mean(dfs_data[k]) for k in list_of_blank])
-
-    elseif blank_subtraction == "time_blank"
-
-        blank_value = [mean([dfs_data[k][j] for k in list_of_blank]) for j in 1:length(times_data)]
-
-    else
-
-        blank_value = zeros(length(times_data))
-
-    end
-
-
-
-
-    ## considering replicates
+  if fit_replicate == true
+    new_data = times_data
     list_replicate = unique(properties_of_annotation)
     list_replicate = filter!(e -> e != "b", list_replicate)
 
+    for replicate_temp in list_replicate
+        names_of_replicate_temp = Symbol.(names_of_annotated_df[findall(x -> x == replicate_temp, properties_of_annotation)])
+        replicate_mean = [mean([dfs_data[k][j] for k in names_of_replicate_temp]) for j in 1:length(times_data)]
+        new_data = hcat(new_data, replicate_mean)
+    end
+
+    new_data = DataFrame(new_data, :auto)
+    rename!(new_data, vcat(:Time, reduce(vcat, Symbol.(list_replicate))))
+    names_of_cols = propertynames(new_data)
+    dfs_data = new_data
+  end
+
+  # for on the columns to analyze
+  for well_name in names_of_cols[2:end]
     if fit_replicate == true
-        new_data = times_data
-
-        list_replicate = unique(properties_of_annotation)
-        list_replicate = filter!(e -> e != "b", list_replicate)
-
-
-        for replicate_temp in list_replicate
-
-            names_of_replicate_temp = Symbol.(names_of_annotated_df[findall(x -> x == replicate_temp, properties_of_annotation)])
-            replicate_mean = [mean([dfs_data[k][j] for k in names_of_replicate_temp]) for j in 1:length(times_data)]
-
-            new_data = hcat(new_data, replicate_mean)
-
-        end
-        new_data = DataFrame(new_data, :auto)
-        rename!(new_data, vcat(:Time, reduce(vcat, Symbol.(list_replicate))))
-        names_of_cols = propertynames(new_data)
-        dfs_data = new_data
-
-
+      data_values = copy(dfs_data[!, well_name])
+    else
+      data_values = copy(dfs_data[well_name])
     end
 
-    # for on the columns to analyze
+    # blank subtraction 
+    data_values = data_values .- blank_value
+    data = Matrix(transpose(hcat(times_data, data_values)))
 
-    for well_name in names_of_cols[2:end]
-
-
-
-        if fit_replicate == true
-
-            data_values = copy(dfs_data[!, well_name])
-
-        else
-            data_values = copy(dfs_data[well_name])
-        end
-
-        # blank subtraction 
-        data_values = data_values .- blank_value
-
-
-        data = Matrix(transpose(hcat(times_data, data_values)))
-
-
-        if correct_negative == "thr_correction"
-
-            data = thr_negative_correction(data, thr_negative)
-
-        end
-
-        if correct_negative == "blank_correction"
-
-            data = blank_distrib_negative_correction(data, blank_array)
-
-        end
-
-        data = Matrix(transpose(hcat(data[1, :], data[2, :])))
-
-        # inference
-
-
-        temp_results_1 = fitting_one_well_Log_Lin(data, # dataset first row times second row OD
-            string(well_name), # name of the well
-            label_exp; #label of the experiment
-            do_plot=do_plot, # do plots or no
-            path_to_plot=path_to_plot, # where save plots
-            type_of_smoothing=type_of_smoothing, # option, NO, gaussian, rolling avg
-            pt_avg=pt_avg, # number of the point for rolling avg not used in the other cases
-            pt_smoothing_derivative=pt_smoothing_derivative, # number of poits to smooth the derivative
-            pt_min_size_of_win=pt_min_size_of_win, # minimum size of the exp windows in number of smooted points
-            type_of_win=type_of_win, # how the exp. phase win is selected, "maximum" of "global_thr"
-            threshold_of_exp=threshold_of_exp, # threshold of growth rate in quantile to define the exp windows
-            multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-            calibration_OD_curve =calibration_OD_curve #  the path to calibration curve to fix the data
-        )
-
-        if verbose == true
-            println("the results are:")
-            println(temp_results_1)
-        end
-
-        results_Log_Lin = hcat(results_Log_Lin, temp_results_1)
-
-
-
-
-        if write_res == true
-            mkpath(path_to_results)
-
-            CSV.write(string(path_to_results, label_exp, "_results.csv"), Tables.table(Matrix(results_Log_Lin)))
-
-
-        end
-
+    if correct_negative == "thr_correction"
+      data = thr_negative_correction(data, thr_negative)
     end
 
-    return results_Log_Lin
+    if correct_negative == "blank_correction"
+      data = blank_distrib_negative_correction(data, blank_array)
+    end
 
+    data = Matrix(transpose(hcat(data[1, :], data[2, :])))
 
+    # inference
+    temp_results_1 = fitting_one_well_Log_Lin(data, # dataset first row times second row OD
+      string(well_name), # name of the well
+      label_exp; #label of the experiment
+      do_plot=do_plot, # do plots or no
+      path_to_plot=path_to_plot, # where save plots
+      type_of_smoothing=type_of_smoothing, # option, NO, gaussian, rolling avg
+      pt_avg=pt_avg, # number of the point for rolling avg not used in the other cases
+      pt_smoothing_derivative=pt_smoothing_derivative, # number of poits to smooth the derivative
+      pt_min_size_of_win=pt_min_size_of_win, # minimum size of the exp windows in number of smooted points
+      type_of_win=type_of_win, # how the exp. phase win is selected, "maximum" of "global_thr"
+      threshold_of_exp=threshold_of_exp, # threshold of growth rate in quantile to define the exp windows
+      multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+      calibration_OD_curve =calibration_OD_curve #  the path to calibration curve to fix the data
+    )
 
+    if verbose == true
+      println("the results are:")
+      println(temp_results_1)
+    end
+    
+    results_Log_Lin = hcat(results_Log_Lin, temp_results_1)
 
+    if write_res == true
+      mkpath(path_to_results)
+      CSV.write(string(path_to_results, label_exp, "_results.csv"), Tables.table(Matrix(results_Log_Lin)))
+    end
+  end
+
+  return results_Log_Lin
 end
 
+function loss_L2_derivative(data, ODE_prob, integrator, p, tsteps)
+  sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
+  sol_t = reduce(hcat, sol.u)
+  sol_time = reduce(hcat, sol.t)
+  sol_t = reduce(hcat, sol.u)
+  sol_t = sum(sol_t,dims=1)
 
+  itp = interpolate((sol_time,), sol_t, Gridded(Linear()));
+  derivative_theo = only.(Interpolations.gradient.(Ref(itp), sol_t))
+
+  itp = interpolate((data[1, :],), data[2, :], Gridded(Linear()));
+  derivative_data = only.(Interpolations.gradient.(Ref(itp), data[2, :]))
+
+  if size(derivative_theo)[1] == size(derivative_data)[1]
+   lossa = NaNMath.sum(abs2.((derivative_theo[2, :] .- derivative_data[1, 1:end]))) / length(derivative_data[2, :])
+  else
+    lossa = 10.0^9 * length(data[2, :])
+  end
+
+  return lossa, sol
+end
+
+function loss_blank_weighted_L2(data, ODE_prob, integrator, p, tsteps, blank_array)
+  sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
+  sol_t = reduce(hcat, sol.u)
+  sol_t = sum(sol_t,dims=1)
+
+  empirical_blank_distrib = (blank_array .- mean(blank_array))
+  # generation of the empirica distrib respect the mean of the noise 
+  test = StatsBase.fit(Histogram, empirical_blank_distrib)
+  binning_distrib = test.edges
+  probabiltity_distrib = test.weights ./ sum(test.weights)
+
+  if size(sol_t)[2] == size(data)[2]
+    lossa = 0.0
+
+    for ll in 1:size(sol_t)[2]
+      dist = (data[2, ll] - sol_t[1, ll])
+      index = findfirst(x -> (x > dist), binning_distrib[1])
+      if (typeof(index) == Nothing || index > length(probabiltity_distrib))
+        lossa = lossa + abs2.(dist) / length(data[2, :])
+      else
+        prob = probabiltity_distrib[index]
+        lossa = lossa + abs2.((1 - prob) * dist) / length(data[2, :])
+      end
+    end
+  else
+    lossa = 10.0^9 * length(data[2, :])
+  end
+
+  return lossa, sol
+end
+
+function loss_L2(data, ODE_prob, integrator, p, tsteps)
+  sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
+  sol_t = reduce(hcat, sol.u)
+  sol_t = sum(sol_t,dims=1)
+    
+  if size(sol_t)[2] == size(data)[2]
+    lossa = NaNMath.sum(abs2.((data[2, :] .- sol_t[1, 1:end]))) / length(data[2, :])
+  else
+    lossa = 10.0^9 * length(data[2, :])
+  end
+  
+  return lossa, sol
+end
+
+function loss_RE(data, ODE_prob, integrator, p, tsteps)
+  sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
+  sol_t = reduce(hcat, sol.u)
+  sol_t = sum(sol_t,dims=1)
+
+  if size(sol_t)[2] == size(data)[2]
+    lossa = 0.5 * NaNMath.sum(abs2.(1.0 .- (data[2, :] ./ sol_t[1, 1:end]))) / length(data[2, :])
+  else
+    lossa = 10.0^9 * length(data[2, :])
+  end
+
+  return lossa, sol
+end
+
+function select_loss_function(loss_name, data, ODE_prob, integrator, tsteps, blank_array)
+  loss_functions = Dict(
+    "L2" => loss_L2,
+    "RE" => loss_RE,
+    "blank_weighted_L2" => loss_blank_weighted_L2,
+    "L2_derivative" => loss_L2_derivative
+  )
+
+  if loss_name == "blank_weighted_L2"
+    return (p) -> loss_functions[loss_name](data, ODE_prob, integrator, p, tsteps, blank_array)
+  else
+    return (p) -> loss_functions[loss_name](data, ODE_prob, integrator, p, tsteps)
+  end
+end
 
 #######################################################################
 
@@ -1016,236 +919,90 @@ end
 fitting single data function ODE
 """
 
-
 function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first row times second row OD
-    name_well::String, # name of the well
-    label_exp::String, #label of the experiment
-    model::String, # ode model to use 
-    lb_param::Vector{Float64}, # lower bound param
-    ub_param::Vector{Float64}; # upper bound param
-    param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator =KenCarp4(autodiff=true), # selection of sciml integrator
-    do_plot=false, # do plots or no
-    path_to_plot="NA", # where save plots
-    pt_avg=1, # numebr of the point to generate intial condition
-    pt_smooth_derivative=7,
-    smoothing=false, # the smoothing is done or not?
-    type_of_loss="RE", # type of used loss 
-    blank_array=zeros(100), # data of all blanks
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-   PopulationSize = 300,
-    maxiters = 2000000,
-     abstol = 0.00001 )
-
-
-    if  multiple_scattering_correction == true
-
-        data = correction_OD_multiple_scattering(data,calibration_OD_curve)
-    
-    
-    end
-   
-
-
-    #defining time interval
-
-    max_t = data[1, end]
-    min_t = data[1, 1]
-    tspan = (min_t, max_t)
-    tsteps = data[1, :]
-    # smoothing data if required
-    if smoothing == true
-
-        data = smoothing_data(data, pt_avg)
-        data = Matrix(data)
-
-    end
-
-    # setting initial conditions
-    u0 = generating_IC(data, model,smoothing,pt_avg)
-   
-    #  definition  ode symbolic problem
-
-    ODE_prob =model_selector(model,u0,tspan)
-
-
-    ## defining loss function
-
-    function loss_L2_derivative(p)
-            
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_time = reduce(hcat, sol.t)
-
-        sol_t = reduce(hcat, sol.u)
-
-        sol_t = sum(sol_t,dims=1)
- 
-
-
-        itp = interpolate((sol_time,), sol_t, Gridded(Linear()));
-        derivative_theo = only.(Interpolations.gradient.(Ref(itp), sol_t))
-
-        itp = interpolate((data[1, :],), data[2, :], Gridded(Linear()));
-        derivative_data = only.(Interpolations.gradient.(Ref(itp), data[2, :]))
-
-
-        if size(derivative_theo)[1] == size(derivative_data)[1]
-         lossa = NaNMath.sum(abs2.((derivative_theo[2, :] .- derivative_data[1, 1:end]))) / length(derivative_data[2, :])
-        else
-             lossa = 10.0^9 * length(data[2, :])
-            # lossa = NaNMath.sum(abs2.((derivative_theo[2, :] .- derivative_data[1, 1:end]))) / length(derivative_data[2, :]) + 1000
-        end
-
-       return lossa, sol
-    end
-
-
-    function loss_ode_blank_weighted_L2(p)
-     sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-     sol_t = reduce(hcat, sol.u)
-     sol_t = sum(sol_t,dims=1)
-
-
-
-     empirical_blank_distrib = (blank_array .- mean(blank_array))
-      # generation of the empirica distrib respect the mean of the noise 
-      test = StatsBase.fit(Histogram, empirical_blank_distrib)
-      binning_distrib = test.edges
-      probabiltity_distrib = test.weights ./ sum(test.weights)
-         if size(sol_t)[2] == size(data)[2]
-            lossa = 0.0
-
-
-
-            for ll in 1:size(sol_t)[2]
-            dist = (data[2, ll] - sol_t[1, ll])
-           index = findfirst(x -> (x > dist), binning_distrib[1])
-             if (typeof(index) == Nothing || index > length(probabiltity_distrib))
-
-                  lossa = lossa + abs2.(dist) / length(data[2, :])
-           else
-
-                 prob = probabiltity_distrib[index]
-
-
-                lossa = lossa + abs2.((1 - prob) * dist) / length(data[2, :])
-
-              end
-
-         end
-       else
-
-         lossa = 10.0^9 * length(data[2, :])
-
-         end
-
-      return lossa, sol
-    end
-
-
-    function loss_L2(p)
-         sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-         sol_t = reduce(hcat, sol.u)
-        sol_t = sum(sol_t,dims=1)
-
-        if size(sol_t)[2] == size(data)[2]
-            lossa = NaNMath.sum(abs2.((data[2, :] .- sol_t[1, 1:end]))) / length(data[2, :])
-        else
-            lossa = 10.0^9 * length(data[2, :])
-
-        end
-
-            return lossa, sol
-        end
-
-    function loss_RE(p)
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_t = sum(sol_t,dims=1)
-
-        if size(sol_t)[2] == size(data)[2]
-               lossa = 0.5 * NaNMath.sum(abs2.(1.0 .- (data[2, :] ./ sol_t[1, 1:end]))) / length(data[2, :])
-        else
-             lossa = 10.0^9 * length(data[2, :])
-
-        end
-
-       return lossa, sol
-    end
-
-    #SOLVING Optimization
-    if type_of_loss == "L2"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_L2(x))
-    end
-
-    if type_of_loss == "RE"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_RE(x))
-    end
-
-    if type_of_loss == "blank_weighted_L2"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_blank_weighted_L2(x))
-    end
-
-    if type_of_loss == "L2_derivative"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_L2_derivative(x))
-    end
-
-    
-    optprob_const = Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
-    #res = Optimization.solve(optprob_const, optmizator )
-
-    res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
-
-
-    #revalution of solution for plot an loss evaluation 
-
-
-    remade_solution = solve(remake(ODE_prob, p=res.u),integrator , saveat=tsteps)
-    sol_time = reduce(hcat, remade_solution.t)
-    sol_fin = reduce(hcat, remade_solution.u)
-    sol_fin = sum(sol_fin,dims=1)
-
-    # plotting if required
-    if do_plot == true
-        mkpath(path_to_plot)
-        display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-        display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
-        png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
-    end
-
-
-
-
-   # here problem
-    #max_theoretical gr
-    data_th = vcat(sol_time,sol_fin)
-
-    max_th_gr = maximum( specific_gr_evaluation(  Matrix(data_th), pt_smooth_derivative))
-
-    # max empirical gr
-    max_em_gr = maximum( specific_gr_evaluation(data, pt_smooth_derivative))
-
-    res_temp = res.u
-
-    loss_value = res.objective
-
-
-    res_param = vectorize_df_results(name_well,
-        model,
-        res_temp,
-        max_th_gr,
-        max_em_gr,
-        loss_value 
-
-    )
-
-
-
-    return res_param,remade_solution.t, sol_fin[1, 1:end]
-
+  name_well::String, # name of the well
+  label_exp::String, #label of the experiment
+  model::String, # ode model to use 
+  lb_param::Vector{Float64}, # lower bound param
+  ub_param::Vector{Float64}; # upper bound param
+  param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
+  optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+  integrator =KenCarp4(autodiff=true), # selection of sciml integrator
+  do_plot=false, # do plots or no
+  path_to_plot="NA", # where save plots
+  pt_avg=1, # numebr of the point to generate intial condition
+  pt_smooth_derivative=7,
+  smoothing=false, # the smoothing is done or not?
+  type_of_loss="RE", # type of used loss 
+  blank_array=zeros(100), # data of all blanks
+  multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+  calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+  PopulationSize = 300,
+  maxiters = 2000000,
+  abstol = 0.00001 )
+
+  if  multiple_scattering_correction == true
+      data = correction_OD_multiple_scattering(data,calibration_OD_curve)
+  end
+
+  #defining time interval
+
+  max_t = data[1, end]
+  min_t = data[1, 1]
+  tspan = (min_t, max_t)
+  tsteps = data[1, :]
+
+  # smoothing data if required
+  if smoothing == true
+    data = smoothing_data(data, pt_avg)
+    data = Matrix(data)
+  end
+
+  # setting initial conditions
+  u0 = generating_IC(data, model,smoothing,pt_avg)
+  
+  #  definition  ode symbolic problem
+  ODE_prob =model_selector(model,u0,tspan)
+
+  ## defining loss function
+  loss_function = select_loss_function(data, ODE_prob, integrator, p, tsteps, blank_array)
+  optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
+  optprob_const = Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
+  res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
+
+  #revalution of solution for plot an loss evaluation 
+  remade_solution = solve(remake(ODE_prob, p=res.u),integrator , saveat=tsteps)
+  sol_time = reduce(hcat, remade_solution.t)
+  sol_fin = reduce(hcat, remade_solution.u)
+  sol_fin = sum(sol_fin,dims=1)
+
+  # plotting if required
+  if do_plot == true
+    mkpath(path_to_plot)
+    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+    display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
+    png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+  end
+
+  # here problem
+  # max_theoretical gr
+  data_th = vcat(sol_time,sol_fin)
+  max_th_gr = maximum( specific_gr_evaluation(  Matrix(data_th), pt_smooth_derivative))
+
+  # max empirical gr
+  max_em_gr = maximum( specific_gr_evaluation(data, pt_smooth_derivative))
+  res_temp = res.u
+  loss_value = res.objective
+
+  res_param = vectorize_df_results(name_well,
+      model,
+      res_temp,
+      max_th_gr,
+      max_em_gr,
+      loss_value 
+  )
+  
+  return res_param,remade_solution.t, sol_fin[1, 1:end]
 end
 
 #######################################################################
@@ -1255,226 +1012,170 @@ fitting dataset function ODE
 """
 
 function fit_file_ODE(
-    label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String,# path to the annotation of the wells
-    model::String, # string of the used model
-    lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
-    ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator = KenCarp4(autodiff=true), # selection of sciml integrator
-    path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
-    loss_type="RE", # string of the type of the used loss
-    smoothing=false, # 1 do smoothing of data with rolling average
-    do_plot=false, # 1 do and visulaze the plots of data
-    verbose=false, # 1 true verbose
-    write_res=false, # write results
-    pt_avg=1, # number of points to do smoothing average
-    pt_smooth_derivative=7, # number of points to do ssmooth_derivative
-    blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    fit_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize = 300,
-    maxiters = 2000000,
-     abstol = 0.00001)
+  label_exp::String, #label of the experiment
+  path_to_data::String, # path to the folder to analyze
+  path_to_annotation::String,# path to the annotation of the wells
+  model::String, # string of the used model
+  lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
+  ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
+  optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+  integrator = KenCarp4(autodiff=true), # selection of sciml integrator
+  path_to_results="NA", # path where save results
+  path_to_plot="NA", # path where to save Plots
+  loss_type="RE", # string of the type of the used loss
+  smoothing=false, # 1 do smoothing of data with rolling average
+  do_plot=false, # 1 do and visulaze the plots of data
+  verbose=false, # 1 true verbose
+  write_res=false, # write results
+  pt_avg=1, # number of points to do smoothing average
+  pt_smooth_derivative=7, # number of points to do ssmooth_derivative
+  blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
+  fit_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+  correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+  thr_negative=0.01,  # used only if correct_negative == "thr_correction"
+  multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+  calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+  PopulationSize = 300,
+  maxiters = 2000000,
+  abstol = 0.00001)
 
 
-    if write_res == true
-        mkpath(path_to_results)
-    end
-    
-    if do_plot == true
-        mkpath(path_to_plot)
-    end
+  if write_res == true
+    mkpath(path_to_results)
+  end
+  
+  if do_plot == true
+    mkpath(path_to_plot)
+  end
 
-    parameter_of_optimization = inzialize_df_results(model)
+  parameter_of_optimization = initialize_df_results(model)
 
- 
+  ## reading annotation here
+  annotation = CSV.File(string(path_to_annotation),header=false)
+  names_of_annotated_df = [annotation[l][1] for l in 1:length(annotation)]
 
-    ## reading annotation here
-    annotation = CSV.File(string(path_to_annotation),header=false)
-    names_of_annotated_df = [annotation[l][1] for l in 1:length(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in 1:length(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
-    list_of_discarded = Symbol.(list_of_discarded)
+  # selcting blank wells
+  properties_of_annotation = [annotation[l][2] for l in 1:length(annotation)]
+  list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
+  list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
+  list_of_blank = Symbol.(list_of_blank)
+  list_of_discarded = Symbol.(list_of_discarded)
 
+  # reading files
+  dfs_data = CSV.File(path_to_data)
 
+  # shaping df for the inference
+  names_of_cols = propertynames(dfs_data)
 
-    # reading files
-    dfs_data = CSV.File(path_to_data)
+  # excluding blank data and discarded wells 
+  if length(list_of_blank)>0
+    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+  end
 
+  if length(list_of_discarded)>0
+    names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
+  end
 
-    # shaping df for the inference
+  times_data = dfs_data[names_of_cols[1]]
+  blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
+  blank_array = convert(Vector{Float64}, blank_array)
 
-    names_of_cols = propertynames(dfs_data)
+  ## BLANK ANALYSIS HERE 
+  if blank_subtraction == "avg_blank"
+    blank_value = mean([mean(dfs_data[k]) for k in list_of_blank])
+  elseif blank_subtraction == "time_blank"
+    blank_value = [mean([dfs_data[k][j] for k in list_of_blank]) for j in 1:length(times_data)]
+  else
+    blank_value = zeros(length(times_data))
+  end
 
+  ## considering replicates
+  list_replicate = unique(properties_of_annotation)
+  list_replicate = filter!(e -> e != "b", list_replicate)
 
-    # excluding blank data and discarded wells 
-    if length(list_of_blank)>0
-        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
-    end
-
-    if length(list_of_discarded)>0
-        names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
-    end
-
-
-    times_data = dfs_data[names_of_cols[1]]
-
-    blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
-    blank_array = convert(Vector{Float64}, blank_array)
-
-    ## BLANK ANALYSIS HERE 
-    if blank_subtraction == "avg_blank"
-
-        blank_value = mean([mean(dfs_data[k]) for k in list_of_blank])
-
-    elseif blank_subtraction == "time_blank"
-
-        blank_value = [mean([dfs_data[k][j] for k in list_of_blank]) for j in 1:length(times_data)]
-
-    else
-
-        blank_value = zeros(length(times_data))
-
-    end
-
-
-
-
-    ## considering replicates
+  if fit_replicate == true
+    new_data = times_data
     list_replicate = unique(properties_of_annotation)
     list_replicate = filter!(e -> e != "b", list_replicate)
 
+    for replicate_temp in list_replicate
+      names_of_replicate_temp = Symbol.(names_of_annotated_df[findall(x -> x == replicate_temp, properties_of_annotation)])
+      replicate_mean = [mean([dfs_data[k][j] for k in names_of_replicate_temp]) for j in 1:length(times_data)]
+      new_data = hcat(new_data, replicate_mean)
+    end
+
+    new_data = DataFrame(new_data, :auto)
+    rename!(new_data, vcat(:Time, reduce(vcat, Symbol.(list_replicate))))
+    names_of_cols = propertynames(new_data)
+    dfs_data = new_data
+  end
+
+  # for on the columns to analyze
+  for well_name in names_of_cols[2:end]
     if fit_replicate == true
-        new_data = times_data
-
-        list_replicate = unique(properties_of_annotation)
-        list_replicate = filter!(e -> e != "b", list_replicate)
-
-
-        for replicate_temp in list_replicate
-
-            names_of_replicate_temp = Symbol.(names_of_annotated_df[findall(x -> x == replicate_temp, properties_of_annotation)])
-            replicate_mean = [mean([dfs_data[k][j] for k in names_of_replicate_temp]) for j in 1:length(times_data)]
-
-            new_data = hcat(new_data, replicate_mean)
-
-        end
-        new_data = DataFrame(new_data, :auto)
-        rename!(new_data, vcat(:Time, reduce(vcat, Symbol.(list_replicate))))
-        names_of_cols = propertynames(new_data)
-        dfs_data = new_data
-
-
+      data_values = copy(dfs_data[!, well_name])
+    else
+      data_values = copy(dfs_data[well_name])
     end
 
+    # blank subtraction 
+    data_values = data_values .- blank_value
+    data = Matrix(transpose(hcat(times_data, data_values)))
 
-
-    # for on the columns to analyze
-
-    for well_name in names_of_cols[2:end]
-
-
-
-
-        if fit_replicate == true
-
-            data_values = copy(dfs_data[!, well_name])
-
-        else
-            data_values = copy(dfs_data[well_name])
-        end
-
-        # blank subtraction 
-        data_values = data_values .- blank_value
-
-        data = Matrix(transpose(hcat(times_data, data_values)))
-
-        if correct_negative == "thr_correction"
-
-            data = thr_negative_correction(data, thr_negative)
-
-        end
-
-        if correct_negative == "blank_correction"
-
-            data = blank_distrib_negative_correction(data, blank_array)
-
-        end
-
-
-        if smoothing == true
-
-            data = smoothing_data(data, pt_avg)
-            data = Matrix(data)
-
-            
-        end
-        # defining time steps of the inference
-
-        max_t = data[1, end]
-        min_t = data[1, 1]
-  
-
-        data = Matrix(data)
-
-
-
-        # inference
-
-
-        temp_results_1 = fitting_one_well_ODE_constrained(data, # dataset first row times second row OD
-            string(well_name), # name of the well
-                label_exp, #label of the experiment
-                model, # ode model to use 
-                lb_param, # lower bound param
-                ub_param; # upper bound param
-                param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
-                optmizator = optmizator, # selection of optimization method 
-                integrator =integrator, # selection of sciml integrator
-                do_plot=do_plot, # do plots or no
-                path_to_plot=path_to_plot, # where save plots
-                pt_avg=pt_avg, # numebr of the point to generate intial condition
-                pt_smooth_derivative=pt_smooth_derivative,
-                smoothing=smoothing, # the smoothing is done or not?
-                type_of_loss=loss_type, # type of used loss 
-                blank_array=blank_array, # data of all blanks
-                multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-                calibration_OD_curve=calibration_OD_curve , #  the path to calibration curve to fix the data
-                PopulationSize =PopulationSize,
-                maxiters = maxiters,
-                 abstol = abstol)
-            
-
-        if verbose == true
-            println("the results are:")
-            println(temp_results_1[1])
-        end
-
-        parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[1])
-
+    if correct_negative == "thr_correction"
+      data = thr_negative_correction(data, thr_negative)
     end
 
-
-    if write_res == true
-
-        CSV.write(string(path_to_results, label_exp, "_parameters_", model, ".csv"), Tables.table(Matrix(parameter_of_optimization)))
-
-
+    if correct_negative == "blank_correction"
+      data = blank_distrib_negative_correction(data, blank_array)
     end
-    return parameter_of_optimization
 
+    if smoothing == true
+      data = smoothing_data(data, pt_avg)
+      data = Matrix(data)
+    end
+    
+    # defining time steps of the inference
+    max_t = data[1, end]
+    min_t = data[1, 1]
+    data = Matrix(data)
 
+    # inference
+    temp_results_1 = fitting_one_well_ODE_constrained(data, # dataset first row times second row OD
+      string(well_name), # name of the well
+      label_exp, #label of the experiment
+      model, # ode model to use 
+      lb_param, # lower bound param
+      ub_param; # upper bound param
+      param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
+      optmizator = optmizator, # selection of optimization method 
+      integrator =integrator, # selection of sciml integrator
+      do_plot=do_plot, # do plots or no
+      path_to_plot=path_to_plot, # where save plots
+      pt_avg=pt_avg, # numebr of the point to generate intial condition
+      pt_smooth_derivative=pt_smooth_derivative,
+      smoothing=smoothing, # the smoothing is done or not?
+      type_of_loss=loss_type, # type of used loss 
+      blank_array=blank_array, # data of all blanks
+      multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+      calibration_OD_curve=calibration_OD_curve , #  the path to calibration curve to fix the data
+      PopulationSize =PopulationSize,
+      maxiters = maxiters,
+      abstol = abstol)
+        
+    if verbose == true
+      println("the results are:")
+      println(temp_results_1[1])
+    end
 
+    parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[1])
+  end
 
+  if write_res == true
+    CSV.write(string(path_to_results, label_exp, "_parameters_", model, ".csv"), Tables.table(Matrix(parameter_of_optimization)))
+  end
+
+  return parameter_of_optimization
 end
 
 #######################################################################
@@ -1483,234 +1184,86 @@ fitting custom ODE
 """
 
 function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row times second row OD
-    name_well::String, # name of the well
-    label_exp::String, #label of the experiment
-    model::Any, # ode model to use 
-    lb_param::Vector{Float64}, # lower bound param
-    ub_param::Vector{Float64}, # upper bound param
-    n_equation::Int; # number ode in the system
-    param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator =KenCarp4(autodiff=true), # selection of sciml integrator
-    do_plot=false, # do plots or no
-    path_to_plot="NA", # where save plots
-    pt_avg=1, # numebr of the point to generate intial condition
-    pt_smooth_derivative=7,
-    smoothing=false, # the smoothing is done or not?
-    type_of_loss="RE", # type of used loss 
-    blank_array=zeros(100), # data of all blanks
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-   PopulationSize = 300,
-    maxiters = 2000000,
-     abstol = 0.00001 )
+  name_well::String, # name of the well
+  label_exp::String, #label of the experiment
+  model::Any, # ode model to use 
+  lb_param::Vector{Float64}, # lower bound param
+  ub_param::Vector{Float64}, # upper bound param
+  n_equation::Int; # number ode in the system
+  param= lb_param .+ (ub_param.-lb_param)./2,# initial guess param
+  optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+  integrator =KenCarp4(autodiff=true), # selection of sciml integrator
+  do_plot=false, # do plots or no
+  path_to_plot="NA", # where save plots
+  pt_avg=1, # numebr of the point to generate intial condition
+  pt_smooth_derivative=7,
+  smoothing=false, # the smoothing is done or not?
+  type_of_loss="RE", # type of used loss 
+  blank_array=zeros(100), # data of all blanks
+  multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+  calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+  PopulationSize = 300,
+  maxiters = 2000000,
+  abstol = 0.00001 )
 
-
-    if  multiple_scattering_correction == true
-
-        data = correction_OD_multiple_scattering(data,calibration_OD_curve)
-    
-    
-    end
+  if  multiple_scattering_correction == true
+    data = correction_OD_multiple_scattering(data,calibration_OD_curve)
+  end
    
-
-
-    #defining time interval
-
-    max_t = data[1, end]
-    min_t = data[1, 1]
-    tspan = (min_t, max_t)
-    tsteps = data[1, :]
-    # smoothing data if required
-    if smoothing == true
-
-        data = smoothing_data(data, pt_avg)
-        data = Matrix(data)
-
-    end
-
-
-
-
-    u0 = generating_IC_custom_ODE(data, n_equation,smoothing,pt_avg)
-    #  definition  ode symbolic problem
-
-    ODE_prob = ODEProblem(model, u0, tspan, nothing)
-
-
-    ## defining loss function
-
-    function loss_L2_derivative(p)
-            
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_time = reduce(hcat, sol.t)
-
-        sol_t = reduce(hcat, sol.u)
-
-        sol_t = sum(sol_t,dims=1)
- 
-
-
-        itp = interpolate((sol_time,), sol_t, Gridded(Linear()));
-        derivative_theo = only.(Interpolations.gradient.(Ref(itp), sol_t))
-
-        itp = interpolate((data[1, :],), data[2, :], Gridded(Linear()));
-        derivative_data = only.(Interpolations.gradient.(Ref(itp), data[2, :]))
-
-
-        if size(derivative_theo)[1] == size(derivative_data)[1]
-         lossa = NaNMath.sum(abs2.((derivative_theo[2, :] .- derivative_data[1, 1:end]))) / length(derivative_data[2, :])
-        else
-             lossa = 10.0^9 * length(data[2, :])
-            # lossa = NaNMath.sum(abs2.((derivative_theo[2, :] .- derivative_data[1, 1:end]))) / length(derivative_data[2, :]) + 1000
-        end
-
-       return lossa, sol
-    end
-
-
-    function loss_ode_blank_weighted_L2(p)
-     sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-     sol_t = reduce(hcat, sol.u)
-     sol_t = sum(sol_t,dims=1)
-
-
-
-     empirical_blank_distrib = (blank_array .- mean(blank_array))
-
-      # generation of the empirical distrib respect the mean of the noise 
-      test = StatsBase.fit(Histogram, empirical_blank_distrib)
-      binning_distrib = test.edges
-      probabiltity_distrib = test.weights ./ sum(test.weights)
-         if size(sol_t)[2] == size(data)[2]
-            lossa = 0.0
-
-
-
-            for ll in 1:size(sol_t)[2]
-            dist = (data[2, ll] - sol_t[1, ll])
-           index = findfirst(x -> (x > dist), binning_distrib[1])
-             if (typeof(index) == Nothing || index > length(probabiltity_distrib))
-
-                  lossa = lossa + abs2.(dist) / length(data[2, :])
-           else
-
-                 prob = probabiltity_distrib[index]
-
-
-                lossa = lossa + abs2.((1 - prob) * dist) / length(data[2, :])
-
-              end
-
-         end
-       else
-
-         lossa = 10.0^9 * length(data[2, :])
-
-         end
-
-      return lossa, sol
-    end
-
-
-    function loss_L2(p)
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_t = sum(sol_t,dims=1)
-
-        if size(sol_t)[2] == size(data)[2]
-            lossa = NaNMath.sum(abs2.((data[2, :] .- sol_t[1, 1:end]))) / length(data[2, :])
-        else
-            lossa = 10.0^9 * length(data[2, :])
-
-        end
-
-        return lossa, sol
-    end
-
-    function loss_RE(p)
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_t = sum(sol_t,dims=1)
-
-        if size(sol_t)[2] == size(data)[2]
-               lossa = 0.5 * NaNMath.sum(abs2.(1.0 .- (data[2, :] ./ sol_t[1, 1:end]))) / length(data[2, :])
-        else
-             lossa = 10.0^9 * length(data[2, :])
-
-        end
-
-       return lossa, sol
-    end
-
-    #SOLVING Optimization
-    if type_of_loss == "L2"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_L2(x))
-    end
-
-    if type_of_loss == "RE"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_RE(x))
-    end
-
-    if type_of_loss == "blank_weighted_L2"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_blank_weighted_L2(x))
-    end
-
-    if type_of_loss == "L2_derivative"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_L2_derivative(x))
-    end
-
-    
-    optprob_const = Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
-   # res = Optimization.solve(optprob_const, optmizator)
-   res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
-
-
-
-    #revalution of solution for plot an loss evaluation 
-
-
-    remade_solution = solve(remake(ODE_prob, p=res.u),integrator , saveat=tsteps)
-    sol_time = reduce(hcat, remade_solution.t)
-    sol_fin = reduce(hcat, remade_solution.u)
-    sol_fin = sum(sol_fin,dims=1)
-
-    # plotting if required
-    if do_plot == true
-        mkpath(path_to_plot)
-        display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-        display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting custom model") nothing], c=:red))
-        png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".png"))
-    end
-
-
-
-
-    # here problem
-    #max_theoretical gr
-    data_th = vcat(sol_time,sol_fin)
-
-    max_th_gr = maximum( specific_gr_evaluation(  Matrix(data_th), pt_smooth_derivative))
-
-    # max empirical gr
-    max_em_gr = maximum( specific_gr_evaluation(data, pt_smooth_derivative))
-
-    res_temp = res.u
-
-    loss_value = res.objective
-
-    res_param = [string(name_well),
-        "custom_model",
-        res_temp,
-        max_th_gr,
-        max_em_gr,
-        loss_value ]
-
-
-
-    return res_param
-
+  #defining time interval
+  max_t = data[1, end]
+  min_t = data[1, 1]
+  tspan = (min_t, max_t)
+  tsteps = data[1, :]
+
+  # smoothing data if required
+  if smoothing == true
+    data = smoothing_data(data, pt_avg)
+    data = Matrix(data)
+  end
+
+  u0 = generating_IC_custom_ODE(data, n_equation,smoothing,pt_avg)
+  
+  #  definition  ode symbolic problem
+  ODE_prob = ODEProblem(model, u0, tspan, nothing)
+
+  loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
+  optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
+  optprob_const = Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
+  res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
+
+  #revalution of solution for plot an loss evaluation 
+  remade_solution = solve(remake(ODE_prob, p=res.u),integrator , saveat=tsteps)
+  sol_time = reduce(hcat, remade_solution.t)
+  sol_fin = reduce(hcat, remade_solution.u)
+  sol_fin = sum(sol_fin,dims=1)
+
+  # plotting if required
+  if do_plot == true
+    mkpath(path_to_plot)
+    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+    display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting custom model") nothing], c=:red))
+    png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".png"))
+  end
+
+  # here problem
+  #max_theoretical gr
+  data_th = vcat(sol_time,sol_fin)
+  max_th_gr = maximum( specific_gr_evaluation(  Matrix(data_th), pt_smooth_derivative))
+
+  # max empirical gr
+  max_em_gr = maximum( specific_gr_evaluation(data, pt_smooth_derivative))
+  res_temp = res.u
+  loss_value = res.objective
+
+  res_param = [string(name_well),
+      "custom_model",
+      res_temp,
+      max_th_gr,
+      max_em_gr,
+      loss_value ]
+
+  return res_param
 end
 
 #######################################################################
@@ -1720,272 +1273,136 @@ model selection functions
 """
 
 function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times second row OD
-    name_well::String, # name of the well
-    label_exp::String, #label of the experiment
-    models_list::Vector{String}, # ode model to use 
-    lb_param_array::Any, # lower bound param
-    ub_param_array::Any; # upper bound param
-    optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator = KenCarp4(autodiff=true), # selection of sciml integrator
-    pt_avg = 1 , # number of the point to generate intial condition
-    beta_penality = 2.0, # penality for AIC evaluation
-    smoothing= false, # the smoothing is done or not?
-    type_of_loss="L2", # type of used loss 
-    blank_array=zeros(100), # data of all blanks
-    plot_best_model=false, # one wants the results of the best fit to be plotted
-    path_to_plot="NA",
-    pt_smooth_derivative=7,
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-    verbose=false,
-   PopulationSize = 300,
-    maxiters = 2000000,
-     abstol = 0.00001 )
+  name_well::String, # name of the well
+  label_exp::String, #label of the experiment
+  models_list::Vector{String}, # ode model to use 
+  lb_param_array::Any, # lower bound param
+  ub_param_array::Any; # upper bound param
+  optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+  integrator = KenCarp4(autodiff=true), # selection of sciml integrator
+  pt_avg = 1 , # number of the point to generate intial condition
+  beta_penality = 2.0, # penality for AIC evaluation
+  smoothing= false, # the smoothing is done or not?
+  type_of_loss="L2", # type of used loss 
+  blank_array=zeros(100), # data of all blanks
+  plot_best_model=false, # one wants the results of the best fit to be plotted
+  path_to_plot="NA",
+  pt_smooth_derivative=7,
+  multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+  calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+  verbose=false,
+  PopulationSize = 300,
+  maxiters = 2000000,
+  abstol = 0.00001 )
 
-    if  multiple_scattering_correction == true
-        data = correction_OD_multiple_scattering(data,calibration_OD_curve)
+  if  multiple_scattering_correction == true
+      data = correction_OD_multiple_scattering(data,calibration_OD_curve)
+  end
+
+  # smooting if required
+  if smoothing == true
+      data = smoothing_data(data, pt_avg)
+      data = Matrix(data)
+  end
+
+  # inizialization of array of results
+  df_res_optimization = Array{Any}(nothing, length(models_list))
+  rss_array = ["model", "Loss", "AIC_standard"]
+
+  # generating time interval
+  max_t = data[1, end]
+  min_t = data[1, 1]
+  tspan = (min_t, max_t)
+  tsteps = data[1, :]
+  data = Matrix(data)
+
+  # common part loss definition
+  ## defining loss function
+  # loop over the models
+  
+  for mm in 1:length(models_list)
+    if verbose == true
+        println(string("fitting ", models_list[mm]))
     end
+    # inizialization of some parameters
 
+    temp_model =models_list[mm]
+    temp_param_lb = lb_param_array[mm]
+    temp_param_ub = ub_param_array[mm]
+    temp_start_param = temp_param_lb.+(temp_param_ub.-temp_param_lb)./2
 
-    # smooting if required
-    if smoothing == true
-        data = smoothing_data(data, pt_avg)
-        data = Matrix(data)
-    end
-
-    # inizialization of array of results
-    df_res_optimization = Array{Any}(nothing, length(models_list))
-    rss_array = ["model", "Loss", "AIC_standard"]
-
-    # generating time interval
-    max_t = data[1, end]
-    min_t = data[1, 1]
-    tspan = (min_t, max_t)
-    tsteps = data[1, :]
-    data = Matrix(data)
-
-    # common part loss definition
-    ## defining loss function
-
-    function loss_L2_derivative(p)
-            
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_time = reduce(hcat, sol.t)
-
-        sol_t = reduce(hcat, sol.u)
-
-        sol_t = sum(sol_t,dims=1)
-
-
-
-        itp = interpolate((sol_time,), sol_t, Gridded(Linear()));
-        derivative_theo = only.(Interpolations.gradient.(Ref(itp), sol_t))
-
-        itp = interpolate((data[1, :],), data[2, :], Gridded(Linear()));
-        derivative_data = only.(Interpolations.gradient.(Ref(itp), data[2, :]))
-
-
-        if size(derivative_theo)[1] == size(derivative_data)[1]
-         lossa = NaNMath.sum(abs2.((derivative_theo[2, :] .- derivative_data[1, 1:end]))) / length(derivative_data[2, :])
-        else
-         lossa = 10.0^9 * length(data[2, :])
-            # lossa = NaNMath.sum(abs2.((derivative_theo[2, :] .- derivative_data[1, 1:end]))) / length(derivative_data[2, :]) + 1000
-        end
-        return lossa, sol   
-    end
-
-
-    function loss_ode_blank_weighted_L2(p)
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_t = sum(sol_t,dims=1)
-        empirical_blank_distrib = (blank_array .- mean(blank_array))
-        # generation of the empirica distrib respect the mean of the noise 
-        test = StatsBase.fit(Histogram, empirical_blank_distrib)
-        binning_distrib = test.edges
-        probabiltity_distrib = test.weights ./ sum(test.weights)
-        if size(sol_t)[2] == size(data)[2]
-            lossa = 0.0
-
-
-
-            for ll in 1:size(sol_t)[2]
-                dist = (data[2, ll] - sol_t[1, ll])
-                index = findfirst(x -> (x > dist), binning_distrib[1])
-                if (typeof(index) == Nothing || index > length(probabiltity_distrib))
-
-                    lossa = lossa + abs2.(dist) / length(data[2, :])
-                else
-
-                    prob = probabiltity_distrib[index]
-
-
-                    lossa = lossa + abs2.((1 - prob) * dist) / length(data[2, :])
-
-                end
-
-            end
-        else
-
-            lossa = 10.0^9 * length(data[2, :])
-
-        end
-
-        return lossa, sol
-    end
-
-
-    function loss_L2(p)
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_t = sum(sol_t,dims=1)
-
-        if size(sol_t)[2] == size(data)[2]
-            lossa = NaNMath.sum(abs2.((data[2, :] .- sol_t[1, 1:end]))) / length(data[2, :])
-        else
-            lossa = 10.0^9 * length(data[2, :])
-
-        end
-
-        return lossa, sol
-    end
-
-    function loss_RE(p)
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_t = sum(sol_t,dims=1)
-
-        if size(sol_t)[2] == size(data)[2]
-            lossa = 0.5 * NaNMath.sum(abs2.(1.0 .- (data[2, :] ./ sol_t[1, 1:end]))) / length(data[2, :])
-        else
-             lossa = 10.0^9 * length(data[2, :])
-
-        end
-
-        return lossa, sol
-    end
+    # generating IC
+    # setting initial conditions
+    u0 = generating_IC(data, temp_model,smoothing,pt_avg)
+  
+    #  definition  ode symbolic problem
+    ODE_prob = model_selector(temp_model, u0, tspan)
     
-    # loop over the models
-    
-    for mm in 1:length(models_list)
-        if verbose == true
-            println(string("fitting ", models_list[mm]))
-        end
-        # inizialization of some parameters
+    loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
+    optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
 
-        temp_model =models_list[mm]
+    # solving optimization problem
+    optprob_const = Optimization.OptimizationProblem(optf, temp_start_param, u0, lb=temp_param_lb, ub=temp_param_ub)
+    res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
+      
+    #revalution of solution for plot an loss evaluation 
+    remade_solution = solve(remake(ODE_prob, p=res.u),integrator , saveat=tsteps)
+    sol_time = reduce(hcat, remade_solution.t)
+    sol_fin = reduce(hcat, remade_solution.u)
+    sol_fin = sum(sol_fin,dims=1)
+    # here problem
+    #max_theoretical gr
+    data_th = vcat(sol_time,sol_fin)
+    max_th_gr = maximum( specific_gr_evaluation(  Matrix(data_th), pt_smooth_derivative))
+  
+    # max empirical gr
+    max_em_gr = maximum( specific_gr_evaluation(data, pt_smooth_derivative))
+    res_temp = res.u
+    loss_value = res.objective
 
-        temp_param_lb = lb_param_array[mm]
-        temp_param_ub = ub_param_array[mm]
-        temp_start_param = temp_param_lb.+(temp_param_ub.-temp_param_lb)./2
-        # generating IC
-        # setting initial conditions
-        u0 = generating_IC(data, temp_model,smoothing,pt_avg)
-   
-        #  definition  ode symbolic problem
+    res_param = vectorize_df_results(name_well,
+        temp_model,
+        res_temp,
+        max_th_gr,
+        max_em_gr,
+        loss_value 
+    )
+  
+    df_res_optimization[mm] = res_param
+    data_size = size(data)[2]
+    param_number = length(temp_start_param)
+    results_to_be_pushed = [  models_list[mm], res.objective , data_size * log( res.objective /data_size) +  beta_penality * param_number  ]
+    rss_array = hcat(rss_array, results_to_be_pushed )
+  end
 
-        ODE_prob = model_selector(temp_model, u0, tspan)
-        
-        # def optimization problem
-        if type_of_loss == "L2"
-            optf = Optimization.OptimizationFunction((x, p) -> loss_L2(x))
-        end
-    
-        if type_of_loss == "RE"
-            optf = Optimization.OptimizationFunction((x, p) -> loss_RE(x))
-        end
-    
-        if type_of_loss == "blank_weighted_L2"
-            optf = Optimization.OptimizationFunction((x, p) -> loss_blank_weighted_L2(x))
-        end
-    
-        if type_of_loss == "L2_derivative"
-            optf = Optimization.OptimizationFunction((x, p) -> loss_L2_derivative(x))
-        end
-    
-        # solving optimization problem
-        optprob_const = Optimization.OptimizationProblem(optf, temp_start_param, u0, lb=temp_param_lb, ub=temp_param_ub)
-       # res = Optimization.solve(optprob_const, optmizator)
-       res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
+  AIC_array = rss_array[3,2:end]
+  min_AIC = minimum(AIC_array)
+  index_minimal_AIC_model = findfirst(item -> item == min_AIC, AIC_array) + 1
 
-    
-    
-        #revalution of solution for plot an loss evaluation 
-    
-    
-        remade_solution = solve(remake(ODE_prob, p=res.u),integrator , saveat=tsteps)
-        sol_time = reduce(hcat, remade_solution.t)
-        sol_fin = reduce(hcat, remade_solution.u)
-        sol_fin = sum(sol_fin,dims=1)
-        # here problem
-        #max_theoretical gr
-        data_th = vcat(sol_time,sol_fin)
-        max_th_gr = maximum( specific_gr_evaluation(  Matrix(data_th), pt_smooth_derivative))
-    
-        # max empirical gr
-        max_em_gr = maximum( specific_gr_evaluation(data, pt_smooth_derivative))
+  # string of the model choosen
+  model = rss_array[1,index_minimal_AIC_model]
 
-        res_temp = res.u
+  # param of the best model
+  param_min = df_res_optimization[index_minimal_AIC_model-1]
+  param_min = param_min[3:(end-3)]
+  tsteps = data[1, :]
+  tspan = (data[1, 1], data[1, end])
+  u0 = generating_IC(data, model,smoothing,pt_avg)
+  ODE_prob = model_selector(model,u0,tspan,param_min)
+  sim = solve(ODE_prob, integrator, saveat=tsteps)
+  sol_t = reduce(hcat, sim.u)
+  sol_time = reduce(hcat, sim.t)
+  sol_t = sum(sol_t,dims=1)
 
-        loss_value = res.objective
+  if plot_best_model == true
+    data_th = vcat(sol_time,sol_t)
+    mkpath(path_to_plot)
+    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+    display(Plots.plot!(data_th[1,:], data_th[2,:], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
+    png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+  end
 
-
-        res_param = vectorize_df_results(name_well,
-            temp_model,
-            res_temp,
-            max_th_gr,
-            max_em_gr,
-            loss_value 
-
-        )
-    
-
-
-        
-        df_res_optimization[mm] = res_param
-        data_size = size(data)[2]
-        param_number = length(temp_start_param)
-        results_to_be_pushed = [  models_list[mm], res.objective , data_size * log( res.objective /data_size) +  beta_penality * param_number  ]
-        rss_array = hcat(rss_array, results_to_be_pushed )
-
-    end
-
-    AIC_array = rss_array[3,2:end]
-    min_AIC = minimum(AIC_array)
-    
-
-    index_minimal_AIC_model = findfirst(item -> item == min_AIC, AIC_array) + 1
-
-
-    # string of the model choosen
-    model = rss_array[1,index_minimal_AIC_model]
-
-    # param of the best model
-    param_min = df_res_optimization[index_minimal_AIC_model-1]
-    param_min = param_min[3:(end-3)]
-
-        
-    tsteps = data[1, :]
-    tspan = (data[1, 1], data[1, end])
-    u0 = generating_IC(data, model,smoothing,pt_avg)
-    ODE_prob = model_selector(model,u0,tspan,param_min)
-    
-    sim = solve(ODE_prob, integrator, saveat=tsteps)
-
-    sol_t = reduce(hcat, sim.u)
-    sol_time = reduce(hcat, sim.t)
-    sol_t = sum(sol_t,dims=1)
-
-    if plot_best_model == true
-        data_th = vcat(sol_time,sol_t)
-        mkpath(path_to_plot)
-        display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-        display(Plots.plot!(data_th[1,:], data_th[2,:], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
-        png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
-    end
-
-    return rss_array,df_res_optimization, min_AIC, minimum(rss_array[2,2:end]) ,param_min,model,data_th
+  return rss_array,df_res_optimization, min_AIC, minimum(rss_array[2,2:end]) ,param_min,model,data_th
 
 end
 #######################################################################
@@ -2013,223 +1430,76 @@ function one_well_morris_sensitivity(data::Matrix{Float64}, # dataset first row 
    PopulationSize = 300,
     maxiters = 2000000,
      abstol = 0.00001 )
-    # inizializing the results of sensitivity
-
-    results_sensitivity =inzialize_df_results(model)
-
-    if write_res == true
-        mkpath(path_to_results)
-    end
   
-    if  multiple_scattering_correction == true
-
-        data = correction_OD_multiple_scattering(data,calibration_OD_curve)
-    
-    
-    end
-   
-
-
-    #defining time interval
-
-    max_t = data[1, end]
-    min_t = data[1, 1]
-    tspan = (min_t, max_t)
-    tsteps = data[1, :]
-    # smoothing data if required
-    if smoothing == true
-
-        data = smoothing_data(data, pt_avg)
-        data = Matrix(data)
-
-    end
-
-    # setting initial conditions
-    u0 = generating_IC(data, model,smoothing,pt_avg)
-   
-    #  definition  ode symbolic problem
-
-    ODE_prob =model_selector(model,u0,tspan)
-
-
-    ## defining loss function
-
-    function loss_L2_derivative(p)
-            
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_time = reduce(hcat, sol.t)
-
-        sol_t = reduce(hcat, sol.u)
-
-        sol_t = sum(sol_t,dims=1)
- 
-
-
-        itp = interpolate((sol_time,), sol_t, Gridded(Linear()));
-        derivative_theo = only.(Interpolations.gradient.(Ref(itp), sol_t))
-
-        itp = interpolate((data[1, :],), data[2, :], Gridded(Linear()));
-        derivative_data = only.(Interpolations.gradient.(Ref(itp), data[2, :]))
-
-
-        if size(derivative_theo)[1] == size(derivative_data)[1]
-         lossa = NaNMath.sum(abs2.((derivative_theo[2, :] .- derivative_data[1, 1:end]))) / length(derivative_data[2, :])
-        else
-             lossa = 10.0^9 * length(data[2, :])
-            # lossa = NaNMath.sum(abs2.((derivative_theo[2, :] .- derivative_data[1, 1:end]))) / length(derivative_data[2, :]) + 1000
-        end
-
-       return lossa, sol
-    end
-
-
-    function loss_ode_blank_weighted_L2(p)
-     sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-     sol_t = reduce(hcat, sol.u)
-     sol_t = sum(sol_t,dims=1)
-
-
-
-     empirical_blank_distrib = (blank_array .- mean(blank_array))
-      # generation of the empirica distrib respect the mean of the noise 
-      test = StatsBase.fit(Histogram, empirical_blank_distrib)
-      binning_distrib = test.edges
-      probabiltity_distrib = test.weights ./ sum(test.weights)
-         if size(sol_t)[2] == size(data)[2]
-       lossa = 0.0
-
-
-
-            for ll in 1:size(sol_t)[2]
-            dist = (data[2, ll] - sol_t[1, ll])
-           index = findfirst(x -> (x > dist), binning_distrib[1])
-             if (typeof(index) == Nothing || index > length(probabiltity_distrib))
-
-                  lossa = lossa + abs2.(dist) / length(data[2, :])
-           else
-
-                 prob = probabiltity_distrib[index]
-
-
-                lossa = lossa + abs2.((1 - prob) * dist) / length(data[2, :])
-
-              end
-
-         end
-       else
-
-         lossa = 10.0^9 * length(data[2, :])
-
-         end
-
-      return lossa, sol
-    end
-
-
-    function loss_L2(p)
-         sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-         sol_t = reduce(hcat, sol.u)
-        sol_t = sum(sol_t,dims=1)
-
-        if size(sol_t)[2] == size(data)[2]
-            lossa = NaNMath.sum(abs2.((data[2, :] .- sol_t[1, 1:end]))) / length(data[2, :])
-        else
-            lossa = 10.0^9 * length(data[2, :])
-
-        end
-
-            return lossa, sol
-    end
-
-    function loss_RE(p)
-        sol = solve(ODE_prob, integrator, p=p, saveat=tsteps, verbose=false, abstol=1e-10, reltol=1e-10)
-        sol_t = reduce(hcat, sol.u)
-        sol_t = sum(sol_t,dims=1)
-
-        if size(sol_t)[2] == size(data)[2]
-               lossa = 0.5 * NaNMath.sum(abs2.(1.0 .- (data[2, :] ./ sol_t[1, 1:end]))) / length(data[2, :])
-        else
-             lossa = 10.0^9 * length(data[2, :])
-
-        end
-
-       return lossa, sol
-    end
-
-    #SOLVING Optimization
-    if type_of_loss == "L2"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_L2(x))
-    end
-
-    if type_of_loss == "RE"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_RE(x))
-    end
-
-    if type_of_loss == "blank_weighted_L2"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_blank_weighted_L2(x))
-    end
-
-    if type_of_loss == "L2_derivative"
-        optf = Optimization.OptimizationFunction((x, p) -> loss_L2_derivative(x))
-    end
-
-    param_combination =  generation_of_combination_of_IC_morris(lb_param, ub_param, N_step_morris)
-
-    for i in 1:size(param_combination)[2]
-        param = param_combination[:,i]
-
-        optprob_const = Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
-        res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
-
-       # res = Optimization.solve(optprob_const, optmizator)
-
-
-        #revalution of solution for plot an loss evaluation 
-
-
-        remade_solution = solve(remake(ODE_prob, p=res.u),integrator , saveat=tsteps)
-        sol_time = reduce(hcat, remade_solution.t)
-        sol_fin = reduce(hcat, remade_solution.u)
-        sol_fin = sum(sol_fin,dims=1)
-
-        # plotting if required
-
-        loss_value = res.objective
-
-
-        # here problem
-        #max_theoretical gr
-        data_th = vcat(sol_time,sol_fin)
-
-        max_th_gr = maximum( specific_gr_evaluation(  Matrix(data_th), pt_smooth_derivative))
-    
-        # max empirical gr
-        max_em_gr = maximum( specific_gr_evaluation(data, pt_smooth_derivative))
-
-        res_temp = res.u
-
-        res_param = vectorize_df_results(name_well,
-            model,
-            res_temp,
-            max_th_gr,
-            max_em_gr,
-            loss_value
-        )
-        results_sensitivity =hcat(results_sensitivity,res_param)
-
-    end
-
-    if write_res == true
-        mkpath(path_to_results)
-        CSV.write(string(path_to_results, label_exp, "_results_sensitivity.csv"), Tables.table(Matrix(results_sensitivity)))
-        CSV.write(string(path_to_results, label_exp, "_configuration_tested.csv"), Tables.table(Matrix(param_combination)))
-
-
-    end
-
-    return param_combination,results_sensitivity
-
+  # inizializing the results of sensitivity
+  results_sensitivity = initialize_df_results(model)
+
+  if write_res == true
+    mkpath(path_to_results)
+  end
+  
+  if multiple_scattering_correction == true
+    data = correction_OD_multiple_scattering(data,calibration_OD_curve)
+  end
+  
+  #defining time interval
+  max_t = data[1, end]
+  min_t = data[1, 1]
+  tspan = (min_t, max_t)
+  tsteps = data[1, :]
+
+  # smoothing data if required
+  if smoothing == true
+    data = smoothing_data(data, pt_avg)
+    data = Matrix(data)
+  end
+
+  # setting initial conditions
+  u0 = generating_IC(data, model,smoothing,pt_avg)
+  
+  #  definition  ode symbolic problem
+  ODE_prob =model_selector(model,u0,tspan)
+  loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
+  optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
+  param_combination =  generation_of_combination_of_IC_morris(lb_param, ub_param, N_step_morris)
+
+  for i in 1:size(param_combination)[2]
+    param = param_combination[:,i]
+    optprob_const = Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
+    res = Optimization.solve(optprob_const, optmizator,  PopulationSize = PopulationSize, maxiters=maxiters,abstol = abstol)
+
+    #revalution of solution for plot an loss evaluation 
+    remade_solution = solve(remake(ODE_prob, p=res.u),integrator , saveat=tsteps)
+    sol_time = reduce(hcat, remade_solution.t)
+    sol_fin = reduce(hcat, remade_solution.u)
+    sol_fin = sum(sol_fin,dims=1)
+    loss_value = res.objective
+
+    # here problem
+    #max_theoretical gr
+    data_th = vcat(sol_time,sol_fin)
+    max_th_gr = maximum( specific_gr_evaluation(  Matrix(data_th), pt_smooth_derivative))
+  
+    # max empirical gr
+    max_em_gr = maximum( specific_gr_evaluation(data, pt_smooth_derivative))
+    res_temp = res.u
+    res_param = vectorize_df_results(name_well,
+        model,
+        res_temp,
+        max_th_gr,
+        max_em_gr,
+        loss_value
+    )
+    results_sensitivity =hcat(results_sensitivity,res_param)
+  end
+
+  if write_res == true
+    mkpath(path_to_results)
+    CSV.write(string(path_to_results, label_exp, "_results_sensitivity.csv"), Tables.table(Matrix(results_sensitivity)))
+    CSV.write(string(path_to_results, label_exp, "_configuration_tested.csv"), Tables.table(Matrix(param_combination)))
+  end
+
+  return param_combination,results_sensitivity
 end
 
 #######################################################################
