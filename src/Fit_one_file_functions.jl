@@ -276,7 +276,7 @@ function fit_file_ODE(
         mkpath(path_to_plot)
     end
 
-    parameter_of_optimization = inzialize_df_results(model)
+    parameter_of_optimization = initialize_df_results(model)
 
 
 
@@ -517,7 +517,7 @@ function fit_file_custom_ODE(
         mkpath(path_to_plot)
     end
 
-    parameter_of_optimization = inzialize_df_results_ode_custom(ub_param)
+    parameter_of_optimization = initialize_df_results_ode_custom(ub_param)
 
 
 
@@ -757,7 +757,7 @@ function ODE_model_selection_file(
         mkpath(path_to_plot)
     end
 
-    parameter_of_optimization = inizialize_res_model_selection(ub_param_array)
+    parameter_of_optimization =initialize_res_model_selection(ub_param_array)
 
 
 
@@ -1015,7 +1015,7 @@ function selection_ODE_fixed_change_points_file(
         mkpath(path_to_plot)
     end
 
-    parameter_of_optimization = inizialize_res_segmentation(ub_param_array)
+    parameter_of_optimization =initialize_res_segmentation(ub_param_array)
 
 
 
@@ -1153,7 +1153,6 @@ function selection_ODE_fixed_change_points_file(
 
         # inference
 
-
         temp_results_1 = selection_ODE_fixed_change_points(
             data, # dataset first row times second row OD
             string(well_name), # name of the well
@@ -1170,7 +1169,7 @@ function selection_ODE_fixed_change_points_file(
             smoothing = smoothing,
             pt_avg = pt_avg,
             save_plot = save_plot, # do plots or no
-            display_plot = display_plot, # do plots or no
+            display_plots = display_plot, # do plots or no
             path_to_plot = path_to_plot, # where save plots
             win_size = win_size, # numebr of the point to generate intial condition
             pt_smooth_derivative = pt_smooth_derivative,
