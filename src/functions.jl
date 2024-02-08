@@ -445,52 +445,29 @@ function plot_data( label_exp::String, #label of the experiment
       data = blank_distrib_negative_correction(data, blank_array)
     end
 
-    # save & not plot overlayed plot
-    if save_plot == true  && display_plots  == false && overlay_plots == true
+    if display_plots
+      if_display = display
+    else
+      if_display = identity
+
+    if overlay_plots
       if well_name == names_of_cols[2]
-        Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well], title=string(label_exp),legend = :outertopright)
+        if_display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well], title=string(label_exp),legend = :outertopright))
       else
-        Plots.plot!(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well],   title=string(label_exp),legend = :outertopright)
+        if_display(Plots.plot!(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well],   title=string(label_exp),legend = :outertopright))
       end
 
-      png(string(path_to_plot, label_exp, ".png"))
-    end
-
-    # save & not plot single plot
-    if save_plot == true  && display_plots  == false && overlay_plots == false
-      Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:black, title=string(label_exp, " ", name_well))
-      png(string(path_to_plot, label_exp, "_", name_well, ".png"))
-    end
-    # not save &  plot overlayed plot
-
-    if save_plot == false  && display_plots  == true && overlay_plots == true
-      if well_name == names_of_cols[2]
-        display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[name_well],  title=string(label_exp),legend = :outertopright))
-      else
-        display(Plots.plot!(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well],legend = :outertopright))
+      if save_plots
+        png(string(path_to_plot, label_exp, ".png"))
+      end
+    else
+      # save & not plot single plot
+      if_display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:black, title=string(label_exp, " ", name_well)))
+      if save_plots
+        png(string(path_to_plot, label_exp, "_", name_well, ".png"))
       end
     end
-    # not save &  plot single plot
 
-    if save_plot == false  && display_plots  == true && overlay_plots == false
-      display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-    end
-
-    #  save &  plot overlayed plot
-    if save_plot == true  && display_plots  == true && overlay_plots == true
-      if well_name == names_of_cols[2]
-        display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well] , title=string(label_exp, " ") ,legend = :outertopright ) )
-      else
-        display(Plots.plot!(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=[ name_well],legend = :outertopright))
-      end
-      png(string(path_to_plot, label_exp, ".png"))
-    end
-
-    #  save &  plot single plot
-    if save_plot == true  && display_plots  == true && overlay_plots == false
-      display(Plots.plot(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-      png(string(path_to_plot, label_exp, "_", name_well, ".png"))
-    end
   end
 end
 
@@ -632,34 +609,25 @@ function fitting_one_well_Log_Lin(data::Matrix{Float64}, # dataset first row tim
 
   results_lin_log_fit = [label_exp, name_well, data_to_fit_times[1], data_to_fit_times[end], specific_gr_times[index_of_max],gr_max ,fitting_results.coefs[2], confidence_coeff_2, log(2)/( fitting_results.coefs[2]) ,log(2)/( fitting_results.coefs[2] -confidence_coeff_2 ) , log(2)/( fitting_results.coefs[2] + confidence_coeff_2 ) ,fitting_results.coefs[1],confidence_coeff_1,rsquared]
 
+  if display_plots
+    if_display = display
+  else
+    if_display = identity
+
+  if save_plot
+    mkpath(path_to_plot)
+  else
+
   # plotting if requested
-  if display_plots == true && save_plot == true
-    mkpath(path_to_plot)
-    display(Plots.scatter(data_smooted[1, :], log.(data_smooted[2, :]), xlabel="Time", ylabel="Log(Arb. Units)", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-    display(Plots.plot!(data_to_fit_times, fitted_line,ribbon= confidence_band, xlabel="Time ", ylabel="Log(Arb. Units)", label=[string("Fitting Log-Lin ") nothing], c=:red))
-    display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
+  if_display(Plots.scatter(data_smooted[1, :], log.(data_smooted[2, :]), xlabel="Time", ylabel="Log(Arb. Units)", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
+  if_display(Plots.plot!(data_to_fit_times, fitted_line,ribbon= confidence_band, xlabel="Time ", ylabel="Log(Arb. Units)", label=[string("Fitting Log-Lin ") nothing], c=:red))
+  if_display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
+  if save_plot
     png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".png"))
-    display(Plots.scatter(specific_gr_times, specific_gr, xlabel="Time ", ylabel="1 /time ", label=[string("Dynamics growth rate ") nothing], c=:red))
-    display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
-    png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
   end
-
-  if display_plots == true && save_plot ==  false 
-    display(Plots.scatter(data_smooted[1, :], log.(data_smooted[2, :]), xlabel="Time", ylabel="Log(Arb. Units)", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-    display(Plots.plot!(data_to_fit_times, fitted_line,ribbon= confidence_band, xlabel="Time ", ylabel="Log(Arb. Units)", label=[string("Fitting Log-Lin ") nothing], c=:red))
-    display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
-    display(Plots.scatter(specific_gr_times, specific_gr, xlabel="Time ", ylabel="1 /time ", label=[string("Dynamics growth rate ") nothing], c=:red))
-    display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
-  end
-
-  if display_plots == false && save_plot ==  true 
-    mkpath(path_to_plot)
-    Plots.scatter(data_smooted[1, :], log.(data_smooted[2, :]), xlabel="Time", ylabel="Log(Arb. Units)", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well))
-    Plots.plot!(data_to_fit_times, fitted_line,ribbon= confidence_band, xlabel="Time ", ylabel="Log(Arb. Units)", label=[string("Fitting Log-Lin ") nothing], c=:red)
-    Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing])
-    png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".png"))
-    Plots.scatter(specific_gr_times, specific_gr, xlabel="Time ", ylabel="1 /time ", label=[string("Dynamics growth rate ") nothing], c=:red)
-    Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing])
+  if_display(Plots.scatter(specific_gr_times, specific_gr, xlabel="Time ", ylabel="1 /time ", label=[string("Dynamics growth rate ") nothing], c=:red))
+  if_display(Plots.vline!([data_to_fit_times[1], data_to_fit_times[end]], c=:black, label=[string("Window of exp. phase ") nothing]))
+  if save_plot
     png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
   end
 
@@ -985,23 +953,21 @@ function fitting_one_well_ODE_constrained(data::Matrix{Float64}, # dataset first
   sol_fin = reduce(hcat, remade_solution.u)
   sol_fin = sum(sol_fin,dims=1)
 
-  # plotting if required
-  if display_plots == true && save_plot ==    true
-    mkpath(path_to_plot)
-    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-    display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
-    png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+  if display_plots
+    if_display = display
+  else
+    if_display = identity
   end
 
-  if display_plots == false && save_plot ==    true
+  if save_plot
     mkpath(path_to_plot)
-    Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well))
-    Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red)
-    png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
   end
-  if display_plots == true  && save_plot ==    false
-    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-    display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
+
+  # plotting if required
+  if_display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+  if_display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
+  if save_plot
+    png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
   end
 
   # here problem
@@ -1266,23 +1232,19 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
   sol_fin = reduce(hcat, remade_solution.u)
   sol_fin = sum(sol_fin,dims=1)
 
-  # plotting if required
-  if display_plots == true && save_plot == false
-    mkpath(path_to_plot)
-    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-    display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting custom model") nothing], c=:red))
-    png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".png"))
+  if display_plots
+    if_display = display
+  else
+    if_display = identity
   end
 
-  if display_plots == true && save_plot==false
-    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-    display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting custom model") nothing], c=:red))
+  if save_plot
+    mkpath(path_to_plot)
   end
 
-  if display_plots == false && save_plot==true
-    mkpath(path_to_plot)
-    (Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-    (Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting custom model") nothing], c=:red))
+  if_display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+  if_display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting custom model") nothing], c=:red))
+  if save_plot
     png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".png"))
   end
 
@@ -1443,25 +1405,22 @@ function  ODE_Model_selection(data::Matrix{Float64}, # dataset first row times s
   sol_t = sum(sol_t,dims=1)
   data_th = vcat(sol_time,sol_t)
 
-  if save_plot_best_model == true && display_plot_best_model == true
-    data_th = vcat(sol_time,sol_t)
-    mkpath(path_to_plot)
-    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-    display(Plots.plot!(data_th[1,:], data_th[2,:], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
-    png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+  if display_plot_best_model
+    if_display = display
+  else
+    if_display = identity
   end
 
-  if save_plot_best_model == false && display_plot_best_model == true
+  if save_plot_best_model
     mkpath(path_to_plot)
-    (Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-    (Plots.plot!(data_th[1,:], data_th[2,:], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
-    png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
   end
 
-  if save_plot_best_model == true && display_plot_best_model == false
-    display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
-    display(Plots.plot!(data_th[1,:], data_th[2,:], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
-  end
+  data_th = vcat(sol_time,sol_t)
+  if_display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
+  if_display(Plots.plot!(data_th[1,:], data_th[2,:], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting ", model) nothing], c=:red))
+  if save_plot_best_model
+    png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+  else
 
   return rss_array,df_res_optimization, min_AIC, minimum(rss_array[2,2:end]) ,param_min,model,data_th,param_out_full
 end
@@ -1944,26 +1903,21 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
     end
   end
 
-  if save_plot == true && display_plot == true
-    mkpath(path_to_plot)
-    display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-    display(Plots.vline!(interval_changepoints[2:end], c=:black, label=["change points" nothing]))
-    display(Plots.plot!(reduce(vcat,composed_time), reduce(vcat,composed_sol), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
-    png(string(path_to_plot, label_exp, "_model_selection_seg_",n_change_points,"_", name_well, ".png"))
+  if display_plot
+    if_display = display
+  else
+    if_display = identity
   end
 
-  if save_plot == true  && display_plot == false
+  if save_plot
     mkpath(path_to_plot)
-    (Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-    (Plots.vline!(interval_changepoints[2:end], c=:black, label=["change points" nothing]))
-    (Plots.plot!(reduce(vcat,composed_time), reduce(vcat,composed_sol), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
-    png(string(path_to_plot, label_exp, "_model_selection_seg_",n_change_points,"_", name_well, ".png"))
   end
 
-  if save_plot == false  && display_plot == true
-    display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-    display(Plots.vline!(interval_changepoints[2:end], c=:black, label=["change points" nothing]))
-    display(Plots.plot!(reduce(vcat,composed_time), reduce(vcat,composed_sol), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
+  if_display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
+  if_display(Plots.vline!(interval_changepoints[2:end], c=:black, label=["change points" nothing]))
+  if_display(Plots.plot!(reduce(vcat,composed_time), reduce(vcat,composed_sol), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
+  if save_plot
+    png(string(path_to_plot, label_exp, "_model_selection_seg_",n_change_points,"_", name_well, ".png"))
   end
 
   return param_out,interval_changepoints,composed_time,composed_sol
@@ -2096,26 +2050,21 @@ function   ODE_selection_NMAX_change_points(data_testing::Matrix{Float64}, # dat
     end
   end
 
-  # plotting best model if required
-  if save_plot == true && display_plot == true
-    mkpath(path_to_plot)
-    display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-    display( Plots.vline!(change_point_to_plot[2:end], c=:black, label=["change points" nothing]))
-    display(Plots.plot!(reduce(vcat,time_points_to_plot), reduce(vcat,sol_to_plot), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
-    png(string(path_to_plot, label_exp, "_model_selection_seg_",length(change_point_to_plot[2:end]),"_", name_well, ".png"))
+  if display_plot
+    if_display = display
+  else
+    if_display = identity
   end
 
-  if save_plot == true  && display_plot == false
+  if save_plot == true
     mkpath(path_to_plot)
-    (Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-    (Plots.vline!(change_point_to_plot[2:end], c=:black, label=["change points" nothing]))
-    (Plots.plot!(reduce(vcat,time_points_to_plot), reduce(vcat,sol_to_plot), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
-    png(string(path_to_plot, label_exp, "_model_selection_seg_",length(change_point_to_plot[2:end]),"_", name_well, ".png"))
   end
-  if save_plot == false  && display_plot == true
-    display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
-    display( Plots.vline!(change_point_to_plot[2:end], c=:black, label=["change points" nothing]))
-    display(Plots.plot!(reduce(vcat,time_points_to_plot), reduce(vcat,sol_to_plot), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
+
+  if_display(Plots.scatter(data_testing[1, :], data_testing[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=1, color=:black, title=string(label_exp, " ", name_well)))
+  if_display(Plots.vline!(change_point_to_plot[2:end], c=:black, label=["change points" nothing]))
+  if_display(Plots.plot!(reduce(vcat,time_points_to_plot), reduce(vcat,sol_to_plot), xlabel="Time", ylabel="Arb. Units", label=[" fitting " nothing], color=:red, title=string(label_exp, " fitting ", name_well)))
+  if save_plot
+    png(string(path_to_plot, label_exp, "_model_selection_seg_",length(change_point_to_plot[2:end]),"_", name_well, ".png"))
   end
 
   return top_model,time_points_to_plot,sol_to_plot
