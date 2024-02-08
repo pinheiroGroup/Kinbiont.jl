@@ -1267,7 +1267,7 @@ function fitting_one_well_custom_ODE(data::Matrix{Float64}, # dataset first row 
   sol_fin = sum(sol_fin,dims=1)
 
   # plotting if required
-  if display_plots == true && save_plot = false
+  if display_plots == true && save_plot == false
     mkpath(path_to_plot)
     display(Plots.scatter(data[1, :], data[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], markersize=2, color=:black, title=string(label_exp, " ", name_well)))
     display(Plots.plot!(remade_solution.t, sol_fin[1, 1:end], xlabel="Time", ylabel="Arb. Units", label=[string("Fitting custom model") nothing], c=:red))
@@ -1817,9 +1817,7 @@ function  selection_ODE_fixed_change_points(data_testing::Matrix{Float64}, # dat
   n_bins = 40,
   PopulationSize = 300,
   maxiters = 2000000,
-  abstol = 0.00001,
-  type_of_smoothing = type_of_smoothing, 
-  thr_lowess = thr_lowess)
+  abstol = 0.000)
 
   if type_of_smoothing == "rolling_avg" && smoothing == true
     data_testing = smoothing_data(data_testing, pt_avg)
