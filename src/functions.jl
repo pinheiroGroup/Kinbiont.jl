@@ -2357,7 +2357,7 @@ function selection_ODE_fixed_change_points(
         end
     end
 
-    if display_plot
+    if display_plots
         if_display = display
     else
         if_display = identity
