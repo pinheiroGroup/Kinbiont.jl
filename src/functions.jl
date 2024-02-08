@@ -1165,7 +1165,7 @@ function fitting_one_well_ODE_constrained(
     ODE_prob = model_selector(model, u0, tspan)
 
     ## defining loss function
-    loss_function = select_loss_function(data, ODE_prob, integrator, p, tsteps, blank_array)
+    loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
     optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
     optprob_const =
         Optimization.OptimizationProblem(optf, param, u0, lb = lb_param, ub = ub_param)
