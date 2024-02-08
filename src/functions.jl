@@ -7,7 +7,6 @@
 
 include("models.jl");
 include("Fit_one_file_functions.jl");
-include("pre_processing_functions.jl");
 
 """
 Internal functions
@@ -54,6 +53,24 @@ function specific_gr_interpol_evaluation(data_testing)
     return specific_gr_interpol
 end
 
+function smoothing_data(data::Matrix{Float64}, pt_avg::Int)
+    """
+    rolling average smoothing of the data
+    data  = matrix of data
+    pt_avg = size of the windows of the rolling average
+    """
+    times = [
+        sum(@view data[1, i:(i+pt_avg-1)]) / pt_avg for
+        i = 1:(length(data[1, :])-(pt_avg-1))
+    ]
+    values = [
+        sum(@view data[2, i:(i+pt_avg-1)]) / pt_avg for
+        i = 1:(length(data[2, :])-(pt_avg-1))
+    ]
+    smoothed_data = Matrix(transpose(hcat(times, values)))
+
+    return smoothed_data
+end
 
 function vectorize_df_results(
     well_name::String,
@@ -95,9 +112,37 @@ function guess_param(lb_param::Vector{Float64}, ub_param::Vector{Float64})
     return param
 end
 
+function thr_negative_correction(
+    data::Matrix{Float64}, # dataset first row times second row OD ,
+    thr_negative::Float64, # the value at which data are setted if negative
+)
 
+    times = data[1, :]
+    values = data[2, :]
+    index_neg = findall(x -> x < thr_negative, values)
+    values[index_neg] .= thr_negative
+    data_corrected = transpose(hcat(times, values))
 
+    return data_corrected
+end
 
+function blank_distrib_negative_correction(
+    data::Matrix{Float64}, # dataset first row times second row OD ,
+    blank_array::Vector{Float64},
+)
+
+    times = data[1, :]
+    values = data[2, :]
+    #println(values)
+    index_neg = findall(x -> x < 0.0, values)
+
+    number_of_neg = length(index_neg)
+    replacement_values = abs.(sample(blank_array, number_of_neg) .- mean(blank_array))
+    values[index_neg] .= replacement_values
+    data_corrected = transpose(hcat(times, values))
+
+    return data_corrected
+end
 
 function generation_of_combination_of_IC_morris(
     lb_param::Vector{Float64},
