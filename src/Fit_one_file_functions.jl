@@ -1,3 +1,5 @@
+
+
 function fit_one_file_Log_Lin(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
@@ -65,7 +67,7 @@ function fit_one_file_Log_Lin(
     properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
-        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
+    names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
     list_of_discarded = Symbol.(list_of_discarded)
 
@@ -76,6 +78,7 @@ function fit_one_file_Log_Lin(
 
     # excluding blank data and discarded wells 
     names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -89,20 +92,10 @@ function fit_one_file_Log_Lin(
     blank_array = convert(Vector{Float64}, blank_array)
 
 
-    if blank_subtraction == "avg_blank"
 
-        blank_value = mean([mean(dfs_data[k]) for k in list_of_blank])
+    blank_value =blank_subtraction(dfs_data, list_of_blank; method = blank_subtraction)
 
-    elseif blank_subtraction == "time_blank"
 
-        blank_value =
-            [mean([dfs_data[k][j] for k in list_of_blank]) for j = 1:length(times_data)]
-
-    else
-
-        blank_value = zeros(length(times_data))
-
-    end
 
 
 
@@ -112,33 +105,9 @@ function fit_one_file_Log_Lin(
     list_replicate = filter!(e -> e != "b", list_replicate)
 
     if fit_replicate == true
-        new_data = times_data
-
-        list_replicate = unique(properties_of_annotation)
-        list_replicate = filter!(e -> e != "b", list_replicate)
 
 
-        for replicate_temp in list_replicate
-
-            names_of_replicate_temp =
-                Symbol.(
-                    names_of_annotated_df[findall(
-                        x -> x == replicate_temp,
-                        properties_of_annotation,
-                    )]
-                )
-            replicate_mean = [
-                mean([dfs_data[k][j] for k in names_of_replicate_temp]) for
-                j = 1:length(times_data)
-            ]
-
-            new_data = hcat(new_data, replicate_mean)
-
-        end
-        new_data = DataFrame(new_data, :auto)
-        rename!(new_data, vcat(:Time, reduce(vcat, Symbol.(list_replicate))))
-        names_of_cols = propertynames(new_data)
-        dfs_data = new_data
+        dfs_data , names_of_cols = average_replicate(dfs_data,times_data,properties_of_annotation,names_of_annotated_df)
 
 
     end
