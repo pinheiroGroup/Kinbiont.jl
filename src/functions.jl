@@ -2279,7 +2279,7 @@ function selection_ODE_fixed_change_points(
             smoothing = smoothing, # the smoothing is done or not?
             type_of_loss = type_of_loss, # type of used loss
             blank_array = zeros(100), # data of all blanks
-            plot_best_model = false, # one wants the results of the best fit to be plotted
+            display_plot_best_model = false, # one wants the results of the best fit to be plotted
             path_to_plot = "NA",
             pt_smooth_derivative = pt_smooth_derivative,
             multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
