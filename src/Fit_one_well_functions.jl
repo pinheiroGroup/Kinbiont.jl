@@ -285,12 +285,14 @@ function fitting_one_well_ODE_constrained(
     # smoothing data if required
 
 
-    data = smoothing_data(
-        data;
-        method=type_of_smoothing,
-        pt_avg=pt_avg,
-        thr_lowess=thr_lowess
-    )
+    if smoothing == true
+        data = smoothing_data(
+            data;
+            method=type_of_smoothing,
+            pt_avg=pt_avg,
+            thr_lowess=thr_lowess
+        )
+    end
 
     # setting initial conditions
     u0 = generating_IC(data, model, smoothing, pt_avg)
@@ -416,12 +418,15 @@ function fitting_one_well_custom_ODE(
     tsteps = data[1, :]
 
     # smoothing data if required
-    data = smoothing_data(
-        data;
-        method=type_of_smoothing,
-        pt_avg=pt_avg,
-        thr_lowess=thr_lowess
-    )
+    if smoothing == true
+        data = smoothing_data(
+            data;
+            method=type_of_smoothing,
+            pt_avg=pt_avg,
+            thr_lowess=thr_lowess
+        )
+
+    end
 
     u0 = generating_IC_custom_ODE(data, n_equation, smoothing, pt_avg)
 
@@ -538,12 +543,14 @@ function ODE_Model_selection(
     end
 
     # smooting if required
-    data = smoothing_data(
-        data;
-        method=type_of_smoothing,
-        pt_avg=pt_avg,
-        thr_lowess=thr_lowess
-    )
+    if smoothing == true
+        data = smoothing_data(
+            data;
+            method=type_of_smoothing,
+            pt_avg=pt_avg,
+            thr_lowess=thr_lowess
+        )
+    end
 
     # inizialization of array of results
     df_res_optimization = Array{Any}(nothing, length(models_list))
@@ -758,12 +765,14 @@ function one_well_morris_sensitivity(
     tsteps = data[1, :]
 
     # smoothing data if required
-    data = smoothing_data(
-        data;
-        method=type_of_smoothing,
-        pt_avg=pt_avg,
-        thr_lowess=thr_lowess
-    )
+    if smoothing == true
+        data = smoothing_data(
+            data;
+            method=type_of_smoothing,
+            pt_avg=pt_avg,
+            thr_lowess=thr_lowess
+        )
+    end
 
     # setting initial conditions
     u0 = generating_IC(data, model, smoothing, pt_avg)
@@ -870,12 +879,14 @@ function selection_ODE_fixed_change_points(
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
     end
 
-    data_testing = smoothing_data(
-        data_testing;
-        method=type_of_smoothing,
-        pt_avg=pt_avg,
-        thr_lowess=thr_lowess
-    )
+    if smoothing == true
+        data_testing = smoothing_data(
+            data;
+            method=type_of_smoothing,
+            pt_avg=pt_avg,
+            thr_lowess=thr_lowess
+        )
+    end
 
     list_change_points_dev = cpd_local_detection(
         data_testing,

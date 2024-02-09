@@ -999,7 +999,7 @@ function selection_ODE_fixed_change_points_file(
         mkpath(path_to_plot)
     end
 
-    parameter_of_optimization = initialize_res_ms(ub_param_array,number_of_segment = n_change_points +1 )
+    parameter_of_optimization = initialize_res_ms(ub_param_array, number_of_segment=n_change_points + 1)
 
 
 
@@ -1128,7 +1128,7 @@ function selection_ODE_fixed_change_points_file(
             lb_param_array,
             string(well_name),
             label_exp;
-            number_of_segment = n_change_points + 1
+            number_of_segment=n_change_points + 1
         )
         if verbose == true
             println("the results are:")

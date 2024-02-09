@@ -175,11 +175,11 @@ end
 function loss_L2_std_blank(data, ODE_prob, integrator, p, tsteps, blank_array)
 
     # evaluation of std of  empirica distrib of the blank
-  
+
     std_blank = Statistics.std(blank_array)
     if std_blank == 0.0
         std_blank = 1.0
-    end     
+    end
     sol = solve(
         ODE_prob,
         integrator,
@@ -193,7 +193,7 @@ function loss_L2_std_blank(data, ODE_prob, integrator, p, tsteps, blank_array)
     sol_t = sum(sol_t, dims=1)
 
     if size(sol_t)[2] == size(data)[2]
-        lossa = NaNMath.sum(abs2.((data[2, :] .- sol_t[1, 1:end])./ std_blank )) / length(data[2, :])
+        lossa = NaNMath.sum(abs2.((data[2, :] .- sol_t[1, 1:end]) ./ std_blank)) / length(data[2, :])
     else
         lossa = 10.0^9 * length(data[2, :])
     end
@@ -215,9 +215,7 @@ function select_loss_function(loss_name, data, ODE_prob, integrator, tsteps, bla
         "L2_derivative" => loss_L2_derivative,
         "L2_std_blank" => loss_L2_std_blank,
         "L2_log" => loss_L2_log,
-        "RE_log" => loss_RE_log,
-
-    )
+        "RE_log" => loss_RE_log,)
 
     if loss_name == "blank_weighted_L2" || loss_name == "L2_std_blank"
         return (p) ->

@@ -677,9 +677,7 @@ function expand_res(
     list_of_model_parameters::Any,
     names_of_the_well::String,
     label_exp::String;
-    number_of_segment=0,
-
-)
+    number_of_segment=0,)
     if number_of_segment == 0
         n_param = length(param_res) - 5
         nmax_param = maximum(length.(list_of_model_parameters))
@@ -736,7 +734,7 @@ function initialize_df_results_ode_custom(list_of_model_parameters::Any)
 
     # evaluation of the number of columns
     # evaluation of the number of rows
-    nrow = length(list_of_model_parameters) + 5
+    nrow = nmax_param + 5
 
     # inizialization of the matrix as full of missing   
     matrix_result = missings(Any, nrow)
