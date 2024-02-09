@@ -64,7 +64,7 @@ function smoothing_data(
 
     else
 
-      #  println(" Warning wrong smoothing input, this part is skipped")
+        #  println(" Warning wrong smoothing input, this part is skipped")
 
         smoothed_data = copy(data)
 

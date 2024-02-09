@@ -171,10 +171,10 @@ function fit_one_file_Log_Lin(
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01, # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction="interpolation", 
+    method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     thr_lowess=0.05, # keyword argument of lowees smoothing
-    verbose = false
+    verbose=false
 )
 
 
@@ -213,7 +213,7 @@ function fit_one_file_Log_Lin(
     properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
-    names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
+        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
 
     # reading files
@@ -308,7 +308,7 @@ function fit_one_file_Log_Lin(
             type_of_win=type_of_win, # how the exp. phase win is selected, "maximum" of "global_thr"
             threshold_of_exp=threshold_of_exp, # threshold of growth rate in quantile to define the exp windows
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-            method_multiple_scattering_correction=method_multiple_scattering_correction, 
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
             thr_lowess=thr_lowess,
         )
@@ -373,7 +373,7 @@ function fit_file_ODE(
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction = "interpolation",
+    method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     PopulationSize=300,
     maxiters=2000000,
@@ -400,7 +400,7 @@ function fit_file_ODE(
     properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
-    names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
+        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
 
     # reading files
@@ -505,7 +505,7 @@ function fit_file_ODE(
             type_of_loss=loss_type, # type of used loss 
             blank_array=blank_array, # data of all blanks
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-            method_multiple_scattering_correction = method_multiple_scattering_correction,
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
             PopulationSize=PopulationSize,
             maxiters=maxiters,
@@ -570,7 +570,7 @@ function fit_file_custom_ODE(
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction = "interpolation",
+    method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     PopulationSize=300,
     maxiters=2000000,
@@ -596,7 +596,7 @@ function fit_file_custom_ODE(
     properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
-    names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
+        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
 
     # reading files
@@ -637,7 +637,7 @@ function fit_file_custom_ODE(
 
 
     end
-   
+
     # for on the columns to analyze
 
     for well_name in names_of_cols[2:end]
@@ -700,7 +700,7 @@ function fit_file_custom_ODE(
             type_of_loss=loss_type, # type of used loss 
             blank_array=blank_array, # data of all blanks
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-           method_multiple_scattering_correction = method_multiple_scattering_correction ,
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
             PopulationSize=PopulationSize,
             maxiters=maxiters,
@@ -765,7 +765,7 @@ function ODE_model_selection_file(
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction = "interpolation",
+    method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     PopulationSize=300,
     maxiters=2000000,
@@ -792,7 +792,7 @@ function ODE_model_selection_file(
     properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
-    names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
+        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
 
     # reading files
@@ -901,7 +901,7 @@ function ODE_model_selection_file(
             path_to_plot=path_to_plot,
             pt_smooth_derivative=pt_smooth_derivative,
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-            method_multiple_scattering_correction = method_multiple_scattering_correction ,
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
             verbose=verbose,
             PopulationSize=PopulationSize,
@@ -976,7 +976,7 @@ function selection_ODE_fixed_change_points_file(
     penality_parameter=2.0,
     avg_replicate=false,
     multiple_scattering_correction="false", # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction = "interpolation",
+    method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     write_res=false,
     method_peaks_detection="peaks_prominence",
@@ -1008,7 +1008,7 @@ function selection_ODE_fixed_change_points_file(
     properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
-    names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
+        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
 
     # reading files
@@ -1110,7 +1110,7 @@ function selection_ODE_fixed_change_points_file(
             win_size=win_size, # numebr of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-           method_multiple_scattering_correction = method_multiple_scattering_correction, 
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
             beta_smoothing_ms=penality_parameter, #  parameter of the AIC penality
             method_peaks_detection=method_peaks_detection,

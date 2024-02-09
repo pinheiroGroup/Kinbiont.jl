@@ -8,33 +8,33 @@ function fitting_one_well_Log_Lin(
     data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
     label_exp::String; #label of the experiment
-    display_plots = false, # do plots or no
-    save_plot = false,
-    path_to_plot = "NA", # where save plots
-    type_of_smoothing = "rolling_avg", # option, NO, gaussian, rolling avg
-    pt_avg = 7, # number of the point for rolling avg not used in the other cases
-    pt_smoothing_derivative = 7, # number of poits to smooth the derivative
-    pt_min_size_of_win = 7, # minimum size of the exp windows in number of smooted points
-    type_of_win = "maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
-    threshold_of_exp = 0.9, # threshold of growth rate in quantile to define the exp windows
-    multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction = "interpolation",
-    calibration_OD_curve = "NA", #  the path to calibration curve to fix the data
-    thr_lowess = 0.05, # keyword argument of lowees smoothing
+    display_plots=false, # do plots or no
+    save_plot=false,
+    path_to_plot="NA", # where save plots
+    type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
+    pt_avg=7, # number of the point for rolling avg not used in the other cases
+    pt_smoothing_derivative=7, # number of poits to smooth the derivative
+    pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
+    type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
+    threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    thr_lowess=0.05, # keyword argument of lowees smoothing
 )
     if multiple_scattering_correction == true
 
-        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method = method_multiple_scattering_correction )
+        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
     end
 
 
-    data_smooted =  smoothing_data(
+    data_smooted = smoothing_data(
         data;
         method=type_of_smoothing,
         pt_avg=pt_avg,
         thr_lowess=thr_lowess
     )
-   
+
 
     # local fitting generating of specific growth rate (derivative)
     specific_gr = specific_gr_evaluation(data_smooted, pt_smoothing_derivative)
@@ -188,30 +188,30 @@ function fitting_one_well_Log_Lin(
         Plots.scatter(
             data_smooted[1, :],
             log.(data_smooted[2, :]),
-            xlabel = "Time",
-            ylabel = "Log(Arb. Units)",
-            label = ["Data " nothing],
-            markersize = 1,
-            color = :black,
-            title = string(label_exp, " ", name_well),
+            xlabel="Time",
+            ylabel="Log(Arb. Units)",
+            label=["Data " nothing],
+            markersize=1,
+            color=:black,
+            title=string(label_exp, " ", name_well),
         ),
     )
     if_display(
         Plots.plot!(
             data_to_fit_times,
             fitted_line,
-            ribbon = confidence_band,
-            xlabel = "Time ",
-            ylabel = "Log(Arb. Units)",
-            label = [string("Fitting Log-Lin ") nothing],
-            c = :red,
+            ribbon=confidence_band,
+            xlabel="Time ",
+            ylabel="Log(Arb. Units)",
+            label=[string("Fitting Log-Lin ") nothing],
+            c=:red,
         ),
     )
     if_display(
         Plots.vline!(
             [data_to_fit_times[1], data_to_fit_times[end]],
-            c = :black,
-            label = [string("Window of exp. phase ") nothing],
+            c=:black,
+            label=[string("Window of exp. phase ") nothing],
         ),
     )
     if save_plot
@@ -221,17 +221,17 @@ function fitting_one_well_Log_Lin(
         Plots.scatter(
             specific_gr_times,
             specific_gr,
-            xlabel = "Time ",
-            ylabel = "1 /time ",
-            label = [string("Dynamics growth rate ") nothing],
-            c = :red,
+            xlabel="Time ",
+            ylabel="1 /time ",
+            label=[string("Dynamics growth rate ") nothing],
+            c=:red,
         ),
     )
     if_display(
         Plots.vline!(
             [data_to_fit_times[1], data_to_fit_times[end]],
-            c = :black,
-            label = [string("Window of exp. phase ") nothing],
+            c=:black,
+            label=[string("Window of exp. phase ") nothing],
         ),
     )
     if save_plot
@@ -250,29 +250,29 @@ function fitting_one_well_ODE_constrained(
     model::String, # ode model to use
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}; # upper bound param
-    param = lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator = KenCarp4(autodiff = true), # selection of sciml integrator
-    display_plots = true, # display plots in julia or not
-    save_plot = false,
-    path_to_plot = "NA", # where save plots
-    pt_avg = 1, # numebr of the point to generate intial condition
-    pt_smooth_derivative = 7,
-    smoothing = false, # the smoothing is done or not?
-    type_of_smoothing = "rolling_avg",
-    type_of_loss = "RE", # type of used loss
-    blank_array = zeros(100), # data of all blanks
-    multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction = "interpolation",
-    calibration_OD_curve = "NA",  #  the path to calibration curve to fix the data
-    PopulationSize = 300,
-    maxiters = 2000000,
-    abstol = 0.00001,
-    thr_lowess = 0.05,
+    param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    display_plots=true, # display plots in julia or not
+    save_plot=false,
+    path_to_plot="NA", # where save plots
+    pt_avg=1, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    smoothing=false, # the smoothing is done or not?
+    type_of_smoothing="rolling_avg",
+    type_of_loss="RE", # type of used loss
+    blank_array=zeros(100), # data of all blanks
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
 )
     if multiple_scattering_correction == true
 
-        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method =method_multiple_scattering_correction )
+        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
 
     end
     #defining time interval
@@ -283,9 +283,9 @@ function fitting_one_well_ODE_constrained(
     tsteps = data[1, :]
 
     # smoothing data if required
-   
 
-    data =  smoothing_data(
+
+    data = smoothing_data(
         data;
         method=type_of_smoothing,
         pt_avg=pt_avg,
@@ -302,20 +302,20 @@ function fitting_one_well_ODE_constrained(
     loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
     optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
     optprob_const =
-        Optimization.OptimizationProblem(optf, param, u0, lb = lb_param, ub = ub_param)
+        Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
     res = Optimization.solve(
         optprob_const,
         optmizator,
-        PopulationSize = PopulationSize,
-        maxiters = maxiters,
-        abstol = abstol,
+        PopulationSize=PopulationSize,
+        maxiters=maxiters,
+        abstol=abstol,
     )
 
     #revalution of solution for plot an loss evaluation
-    remade_solution = solve(remake(ODE_prob, p = res.u), integrator, saveat = tsteps)
+    remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
     sol_time = reduce(hcat, remade_solution.t)
     sol_fin = reduce(hcat, remade_solution.u)
-    sol_fin = sum(sol_fin, dims = 1)
+    sol_fin = sum(sol_fin, dims=1)
 
     if display_plots
         if_display = display
@@ -332,22 +332,22 @@ function fitting_one_well_ODE_constrained(
         Plots.scatter(
             data[1, :],
             data[2, :],
-            xlabel = "Time",
-            ylabel = "Arb. Units",
-            label = ["Data " nothing],
-            markersize = 2,
-            color = :black,
-            title = string(label_exp, " ", name_well),
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=["Data " nothing],
+            markersize=2,
+            color=:black,
+            title=string(label_exp, " ", name_well),
         ),
     )
     if_display(
         Plots.plot!(
             remade_solution.t,
             sol_fin[1, 1:end],
-            xlabel = "Time",
-            ylabel = "Arb. Units",
-            label = [string("Fitting ", model) nothing],
-            c = :red,
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=[string("Fitting ", model) nothing],
+            c=:red,
         ),
     )
     if save_plot
@@ -384,29 +384,29 @@ function fitting_one_well_custom_ODE(
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}, # upper bound param
     n_equation::Int; # number ode in the system
-    param = lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator = KenCarp4(autodiff = true), # selection of sciml integrator
-    display_plots = false, # do plots or no
-    save_plot = false,
-    path_to_plot = "NA", # where save plots
-    pt_avg = 1, # numebr of the point to generate intial condition
-    pt_smooth_derivative = 7,
-    smoothing = false, # the smoothing is done or not?
-    type_of_loss = "RE", # type of used loss
-    blank_array = zeros(100), # data of all blanks
-    multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
-     method_multiple_scattering_correction = "interpolation",
-    calibration_OD_curve = "NA",  #  the path to calibration curve to fix the data
-    PopulationSize = 300,
-    maxiters = 2000000,
-    abstol = 0.00001,
-    thr_lowess = 0.05,
-    type_of_smoothing = "lowess",
+    param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    display_plots=false, # do plots or no
+    save_plot=false,
+    path_to_plot="NA", # where save plots
+    pt_avg=1, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    smoothing=false, # the smoothing is done or not?
+    type_of_loss="RE", # type of used loss
+    blank_array=zeros(100), # data of all blanks
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    type_of_smoothing="lowess",
 )
     if multiple_scattering_correction == true
 
-     data = correction_OD_multiple_scattering(data, calibration_OD_curve; method = method_multiple_scattering_correction)
+        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
     end
 
     #defining time interval
@@ -416,7 +416,7 @@ function fitting_one_well_custom_ODE(
     tsteps = data[1, :]
 
     # smoothing data if required
-    data =  smoothing_data(
+    data = smoothing_data(
         data;
         method=type_of_smoothing,
         pt_avg=pt_avg,
@@ -432,20 +432,20 @@ function fitting_one_well_custom_ODE(
         select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
     optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
     optprob_const =
-        Optimization.OptimizationProblem(optf, param, u0, lb = lb_param, ub = ub_param)
+        Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
     res = Optimization.solve(
         optprob_const,
         optmizator,
-        PopulationSize = PopulationSize,
-        maxiters = maxiters,
-        abstol = abstol,
+        PopulationSize=PopulationSize,
+        maxiters=maxiters,
+        abstol=abstol,
     )
 
     #revalution of solution for plot an loss evaluation
-    remade_solution = solve(remake(ODE_prob, p = res.u), integrator, saveat = tsteps)
+    remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
     sol_time = reduce(hcat, remade_solution.t)
     sol_fin = reduce(hcat, remade_solution.u)
-    sol_fin = sum(sol_fin, dims = 1)
+    sol_fin = sum(sol_fin, dims=1)
 
     if display_plots
         if_display = display
@@ -461,22 +461,22 @@ function fitting_one_well_custom_ODE(
         Plots.scatter(
             data[1, :],
             data[2, :],
-            xlabel = "Time",
-            ylabel = "Arb. Units",
-            label = ["Data " nothing],
-            markersize = 2,
-            color = :black,
-            title = string(label_exp, " ", name_well),
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=["Data " nothing],
+            markersize=2,
+            color=:black,
+            title=string(label_exp, " ", name_well),
         ),
     )
     if_display(
         Plots.plot!(
             remade_solution.t,
             sol_fin[1, 1:end],
-            xlabel = "Time",
-            ylabel = "Arb. Units",
-            label = [string("Fitting custom model") nothing],
-            c = :red,
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=[string("Fitting custom model") nothing],
+            c=:red,
         ),
     )
     if save_plot
@@ -511,34 +511,34 @@ function ODE_Model_selection(
     models_list::Vector{String}, # ode model to use
     lb_param_array::Any, # lower bound param
     ub_param_array::Any; # upper bound param
-    optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator = KenCarp4(autodiff = true), # selection of sciml integrator
-    pt_avg = 1, # number of the point to generate intial condition
-    beta_penality = 2.0, # penality for AIC evaluation
-    smoothing = false, # the smoothing is done or not?
-    type_of_smoothing = "lowess",
-    thr_lowess = 0.05,
-    type_of_loss = "L2", # type of used loss
-    blank_array = zeros(100), # data of all blanks
-    display_plot_best_model = false, # one wants the results of the best fit to be plotted
-    save_plot_best_model = false,
-    path_to_plot = "NA",
-    pt_smooth_derivative = 7,
-    multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction = "interpolation",
-    calibration_OD_curve = "NA", #  the path to calibration curve to fix the data
-    verbose = false,
-    PopulationSize = 300,
-    maxiters = 2000000,
-    abstol = 0.00001,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    pt_avg=1, # number of the point to generate intial condition
+    beta_penality=2.0, # penality for AIC evaluation
+    smoothing=false, # the smoothing is done or not?
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    type_of_loss="L2", # type of used loss
+    blank_array=zeros(100), # data of all blanks
+    display_plot_best_model=false, # one wants the results of the best fit to be plotted
+    save_plot_best_model=false,
+    path_to_plot="NA",
+    pt_smooth_derivative=7,
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    verbose=false,
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
 )
     if multiple_scattering_correction == true
 
-        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method = method_multiple_scattering_correction)
+        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
     end
 
     # smooting if required
-    data =  smoothing_data(
+    data = smoothing_data(
         data;
         method=type_of_smoothing,
         pt_avg=pt_avg,
@@ -593,22 +593,22 @@ function ODE_Model_selection(
             optf,
             temp_start_param,
             u0,
-            lb = temp_param_lb,
-            ub = temp_param_ub,
+            lb=temp_param_lb,
+            ub=temp_param_ub,
         )
         res = Optimization.solve(
             optprob_const,
             optmizator,
-            PopulationSize = PopulationSize,
-            maxiters = maxiters,
-            abstol = abstol,
+            PopulationSize=PopulationSize,
+            maxiters=maxiters,
+            abstol=abstol,
         )
 
         #revalution of solution for plot an loss evaluation
-        remade_solution = solve(remake(ODE_prob, p = res.u), integrator, saveat = tsteps)
+        remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
         sol_time = reduce(hcat, remade_solution.t)
         sol_fin = reduce(hcat, remade_solution.u)
-        sol_fin = sum(sol_fin, dims = 1)
+        sol_fin = sum(sol_fin, dims=1)
         # here problem
         #max_theoretical gr
         data_th = vcat(sol_time, sol_fin)
@@ -654,10 +654,10 @@ function ODE_Model_selection(
     tspan = (data[1, 1], data[1, end])
     u0 = generating_IC(data, model, smoothing, pt_avg)
     ODE_prob = model_selector(model, u0, tspan, param_min)
-    sim = solve(ODE_prob, integrator, saveat = tsteps)
+    sim = solve(ODE_prob, integrator, saveat=tsteps)
     sol_t = reduce(hcat, sim.u)
     sol_time = reduce(hcat, sim.t)
-    sol_t = sum(sol_t, dims = 1)
+    sol_t = sum(sol_t, dims=1)
     data_th = vcat(sol_time, sol_t)
 
     if display_plot_best_model
@@ -675,22 +675,22 @@ function ODE_Model_selection(
         Plots.scatter(
             data[1, :],
             data[2, :],
-            xlabel = "Time",
-            ylabel = "Arb. Units",
-            label = ["Data " nothing],
-            markersize = 2,
-            color = :black,
-            title = string(label_exp, " ", name_well),
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=["Data " nothing],
+            markersize=2,
+            color=:black,
+            title=string(label_exp, " ", name_well),
         ),
     )
     if_display(
         Plots.plot!(
             data_th[1, :],
             data_th[2, :],
-            xlabel = "Time",
-            ylabel = "Arb. Units",
-            label = [string("Fitting ", model) nothing],
-            c = :red,
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=[string("Fitting ", model) nothing],
+            c=:red,
         ),
     )
     if save_plot_best_model
@@ -721,22 +721,22 @@ function one_well_morris_sensitivity(
     model::String, # ode model to use
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}; # upper bound param
-    N_step_morris = 7,
-    optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator = KenCarp4(autodiff = true), # selection of sciml integrator
-    pt_avg = 1, # numebr of the point to generate intial condition
-    pt_smooth_derivative = 7,
-    write_res = false,
-    smoothing = false, # the smoothing is done or not?
-    type_of_smoothing = "lowess",
-    type_of_loss = "RE", # type of used loss
-    blank_array = zeros(100), # data of all blanks
-    multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction = "interpolation",
-    calibration_OD_curve = "NA",  #  the path to calibration curve to fix the data
-    PopulationSize = 300,
-    maxiters = 2000000,
-    abstol = 0.00001,
+    N_step_morris=7,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    pt_avg=1, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    write_res=false,
+    smoothing=false, # the smoothing is done or not?
+    type_of_smoothing="lowess",
+    type_of_loss="RE", # type of used loss
+    blank_array=zeros(100), # data of all blanks
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
 )
 
     # inizializing the results of sensitivity
@@ -748,7 +748,7 @@ function one_well_morris_sensitivity(
 
     if multiple_scattering_correction == true
 
-     data = correction_OD_multiple_scattering(data, calibration_OD_curve; method = method_multiple_scattering_correction)
+        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
 
     end
     #defining time interval
@@ -758,7 +758,7 @@ function one_well_morris_sensitivity(
     tsteps = data[1, :]
 
     # smoothing data if required
-    data =  smoothing_data(
+    data = smoothing_data(
         data;
         method=type_of_smoothing,
         pt_avg=pt_avg,
@@ -779,20 +779,20 @@ function one_well_morris_sensitivity(
     for i = 1:size(param_combination)[2]
         param = param_combination[:, i]
         optprob_const =
-            Optimization.OptimizationProblem(optf, param, u0, lb = lb_param, ub = ub_param)
+            Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
         res = Optimization.solve(
             optprob_const,
             optmizator,
-            PopulationSize = PopulationSize,
-            maxiters = maxiters,
-            abstol = abstol,
+            PopulationSize=PopulationSize,
+            maxiters=maxiters,
+            abstol=abstol,
         )
 
         #revalution of solution for plot an loss evaluation
-        remade_solution = solve(remake(ODE_prob, p = res.u), integrator, saveat = tsteps)
+        remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
         sol_time = reduce(hcat, remade_solution.t)
         sol_fin = reduce(hcat, remade_solution.u)
-        sol_fin = sum(sol_fin, dims = 1)
+        sol_fin = sum(sol_fin, dims=1)
         loss_value = res.objective
 
         # here problem
@@ -841,36 +841,36 @@ function selection_ODE_fixed_change_points(
     list_lb_param::Any, # lower bound param
     list_ub_param::Any, # upper bound param
     n_change_points::Int;
-    type_of_loss = "L2", # type of used loss
-    optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator = KenCarp4(autodiff = true), # selection of sciml integrator
-    type_of_detection = "lsdd",
-    type_of_curve = "original",
-    smoothing = false,
-    type_of_smoothing = "lowess",
-    thr_lowess = 0.05,
-    pt_avg = 1,
-    save_plot = false, # do plots or no
-    display_plots = false,
-    path_to_plot = "NA", # where save plots
-    win_size = 2, # numebr of the point to generate intial condition
-    pt_smooth_derivative = 7,
-    multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction = "interpolation",
-    calibration_OD_curve = "NA", #  the path to calibration curve to fix the data
-    beta_smoothing_ms = 2.0, #  parameter of the AIC penality
-    method_peaks_detection = "peaks_prominence",
-    n_bins = 40,
-    PopulationSize = 300,
-    maxiters = 2000000,
-    abstol = 0.000,
+    type_of_loss="L2", # type of used loss
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    type_of_detection="lsdd",
+    type_of_curve="original",
+    smoothing=false,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    pt_avg=1,
+    save_plot=false, # do plots or no
+    display_plots=false,
+    path_to_plot="NA", # where save plots
+    win_size=2, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    beta_smoothing_ms=2.0, #  parameter of the AIC penality
+    method_peaks_detection="peaks_prominence",
+    n_bins=40,
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.000,
 )
 
     if multiple_scattering_correction == true
-     data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method =method_multiple_scattering_correction)
+        data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
     end
 
-    data_testing =  smoothing_data(
+    data_testing = smoothing_data(
         data_testing;
         method=type_of_smoothing,
         pt_avg=pt_avg,
@@ -880,12 +880,12 @@ function selection_ODE_fixed_change_points(
     list_change_points_dev = cpd_local_detection(
         data_testing,
         n_change_points;
-        type_of_detection = type_of_detection,
-        type_of_curve = type_of_curve,
-        pt_derivative = pt_smooth_derivative,
-        size_win = win_size,
-        method = method_peaks_detection,
-        number_of_bin = n_bins,
+        type_of_detection=type_of_detection,
+        type_of_curve=type_of_curve,
+        pt_derivative=pt_smooth_derivative,
+        size_win=win_size,
+        method=method_peaks_detection,
+        number_of_bin=n_bins,
     )
 
     interval_changepoints = push!(list_change_points_dev[2], data_testing[1, 1])
@@ -919,23 +919,23 @@ function selection_ODE_fixed_change_points(
             list_of_models, # ode model to use
             list_lb_param, # lower bound param
             list_ub_param; # upper bound param
-            optmizator = optmizator, # selection of optimization method
-            integrator = integrator, # selection of sciml integrator
-            pt_avg = pt_avg, # number of the point to generate intial condition
-            beta_penality = beta_smoothing_ms, # penality for AIC evaluation
-            smoothing = smoothing, # the smoothing is done or not?
-            type_of_loss = type_of_loss, # type of used loss
-            blank_array = zeros(100), # data of all blanks
-            display_plot_best_model = false, # one wants the results of the best fit to be plotted
-            path_to_plot = "NA",
-            pt_smooth_derivative = pt_smooth_derivative,
-            multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
-            method_multiple_scattering_correction = "interpolation",
-            calibration_OD_curve = "NA", #  the path to calibration curve to fix the data
-            verbose = false,
-            PopulationSize = PopulationSize,
-            maxiters = maxiters,
-            abstol = abstol,
+            optmizator=optmizator, # selection of optimization method
+            integrator=integrator, # selection of sciml integrator
+            pt_avg=pt_avg, # number of the point to generate intial condition
+            beta_penality=beta_smoothing_ms, # penality for AIC evaluation
+            smoothing=smoothing, # the smoothing is done or not?
+            type_of_loss=type_of_loss, # type of used loss
+            blank_array=zeros(100), # data of all blanks
+            display_plot_best_model=false, # one wants the results of the best fit to be plotted
+            path_to_plot="NA",
+            pt_smooth_derivative=pt_smooth_derivative,
+            multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+            method_multiple_scattering_correction="interpolation",
+            calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+            verbose=false,
+            PopulationSize=PopulationSize,
+            maxiters=maxiters,
+            abstol=abstol,
         )
 
         # selection of te model
@@ -961,7 +961,7 @@ function selection_ODE_fixed_change_points(
 
         time_sol = reduce(hcat, remade_solution.t)
         sol_fin = reduce(hcat, remade_solution.u)
-        sol_fin = sum(sol_fin, dims = 1)
+        sol_fin = sum(sol_fin, dims=1)
         value_bonduary = remade_solution.t[end]
         time_bonduary = sol_fin[end]
         bc = [value_bonduary, time_bonduary]
@@ -1019,30 +1019,30 @@ function selection_ODE_fixed_change_points(
         Plots.scatter(
             data_testing[1, :],
             data_testing[2, :],
-            xlabel = "Time",
-            ylabel = "Arb. Units",
-            label = ["Data " nothing],
-            markersize = 1,
-            color = :black,
-            title = string(label_exp, " ", name_well),
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=["Data " nothing],
+            markersize=1,
+            color=:black,
+            title=string(label_exp, " ", name_well),
         ),
     )
     if_display(
         Plots.vline!(
             interval_changepoints[2:end],
-            c = :black,
-            label = ["change points" nothing],
+            c=:black,
+            label=["change points" nothing],
         ),
     )
     if_display(
         Plots.plot!(
             reduce(vcat, composed_time),
             reduce(vcat, composed_sol),
-            xlabel = "Time",
-            ylabel = "Arb. Units",
-            label = [" fitting " nothing],
-            color = :red,
-            title = string(label_exp, " fitting ", name_well),
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=[" fitting " nothing],
+            color=:red,
+            title=string(label_exp, " fitting ", name_well),
         ),
     )
     if save_plot
@@ -1070,31 +1070,31 @@ function ODE_selection_NMAX_change_points(
     list_ub_param::Any, # upper bound param
     list_of_models::Vector{String}, # ode model to use
     n_max_change_points::Int;
-    optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator = KenCarp4(autodiff = true), # selection of sciml integrator
-    type_of_loss = "L2", # type of used loss
-    type_of_detection = "lsdd",
-    type_of_curve = "original",
-    pt_avg = 1, # number of the point to generate intial condition
-    smoothing = true, # the smoothing is done or not?
-    save_plot = false, # do plots or no
-    display_plot = false, # do plots or no
-    path_to_plot = "NA", # where save plots
-    path_to_results = "NA",
-    win_size = 2, # numebr of the point to generate intial condition
-    pt_smooth_derivative = 7,
-    penality_parameter = 2.0,
-    multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction = "interpolation",
-    calibration_OD_curve = "NA",  #  the path to calibration curve to fix the data
-    save_all_model = false,
-    method_peaks_detection = "peaks_prominence",
-    n_bins = 40,
-    PopulationSize = 300,
-    maxiters = 2000000,
-    abstol = 0.00001,
-    type_of_smoothing = "lowess",
-    thr_lowess = 0.05,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    type_of_loss="L2", # type of used loss
+    type_of_detection="lsdd",
+    type_of_curve="original",
+    pt_avg=1, # number of the point to generate intial condition
+    smoothing=true, # the smoothing is done or not?
+    save_plot=false, # do plots or no
+    display_plot=false, # do plots or no
+    path_to_plot="NA", # where save plots
+    path_to_results="NA",
+    win_size=2, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    penality_parameter=2.0,
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    save_all_model=false,
+    method_peaks_detection="peaks_prominence",
+    n_bins=40,
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
 )
 
     # fitting single models
@@ -1108,26 +1108,26 @@ function ODE_selection_NMAX_change_points(
         list_of_models, # ode model to use
         list_lb_param, # lower bound param
         list_ub_param; # upper bound param
-        optmizator = optmizator, # selection of optimization method
-        integrator = integrator, # selection of sciml integrator
-        pt_avg = pt_avg, # number of the point to generate intial condition
-        beta_penality = penality_parameter, # penality for AIC evaluation
-        smoothing = smoothing, # the smoothing is done or not?
-        type_of_loss = type_of_loss, # type of used loss
-        blank_array = zeros(100), # data of all blanks
-        display_plot_best_model = false, # one wants the results of the best fit to be plotted
-        save_plot_best_model = false,
-        path_to_plot = "NA",
-        pt_smooth_derivative = pt_smooth_derivative,
-        multiple_scattering_correction = multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-        method_multiple_scattering_correction= method_multiple_scattering_correction,
-        calibration_OD_curve = calibration_OD_curve, #  the path to calibration curve to fix the data
-        verbose = false,
-        PopulationSize = PopulationSize,
-        maxiters = maxiters,
-        abstol = abstol,
-        type_of_smoothing = type_of_smoothing,
-        thr_lowess = thr_lowess,
+        optmizator=optmizator, # selection of optimization method
+        integrator=integrator, # selection of sciml integrator
+        pt_avg=pt_avg, # number of the point to generate intial condition
+        beta_penality=penality_parameter, # penality for AIC evaluation
+        smoothing=smoothing, # the smoothing is done or not?
+        type_of_loss=type_of_loss, # type of used loss
+        blank_array=zeros(100), # data of all blanks
+        display_plot_best_model=false, # one wants the results of the best fit to be plotted
+        save_plot_best_model=false,
+        path_to_plot="NA",
+        pt_smooth_derivative=pt_smooth_derivative,
+        multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+        method_multiple_scattering_correction=method_multiple_scattering_correction,
+        calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
+        verbose=false,
+        PopulationSize=PopulationSize,
+        maxiters=maxiters,
+        abstol=abstol,
+        type_of_smoothing=type_of_smoothing,
+        thr_lowess=thr_lowess,
     )
 
     if save_all_model == true
@@ -1182,26 +1182,26 @@ function ODE_selection_NMAX_change_points(
                 list_lb_param, # lower bound param
                 list_ub_param, # upper bound param
                 n;
-                type_of_loss = type_of_loss, # type of used loss
-                optmizator = optmizator, # selection of optimization method
-                integrator = integrator, # selection of sciml integrator
-                type_of_detection = type_of_detection,
-                type_of_curve = type_of_curve,
-                smoothing = smoothing,
-                pt_avg = pt_avg,
-                save_plot = false, # do plots or no
-                display_plots = false, # do plots or no
-                path_to_plot = "NA", # where save plots
-                win_size = win_size, # numebr of the point to generate intial condition
-                pt_smooth_derivative = pt_smooth_derivative,
-                multiple_scattering_correction = multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-                method_multiple_scattering_correction = method_multiple_scattering_correction, 
-                calibration_OD_curve = calibration_OD_curve, #  the path to calibration curve to fix the data
-                beta_smoothing_ms = penality_parameter, #  parameter of the AIC penality
-                method_peaks_detection = method_peaks_detection,
-                n_bins = n_bins,
-                type_of_smoothing = type_of_smoothing,
-                thr_lowess = thr_lowess,
+                type_of_loss=type_of_loss, # type of used loss
+                optmizator=optmizator, # selection of optimization method
+                integrator=integrator, # selection of sciml integrator
+                type_of_detection=type_of_detection,
+                type_of_curve=type_of_curve,
+                smoothing=smoothing,
+                pt_avg=pt_avg,
+                save_plot=false, # do plots or no
+                display_plots=false, # do plots or no
+                path_to_plot="NA", # where save plots
+                win_size=win_size, # numebr of the point to generate intial condition
+                pt_smooth_derivative=pt_smooth_derivative,
+                multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+                method_multiple_scattering_correction=method_multiple_scattering_correction,
+                calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
+                beta_smoothing_ms=penality_parameter, #  parameter of the AIC penality
+                method_peaks_detection=method_peaks_detection,
+                n_bins=n_bins,
+                type_of_smoothing=type_of_smoothing,
+                thr_lowess=thr_lowess,
             )
 
             # composing piecewise penality
@@ -1269,30 +1269,30 @@ function ODE_selection_NMAX_change_points(
         Plots.scatter(
             data_testing[1, :],
             data_testing[2, :],
-            xlabel = "Time",
-            ylabel = "Arb. Units",
-            label = ["Data " nothing],
-            markersize = 1,
-            color = :black,
-            title = string(label_exp, " ", name_well),
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=["Data " nothing],
+            markersize=1,
+            color=:black,
+            title=string(label_exp, " ", name_well),
         ),
     )
     if_display(
         Plots.vline!(
             change_point_to_plot[2:end],
-            c = :black,
-            label = ["change points" nothing],
+            c=:black,
+            label=["change points" nothing],
         ),
     )
     if_display(
         Plots.plot!(
             reduce(vcat, time_points_to_plot),
             reduce(vcat, sol_to_plot),
-            xlabel = "Time",
-            ylabel = "Arb. Units",
-            label = [" fitting " nothing],
-            color = :red,
-            title = string(label_exp, " fitting ", name_well),
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=[" fitting " nothing],
+            color=:red,
+            title=string(label_exp, " fitting ", name_well),
         ),
     )
     if save_plot
