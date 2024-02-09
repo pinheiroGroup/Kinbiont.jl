@@ -46,6 +46,11 @@ function smoothing_data(
     data  = matrix of data
     pt_avg = size of the windows of the rolling average
     """
+    if  method == "rolling_avg" && pt_avg < 3
+       println("WARNING: the number of points to do rolling average is too low")
+       println("changing the method of smoothinf to lowess")
+       method = "lowess"
+    end
 
     if method == "rolling_avg"
         times = [
