@@ -18,12 +18,13 @@ function fitting_one_well_Log_Lin(
     type_of_win = "maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
     threshold_of_exp = 0.9, # threshold of growth rate in quantile to define the exp windows
     multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction = "interpolation",
     calibration_OD_curve = "NA", #  the path to calibration curve to fix the data
     thr_lowess = 0.05, # keyword argument of lowees smoothing
 )
-
     if multiple_scattering_correction == true
-        data = correction_OD_multiple_scattering(data, calibration_OD_curve)
+
+        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method = method_multiple_scattering_correction )
     end
 
 
@@ -262,17 +263,18 @@ function fitting_one_well_ODE_constrained(
     type_of_loss = "RE", # type of used loss
     blank_array = zeros(100), # data of all blanks
     multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction = "interpolation",
     calibration_OD_curve = "NA",  #  the path to calibration curve to fix the data
     PopulationSize = 300,
     maxiters = 2000000,
     abstol = 0.00001,
     thr_lowess = 0.05,
 )
-
     if multiple_scattering_correction == true
-        data = correction_OD_multiple_scattering(data, calibration_OD_curve)
-    end
 
+        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method =method_multiple_scattering_correction )
+
+    end
     #defining time interval
 
     max_t = data[1, end]
@@ -394,6 +396,7 @@ function fitting_one_well_custom_ODE(
     type_of_loss = "RE", # type of used loss
     blank_array = zeros(100), # data of all blanks
     multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
+     method_multiple_scattering_correction = "interpolation",
     calibration_OD_curve = "NA",  #  the path to calibration curve to fix the data
     PopulationSize = 300,
     maxiters = 2000000,
@@ -401,9 +404,9 @@ function fitting_one_well_custom_ODE(
     thr_lowess = 0.05,
     type_of_smoothing = "lowess",
 )
-
     if multiple_scattering_correction == true
-        data = correction_OD_multiple_scattering(data, calibration_OD_curve)
+
+     data = correction_OD_multiple_scattering(data, calibration_OD_curve; method = method_multiple_scattering_correction)
     end
 
     #defining time interval
@@ -522,15 +525,16 @@ function ODE_Model_selection(
     path_to_plot = "NA",
     pt_smooth_derivative = 7,
     multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction = "interpolation",
     calibration_OD_curve = "NA", #  the path to calibration curve to fix the data
     verbose = false,
     PopulationSize = 300,
     maxiters = 2000000,
     abstol = 0.00001,
 )
-
     if multiple_scattering_correction == true
-        data = correction_OD_multiple_scattering(data, calibration_OD_curve)
+
+        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method = method_multiple_scattering_correction)
     end
 
     # smooting if required
@@ -728,6 +732,7 @@ function one_well_morris_sensitivity(
     type_of_loss = "RE", # type of used loss
     blank_array = zeros(100), # data of all blanks
     multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction = "interpolation",
     calibration_OD_curve = "NA",  #  the path to calibration curve to fix the data
     PopulationSize = 300,
     maxiters = 2000000,
@@ -742,9 +747,10 @@ function one_well_morris_sensitivity(
     end
 
     if multiple_scattering_correction == true
-        data = correction_OD_multiple_scattering(data, calibration_OD_curve)
-    end
 
+     data = correction_OD_multiple_scattering(data, calibration_OD_curve; method = method_multiple_scattering_correction)
+
+    end
     #defining time interval
     max_t = data[1, end]
     min_t = data[1, 1]
@@ -850,6 +856,7 @@ function selection_ODE_fixed_change_points(
     win_size = 2, # numebr of the point to generate intial condition
     pt_smooth_derivative = 7,
     multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction = "interpolation",
     calibration_OD_curve = "NA", #  the path to calibration curve to fix the data
     beta_smoothing_ms = 2.0, #  parameter of the AIC penality
     method_peaks_detection = "peaks_prominence",
@@ -858,16 +865,17 @@ function selection_ODE_fixed_change_points(
     maxiters = 2000000,
     abstol = 0.000,
 )
+
+    if multiple_scattering_correction == true
+     data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method =method_multiple_scattering_correction)
+    end
+
     data_testing =  smoothing_data(
         data_testing;
         method=type_of_smoothing,
         pt_avg=pt_avg,
         thr_lowess=thr_lowess
     )
-
-    if multiple_scattering_correction == true
-        data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve)
-    end
 
     list_change_points_dev = cpd_local_detection(
         data_testing,
@@ -922,6 +930,7 @@ function selection_ODE_fixed_change_points(
             path_to_plot = "NA",
             pt_smooth_derivative = pt_smooth_derivative,
             multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
+            method_multiple_scattering_correction = "interpolation",
             calibration_OD_curve = "NA", #  the path to calibration curve to fix the data
             verbose = false,
             PopulationSize = PopulationSize,
@@ -1075,7 +1084,8 @@ function ODE_selection_NMAX_change_points(
     win_size = 2, # numebr of the point to generate intial condition
     pt_smooth_derivative = 7,
     penality_parameter = 2.0,
-    multiple_scattering_correction = "false", # if true uses the given calibration curve to fix the data
+    multiple_scattering_correction = false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction = "interpolation",
     calibration_OD_curve = "NA",  #  the path to calibration curve to fix the data
     save_all_model = false,
     method_peaks_detection = "peaks_prominence",
@@ -1110,6 +1120,7 @@ function ODE_selection_NMAX_change_points(
         path_to_plot = "NA",
         pt_smooth_derivative = pt_smooth_derivative,
         multiple_scattering_correction = multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+        method_multiple_scattering_correction= method_multiple_scattering_correction,
         calibration_OD_curve = calibration_OD_curve, #  the path to calibration curve to fix the data
         verbose = false,
         PopulationSize = PopulationSize,
@@ -1184,6 +1195,7 @@ function ODE_selection_NMAX_change_points(
                 win_size = win_size, # numebr of the point to generate intial condition
                 pt_smooth_derivative = pt_smooth_derivative,
                 multiple_scattering_correction = multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+                method_multiple_scattering_correction = method_multiple_scattering_correction, 
                 calibration_OD_curve = calibration_OD_curve, #  the path to calibration curve to fix the data
                 beta_smoothing_ms = penality_parameter, #  parameter of the AIC penality
                 method_peaks_detection = method_peaks_detection,
