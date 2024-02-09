@@ -620,145 +620,115 @@ end
 "
 Testing part
 "
-function initialize_res_segmentation(
-    data_df::Matrix{Float64},
-    list_of_model_parameters::Any,
-    number_of_segment::Any,
+function initialize_res_ms(
+    list_of_model_parameters::Any;
+    number_of_segment=0,
 )
+    if number_of_segment > 0
 
-    # evaluation of the number of columns
-    ncols = size(data_df, 2) * (number_of_segment + 1) + 1
-    # evaluation of the number of rows
-    nrow = maximum(length.(list_of_model_parameters)) + 7
+        nmax_param = maximum(length.(list_of_model_parameters))
 
-    # inizialization of the matrix as full of missing
-    matrix_result = missings(Any, nrow, ncols)
-    # generation of the names of the rows
-    matrix_result[1] = "well"
-    matrix_result[2] = "label_exp"
-    matrix_result[3] = "model"
-    matrix_result[(end-3)] = "th_gr"
-    matrix_result[(end-2)] = "em_gr"
-    matrix_result[(end-1)] = "loss"
+        # evaluation of the number of columns
+        # evaluation of the number of rows
+        nrow = nmax_param + 7
 
-    for i = 4:(4+maximum(length.(list_of_model_parameters)))
-        matrix_result[i, 1] = string("param_", i)
+        # inizialization of the matrix as full of missing
+        matrix_result = missings(Any, nrow)
+
+        # generation of the names of the rows
+        matrix_result[1] = "well"
+        matrix_result[2] = "label_exp"
+        matrix_result[3] = "model"
+        matrix_result[(end-3)] = "loss"
+        matrix_result[(end-2)] = "th_gr"
+        matrix_result[(end-1)] = "em_gr"
+        matrix_result[end] = "segment"
+
+        for i = 4:(4+nmax_param-1)
+            matrix_result[i] = string("param_", i - 3)
+        end
+
+
+
+    elseif number_of_segment == 0
+
+        nmax_param = maximum(length.(list_of_model_parameters))
+        # evaluation of the number of rows
+        nrow = nmax_param + 6
+        # inizialization of the matrix as full of missing
+        matrix_result = missings(Any, nrow)
+        # generation of the names of the rows
+        matrix_result[1] = "well"
+        matrix_result[2] = "label_exp"
+        matrix_result[3] = "model"
+        matrix_result[(end-2)] = "loss"
+        matrix_result[(end-1)] = "th_gr"
+        matrix_result[(end)] = "em_gr"
+
+        for i = 4:(4+nmax_param-1)
+            matrix_result[i] = string("param_", i - 3)
+        end
     end
-
     return matrix_result
 end
 
-# function to initialize the df for results of  model selection
-function initialize_res_model_selection(list_of_model_parameters::Any)
-
-    nmax_param = maximum(length.(list_of_model_parameters))
-    # evaluation of the number of rows
-    nrow = nmax_param + 6
-    # inizialization of the matrix as full of missing
-    matrix_result = missings(Any, nrow)
-    # generation of the names of the rows
-    matrix_result[1] = "well"
-    matrix_result[2] = "label_exp"
-    matrix_result[3] = "model"
-    matrix_result[(end-2)] = "loss"
-    matrix_result[(end-1)] = "th_gr"
-    matrix_result[(end)] = "em_gr"
-
-    for i = 4:(4+nmax_param-1)
-        matrix_result[i] = string("param_", i - 3)
-    end
-
-    return matrix_result
-end
-
-# function to initialize the df for results of  model selection
-function initialize_res_segmentation(list_of_model_parameters::Any)
-
-    nmax_param = maximum(length.(list_of_model_parameters))
-
-    # evaluation of the number of columns
-    # evaluation of the number of rows
-    nrow = nmax_param + 7
-
-    # inizialization of the matrix as full of missing
-    matrix_result = missings(Any, nrow)
-
-    # generation of the names of the rows
-    matrix_result[1] = "well"
-    matrix_result[2] = "label_exp"
-    matrix_result[3] = "model"
-    matrix_result[(end-3)] = "loss"
-    matrix_result[(end-2)] = "th_gr"
-    matrix_result[(end-1)] = "em_gr"
-    matrix_result[end] = "segment"
-
-    for i = 4:(4+nmax_param-1)
-        matrix_result[i] = string("param_", i - 3)
-    end
-
-    return matrix_result
-end
-
-# given optimization results for model selection add missing to mach the size  of the model of
-function expand_res_model_selection(
+function expand_res(
     param_res::Any,
     list_of_model_parameters::Any,
     names_of_the_well::String,
+    label_exp::String;
+    number_of_segment=0,
+
 )
-
-    n_param = length(param_res) - 5
-    nmax_param = maximum(length.(list_of_model_parameters))
-    temp_output = missings(Any, nmax_param + 6)
-    temp_output[1] = names_of_the_well
-    temp_output[2] = param_res[1]
-    temp_output[3] = param_res[2]
-    temp_output[(end-2)] = param_res[(end)]
-    temp_output[(end-1)] = param_res[(end-2)]
-    temp_output[(end)] = param_res[(end)-1]
-
-    for i = 3:(3+n_param)
-        temp_output[i] = param_res[i-1]
-    end
-
-    return temp_output
-end
-
-# here the function to construct segmentation
-function expand_res_segmentation(
-    param_res::Any,
-    list_of_model_parameters::Any,
-    number_of_segment::Int,
-    names_of_the_well::String,
-    label_exp::String,
-)
-
-    nmax_param = maximum(length.(list_of_model_parameters))
-    fin_output = Matrix{Any}
-
-    for s = 1:number_of_segment
-        n_param = length(param_res[s]) - 5
-        temp_output = missings(Any, nmax_param + 7)
+    if number_of_segment == 0
+        n_param = length(param_res) - 5
+        nmax_param = maximum(length.(list_of_model_parameters))
+        temp_output = missings(Any, nmax_param + 6)
         temp_output[1] = names_of_the_well
-        temp_output[2] = label_exp
-        temp_output[3] = param_res[s][1]
-        temp_output[(end-3)] = param_res[s][(end-3)]
-        temp_output[(end-2)] = param_res[s][(end-2)]
-        temp_output[(end-1)] = param_res[s][(end-1)]
-        temp_output[(end)] = param_res[s][(end)]
+        temp_output[2] = param_res[1]
+        temp_output[3] = param_res[2]
+        temp_output[(end-2)] = param_res[(end)]
+        temp_output[(end-1)] = param_res[(end-2)]
+        temp_output[(end)] = param_res[(end)-1]
 
-        for i = 4:(4+n_param-1)
-            temp_output[i] = param_res[s][i-2]
+        for i = 3:(3+n_param)
+            temp_output[i] = param_res[i-1]
+        end
+        fin_output = copy(temp_output)
+    else
+        number_of_segment > 0
+        nmax_param = maximum(length.(list_of_model_parameters))
+        fin_output = Matrix{Any}
+
+        for s = 1:number_of_segment
+            n_param = length(param_res[s]) - 5
+            temp_output = missings(Any, nmax_param + 7)
+            temp_output[1] = names_of_the_well
+            temp_output[2] = label_exp
+            temp_output[3] = param_res[s][1]
+            temp_output[(end-3)] = param_res[s][(end-3)]
+            temp_output[(end-2)] = param_res[s][(end-2)]
+            temp_output[(end-1)] = param_res[s][(end-1)]
+            temp_output[(end)] = param_res[s][(end)]
+
+            for i = 4:(4+n_param-1)
+                temp_output[i] = param_res[s][i-2]
+            end
+
+            if s == 1
+                fin_output = temp_output
+            else
+                fin_output = hcat(fin_output, temp_output)
+            end
         end
 
-        if s == 1
-            fin_output = temp_output
-        else
-            fin_output = hcat(fin_output, temp_output)
-        end
+
     end
 
     return fin_output
 end
+
+
 
 function initialize_df_results_ode_custom(list_of_model_parameters::Any)
 

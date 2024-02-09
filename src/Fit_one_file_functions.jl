@@ -782,7 +782,7 @@ function ODE_model_selection_file(
         mkpath(path_to_plot)
     end
 
-    parameter_of_optimization = initialize_res_model_selection(ub_param_array)
+    parameter_of_optimization = initialize_res_ms(ub_param_array)
 
 
 
@@ -909,10 +909,11 @@ function ODE_model_selection_file(
             abstol=abstol,
         )
 
-        vectorized_temp_results = expand_res_model_selection(
+        vectorized_temp_results = expand_res(
             temp_results_1[end],
             lb_param_array,
             string(well_name),
+            label_exp
         )
         if verbose == true
             println("the results are:")
@@ -998,7 +999,7 @@ function selection_ODE_fixed_change_points_file(
         mkpath(path_to_plot)
     end
 
-    parameter_of_optimization = initialize_res_segmentation(ub_param_array)
+    parameter_of_optimization = initialize_res_ms(ub_param_array,number_of_segment = n_change_points +1 )
 
 
 
@@ -1122,12 +1123,12 @@ function selection_ODE_fixed_change_points_file(
             abstol=abstol,
         )
 
-        vectorized_temp_results = expand_res_segmentation(
+        vectorized_temp_results = expand_res(
             temp_results_1[1],
             lb_param_array,
-            n_change_points + 1,
             string(well_name),
-            label_exp,
+            label_exp;
+            number_of_segment = n_change_points + 1
         )
         if verbose == true
             println("the results are:")
