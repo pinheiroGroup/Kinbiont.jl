@@ -181,21 +181,7 @@ function generating_IC_custom_ODE(
     return u0
 end
 
-function correction_OD_multiple_scattering(data::Matrix{Float64}, calibration_curve::String)
 
-    od_calib = CSV.File(calibration_curve)
-    names_of_cols = propertynames(od_calib)
-    Od_real = od_calib[names_of_cols[1]]
-    od_calib_array = Matrix(transpose(hcat(Od_real, od_calib[names_of_cols[2]])))
-    soterd_calib = sort!(od_calib_array, rev=false, dims=2)
-    itp =
-        interpolate(soterd_calib[1, :], soterd_calib[2, :], SteffenMonotonicInterpolation())
-    extrap_spline = extrapolate(itp, 0)
-    corrected_data = [extrap_spline(k) for k in data[2, :]]
-    data_fin = Matrix(transpose(hcat(data[1, :], corrected_data)))
-
-    return data_fin
-end
 
 
 #######################################################################
