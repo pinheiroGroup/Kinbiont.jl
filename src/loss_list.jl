@@ -177,7 +177,9 @@ function loss_L2_std_blank(data, ODE_prob, integrator, p, tsteps, blank_array)
     # evaluation of std of  empirica distrib of the blank
   
     std_blank = Statistics.std(blank_array)
-
+    if std_blank == 0.0
+        std_blank = 1.0
+    end     
     sol = solve(
         ODE_prob,
         integrator,
