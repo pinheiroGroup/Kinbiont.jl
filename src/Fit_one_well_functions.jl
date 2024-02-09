@@ -358,7 +358,11 @@ function fitting_one_well_ODE_constrained(
 
     # here problem
     # max_theoretical gr
-    data_th = vcat(sol_time, sol_fin)
+    sol_fin , index_not_zero = remove_negative_value(sol_fin)
+
+    data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
+    
+
     max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
 
     # max empirical gr
@@ -489,7 +493,9 @@ function fitting_one_well_custom_ODE(
     end
 
     #max_theoretical gr
-    data_th = vcat(sol_time, sol_fin)
+    sol_fin , index_not_zero = remove_negative_value(sol_fin)
+
+    data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
     max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
 
     # max empirical gr
@@ -618,7 +624,9 @@ function ODE_Model_selection(
         sol_fin = sum(sol_fin, dims=1)
         # here problem
         #max_theoretical gr
-        data_th = vcat(sol_time, sol_fin)
+        sol_fin , index_not_zero = remove_negative_value(sol_fin)
+
+        data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
         max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
 
         # max empirical gr
@@ -665,8 +673,9 @@ function ODE_Model_selection(
     sol_t = reduce(hcat, sim.u)
     sol_time = reduce(hcat, sim.t)
     sol_t = sum(sol_t, dims=1)
-    data_th = vcat(sol_time, sol_t)
+    sol_fin , index_not_zero = remove_negative_value(sol_fin)
 
+    data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
     if display_plot_best_model
         if_display = display
     else
@@ -677,7 +686,9 @@ function ODE_Model_selection(
         mkpath(path_to_plot)
     end
 
-    data_th = vcat(sol_time, sol_t)
+    sol_fin , index_not_zero = remove_negative_value(sol_fin)
+
+    data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))  
     if_display(
         Plots.scatter(
             data[1, :],
@@ -806,7 +817,9 @@ function one_well_morris_sensitivity(
 
         # here problem
         #max_theoretical gr
-        data_th = vcat(sol_time, sol_fin)
+        sol_fin , index_not_zero = remove_negative_value(sol_fin)
+
+        data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
         max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
 
         # max empirical gr
@@ -976,41 +989,46 @@ function selection_ODE_fixed_change_points(
         value_bonduary = remade_solution.t[end]
         time_bonduary = sol_fin[end]
         bc = [value_bonduary, time_bonduary]
-
+     
+           sol_fin , index_not_zero = remove_negative_value(sol_fin)
+    
         if (
             pt_smooth_derivative > (length(data_temp[1, :]) - 2) &&
             length(data_temp[1, :]) > 3
         )
             emp_max_gr_of_segment =
                 maximum(specific_gr_evaluation(data_temp, pt_smooth_derivative))
-            data_th = Matrix(vcat(time_sol, sol_fin))
-            th_max_gr_of_segment =
+                data_th = transpose(hcat(time_sol[index_not_zero], sol_fin))
+                th_max_gr_of_segment =
                 maximum(specific_gr_evaluation(data_th, pt_smooth_derivative))
             temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
             temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
         elseif length(data_temp[1, :]) <= 3
-            emp_max_gr_of_segment = "NA"
-            th_max_gr_of_segment = "NA"
+            
+            emp_max_gr_of_segment = missing
+            th_max_gr_of_segment = missing
             temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
             temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
         else
             emp_max_gr_of_segment =
                 maximum(specific_gr_evaluation(data_temp, pt_smooth_derivative))
-            data_th = Matrix(vcat(time_sol, sol_fin))
-            th_max_gr_of_segment =
+                data_th = transpose(hcat(time_sol[index_not_zero], sol_fin)) 
+                th_max_gr_of_segment =
                 maximum(specific_gr_evaluation(data_th, pt_smooth_derivative))
             temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
             temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
         end
 
         if i == 2
-            composed_time = copy(time_sol)
+            composed_time = copy(time_sol[index_not_zero])
             composed_sol = copy(sol_fin)
             temp_res_win = push!(temp_res_win, i - 1)
             param_out = push!(param_out, temp_res_win)
         else
-            composed_time = hcat(composed_time, reduce(hcat, time_sol))
-            composed_sol = hcat(composed_sol, reduce(hcat, sol_fin))
+         
+
+            composed_time =  vcat(composed_time, time_sol[index_not_zero])
+            composed_sol = vcat(composed_sol,  sol_fin)
             temp_res_win = push!(temp_res_win, i - 1)
             param_out = push!(param_out, temp_res_win)
         end

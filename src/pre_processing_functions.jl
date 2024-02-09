@@ -175,3 +175,11 @@ function average_replicate(dfs_data, times_data, properties_of_annotation, names
 
 end
 
+function remove_negative_value(data::Any)
+
+    # index bigger than zero
+    index_not_zero = findall(>(0), data)
+    data = data[index_not_zero]
+
+    return data, index_not_zero
+end
