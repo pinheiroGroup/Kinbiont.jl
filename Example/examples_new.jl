@@ -74,8 +74,9 @@ data_OD[2,:] = data_OD[2,:] .+ noise_unifom
 Plots.scatter!(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:blue,markersize =2 ,size = (300,300))
 
 # smooting of the data with rolling average
-# it is possible to do that also with gaussian processes (gaussian_smoothing(data,optimize_gp))
 data_OD_smooth= smoothing_data(data_OD, 7)
+# smooting of the data with lowess
+
 data_OD_smooth_3= smoothing_data(data_OD, method = "lowess")
 
 data_OD_smooth=  Matrix(data_OD_smooth)
@@ -385,21 +386,12 @@ maxiters = 30
 # testing custom ode
 
 # function of the custom ODE
-function ODE_custom(du, u, param, t)
-
-    du[1] =  u[1] * (1 - u[1] )* (param[2])  +  param[1] *  u[1] 
-
-    du[2] = + u[1] * (param[2]) + param[4] * u[2]* ( 1 - (u[1] + u[2])/param[3]) 
-
-    
-end
-
-custom_ub = [ 1.2 , 1.1 , 2.0  ,20  ]
-
-custom_lb=[ 0.0001 , 0.00000001, 0.00 ,0 ]
 
 
+"
+Start of the test for the functions that do a complete file
 
+"
 path_to_plot = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/example_for_fernanda/new_test/plots/"
 path_to_results = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/example_for_fernanda/new_test/res/"
 path_to_data  = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/example_for_fernanda/LG110/data_channel_1.csv"
@@ -417,7 +409,7 @@ plot_data(
     save_plots = false, # save the plot or not
     overlay_plots = true, # true a single plot for all dataset false one plot per well
     do_blank_subtraction = "NO", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate = true, # if true the average between replicates
+    avg_replicate = false, # if true the average between replicates
     correct_negative = "thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative = 0.01,  # used only if correct_negative == "thr_correction"
 )
@@ -463,7 +455,7 @@ fitting_ode_file_test = fit_file_ODE(
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
-    smoothing=false, # 1 do smoothing of data with rolling average
+    smoothing=true, # 1 do smoothing of data with rolling average
     type_of_smoothing="lowess",
     display_plots=true,# display plots in julia or not
     save_plots=false,
@@ -477,11 +469,25 @@ fitting_ode_file_test = fit_file_ODE(
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
-    maxiters=2000000,
+    PopulationSize=30,
+    maxiters=200,
     abstol=0.00001,
     thr_lowess=0.05,
 )
+
+function ODE_custom(du, u, param, t)
+
+    du[1] =  u[1] * (1 - u[1] )* (param[2])  +  param[1] *  u[1] 
+
+    du[2] = + u[1] * (param[2]) + param[4] * u[2]* ( 1 - (u[1] + u[2])/param[3]) 
+
+    
+end
+
+custom_ub = [ 1.2 , 1.1 , 2.0  ,20  ]
+
+custom_lb=[ 0.0001 , 0.00000001, 0.00 ,0 ]
+
 
 fitting_ode_custom_test = fit_file_custom_ODE(
     "test", #label of the experiment
@@ -554,7 +560,7 @@ fitting_model_selection_test = ODE_model_selection_file(
     path_to_results=path_to_results, # path where save results
     path_to_plot=path_to_plot, # path where to save Plots
     loss_type="L2", # string of the type of the used loss
-    smoothing=false, # 1 do smoothing of data with rolling average
+    smoothing=true, # 1 do smoothing of data with rolling average
     type_of_smoothing ="lowess",
     display_plot_best_model=true, # one wants the results of the best fit to be plotted
     save_plot_best_model=true,
@@ -568,7 +574,7 @@ fitting_model_selection_test = ODE_model_selection_file(
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize = 300,
+    PopulationSize = 30,
     maxiters = 200,
      abstol = 0.00001,
      thr_lowess = 0.05) 
@@ -595,15 +601,15 @@ A = selection_ODE_fixed_change_points_file(
     path_to_plot="NA", # where save plots
     path_to_results="NA",
     win_size=8, 
-    pt_smooth_derivative=7,
+    pt_smooth_derivative=0,
     penality_parameter=2.0,
     multiple_scattering_correction="false", # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     write_res =false ,
     method_peaks_detection= "peaks_prominence",
     bins = 40,
-   PopulationSize = 300,
-    maxiters = 2000000,
+   PopulationSize = 30,
+    maxiters = 200,
     abstol = 0.00001,
     type_of_smoothing = "lowess" ,
     thr_lowess = 0.05
