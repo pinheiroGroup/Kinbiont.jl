@@ -26,15 +26,14 @@ function fitting_one_well_Log_Lin(
         data = correction_OD_multiple_scattering(data, calibration_OD_curve)
     end
 
-    if type_of_smoothing == "rolling_avg"
-        data_smooted = smoothing_data(data, pt_avg)
-    elseif type_of_smoothing == "lowess"
-        # lowess call here
-        model_fit = lowess_model(data[1, :], data[2, :], thr_lowess)
-        data_smooted = Matrix(transpose(hcat(data[1, :], model_fit)))
-    else
-        data_smooted = data
-    end
+
+    data_smooted =  smoothing_data(
+        data;
+        method=type_of_smoothing,
+        pt_avg=pt_avg,
+        thr_lowess=thr_lowess
+    )
+   
 
     # local fitting generating of specific growth rate (derivative)
     specific_gr = specific_gr_evaluation(data_smooted, pt_smoothing_derivative)
@@ -282,15 +281,14 @@ function fitting_one_well_ODE_constrained(
     tsteps = data[1, :]
 
     # smoothing data if required
-    if type_of_smoothing == "rolling_avg"
-        data = smoothing_data(data, pt_avg)
-    elseif type_of_smoothing == "lowess"
-        # lowess call here
-        model_fit = lowess_model(data[1, :], data[2, :], thr_lowess)
-        data = Matrix(transpose(hcat(data[1, :], model_fit)))
-    else
-        data = data
-    end
+   
+
+    data =  smoothing_data(
+        data;
+        method=type_of_smoothing,
+        pt_avg=pt_avg,
+        thr_lowess=thr_lowess
+    )
 
     # setting initial conditions
     u0 = generating_IC(data, model, smoothing, pt_avg)
@@ -415,15 +413,12 @@ function fitting_one_well_custom_ODE(
     tsteps = data[1, :]
 
     # smoothing data if required
-    if type_of_smoothing == "rolling_avg" && smoothing == true
-        data = smoothing_data(data, pt_avg)
-    elseif type_of_smoothing == "lowess" && smoothing == true
-        # lowess call here
-        model_fit = lowess_model(data[1, :], data[2, :], thr_lowess)
-        data = Matrix(transpose(hcat(data[1, :], model_fit)))
-    else
-        data = copy(data)
-    end
+    data =  smoothing_data(
+        data;
+        method=type_of_smoothing,
+        pt_avg=pt_avg,
+        thr_lowess=thr_lowess
+    )
 
     u0 = generating_IC_custom_ODE(data, n_equation, smoothing, pt_avg)
 
@@ -539,15 +534,12 @@ function ODE_Model_selection(
     end
 
     # smooting if required
-    if type_of_smoothing == "rolling_avg" && smoothing == true
-        data = smoothing_data(data, pt_avg)
-    elseif type_of_smoothing == "lowess" && smoothing == true
-        # lowess call here
-        model_fit = lowess_model(data[1, :], data[2, :], thr_lowess)
-        data = Matrix(transpose(hcat(data[1, :], model_fit)))
-    else
-        data = copy(data)
-    end
+    data =  smoothing_data(
+        data;
+        method=type_of_smoothing,
+        pt_avg=pt_avg,
+        thr_lowess=thr_lowess
+    )
 
     # inizialization of array of results
     df_res_optimization = Array{Any}(nothing, length(models_list))
@@ -760,15 +752,12 @@ function one_well_morris_sensitivity(
     tsteps = data[1, :]
 
     # smoothing data if required
-    if type_of_smoothing == "rolling_avg" && smoothing == true
-        data = smoothing_data(data, pt_avg)
-    elseif type_of_smoothing == "lowess" && smoothing == true
-        # lowess call here
-        model_fit = lowess_model(data[1, :], data[2, :], thr_lowess)
-        data = Matrix(transpose(hcat(data[1, :], model_fit)))
-    else
-        data = copy(data)
-    end
+    data =  smoothing_data(
+        data;
+        method=type_of_smoothing,
+        pt_avg=pt_avg,
+        thr_lowess=thr_lowess
+    )
 
     # setting initial conditions
     u0 = generating_IC(data, model, smoothing, pt_avg)
@@ -869,16 +858,12 @@ function selection_ODE_fixed_change_points(
     maxiters = 2000000,
     abstol = 0.000,
 )
-
-    if type_of_smoothing == "rolling_avg" && smoothing == true
-        data_testing = smoothing_data(data_testing, pt_avg)
-    elseif type_of_smoothing == "lowess" && smoothing == true
-        # lowess call here
-        model_fit = lowess_model(data_testing[1, :], data_testing[2, :], thr_lowess)
-        data_testing = Matrix(transpose(hcat(data_testing[1, :], model_fit)))
-    else
-        data_testing = copy(data_testing)
-    end
+    data_testing =  smoothing_data(
+        data_testing;
+        method=type_of_smoothing,
+        pt_avg=pt_avg,
+        thr_lowess=thr_lowess
+    )
 
     if multiple_scattering_correction == true
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve)
