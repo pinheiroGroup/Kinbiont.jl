@@ -346,7 +346,7 @@ function fit_file_ODE(
     lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
     ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
@@ -538,7 +538,7 @@ function fit_file_custom_ODE(
     ub_param::Vector{Float64}, # array of the array of the upper bound of the parameters
     n_equation::Int;
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
@@ -721,7 +721,7 @@ function ODE_model_selection_file(
     lb_param_array::Any, # lower bound param
     ub_param_array::Any; # upper bound param
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
     loss_type="L2", # string of the type of the used loss
@@ -919,7 +919,7 @@ function selection_ODE_fixed_change_points_file(
     ub_param_array::Any,# upper bound param
     n_change_points::Int;
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    integrator=Tsit5(), # selection of sciml integrator
     type_of_loss="L2", # type of used loss 
     type_of_detection="sliding_win",
     type_of_curve="original",

@@ -234,7 +234,7 @@ function fitting_one_well_ODE_constrained(
     ub_param::Vector{Float64}; # upper bound param
     param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    integrator=Tsit5(), # selection of sciml integrator
     display_plots=true, # display plots in julia or not
     save_plot=false,
     path_to_plot="NA", # where save plots
@@ -374,7 +374,7 @@ function fitting_one_well_custom_ODE(
     n_equation::Int; # number ode in the system
     param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    integrator=Tsit5(), # selection of sciml integrator
     display_plots=false, # do plots or no
     save_plot=false,
     path_to_plot="NA", # where save plots
@@ -505,7 +505,7 @@ function ODE_Model_selection(
     lb_param_array::Any, # lower bound param
     ub_param_array::Any; # upper bound param
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    integrator=Tsit5(), # selection of sciml integrator
     pt_avg=1, # number of the point to generate intial condition
     beta_penality=2.0, # penality for AIC evaluation
     smoothing=false, # the smoothing is done or not?
@@ -723,7 +723,7 @@ function one_well_morris_sensitivity(
     ub_param::Vector{Float64}; # upper bound param
     N_step_morris=7,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    integrator=Tsit5(), # selection of sciml integrator
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     write_res=false,
@@ -847,7 +847,7 @@ function selection_ODE_fixed_change_points(
     n_change_points::Int;
     type_of_loss="L2", # type of used loss
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    integrator=Tsit5(), # selection of sciml integrator
     type_of_detection="lsdd",
     type_of_curve="original",
     smoothing=false,
@@ -1082,7 +1082,7 @@ function ODE_selection_NMAX_change_points(
     list_of_models::Vector{String}, # ode model to use
     n_max_change_points::Int;
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
+    integrator=Tsit5(), # selection of sciml integrator
     type_of_loss="L2", # type of used loss
     type_of_detection="lsdd",
     type_of_curve="original",

@@ -48,7 +48,7 @@ function smoothing_data(
     """
     if method == "rolling_avg" && pt_avg < 3
         println("WARNING: the number of points to do rolling average is too low")
-        println("changing the method of smoothinf to lowess")
+        println("changing the method of smoothing to lowess")
         method = "lowess"
     end
 
