@@ -29,15 +29,20 @@ function specific_gr_evaluation(data_smooted::Any, pt_smoothing_derivative::Int)
     data_smooted = matrix of data
     pt_smoothing_derivative = size of the win, if <2 the the numerical derivative of (log) data is evaluate with interpolation algorithm
     """
-
+    
     if pt_smoothing_derivative > 1
-        specific_gr = [
-            CurveFit.curve_fit(
-                LinearFit,
-                data_smooted[1, r:(r+pt_smoothing_derivative)],
-                log.(data_smooted[2, r:(r+pt_smoothing_derivative)]),
-            ).coefs[2] for r = 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)
-        ]
+        for r = 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)
+          M = [ones(pt_smoothing_derivative)  data_smooted[1, r:(r+pt_smoothing_derivative-1)] ]
+           Y = log.(data_smooted[2, r:(r+pt_smoothing_derivative-1)])
+
+           fit = M \ Y 
+           if r == 1
+            specific_gr = fit[2]
+           else
+            specific_gr = vcat(specific_gr ,fit[2] )
+
+           end
+        end
     else
         itp =
             interpolate((data_smooted[1, :],), log.(data_smooted[2, :]), Gridded(Linear()))
@@ -573,38 +578,53 @@ function curve_dissimilitary_lin_fitting(
 
         #fitting total data
         data_total = Matrix(transpose(hcat(win_tot_times, win_tot_data)))
-        fit_total = CurveFit.curve_fit(LinearFit, data_total[1, :], data_total[2, :])
+        data_1 = Matrix(transpose(hcat(win_1_times, win_1_data)))
+        data_2 = Matrix(transpose(hcat(win_2_times, win_2_data)))
+
+        X_total = data_total[1, :]
+        Y_total = data_total[2, :]
+        X_1 = data_1[1, :]
+        Y_1 = data_2[2, :]
+        X_2 = data_1[1, :]
+        Y_2 = data_2[2, :]
+        N_1 = length( data_1[1, :])
+        N_2 = length( data_2[1, :])
+        N_tot =  length( data_total[1, :])
+        M_1 = [ones(N_1) X_1]
+        M_2 = [ones(N_2) X_2]
+        M_tot = [ones(N_tot) X_total]
+        fit_1 =  M_1 \ Y_1
+        fit_2 =  M_2 \ Y_2
+        fit_total =  M_tot \ Y_total
+
+
+
 
         # residual calculation
         res_total = sum([
             abs((
-                data_total[2, ll] - fit_total.coefs[2] * data_total[1, ll] -
-                fit_total.coefs[1]
+                data_total[2, ll] - fit_total[2] * data_total[1, ll] -
+                fit_total[1]
             )) for ll = 1:length(data_total[1, :])
         ])
 
-        #fitting win 1
-        data_1 = Matrix(transpose(hcat(win_1_times, win_1_data)))
-        fit_1 = CurveFit.curve_fit(LinearFit, data_1[1, :], data_1[2, :])
-
+       
         # residual calculation
         res_win_1 = sum([
-            abs((data_1[2, ll] - fit_1.coefs[2] * data_1[1, ll] - fit_1.coefs[1])) for
+            abs((data_1[2, ll] - fit_1[2] * data_1[1, ll] - fit_1[1])) for
             ll = 1:length(data_1[1, :])
         ])
 
         #fitting win 2
-        data_2 = Matrix(transpose(hcat(win_2_times, win_2_data)))
-        fit_2 = CurveFit.curve_fit(LinearFit, data_2[1, :], data_2[2, :])
-
+      
         # residual calculation
         res_win_2 = sum([
-            abs((data_2[2, ll] - fit_2.coefs[2] * data_2[1, ll] - fit_2.coefs[1])) for
+            abs((data_2[2, ll] - fit_2[2] * data_2[1, ll] - fit_2[1])) for
             ll = 1:length(data_2[1, :])
         ])
 
         #evaluation of the cost
-        cost = res_total - res_win_1 - res_win_2
+        cost = - res_total + res_win_1 + res_win_2
         discrepancy_measure_curve =
             hcat(discrepancy_measure_curve, [index_t + floor(size_wind / 2), cost])
         # stop when first change point is fitted

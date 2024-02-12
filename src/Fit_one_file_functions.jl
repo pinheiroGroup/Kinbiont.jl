@@ -189,13 +189,13 @@ function fit_one_file_Log_Lin(
         "t_of_max",
         "empirical_max_Growth_rate",
         "Growth_rate",
-        "2sigma_gr",
+        "sigma_gr",
         "dt",
-        "95_confidence_dt_upper",
-        "95_confidence_dt_lower",
+        "sigma_confidence_dt_upper",
+        "sigma_confidence_dt_lower",
         "intercept",
-        "2sigma_intercept",
-        "R^2",
+        "sigma_intercept",
+        "Pearson_correlation",
     ]
 
     if save_plots == true

@@ -115,45 +115,27 @@ function fitting_one_well_Log_Lin(
     # fitting data
     data_to_fit_times = data_smooted[1, index_of_t_start:index_of_t_end]
     data_to_fit_values = log.(data_smooted[2, index_of_t_start:index_of_t_end])
-    fitting_results = CurveFit.curve_fit(LinearFit, data_to_fit_times, data_to_fit_values)
 
-    # residual calculation
-    residual = [
-        (
-            (
-                data_to_fit_values[ll] - fitting_results.coefs[2] * data_to_fit_times[ll] -
-                fitting_results.coefs[1]
-            )^2
-        ) for ll = 1:length(data_to_fit_values)
-    ]
-    # sum_of_squares calculation
-    sum_of_squares = [
-        ((data_to_fit_values[ll] - mean(data_to_fit_values))^2) for
-        ll = 1:length(data_to_fit_values)
-    ]
-    # coeff of determination
-    rsquared = 1 - sum(residual) / sum(sum_of_squares)
-    # confidence interval growth rate
-    a = ((1 / (length(residual) - 2)) * sum(residual))
-    std_error = sqrt(a / sum(sum_of_squares))
-    p95 = ccdf(TDist(length(sum_of_squares) - 2), (1 - 0.05 / 2))
-    confidence_coeff_2 = std_error * p95
-    # confidence interval intercept
-    a_1 = sqrt((1 / (length(residual))) * sum(data_to_fit_values .^ 2))
-    std_error_intercept = std_error * a_1
-    confidence_coeff_1 = std_error_intercept * p95
+    N= length(data_to_fit_times)
+    M = [ones(N) data_to_fit_times]
+    (coeff_1, coeff_2) = M \ data_to_fit_values
+    mean_x = mean(data_to_fit_times)   
 
-    ###
-    # EVALUATING CONFIDENCE BANDS
-    term_1 = ((1 / (length(residual) - 2)) * sum(residual))
-    term_2 =
-        (1 / (length(residual))) .+
-        (data_to_fit_times .- mean(data_to_fit_values)) ./ (sum(sum_of_squares))
-    confidence_band = p95 .* sqrt.(term_1 .* term_2)
-    fitted_line = [
-        fitting_results.coefs[2] * data_to_fit_times[ll] + fitting_results.coefs[1] for
-        ll = 1:length(data_to_fit_times)
-    ]
+    sigma_a = sigma_b = r = zeros(N)
+    Theoretical_fitting = coeff_1.+ data_to_fit_times .* coeff_2
+
+    Cantrell_errors = sqrt(sum((data_to_fit_values - coeff_2*data_to_fit_times .- coeff_1).^2)/(N-2))  # goodness of fit
+    sigma_b = sqrt(1/sum((data_to_fit_times .-mean_x ).^2))
+    sigma_a =  Cantrell_errors * sqrt(1/N +mean_x^2 * sigma_b^2)
+    sigma_b *=  Cantrell_errors
+    # Pearson's correlation coefficient
+    rho = cov(X,Y)/sqrt(var(X) * var(Y))
+    d = TDist(N-2)     # t-Student distribution with N-2 degrees of freedom
+    cf = quantile(d, 0.975)  # correction factor for 95% confidence intervals (two-tailed distribution)
+    confidence_band = cf * Cantrell_errors* sqrt.(1/N .+ (data_to_fit_times .- mean(data_to_fit_times)).^2 / var(data_to_fit_times) /(N-1))
+     println(confidence_band)
+
+
     # storing results
 
     results_lin_log_fit = [
@@ -163,14 +145,14 @@ function fitting_one_well_Log_Lin(
         data_to_fit_times[end],
         specific_gr_times[index_of_max],
         gr_max,
-        fitting_results.coefs[2],
-        confidence_coeff_2,
-        log(2) / (fitting_results.coefs[2]),
-        log(2) / (fitting_results.coefs[2] - confidence_coeff_2),
-        log(2) / (fitting_results.coefs[2] + confidence_coeff_2),
-        fitting_results.coefs[1],
-        confidence_coeff_1,
-        rsquared,
+        coeff_2,
+        sigma_b,
+        log(2) / (coeff_2),
+        log(2) / (coeff_2 - sigma_b),
+        log(2) / (coeff_2 + sigma_b),
+        coeff_1,
+        sigma_a,
+        rho,
     ]
 
     if display_plots
@@ -199,7 +181,7 @@ function fitting_one_well_Log_Lin(
     if_display(
         Plots.plot!(
             data_to_fit_times,
-            fitted_line,
+            Theoretical_fitting,
             ribbon=confidence_band,
             xlabel="Time ",
             ylabel="Log(Arb. Units)",
