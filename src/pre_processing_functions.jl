@@ -46,10 +46,10 @@ function smoothing_data(
     data  = matrix of data
     pt_avg = size of the windows of the rolling average
     """
-    if  method == "rolling_avg" && pt_avg < 3
-       println("WARNING: the number of points to do rolling average is too low")
-       println("changing the method of smoothinf to lowess")
-       method = "lowess"
+    if method == "rolling_avg" && pt_avg < 3
+        println("WARNING: the number of points to do rolling average is too low")
+        println("changing the method of smoothinf to lowess")
+        method = "lowess"
     end
 
     if method == "rolling_avg"
@@ -78,39 +78,6 @@ function smoothing_data(
 end
 
 
-
-
-function thr_negative_correction(
-    data::Matrix{Float64}, # dataset first row times second row OD ,
-    thr_negative::Float64, # the value at which data are setted if negative
-)
-
-    times = data[1, :]
-    values = data[2, :]
-    index_neg = findall(x -> x < thr_negative, values)
-    values[index_neg] .= thr_negative
-    data_corrected = transpose(hcat(times, values))
-
-    return data_corrected
-end
-
-function blank_distrib_negative_correction(
-    data::Matrix{Float64}, # dataset first row times second row OD ,
-    blank_array::Vector{Float64},
-)
-
-    times = data[1, :]
-    values = data[2, :]
-    #println(values)
-    index_neg = findall(x -> x < 0.0, values)
-
-    number_of_neg = length(index_neg)
-    replacement_values = abs.(sample(blank_array, number_of_neg) .- mean(blank_array))
-    values[index_neg] .= replacement_values
-    data_corrected = transpose(hcat(times, values))
-
-    return data_corrected
-end
 
 
 
@@ -183,3 +150,43 @@ function remove_negative_value(data::Any)
 
     return data, index_not_zero
 end
+
+
+function negative_value_correction(data::Any,
+    list_of_blank::Any;
+    method="remove",
+    thr_negative=0.01,)
+
+
+    if method == "blank_correction"
+
+        times = data[1, :]
+        values = data[2, :]
+        index_neg = findall(x -> x < 0.0, values)
+        number_of_neg = length(index_neg)
+        replacement_values = abs.(sample(list_of_blank, number_of_neg) .- mean(list_of_blank))
+        values[index_neg] .= replacement_values
+        data_corrected = transpose(hcat(times, values))
+
+    elseif method == "thr_correction"
+        times = data[1, :]
+        values = data[2, :]
+        index_neg = findall(x -> x < thr_negative, values)
+        values[index_neg] .= thr_negative
+        data_corrected = transpose(hcat(times, values))
+    else
+        times = data[1, :]
+        values = data[2, :]
+        values_corrected = remove_negative_value(values)
+        data_corrected = transpose(hcat(times, values_corrected[1]))
+
+    end
+
+
+
+
+    return Matrix(data_corrected)
+end
+
+
+

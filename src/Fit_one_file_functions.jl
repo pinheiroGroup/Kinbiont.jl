@@ -85,14 +85,11 @@ function plot_data(
         # blank subtraction
         data_values = data_values .- blank_value
         data = Matrix(transpose(hcat(times_data, data_values)))
-
-        if correct_negative == "thr_correction"
-            data = thr_negative_correction(data, thr_negative)
-        end
-
-        if correct_negative == "blank_correction"
-            data = blank_distrib_negative_correction(data, blank_array)
-        end
+        # correcting negative values after blank subtraction
+        data = negative_value_correction(data,
+            blank_array;
+            method=correct_negative,
+            thr_negative=thr_negative,)
 
         if display_plots
             if_display = display
@@ -276,18 +273,11 @@ function fit_one_file_Log_Lin(
 
         data = Matrix(transpose(hcat(times_data, data_values)))
 
-
-        if correct_negative == "thr_correction"
-
-            data = thr_negative_correction(data, thr_negative)
-
-        end
-
-        if correct_negative == "blank_correction"
-
-            data = blank_distrib_negative_correction(data, blank_array)
-
-        end
+        # correcting negative values after blank subtraction
+        data = negative_value_correction(data,
+            blank_array;
+            method=correct_negative,
+            thr_negative=thr_negative,)
 
         data = Matrix(transpose(hcat(data[1, :], data[2, :])))
 
@@ -462,17 +452,12 @@ function fit_file_ODE(
 
         data = Matrix(transpose(hcat(times_data, data_values)))
 
-        if correct_negative == "thr_correction"
 
-            data = thr_negative_correction(data, thr_negative)
-
-        end
-
-        if correct_negative == "blank_correction"
-
-            data = blank_distrib_negative_correction(data, blank_array)
-
-        end
+        # correcting negative values after blank subtraction
+        data = negative_value_correction(data,
+            blank_array;
+            method=correct_negative,
+            thr_negative=thr_negative,)
 
 
         # defining time steps of the inference
@@ -658,23 +643,12 @@ function fit_file_custom_ODE(
 
         data = Matrix(transpose(hcat(times_data, data_values)))
 
-        if correct_negative == "thr_correction"
+        # correcting negative values after blank subtraction
+        data = negative_value_correction(data,
+            blank_array;
+            method=correct_negative,
+            thr_negative=thr_negative,)
 
-            data = thr_negative_correction(data, thr_negative)
-
-        end
-
-        if correct_negative == "blank_correction"
-
-            data = blank_distrib_negative_correction(data, blank_array)
-
-        end
-
-
-
-
-
-        data = Matrix(data)
 
 
 
@@ -855,25 +829,11 @@ function ODE_model_selection_file(
         data_values = data_values .- blank_value
 
         data = Matrix(transpose(hcat(times_data, data_values)))
-
-        if correct_negative == "thr_correction"
-
-            data = thr_negative_correction(data, thr_negative)
-
-        end
-
-        if correct_negative == "blank_correction"
-
-            data = blank_distrib_negative_correction(data, blank_array)
-
-        end
-
-
-
-
-
-
-        data = Matrix(data)
+        # correcting negative values after blank subtraction
+        data = negative_value_correction(data,
+            blank_array;
+            method=correct_negative,
+            thr_negative=thr_negative,)
 
 
 
@@ -1069,22 +1029,11 @@ function selection_ODE_fixed_change_points_file(
 
         data = Matrix(transpose(hcat(times_data, data_values)))
 
-        if correct_negative == "thr_correction"
-
-            data = thr_negative_correction(data, thr_negative)
-
-        end
-
-        if correct_negative == "blank_correction"
-
-            data = blank_distrib_negative_correction(data, blank_array)
-
-        end
-
-
-
-
-        data = Matrix(data)
+        # correcting negative values after blank subtraction
+        data = negative_value_correction(data,
+            blank_array;
+            method=correct_negative,
+            thr_negative=thr_negative,)
 
 
 
