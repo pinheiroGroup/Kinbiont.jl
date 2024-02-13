@@ -116,24 +116,24 @@ function fitting_one_well_Log_Lin(
     data_to_fit_times = data_smooted[1, index_of_t_start:index_of_t_end]
     data_to_fit_values = log.(data_smooted[2, index_of_t_start:index_of_t_end])
 
-    N= length(data_to_fit_times)
+    N = length(data_to_fit_times)
     M = [ones(N) data_to_fit_times]
     (coeff_1, coeff_2) = M \ data_to_fit_values
-    mean_x = mean(data_to_fit_times)   
+    mean_x = mean(data_to_fit_times)
 
     sigma_a = sigma_b = r = zeros(N)
-    Theoretical_fitting = coeff_1.+ data_to_fit_times .* coeff_2
+    Theoretical_fitting = coeff_1 .+ data_to_fit_times .* coeff_2
 
-    Cantrell_errors = sqrt(sum((data_to_fit_values - coeff_2*data_to_fit_times .- coeff_1).^2)/(N-2))  # goodness of fit
-    sigma_b = sqrt(1/sum((data_to_fit_times .-mean_x ).^2))
-    sigma_a =  Cantrell_errors * sqrt(1/N +mean_x^2 * sigma_b^2)
-    sigma_b *=  Cantrell_errors
+    Cantrell_errors = sqrt(sum((data_to_fit_values - coeff_2 * data_to_fit_times .- coeff_1) .^ 2) / (N - 2))  # goodness of fit
+    sigma_b = sqrt(1 / sum((data_to_fit_times .- mean_x) .^ 2))
+    sigma_a = Cantrell_errors * sqrt(1 / N + mean_x^2 * sigma_b^2)
+    sigma_b *= Cantrell_errors
     # Pearson's correlation coefficient
-    rho = cov(X,Y)/sqrt(var(X) * var(Y))
-    d = TDist(N-2)     # t-Student distribution with N-2 degrees of freedom
+    rho = cov(X, Y) / sqrt(var(X) * var(Y))
+    d = TDist(N - 2)     # t-Student distribution with N-2 degrees of freedom
     cf = quantile(d, 0.975)  # correction factor for 95% confidence intervals (two-tailed distribution)
-    confidence_band = cf * Cantrell_errors* sqrt.(1/N .+ (data_to_fit_times .- mean(data_to_fit_times)).^2 / var(data_to_fit_times) /(N-1))
-     println(confidence_band)
+    confidence_band = cf * Cantrell_errors * sqrt.(1 / N .+ (data_to_fit_times .- mean(data_to_fit_times)) .^ 2 / var(data_to_fit_times) / (N - 1))
+    println(confidence_band)
 
 
     # storing results
@@ -222,6 +222,12 @@ function fitting_one_well_Log_Lin(
 
     return results_lin_log_fit
 end
+
+
+
+
+
+
 
 
 
@@ -338,12 +344,11 @@ function fitting_one_well_ODE_constrained(
         png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
     end
 
-    # here problem
     # max_theoretical gr
-    sol_fin , index_not_zero = remove_negative_value(sol_fin)
+    sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
     data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
-    
+
 
     max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
 
@@ -475,7 +480,7 @@ function fitting_one_well_custom_ODE(
     end
 
     #max_theoretical gr
-    sol_fin , index_not_zero = remove_negative_value(sol_fin)
+    sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
     data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
     max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
@@ -606,7 +611,7 @@ function ODE_Model_selection(
         sol_fin = sum(sol_fin, dims=1)
         # here problem
         #max_theoretical gr
-        sol_fin , index_not_zero = remove_negative_value(sol_fin)
+        sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
         data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
         max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
@@ -655,7 +660,7 @@ function ODE_Model_selection(
     sol_t = reduce(hcat, sim.u)
     sol_time = reduce(hcat, sim.t)
     sol_t = sum(sol_t, dims=1)
-    sol_fin , index_not_zero = remove_negative_value(sol_fin)
+    sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
     data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
     if display_plot_best_model
@@ -668,9 +673,9 @@ function ODE_Model_selection(
         mkpath(path_to_plot)
     end
 
-    sol_fin , index_not_zero = remove_negative_value(sol_fin)
+    sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
-    data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))  
+    data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
     if_display(
         Plots.scatter(
             data[1, :],
@@ -799,7 +804,7 @@ function one_well_morris_sensitivity(
 
         # here problem
         #max_theoretical gr
-        sol_fin , index_not_zero = remove_negative_value(sol_fin)
+        sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
         data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
         max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
@@ -825,7 +830,7 @@ function one_well_morris_sensitivity(
             Tables.table(Matrix(results_sensitivity)),
         )
         CSV.write(
-            string(path_to_results, label_exp, "_configuration_tested.csv"),
+            string(path_to_results, label_exp, "_configurations_tested.csv"),
             Tables.table(Matrix(param_combination)),
         )
     end
@@ -971,22 +976,22 @@ function selection_ODE_fixed_change_points(
         value_bonduary = remade_solution.t[end]
         time_bonduary = sol_fin[end]
         bc = [value_bonduary, time_bonduary]
-     
-           sol_fin , index_not_zero = remove_negative_value(sol_fin)
-    
+
+        sol_fin, index_not_zero = remove_negative_value(sol_fin)
+
         if (
             pt_smooth_derivative > (length(data_temp[1, :]) - 2) &&
             length(data_temp[1, :]) > 3
         )
             emp_max_gr_of_segment =
                 maximum(specific_gr_evaluation(data_temp, pt_smooth_derivative))
-                data_th = transpose(hcat(time_sol[index_not_zero], sol_fin))
-                th_max_gr_of_segment =
+            data_th = transpose(hcat(time_sol[index_not_zero], sol_fin))
+            th_max_gr_of_segment =
                 maximum(specific_gr_evaluation(data_th, pt_smooth_derivative))
             temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
             temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
         elseif length(data_temp[1, :]) <= 3
-            
+
             emp_max_gr_of_segment = missing
             th_max_gr_of_segment = missing
             temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
@@ -994,8 +999,8 @@ function selection_ODE_fixed_change_points(
         else
             emp_max_gr_of_segment =
                 maximum(specific_gr_evaluation(data_temp, pt_smooth_derivative))
-                data_th = transpose(hcat(time_sol[index_not_zero], sol_fin)) 
-                th_max_gr_of_segment =
+            data_th = transpose(hcat(time_sol[index_not_zero], sol_fin))
+            th_max_gr_of_segment =
                 maximum(specific_gr_evaluation(data_th, pt_smooth_derivative))
             temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
             temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
@@ -1007,10 +1012,10 @@ function selection_ODE_fixed_change_points(
             temp_res_win = push!(temp_res_win, i - 1)
             param_out = push!(param_out, temp_res_win)
         else
-         
 
-            composed_time =  vcat(composed_time, time_sol[index_not_zero])
-            composed_sol = vcat(composed_sol,  sol_fin)
+
+            composed_time = vcat(composed_time, time_sol[index_not_zero])
+            composed_sol = vcat(composed_sol, sol_fin)
             temp_res_win = push!(temp_res_win, i - 1)
             param_out = push!(param_out, temp_res_win)
         end
