@@ -10,6 +10,7 @@ include("Fit_one_well_functions.jl");
 include("loss_list.jl");
 include("NL_models.jl");
 include("temp_non_linear_fit.jl");
+include("NL_loss_list.jl");
 
 """
 Internal functions
@@ -24,6 +25,9 @@ function model_selector(model::String, u0, tspan, param=nothing)
 
     return ODE_prob
 end
+
+
+
 
 function specific_gr_evaluation(data_smooted::Any, pt_smoothing_derivative::Int)
     """

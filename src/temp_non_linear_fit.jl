@@ -57,16 +57,11 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
 
 
     end
-    # Define the optimization problem LOSS
-    function objective(u, p)
 
-        model = model_function(u, data[1, :])
-        n_data = length(data[1, :])
-        residuals = (model .- data[2, :]) ./ n_data
-        return log(sum(residuals .^ 2))
-    end
+    loss_function =
+    select_loss_function_NL(type_of_loss, data, model_function )
 
-    prob = OptimizationProblem(objective, u0, data, lb=lb_param, ub=ub_param)
+    prob = OptimizationProblem(loss_function, u0, data, lb=lb_param, ub=ub_param)
 
     # Solve the optimization problem
     sol = solve(prob, optmizator, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
@@ -194,13 +189,11 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
 
     end
     # Define the optimization problem LOSS
-    function objective(u, p)
 
-        model = model_function(u, data[1, :])
-        n_data = length(data[1, :])
-        residuals = (model .- data[2, :]) ./ n_data
-        return log(sum(residuals .^ 2))
-    end
+    loss_function =
+    select_loss_function_NL(type_of_loss, data, model_function )
+
+
 
     max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
 
@@ -213,7 +206,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
 
 
 
-        prob = OptimizationProblem(objective, u0, data, lb=lb_param, ub=ub_param)
+        prob = OptimizationProblem(loss_function, u0, data, lb=lb_param, ub=ub_param)
 
         # Solve the optimization problem
         sol = solve(prob, optmizator, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
@@ -283,18 +276,18 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
         ),
     )
     if save_plot
-        png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+        png(string(path_to_plot, label_exp, "_", model_string, "_", name_well, ".png"))
     end
 
 
     if write_res == true
         mkpath(path_to_results)
         CSV.write(
-            string(path_to_results, label_exp, "_results_sensitivity.csv"),
+            string(path_to_results, label_exp, "_", model_string,"_results_sensitivity.csv"),
             Tables.table(Matrix(fin_param)),
         )
         CSV.write(
-            string(path_to_results, label_exp, "_configurations_tested.csv"),
+            string(path_to_results, label_exp, "_", model_string,"_configurations_tested.csv"),
             Tables.table(Matrix(param_combination)),
         )
     end
@@ -368,13 +361,10 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
 
     end
     # Define the optimization problem LOSS
-    function objective(u, p)
 
-        model = model_function(u, data[1, :])
-        n_data = length(data[1, :])
-        residuals = (model .- data[2, :]) ./ n_data
-        return log(sum(residuals .^ 2))
-    end
+   
+
+
 
     max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
 
@@ -393,8 +383,9 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
 
         data_to_fit =  Matrix(transpose(hcat(times_boot,data_boot)))
 
-
-        prob = OptimizationProblem(objective, u0, data_to_fit, lb=lb_param, ub=ub_param)
+        loss_function =
+        select_loss_function_NL(type_of_loss, data_to_fit, model_function )
+        prob = OptimizationProblem(loss_function, u0, data_to_fit, lb=lb_param, ub=ub_param)
 
         # Solve the optimization problem
         sol = solve(prob, optmizator, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
@@ -463,22 +454,21 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
         ),
     )
     if save_plot
-        png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+        png(string(path_to_plot, label_exp, "_", model_string, "_", name_well, ".png"))
     end
 
 
     if write_res == true
         mkpath(path_to_results)
         CSV.write(
-            string(path_to_results, label_exp, "_results_bootstrap.csv"),
+            string(path_to_results, label_exp, "_",model_string,"_results_bootstrap.csv"),
             Tables.table(Matrix(fin_param)),
         )
 
     end
-    mean_param = [mean(fin_param[i,2:end]) i in 3:size(fin_param,1)]
-     sd_param = [std(fin_param[i,2:end]) i in 3:size(fin_param,1)]
-     mean_param
-     sd_param =hcat()
+    mean_param = [mean(fin_param[i,2:end]) for i in 3:size(fin_param,1)]
+    sd_param = [std(fin_param[i,2:end]) for i in 3:size(fin_param,1)]
+    
     return best_res_param, best_fitted_model,fin_param,mean_param,sd_param
 end
 
