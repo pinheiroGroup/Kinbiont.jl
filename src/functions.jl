@@ -789,3 +789,13 @@ function initialize_df_results_ode_custom(list_of_model_parameters::Any)
 end
 
 
+function AICc_evaluation(n_param,beta_penality,data,data_th)
+
+    n_data = length(data)
+    RSS = sum((data_th .- data).^2)
+    correction = beta_penality *(((n_param +1)*(n_param +2) )/(n_data - n_param - 2))
+    AIC = +beta_penality * n_param - n_data * log(RSS / n_data )  
+    AICc = AIC + correction
+    return AICc
+
+end   

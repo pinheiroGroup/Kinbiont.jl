@@ -609,7 +609,11 @@ function ODE_Model_selection(
         sol_time = reduce(hcat, remade_solution.t)
         sol_fin = reduce(hcat, remade_solution.u)
         sol_fin = sum(sol_fin, dims=1)
-        # here problem
+      
+        param_number = length(temp_start_param)
+
+        AICc = AICc_evaluation(param_number, beta_penality, data[2, :], sol_fin)
+        
         #max_theoretical gr
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
@@ -630,15 +634,15 @@ function ODE_Model_selection(
             loss_value,
         )
 
-        df_res_optimization[mm] = res_param
-        data_size = size(data)[2]
-        param_number = length(temp_start_param)
+
         results_to_be_pushed = [
             models_list[mm],
-            res.objective,
-            data_size * log(res.objective / data_size) + beta_penality * param_number,
+            res_param[end],
+            AICc,
         ]
         rss_array = hcat(rss_array, results_to_be_pushed)
+        df_res_optimization[mm] = res_param
+
     end
 
     AIC_array = rss_array[3, 2:end]
@@ -802,7 +806,6 @@ function one_well_morris_sensitivity(
         sol_fin = sum(sol_fin, dims=1)
         loss_value = res.objective
 
-        # here problem
         #max_theoretical gr
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
@@ -830,7 +833,7 @@ function one_well_morris_sensitivity(
             Tables.table(Matrix(results_sensitivity)),
         )
         CSV.write(
-            string(path_to_results, label_exp, "_configurations_tested.csv"),
+            string(path_to_results, label_exp, "_configuration_tested.csv"),
             Tables.table(Matrix(param_combination)),
         )
     end
@@ -1114,7 +1117,6 @@ function ODE_selection_NMAX_change_points(
 )
 
     # fitting single models
-    length_dataset = length(data_testing[1, :])
     change_point_list = Vector{Vector{Any}}()
 
     res = ODE_Model_selection(
@@ -1221,18 +1223,15 @@ function ODE_selection_NMAX_change_points(
             )
 
             # composing piecewise penality
-            loss_penality = sum([
-                direct_search_results[1][kk][(end-2)] for
-                kk = 1:length(direct_search_results[1])
-            ])
+
             n_param =
                 sum([
                     length(direct_search_results[1][kk][3:(end-5)]) for
                     kk = 1:length(direct_search_results[1])
                 ]) + n_change_points
-            new_penality =
-                length_dataset * log(loss_penality / length_dataset) +
-                penality_parameter * n_param
+
+            new_penality = AICc_evaluation(n_param, penality_parameter, data, unique(direct_search_results[end]))
+
 
             if new_penality <= score_of_the_models
                 score_of_the_models = copy(new_penality)
