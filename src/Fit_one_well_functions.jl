@@ -656,6 +656,8 @@ function ODE_Model_selection(
     param_min = df_res_optimization[index_minimal_AIC_model-1]
     param_out_full = copy(param_min)
     param_min = param_min[3:(end-3)]
+    println(param_min)
+
     tsteps = data[1, :]
     tspan = (data[1, 1], data[1, end])
     u0 = generating_IC(data, model, smoothing, pt_avg)
