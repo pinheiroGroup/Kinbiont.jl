@@ -300,6 +300,186 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
 end
 
 
+function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first row times second row OD
+    name_well::String, # name of the well
+    label_exp::String, #label of the experiment
+    model_function::Any, # ode model to use
+    lb_param::Vector{Float64}, # lower bound param
+    ub_param::Vector{Float64}; # upper bound param
+    u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
+    nrep=100,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    display_plots=true, # display plots in julia or not
+    save_plot=false,
+    path_to_plot="NA", # where save plots
+    pt_avg=1, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    smoothing=false, # the smoothing is done or not?
+    type_of_smoothing="rolling_avg",
+    type_of_loss="RE", # type of used loss
+    blank_array=zeros(100), # data of all blanks
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    penality_CI=3.0,
+)
+  
+    u0_best = copy(u0)
+    loss_best = 10^20
+    loss_chain = copy(loss_best)
+    best_fitted_model = Any
+    best_res_param = Any
+    if multiple_scattering_correction == true
+
+        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
+
+    end
+
+    if smoothing == true
+        data = smoothing_data(
+            data;
+            method=type_of_smoothing,
+            pt_avg=pt_avg,
+            thr_lowess=thr_lowess
+        )
+    end
+    # setting initial conditions
+    # TO DO GIVE THE OPTION TO FIX THEM AT LEAST IN KNOWN MODELS
+    # TO DO MODEL SELECTOR
+    if typeof(model_function) == String
+        model_string = NL_models[model_function].name
+        model_function = NL_models[model_string].func
+
+    else
+
+        model_string = "custom"
+
+
+    end
+    # Define the optimization problem LOSS
+
+
+    loss_function =
+        select_loss_function_NL(type_of_loss, data, penality_CI, model_function)
+
+
+    max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
+
+
+    for i = 1:nrep
+
+
+        index_to_change = rand(1:length(lb_param),1)[1]
+        new_param =  rand(Uniform(lb_param[index_to_change],ub_param[index_to_change]),1)[1]
+        u0 = copy(u0_best)
+        u0[index_to_change] = new_param
+        prob = OptimizationProblem(loss_function, u0, data, lb=lb_param, ub=ub_param)
+
+        # Solve the optimization problem
+        sol = solve(prob, optmizator, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
+        # evaluate the fitted  model
+        fitted_model = model_function(sol, data[1, :])
+
+        sol_fin, index_not_zero = remove_negative_value(fitted_model)
+
+        data_th = transpose(hcat(data[1, index_not_zero], sol_fin))
+        if size(index_not_zero, 1) > pt_smooth_derivative + 3
+            max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
+        else
+            max_th_gr = missing
+        end
+
+        loss_value = sol.objective
+
+        loss_chain = vcat(loss_chain,loss_value)
+        res_param = [[name_well, model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
+        res_param = reduce(vcat, reduce(vcat, res_param))
+
+
+       if loss_value < loss_best
+        loss_best = copy(loss_value)
+
+        best_res_param = copy(res_param)
+
+        best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
+        u0_best = copy(u0)
+
+
+       else
+
+
+            prob = 1 - abs(loss_value-loss_best)/loss_best
+            
+            nrand = rand(Uniform(0.0,1.0),1)[1]
+
+            if nrand < prob
+
+                loss_best = copy(loss_value)
+
+                best_res_param = copy(res_param)
+        
+                best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
+
+                u0_best = copy(u0)
+
+            end
+
+       end
+
+
+
+    end
+
+
+    if display_plots
+        if_display = display
+    else
+        if_display = identity
+    end
+
+    if save_plot
+        mkpath(path_to_plot)
+    end
+
+
+    # plotting if required
+    if_display(
+        Plots.scatter(
+            data[1, :],
+            data[2, :],
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=["Data " nothing],
+            markersize=2,
+            color=:black,
+            title=string(label_exp, " ", name_well),
+        ),)
+
+    if_display(
+        Plots.plot!(
+            data[1, :],
+            best_fitted_model,
+            xlabel="Time",
+            ylabel="Arb. Units",
+            label=[string("Fitting ", model_string) nothing],
+            c=:red,
+        ),
+    )
+    if save_plot
+        png(string(path_to_plot, label_exp, "_", model_string, "_", name_well, ".png"))
+    end
+
+
+
+
+
+    return best_res_param, best_fitted_model,loss_chain[2:end]
+end
+
 
 
 
@@ -501,7 +681,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     list_model_function::Any, # ode model to use
     list_lb_param::Vector{Float64}, # lower bound param
     list_ub_param::Vector{Float64}; # upper bound param
-    method_of_fitting="Bootstrap",
+    method_of_fitting="MCMC",
     nrep=100,
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
@@ -524,6 +704,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     thr_lowess=0.05,
     write_res=false,
     beta_param=2.0,
+    penality_CI = penality_CI
 )
     score_res = ["model", "loss", "AIC"]
     top_score = 10^20
@@ -565,7 +746,8 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 maxiters=maxiters,
                 abstol=abstol,
                 thr_lowess=thr_lowess,
-                write_res=write_res
+                write_res=write_res,
+                penality_CI = penality_CI
             )
 
             n_param = length(lb_param)
@@ -613,7 +795,58 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 maxiters=maxiters,
                 abstol=abstol,
                 thr_lowess=thr_lowess,
-                write_res=write_res
+                write_res=write_res,
+                penality_CI = penality_CI
+            )
+
+            n_param = length(lb_param)
+
+            temp_AIC = AICc_evaluation(n_param, beta_param, data, temp_res[2])
+            temp = [model_to_test, temp_res[end], temp_AIC]
+
+            score_res = hcat(score_res, temp_AIC)
+            if mm == 1
+
+                top_score = temp_AIC
+                top_model = temp_res[1]
+                top_fitted_sol = temp_res[2]
+
+
+            elseif top_score > temp_AIC
+                top_score = temp_AIC
+                top_model = temp_res[1]
+                top_fitted_sol = temp_res[2]
+
+            end
+        elseif method_of_fitting == "MCMC"
+
+
+            temp_res = fit_NL_model_MCMC_intialization(data, # dataset first row times second row OD
+                name_well, # name of the well
+                label_exp, #label of the experiment
+                model_to_test, # ode model to use
+                lb_param, # lower bound param
+                ub_param; # upper bound param
+                nrep=nrep,
+                optmizator=optmizator,
+                display_plots=display_plots, # display plots in julia or not
+                save_plot=save_plot,
+                path_to_plot=path_to_plot, # where save plots
+                pt_avg=pt_avg, # numebr of the point to generate intial condition
+                pt_smooth_derivative=pt_smooth_derivative,
+                smoothing=smoothing, # the smoothing is done or not?
+                type_of_smoothing=type_of_smoothing,
+                type_of_loss=type_of_loss, # type of used loss
+                blank_array=blank_array, # data of all blanks
+                multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+                method_multiple_scattering_correction=method_multiple_scattering_correction,
+                calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
+                PopulationSize=PopulationSize,
+                maxiters=maxiters,
+                abstol=abstol,
+                thr_lowess=thr_lowess,
+                penality_CI = penality_CI
+
             )
 
             n_param = length(lb_param)
@@ -664,6 +897,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 maxiters=maxiters,
                 abstol=abstol,
                 thr_lowess=thr_lowess,
+                penality_CI = penality_CI
             )
 
 

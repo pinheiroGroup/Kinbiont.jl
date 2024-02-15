@@ -36,6 +36,7 @@ function fit_NL_model_file(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
+    penality_CI = 8.0
 )
 
 
@@ -160,7 +161,9 @@ function fit_NL_model_file(
                 maxiters=maxiters,
                 abstol=abstol,
                 thr_lowess=thr_lowess,
-                write_res=write_res
+                write_res=write_res,
+                penality_CI = penality_CI
+
             )
 
 
@@ -191,9 +194,40 @@ function fit_NL_model_file(
                 maxiters=maxiters,
                 abstol=abstol,
                 thr_lowess=thr_lowess,
-                write_res=write_res
-            )
+                write_res=write_res,
+                penality_CI = penality_CI
 
+            )
+        elseif method_of_fitting == "MCMC"
+
+
+            temp_res = fit_NL_model_MCMC_intialization(data, # dataset first row times second row OD
+                name_well, # name of the well
+                label_exp, #label of the experiment
+                model_to_test, # ode model to use
+                lb_param, # lower bound param
+                ub_param; # upper bound param
+                nrep=nrep,
+                optmizator=optmizator,
+                display_plots=display_plots, # display plots in julia or not
+                save_plot=save_plot,
+                path_to_plot=path_to_plot, # where save plots
+                pt_avg=pt_avg, # numebr of the point to generate intial condition
+                pt_smooth_derivative=pt_smooth_derivative,
+                smoothing=smoothing, # the smoothing is done or not?
+                type_of_smoothing=type_of_smoothing,
+                type_of_loss=type_of_loss, # type of used loss
+                blank_array=blank_array, # data of all blanks
+                multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+                method_multiple_scattering_correction=method_multiple_scattering_correction,
+                calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
+                PopulationSize=PopulationSize,
+                maxiters=maxiters,
+                abstol=abstol,
+                thr_lowess=thr_lowess,
+                penality_CI = penality_CI
+
+            )
 
 
         else
@@ -224,6 +258,7 @@ function fit_NL_model_file(
                 maxiters=maxiters,
                 abstol=abstol,
                 thr_lowess=thr_lowess,
+                penality_CI = penality_CI
             )
 
 
@@ -302,6 +337,7 @@ function fit_NL_model_selection_file(
     abstol=0.00001,
     thr_lowess=0.05,
     beta_param=2.0,
+    penality_CI = 8.0
 
 )
 
@@ -415,7 +451,7 @@ function fit_NL_model_selection_file(
         pt_smooth_derivative=pt_smooth_derivative,
         smoothing=smoothing, # the smoothing is done or not?
         type_of_smoothing=type_of_smoothing,
-        type_of_loss=type_of_loss, # type of used loss
+        type_of_loss=loss_type, # type of used loss
         blank_array=blank_array, # data of all blanks
         multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
         method_multiple_scattering_correction=method_multiple_scattering_correction,
@@ -425,7 +461,8 @@ function fit_NL_model_selection_file(
         abstol=abstol,
         thr_lowess=thr_lowess,
         write_res=false,
-        beta_param=  beta_param
+        beta_param=  beta_param,
+       penality_CI = penality_CI
     )
 
 
