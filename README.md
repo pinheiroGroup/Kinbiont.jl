@@ -51,25 +51,26 @@ this last step is Temporary before the official realese
 ## Requirements
 ### Dependencies
 
-1. Julia (1.7,1.8,1.9)
-2. DifferentialEquations.jl
-3. Optimization.jl
-4. Plots.jl
-5. Random.jl
-6. CSV.jl
-7. DataFrames.jl
-8. Statistics.jl
-9. Optim.jl
-10. OptimizationBBO.jl
-11. NaNMath.jl
-12. CurveFit.jl
-13. StatsBase.jl
-14. Tables.jl
-15. Distributions.jl
-16. Interpolations.jl
-17. GaussianProcesses.jl 
-18. Peaks.jl
-19. ChangePointDetection.jl
+- Julia (1.7,1.8,1.9)
+- DifferentialEquations
+- Optimization
+- Plots
+- Random
+- CSV
+- DataFrames
+- Statistics
+-  Optim
+-   OptimizationBBO
+- NaNMath
+- StatsBase
+- Tables
+- Distributions
+- Interpolations
+- Peaks
+- ChangePointDetection
+- Lowess
+- LsqFit
+- Combinatorics
 
 
 <a name="data"></a>
