@@ -480,7 +480,6 @@ end
 
 
 function AICc_evaluation(n_param,beta_penality,data,data_th)
-    println(data)
     n_data = length(data)
     RSS = sum((data_th .- data).^2)
     correction = beta_penality *(((n_param +1)*(n_param +2) )/(n_data - n_param - 2))
