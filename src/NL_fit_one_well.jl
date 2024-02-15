@@ -26,6 +26,7 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
+    penality_CI=3.0,
 )
 
     if multiple_scattering_correction == true
@@ -59,7 +60,7 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     end
 
     loss_function =
-        select_loss_function_NL(type_of_loss, data, model_function)
+        select_loss_function_NL(type_of_loss, data, penality_CI, model_function)
 
     prob = OptimizationProblem(loss_function, u0, data, lb=lb_param, ub=ub_param)
 
@@ -156,7 +157,8 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-    write_res=false
+    write_res=false,
+    penality_CI=3.0,
 )
 
 
@@ -189,9 +191,9 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
     end
     # Define the optimization problem LOSS
 
-    loss_function =
-        select_loss_function_NL(type_of_loss, data, model_function)
 
+    loss_function =
+        select_loss_function_NL(type_of_loss, data, penality_CI, model_function)
 
 
     max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
@@ -211,14 +213,16 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
         sol = solve(prob, optmizator, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
         # evaluate the fitted  model
         fitted_model = model_function(sol, data[1, :])
+
         sol_fin, index_not_zero = remove_negative_value(fitted_model)
 
         data_th = transpose(hcat(data[1, index_not_zero], sol_fin))
+        if size(index_not_zero, 1) > pt_smooth_derivative + 3
+            max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
+        else
+            max_th_gr = missing
+        end
 
-
-        max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
-
-        # max empirical gr
         loss_value = sol.objective
 
 
@@ -235,8 +239,8 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
 
     index_best = findmin(fin_param[end, 2:end])[2]
 
-    best_res_param = fin_param[:, index_best]
-    println(best_res_param[3:(end-3)])
+
+    best_res_param = fin_param[:, index_best+1]
 
     best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
 
@@ -292,7 +296,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
     end
 
 
-    return best_res_param, best_fitted_model, fin_param
+    return best_res_param, best_fitted_model, fin_param, Matrix(param_combination)
 end
 
 
@@ -327,7 +331,8 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-    write_res=false
+    write_res=false,
+    penality_CI=3.0
 )
 
 
@@ -381,8 +386,10 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
 
         data_to_fit = Matrix(transpose(hcat(times_boot, data_boot)))
 
+
         loss_function =
-            select_loss_function_NL(type_of_loss, data_to_fit, model_function)
+            select_loss_function_NL(type_of_loss, data, penality_CI, model_function)
+
         prob = OptimizationProblem(loss_function, u0, data_to_fit, lb=lb_param, ub=ub_param)
 
         # Solve the optimization problem
@@ -394,9 +401,12 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
         data_th = transpose(hcat(data_to_fit[1, index_not_zero], sol_fin))
 
 
-        max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
+        if size(index_not_zero, 1) > pt_smooth_derivative + 3
+            max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
+        else
+            max_th_gr = missing
+        end
 
-        # max empirical gr
         loss_value = sol.objective
 
 
@@ -413,8 +423,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
 
     index_best = findmin(fin_param[end, 2:end])[2]
 
-    best_res_param = fin_param[:, index_best]
-
+    best_res_param = fin_param[:, index_best+1]
     best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
 
     if display_plots
@@ -564,7 +573,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
             temp_AIC = AICc_evaluation(n_param, beta_param, data, temp_res[2])
             temp = [model_to_test, temp_res[end], temp_AIC]
             score_res = hcat(score_res, temp_AIC)
-            if mm==1
+            if mm == 1
 
                 top_score = temp_AIC
                 top_model = temp_res[1]
@@ -613,8 +622,8 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
-            if mm==1
-                
+            if mm == 1
+
                 top_score = temp_AIC
                 top_model = temp_res[1]
                 top_fitted_sol = temp_res[2]
@@ -664,8 +673,8 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
-            if mm==1
-                
+            if mm == 1
+
                 top_score = temp_AIC
                 top_model = temp_res[1]
                 top_fitted_sol = temp_res[2]
@@ -683,10 +692,10 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
 
     end
-    
+
     # plotting if required
-      # plotting if required
-      if_display(
+    # plotting if required
+    if_display(
         Plots.scatter(
             data[1, :],
             data[2, :],
@@ -713,7 +722,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     end
 
 
-    return top_score, top_model,top_fitted_sol
+    return top_score, top_model, top_fitted_sol
 end
 
 
