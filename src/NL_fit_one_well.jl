@@ -1163,8 +1163,10 @@ function selection_NL_maxiumum_change_points(
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.000000001,
+    dectect_number_cdp= true,
     penality_CI=8.0,
     size_bootstrap = 0.7 )
+
     top_aicc = 10^20
     top_param = Vector{Any}
     top_fit =Vector{Any}
@@ -1195,8 +1197,16 @@ function selection_NL_maxiumum_change_points(
         number_of_bin=n_bins,
     )
 
-    combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2], 
-    n_fix = n_change_points)
+
+    if dectect_number_cdp == true
+
+     combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2], 
+    n_fix = 0)
+
+    else 
+        combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2], 
+        n_fix = n_change_points)
+    end
       
     for i in 1:size(combination_to_test, 1)
 
