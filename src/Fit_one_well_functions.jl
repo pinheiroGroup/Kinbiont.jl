@@ -129,7 +129,7 @@ function fitting_one_well_Log_Lin(
     sigma_a = Cantrell_errors * sqrt(1 / N + mean_x^2 * sigma_b^2)
     sigma_b *= Cantrell_errors
     # Pearson's correlation coefficient
-    rho = cov(X, Y) / sqrt(var(X) * var(Y))
+    rho = cov(data_to_fit_times, data_to_fit_values) / sqrt(var(data_to_fit_times) * var(data_to_fit_values))
     d = TDist(N - 2)     # t-Student distribution with N-2 degrees of freedom
     cf = quantile(d, 0.975)  # correction factor for 95% confidence intervals (two-tailed distribution)
     confidence_band = cf * Cantrell_errors * sqrt.(1 / N .+ (data_to_fit_times .- mean(data_to_fit_times)) .^ 2 / var(data_to_fit_times) / (N - 1))
