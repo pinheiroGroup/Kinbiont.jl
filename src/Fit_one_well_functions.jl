@@ -858,7 +858,7 @@ function selection_ODE_fixed_change_points(
     type_of_loss="L2", # type of used loss
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
-    type_of_detection="lsdd",
+    type_of_detection="sliding_win",
     type_of_curve="original",
     smoothing=false,
     type_of_smoothing="lowess",
@@ -867,7 +867,7 @@ function selection_ODE_fixed_change_points(
     save_plot=false, # do plots or no
     display_plots=false,
     path_to_plot="NA", # where save plots
-    win_size=2, # numebr of the point to generate intial condition
+    win_size=6, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
@@ -886,7 +886,7 @@ function selection_ODE_fixed_change_points(
 
     if smoothing == true
         data_testing = smoothing_data(
-            data;
+            data_testing;
             method=type_of_smoothing,
             pt_avg=pt_avg,
             thr_lowess=thr_lowess
@@ -978,9 +978,9 @@ function selection_ODE_fixed_change_points(
         time_sol = reduce(hcat, remade_solution.t)
         sol_fin = reduce(hcat, remade_solution.u)
         sol_fin = sum(sol_fin, dims=1)
-        value_bonduary = remade_solution.t[end]
-        time_bonduary = sol_fin[end]
-        bc = [value_bonduary, time_bonduary]
+        time_bonduary = remade_solution.t[end]
+        value_bonduary = sol_fin[end]
+        bc = [time_bonduary,value_bonduary]
 
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
@@ -1232,7 +1232,7 @@ function ODE_selection_NMAX_change_points(
                     kk = 1:length(direct_search_results[1])
                 ]) + n_change_points
 
-            new_penality = AICc_evaluation(n_param, penality_parameter, data, unique(direct_search_results[end]))
+            new_penality = AICc_evaluation(n_param, penality_parameter, data_testing[2,:], unique(direct_search_results[end]))
 
 
             if new_penality <= score_of_the_models
