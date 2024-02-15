@@ -10,6 +10,7 @@ include("Fit_one_well_functions.jl");
 include("loss_list.jl");
 include("NL_models.jl");
 include("NL_fit_one_well.jl");
+include("NL_fit_one_file.jl");
 include("NL_loss_list.jl");
 
 """
@@ -26,15 +27,6 @@ function model_selector(model::String, u0, tspan, param=nothing)
     return ODE_prob
 end
 
-function NL_model_selector(model::String, u0, tspan, param=nothing)
-    """
-      generate sciML ODE problem
-    """
-
-    ODE_prob = ODEProblem(models[model].func, u0, tspan, param)
-
-    return ODE_prob
-end
 
 
 
