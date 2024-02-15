@@ -132,7 +132,7 @@ ub_dhpm; # upper bound param
 display_plots=true, # do plots or no
 path_to_plot=path_to_plotting, # where save plots
 PopulationSize = 300,
-maxiters = 200000,
+maxiters = 200,
 #integrator = Tsit5(),
 integrator = KenCarp4(),
  type_of_loss = "L2")
@@ -223,11 +223,11 @@ new_param = [0.1, 1.01,0.0]
 @time M= fit_NL_model_MCMC_intialization(data_OD_smooth2, # dataset first row times second row OD
 "test", # name of the well
 "", #label of the experiment
-"NL_logistic", # ode model to use
+"NL_Gompertz", # ode model to use
 nl_lb, # lower bound param
 nl_ub; # upper bound param
 u0=new_param,# initial guess param
-nrep =300,
+nrep =500,
 optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
 display_plots=true, # display plots in julia or not
 save_plot=false,
@@ -237,7 +237,6 @@ pt_smooth_derivative=7,
 smoothing=false, # the smoothing is done or not?
 type_of_smoothing="rolling_avg",
 type_of_loss="L2", # type of used loss
-blank_array=zeros(100), # data of all blanks
 multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
 method_multiple_scattering_correction="interpolation",
 calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
@@ -257,7 +256,7 @@ new_param = [0.1, 1.01,0.0]
 B1= fit_NL_model(data_OD_smooth2, # dataset first row times second row OD
 "test", # name of the well
 "", #label of the experiment
-"NL_Gompertz", # ode model to use
+"NL_Bertalanffy", # ode model to use
 nl_lb, # lower bound param
 nl_ub; # upper bound param
 u0=new_param,# initial guess param
@@ -375,7 +374,7 @@ type_of_loss="L2_fixed_CI", # type of used loss
 multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
 method_multiple_scattering_correction="interpolation",
 calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-PopulationSize=300,
+PopulationSize=50,
 maxiters=2000000,
 abstol=0.0000001,
 thr_lowess=0.05,
@@ -398,7 +397,7 @@ nl_lb_3 =  [0.0001 , 0.00000001]
 nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
 nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
 
-list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_Gompertz"]
+list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_logistic"]
 list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
 list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
 
@@ -410,8 +409,8 @@ R= selection_NL_maxiumum_change_points(
     list_models_f, # ode model to use
     list_lb, # lower bound param
     list_ub, # upper bound param
-    4;
-    type_of_loss="L2_fixed_CI", # type of used loss
+   2;
+    type_of_loss="L2", # type of used loss
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     method_of_fitting="MCMC", # selection of sciml integrator
     type_of_detection="sliding_win",
@@ -420,26 +419,25 @@ R= selection_NL_maxiumum_change_points(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     pt_avg=1,
-    nrep=25,
+    nrep=100,
     save_plot=false, # do plots or no
     display_plots=true,
     path_to_plot="NA", # where save plots
-    win_size=7, # numebr of the point to generate intial condition
+    win_size=14, # numebr of the point to generate intial condition
     pt_smooth_derivative=0,
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-    beta_smoothing_ms=2.0, #  parameter of the AIC penality
+    beta_smoothing_ms=0.0, #  parameter of the AIC penality
     method_peaks_detection="peaks_prominence",
     n_bins=40,
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00000001,
-    penality_CI=7.0)
+    PopulationSize=50,
+    maxiters=20000000,
+    abstol=0.000000001,
+    penality_CI=9.0)
 
 
 
-histogram(D[3][end,2:end])
 
 histogram(D[3][3,2:end])
 
@@ -513,7 +511,7 @@ list_ub; # upper bound param
 display_plot_best_model = true,
 save_plot_best_model=false, # one wants the results of the best fit to be plotted
 verbose=true,
-maxiters = 30000000,
+maxiters = 30,
 integrator =KenCarp4()
 )
 
@@ -672,7 +670,7 @@ list_ub_param, # upper bound param
 display_plots=true, # do plots or no
 path_to_plot="", # where save plots
 pt_smooth_derivative = 0,
-maxiters = 30000000
+maxiters = 30
 ) 
 
 
@@ -775,7 +773,7 @@ fitting_ode_file_test = fit_file_ODE(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     PopulationSize=30,
-    maxiters=200,
+    maxiters=20,
     abstol=0.00001,
     thr_lowess=0.05,
 )

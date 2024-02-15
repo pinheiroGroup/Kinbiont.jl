@@ -1009,19 +1009,41 @@ function selection_NL_fixed_interval(
     interval_changepoints = push!(interval_changepoints, data_testing[1, 1])
     interval_changepoints = push!(interval_changepoints, data_testing[1, end])
     interval_changepoints = sort(interval_changepoints)
-    bc = [data_testing[1, 1], data_testing[2, 2]]
+    bc = [data_testing[1, end], data_testing[2, end]]
     param_out = Vector{Vector{Any}}()
     composed_sol = Type{Any}
     composed_time = Type{Any}
+    loss_to_use = " "
 
-
-    for i = 2:(length(interval_changepoints))
+    for i = (length(interval_changepoints)):-1:2
 
         if i == 2
             tspan_array = findall((data_testing[1, :] .<= interval_changepoints[i]))
             data_temp = Matrix(
                 transpose(hcat(data_testing[1, tspan_array], data_testing[2, tspan_array])),
             )
+
+            if type_of_loss =="RE"
+
+                loss_to_use = "RE_fixed_end"
+
+            elseif    type_of_loss =="L2"
+
+                loss_to_use = "L2_fixed_end"
+            else
+                loss_to_use = string(type_of_loss)
+            end
+        
+        elseif i == (length(interval_changepoints))
+
+
+            tspan_array_1 = findall((data_testing[1, :] .> interval_changepoints[i-1]))
+            tspan_array_2 = findall((data_testing[1, :] .<= interval_changepoints[i]))
+            tspan_array = intersect(tspan_array_1, tspan_array_2)
+            data_temp = Matrix(
+                transpose(hcat(data_testing[1, tspan_array], data_testing[2, tspan_array])),
+            )
+            loss_to_use = string(type_of_loss)
         else
             tspan_array_1 = findall((data_testing[1, :] .> interval_changepoints[i-1]))
             tspan_array_2 = findall((data_testing[1, :] .<= interval_changepoints[i]))
@@ -1029,9 +1051,22 @@ function selection_NL_fixed_interval(
             data_temp = Matrix(
                 transpose(hcat(data_testing[1, tspan_array], data_testing[2, tspan_array])),
             )
+            if type_of_loss =="RE"
+
+                loss_to_use = "RE_fixed_end"
+
+            elseif    type_of_loss =="L2"
+
+                loss_to_use = "L2_fixed_end"
+            else
+
+
+                loss_to_use = string(type_of_loss)
+            end    
             # imposing_bounduary condition
-            data_temp = hcat(bc, data_temp)
+            data_temp = hcat(data_temp,bc)
         end
+
         model_selection_results =  NL_model_selection(data_temp, # dataset first row times second row OD
         name_well, # name of the well
         label_exp, #label of the experiment
@@ -1048,7 +1083,7 @@ function selection_NL_fixed_interval(
         pt_smooth_derivative=pt_smooth_derivative,
         smoothing=smoothing, # the smoothing is done or not?
         type_of_smoothing=type_of_smoothing,
-        type_of_loss=type_of_loss, # type of used loss
+        type_of_loss=loss_to_use, # type of used loss
         multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
         method_multiple_scattering_correction=method_multiple_scattering_correction,
         calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
@@ -1064,20 +1099,18 @@ function selection_NL_fixed_interval(
         # param of the best model
         temp_res_win = model_selection_results[2]
 
-    
 
         time_sol = data_temp[1,:]
         sol_fin = model_selection_results[3]
       
-        value_bonduary = sol_fin[end]
-        time_bonduary = time_sol[end]
+        value_bonduary = sol_fin[1]
+        time_bonduary = time_sol[1]
 
         bc = [time_bonduary,value_bonduary]
         
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
-      
-        if i == 2
+        if i == length(interval_changepoints)
             composed_time = copy(time_sol[index_not_zero])
             composed_sol = copy(sol_fin)
             temp_res_win = push!(temp_res_win, i - 1)
@@ -1085,13 +1118,14 @@ function selection_NL_fixed_interval(
         else
 
 
-            composed_time = vcat(composed_time, time_sol[index_not_zero])
-            composed_sol = vcat(composed_sol, sol_fin)
+            composed_time = vcat( time_sol[index_not_zero],composed_time)
+            composed_sol = vcat(sol_fin,composed_sol)
             temp_res_win = push!(temp_res_win, i - 1)
             param_out = push!(param_out, temp_res_win)
         end
-    end
-  
+    end 
+
+    
     return param_out,composed_sol,composed_time
 
 end   
@@ -1195,12 +1229,17 @@ function selection_NL_maxiumum_change_points(
             maxiters=maxiters,
             abstol=abstol,
             penality_CI=penality_CI)
+ 
 
          n_param_full_model = sum([
                  length(res_this_combination[1][kk][3:(end-5)]) for
                  kk = 1:length(res_this_combination[1])
              ]) + n_change_points
 
+            
+
+
+              
         AICc_full_model = AICc_evaluation(n_param_full_model,beta_smoothing_ms,res_this_combination[3],res_this_combination[2])
 
  
