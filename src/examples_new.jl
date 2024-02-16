@@ -403,13 +403,13 @@ list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
 
 
 R= selection_NL_maxiumum_change_points(
-    data_OD_smooth2, # dataset first row times second row OD
+    data_OD, # dataset first row times second row OD
     "", # name of the well
     "test", #label of the experiment
     list_models_f, # ode model to use
     list_lb, # lower bound param
     list_ub, # upper bound param
-   2;
+  6;
     type_of_loss="L2", # type of used loss
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     method_of_fitting="MCMC", # selection of sciml integrator
@@ -418,17 +418,18 @@ R= selection_NL_maxiumum_change_points(
     smoothing=false,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
+    dectect_number_cdp= true,
     pt_avg=1,
-    nrep=100,
+    nrep=10,
     save_plot=false, # do plots or no
     display_plots=true,
     path_to_plot="NA", # where save plots
-    win_size=14, # numebr of the point to generate intial condition
+    win_size=10, # numebr of the point to generate intial condition
     pt_smooth_derivative=0,
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-    beta_smoothing_ms=0.0, #  parameter of the AIC penality
+    beta_smoothing_ms=2.0, #  parameter of the AIC penality
     method_peaks_detection="peaks_prominence",
     n_bins=40,
     PopulationSize=50,
@@ -439,7 +440,6 @@ R= selection_NL_maxiumum_change_points(
 
 
 
-histogram(D[3][3,2:end])
 
 xdata =data_OD[1,:]
 ydata = data_OD[2,:]
@@ -493,11 +493,11 @@ lb_triple_exp =[ 0.0001 , -0.001, 0.0  , 00.0 ,  200.0   ]
 ub_dhpm =[ 1.2 , 1.1 , 2.0  ,20  ]
 lb_dhpm =[ 0.0001 , 0.00000001, 0.00 ,0 ]
 
-
-
-list_of_models = ["aHPM","piecewise_adjusted_logistic"]
-list_ub =[ub_dhpm  , ub_piece_wise_logistic   ];
-list_lb =[lb_dhpm , lb_piece_wise_logistic   ];
+ub_exp=[1.0]
+lb_exp= [-0.001]
+list_of_models = ["aHPM","piecewise_adjusted_logistic","exponential"]
+list_ub =[ub_dhpm  , ub_piece_wise_logistic  ,ub_exp ];
+list_lb =[lb_dhpm , lb_piece_wise_logistic   ,lb_exp];
 
 
 
@@ -511,7 +511,8 @@ list_ub; # upper bound param
 display_plot_best_model = true,
 save_plot_best_model=false, # one wants the results of the best fit to be plotted
 verbose=true,
-maxiters = 30,
+maxiters = 3000000,
+beta_penality=0.0, # penality for AIC evaluation
 integrator =KenCarp4()
 )
 
@@ -519,7 +520,7 @@ integrator =KenCarp4()
 
 
 
-
+results_ms[1]
 
 
 
@@ -670,7 +671,7 @@ list_ub_param, # upper bound param
 display_plots=true, # do plots or no
 path_to_plot="", # where save plots
 pt_smooth_derivative = 0,
-maxiters = 30
+maxiters = 300000
 ) 
 
 

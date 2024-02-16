@@ -328,6 +328,7 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
     u0_best = copy(u0)
     loss_best = 10^20
     loss_chain = copy(loss_best)
+    loss_chain_best =copy(loss_best)
     best_fitted_model = Any
     best_res_param = Any
     if multiple_scattering_correction == true
@@ -404,6 +405,7 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
 
             best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
             u0_best = copy(u0)
+            loss_chain = vcat(loss_chain, loss_value)
 
 
         else
@@ -426,6 +428,7 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
             end
 
         end
+        loss_chain_best = vcat(loss_chain, loss_best)
 
 
 
@@ -474,7 +477,7 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
 
 
 
-    return best_res_param, best_fitted_model, loss_chain[2:end]
+    return best_res_param, best_fitted_model, loss_chain[2:end],loss_chain_best[2:end]
 end
 
 
@@ -1164,6 +1167,7 @@ function selection_NL_maxiumum_change_points(
     maxiters=2000000,
     abstol=0.000000001,
     dectect_number_cdp= true,
+    fixed_cpd = false,
     penality_CI=8.0,
     size_bootstrap = 0.7 )
 
@@ -1186,26 +1190,60 @@ function selection_NL_maxiumum_change_points(
         )
     end
 
-    list_change_points_dev = cpd_local_detection(
-        data_testing,
-        n_change_points;
-        type_of_detection=type_of_detection,
-        type_of_curve=type_of_curve,
-        pt_derivative=pt_smooth_derivative,
-        size_win=win_size,
-        method=method_peaks_detection,
-        number_of_bin=n_bins,
-    )
+
 
 
     if dectect_number_cdp == true
 
-     combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2], 
-    n_fix = 0)
+        list_change_points_dev = cpd_local_detection(
+            data_testing,
+            n_change_points;
+            type_of_detection=type_of_detection,
+            type_of_curve=type_of_curve,
+            pt_derivative=pt_smooth_derivative,
+            size_win=win_size,
+            method=method_peaks_detection,
+            number_of_bin=n_bins,
+        )
 
-    else 
+     combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2], 
+         n_fix = 0)
+
+
+    elseif fixed_cpd == true      
+    
+        list_change_points_dev = cpd_local_detection(
+            data_testing,
+            n_change_points;
+            type_of_detection=type_of_detection,
+            type_of_curve=type_of_curve,
+            pt_derivative=pt_smooth_derivative,
+            size_win=win_size,
+            method=method_peaks_detection,
+            number_of_bin=n_bins,
+        )
+
         combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2], 
         n_fix = n_change_points)
+
+    
+    
+    else 
+        list_change_points_dev = cpd_local_detection(
+            data_testing,
+            2*n_change_points;
+            type_of_detection=type_of_detection,
+            type_of_curve=type_of_curve,
+            pt_derivative=pt_smooth_derivative,
+            size_win=win_size,
+            method=method_peaks_detection,
+            number_of_bin=n_bins,
+        )
+
+        combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2], 
+        n_fix = n_change_points)
+
+   
     end
       
     for i in 1:size(combination_to_test, 1)
