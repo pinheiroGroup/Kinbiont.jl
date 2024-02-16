@@ -95,10 +95,11 @@ Plots.scatter!(data_OD_smooth2[1,:],data_OD_smooth2[2,:], xlabel="Time", ylabel=
 # first, as example, I evaluate the specific growth rate (i.e. the dynamic of the slope of a log linear fitting of a slinding window)
 # size of the win. If 0 the methods involve interpolation between the data point 
 pt_smoothing_derivative =7
-deriv = specific_gr_evaluation(data_OD_smooth2, 7)
+deriv = specific_gr_evaluation(data_OD, 7)
+plot(deriv)
 # to be correctet if 0
 data_OD_smooth2 =data_OD_smooth
-specific_gr_times = [(data_OD_smooth2[1, r] + data_OD_smooth2[1, (r+pt_smoothing_derivative)]) / 2 for r in 1:1:(length(data_OD_smooth2[2, :])-pt_smoothing_derivative)]
+specific_gr_times = [(data_OD_smooth2[1, r] + data_OD_smooth2[1, (r+pt_smoothing_derivative)]) / 2 for r in 1:1:(eachindex(data_OD_smooth2[2, :][end]-pt_smoothing_derivative))]
 data_deriv =      Matrix(transpose(hcat(specific_gr_times, deriv)));
 
 # now i fit for real the data with log lin
@@ -158,31 +159,6 @@ function NL_model_exp(p, times)
     return model
 end
 
-function NL_model_logistic(p,times)
-
-    u = p[1] ./ (1 .+ exp.( .- p[2] .* ( times .- p[3] )))
-  
-   return u
-
-end 
-
-function NL_model_Weibull(p,times)
-
-    u = p[1] .- (p[1] .-p[2]) .* exp.( - (p[3] .* times ) .^ p[4]) 
-
-
-    return u
-
-end
-
-function NL_model_Richards(p,times)
-
-    u = p[1] ./ (1 .+ p[2] .* exp.( .- p[3] .* ( times .- p[4] ))).^(1 ./ p[5])
-
-   return u
-
-end 
-
 
 nl_ub =  [2.0001 , 10.00000001, 500.00]
 nl_lb =  [0.0001 , 0.00000001, 0.00 ]
@@ -204,7 +180,6 @@ pt_smooth_derivative=7,
 smoothing=false, # the smoothing is done or not?
 type_of_smoothing="rolling_avg",
 type_of_loss="L2", # type of used loss
-blank_array=zeros(100), # data of all blanks
 multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
 method_multiple_scattering_correction="interpolation",
 calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
@@ -215,19 +190,19 @@ thr_lowess=0.05,
 penality_CI = 8
 )
 
-nl_ub =  [2.0001 , 10.00000001, 500.00]
-nl_lb =  [0.0001 , 0.00000001, 0.00 ]
-new_param = [0.1, 1.01,0.0]
+nl_ub =  [2.0001 , 10.00000001, 500.00,4]
+nl_lb =  [0.0001 , 0.00000001, 0.00,0.1 ]
+new_param = [0.1, 1.01,0.0,0.99]
 
 
 @time M= fit_NL_model_MCMC_intialization(data_OD_smooth2, # dataset first row times second row OD
 "test", # name of the well
 "", #label of the experiment
-"NL_Gompertz", # ode model to use
+"NL_Bertalanffy", # ode model to use
 nl_lb, # lower bound param
 nl_ub; # upper bound param
 u0=new_param,# initial guess param
-nrep =500,
+nrep =5,
 optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
 display_plots=true, # display plots in julia or not
 save_plot=false,
@@ -250,8 +225,7 @@ penality_CI = 8
 plot(M[3])
 
 histogram(M[3])
-new_param = [B[1][3],B[1][4],B[1][5]]
-new_param = [0.1, 1.01,0.0]
+new_param = [M[1][3],M[1][4],M[1][5],M[1][6]]
 
 B1= fit_NL_model(data_OD_smooth2, # dataset first row times second row OD
 "test", # name of the well
@@ -269,7 +243,6 @@ pt_smooth_derivative=7,
 smoothing=false, # the smoothing is done or not?
 type_of_smoothing="rolling_avg",
 type_of_loss="L2_fixed_CI", # type of used loss
-blank_array=zeros(100), # data of all blanks
 multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
 method_multiple_scattering_correction="interpolation",
 calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
@@ -296,7 +269,6 @@ pt_smooth_derivative=0,
 smoothing=false, # the smoothing is done or not?
 type_of_smoothing="rolling_avg",
 type_of_loss="L2", # type of used loss
-blank_array=zeros(100), # data of all blanks
 multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
 method_multiple_scattering_correction="interpolation",
 calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
@@ -310,11 +282,11 @@ penality_CI = 9
 @time  D = fit_NL_model_bootstrap(data_OD_smooth2, # dataset first row times second row OD
 "", # name of the well
 "", #label of the experiment
-"NL_Richards", # ode model to use
+"NL_Bertalanffy", # ode model to use
 nl_lb, # lower bound param
 nl_ub; # upper bound param
 nrep=500,
-u0=[00.01, 0.1,0.1,0.1,0.1],# initial guess param
+u0=[00.01, 0.01,0.01,1.01],# initial guess param
 optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
 display_plots=true, # display plots in julia or not
 save_plot=false,
@@ -324,7 +296,6 @@ pt_smooth_derivative=7,
 smoothing=false, # the smoothing is done or not?
 type_of_smoothing="rolling_avg",
 type_of_loss="RE", # type of used loss
-blank_array=zeros(100), # data of all blanks
 multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
 method_multiple_scattering_correction="interpolation",
 calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
@@ -401,6 +372,9 @@ list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_logistic"]
 list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
 list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
 
+data_OD = Matrix(transpose(hcat(unique(data_OD[1,:]),unique(data_OD[2,1:length(unique(data_OD[1,:]))]))))
+scatter(data_OD[1,:],data_OD[2,:])
+
 
 R= selection_NL_maxiumum_change_points(
     data_OD, # dataset first row times second row OD
@@ -409,7 +383,7 @@ R= selection_NL_maxiumum_change_points(
     list_models_f, # ode model to use
     list_lb, # lower bound param
     list_ub, # upper bound param
-  6;
+  3;
     type_of_loss="L2", # type of used loss
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     method_of_fitting="MCMC", # selection of sciml integrator
@@ -418,9 +392,9 @@ R= selection_NL_maxiumum_change_points(
     smoothing=false,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
-    dectect_number_cdp= true,
+    dectect_number_cdp= false,
     pt_avg=1,
-    nrep=10,
+    nrep=20,
     save_plot=false, # do plots or no
     display_plots=true,
     path_to_plot="NA", # where save plots
@@ -429,11 +403,11 @@ R= selection_NL_maxiumum_change_points(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-    beta_smoothing_ms=2.0, #  parameter of the AIC penality
+    beta_smoothing_ms=10.0, #  parameter of the AIC penality
     method_peaks_detection="peaks_prominence",
     n_bins=40,
     PopulationSize=50,
-    maxiters=20000000,
+    maxiters=2000000,
     abstol=0.000000001,
     penality_CI=9.0)
 
@@ -671,7 +645,7 @@ list_ub_param, # upper bound param
 display_plots=true, # do plots or no
 path_to_plot="", # where save plots
 pt_smooth_derivative = 0,
-maxiters = 300000
+maxiters = 300
 ) 
 
 
@@ -918,6 +892,7 @@ A = selection_ODE_fixed_change_points_file(
     type_of_smoothing = "lowess" ,
     thr_lowess = 0.05
     )
+
 
 
 

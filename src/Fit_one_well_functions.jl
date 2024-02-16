@@ -40,7 +40,7 @@ function fitting_one_well_Log_Lin(
     specific_gr = specific_gr_evaluation(data_smooted, pt_smoothing_derivative)
     specific_gr_times = [
         (data_smooted[1, r] + data_smooted[1, (r+pt_smoothing_derivative)]) / 2 for
-        r = 1:1:(eachindex(data_smooted[2, :][end])-pt_smoothing_derivative)
+        r = 1:1:(eachindex(data_smooted[2, :])[end].-pt_smoothing_derivative)
     ]
 
     # selecting the max
@@ -912,7 +912,7 @@ function selection_ODE_fixed_change_points(
     composed_sol = Type{Any}
     composed_time = Type{Any}
 
-    for i = 2:(eachindexa(interval_changepoints)[end])
+    for i = 2:(eachindex(interval_changepoints)[end])
         if i == 2
             tspan_array = findall((data_testing[1, :] .<= interval_changepoints[i]))
             data_temp = Matrix(
