@@ -964,7 +964,7 @@ function selection_ODE_fixed_change_points_file(
 
 
     annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l  in eachindex(annotation)]
+    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
     # selcting blank wells
     properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
@@ -1070,6 +1070,217 @@ function selection_ODE_fixed_change_points_file(
             PopulationSize=PopulationSize,
             maxiters=maxiters,
             abstol=abstol,
+        )
+
+        vectorized_temp_results = expand_res(
+            temp_results_1[1],
+            lb_param_array,
+            string(well_name),
+            label_exp;
+            number_of_segment=n_change_points + 1
+        )
+        if verbose == true
+            println("the results are:")
+            println(vectorized_temp_results)
+        end
+
+        parameter_of_optimization = hcat(parameter_of_optimization, vectorized_temp_results)
+
+    end
+
+
+    if write_res == true
+
+        CSV.write(
+            string(
+                path_to_results,
+                label_exp,
+                "_parameters_model_cdp_nseg_",
+                n_change_points + 1,
+                ".csv",
+            ),
+            Tables.table(Matrix(parameter_of_optimization)),
+        )
+
+
+    end
+    return parameter_of_optimization
+
+
+
+
+end
+
+
+
+
+function segmentation_ODE_file(
+    label_exp::String, #label of the experiment
+    path_to_data::String, # path to the folder to analyze
+    path_to_annotation::String,# path to the annotation of the wells
+    list_of_models::Vector{String}, # ode model to use 
+    lb_param_array::Any, # lower bound param
+    ub_param_array::Any,# upper bound param
+    n_change_points::Int;
+    dectect_number_cdp=true,
+    fixed_cpd=false,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    integrator=Tsit5(), # selection of sciml integrator
+    type_of_loss="L2", # type of used loss 
+    type_of_detection="sliding_win",
+    type_of_curve="original",
+    do_blank_subtraction="avg_blank",
+    correct_negative="thr_correction",
+    thr_negative=0.01,
+    pt_avg=1, # number of the point to generate intial condition
+    smoothing=true, # the smoothing is done or not?
+    save_plots=false, # do plots or no
+    display_plots=false, # do plots or no
+    path_to_plot="NA", # where save plots
+    path_to_results="NA",
+    win_size=7, # numebr of the point to generate intial condition
+    pt_smooth_derivative=0,
+    penality_parameter=2.0,
+    avg_replicate=false,
+    multiple_scattering_correction="false", # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    write_res=false,
+    save_all_model=false,
+    method_peaks_detection="peaks_prominence",
+    n_bins=40,
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    verbose=false,
+)
+
+
+    if write_res == true
+        mkpath(path_to_results)
+    end
+
+    if save_plots == true
+        mkpath(path_to_plot)
+    end
+
+    parameter_of_optimization = initialize_res_ms(ub_param_array, number_of_segment=n_change_points + 1)
+
+
+
+    annotation = CSV.File(string(path_to_annotation), header=false)
+    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
+    # selcting blank wells
+    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
+    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
+    list_of_discarded =
+        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
+    list_of_blank = Symbol.(list_of_blank)
+
+    # reading files
+    dfs_data = CSV.File(path_to_data)
+
+    # shaping df for the inference
+    names_of_cols = propertynames(dfs_data)
+
+    # excluding blank data and discarded wells
+    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    if length(list_of_discarded) > 0
+        names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
+    end
+
+    times_data = dfs_data[names_of_cols[1]]
+    if length(list_of_blank) > 0
+        blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
+        blank_array = convert(Vector{Float64}, blank_array)
+
+        blank_value = blank_subtraction(
+            dfs_data,
+            list_of_blank;
+            method=do_blank_subtraction
+        )
+    else
+        blank_value = 0.0
+    end
+
+
+    ## considering replicates
+    list_replicate = unique(properties_of_annotation)
+    list_replicate = filter!(e -> e != "b", list_replicate)
+
+    if avg_replicate == true
+
+
+        dfs_data, names_of_cols = average_replicate(dfs_data, times_data, properties_of_annotation, names_of_annotated_df)
+
+
+    end
+    # for on the columns to analyze
+
+    for well_name in names_of_cols[2:end]
+
+
+
+        if avg_replicate == true
+
+            data_values = copy(dfs_data[!, well_name])
+
+        else
+            data_values = copy(dfs_data[well_name])
+        end
+
+        # blank subtraction 
+        data_values = data_values .- blank_value
+
+        data = Matrix(transpose(hcat(times_data, data_values)))
+
+        # correcting negative values after blank subtraction
+        data = negative_value_correction(data,
+            blank_array;
+            method=correct_negative,
+            thr_negative=thr_negative,)
+
+
+
+        # inference
+
+        temp_results_1 = segmentation_ODE(
+            data_testing, # dataset x times y OD/fluorescence
+            string(well_name), # name of the well
+            label_exp, #label of the experiment
+            list_of_models, # ode model to use
+            lb_param_array, # lower bound param
+            ub_param_array, # upper bound param
+            n_max_change_points::Int;
+            dectect_number_cdp=dectect_number_cdp,
+            fixed_cpd=fixed_cpd,
+            optmizator=optmizator, # selection of optimization method
+            integrator=integrator, # selection of sciml integrator
+            type_of_loss=type_of_loss, # type of used loss
+            type_of_detection=type_of_detection,
+            type_of_curve=type_of_curve,
+            pt_avg=pt_avg, # number of the point to generate intial condition
+            smoothing=smoothing, # the smoothing is done or not?
+            save_plot=save_plots, # do plots or no
+            display_plot=display_plots, # do plots or no
+            path_to_plot=path_to_plot, # where save plots
+            path_to_results=path_to_results,
+            win_size=win_size, # numebr of the point to generate intial condition
+            pt_smooth_derivative=pt_smooth_derivative,
+            penality_parameter=penality_parameter,
+            multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
+            calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
+            save_all_model=save_all_model,
+            method_peaks_detection=method_peaks_detection,
+            n_bins=n_bins,
+            PopulationSize=PopulationSize,
+            maxiters=maxiters,
+            abstol=abstol,
+            type_of_smoothing=type_of_smoothing,
+            thr_lowess=thr_lowess,
         )
 
         vectorized_temp_results = expand_res(

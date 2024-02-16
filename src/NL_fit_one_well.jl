@@ -328,7 +328,7 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
     u0_best = copy(u0)
     loss_best = 10^20
     loss_chain = copy(loss_best)
-    loss_chain_best =copy(loss_best)
+    loss_chain_best = copy(loss_best)
     best_fitted_model = Any
     best_res_param = Any
     if multiple_scattering_correction == true
@@ -477,7 +477,7 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
 
 
 
-    return best_res_param, best_fitted_model, loss_chain[2:end],loss_chain_best[2:end]
+    return best_res_param, best_fitted_model, loss_chain[2:end], loss_chain_best[2:end]
 end
 
 
@@ -704,7 +704,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     beta_param=2.0,
     penality_CI=8.0
 )
-    score_res = [ "AIC"]
+    score_res = ["AIC"]
     top_score = 10^20
     top_model = Vector{Any}
     top_fitted_sol = Vector{Any}
@@ -751,7 +751,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2,:], temp_res[2])
+            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2])
             temp = [model_to_test, temp_res[end], temp_AIC]
             score_res = hcat(score_res, temp_AIC)
             if mm == 1
@@ -801,7 +801,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2,:], temp_res[2])
+            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2])
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
@@ -850,7 +850,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2,:], temp_res[2])
+            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2])
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
@@ -902,7 +902,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2,:], temp_res[2])
+            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2])
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
@@ -964,7 +964,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     end
 
 
-    return top_score, top_model, top_fitted_sol,score_res
+    return top_score, top_model, top_fitted_sol, score_res
 end
 
 
@@ -994,7 +994,7 @@ function selection_NL_fixed_interval(
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     method_of_fitting="MCMC", # selection of sciml integrator
     smoothing=false,
-    size_bootstrap = size_bootstrap,
+    size_bootstrap=size_bootstrap,
     nrep=nrep,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
@@ -1026,17 +1026,17 @@ function selection_NL_fixed_interval(
                 transpose(hcat(data_testing[1, tspan_array], data_testing[2, tspan_array])),
             )
 
-            if type_of_loss =="RE"
+            if type_of_loss == "RE"
 
                 loss_to_use = "RE_fixed_end"
 
-            elseif    type_of_loss =="L2"
+            elseif type_of_loss == "L2"
 
                 loss_to_use = "L2_fixed_end"
             else
                 loss_to_use = string(type_of_loss)
             end
-        
+
         elseif i == (length(interval_changepoints))
 
 
@@ -1054,63 +1054,63 @@ function selection_NL_fixed_interval(
             data_temp = Matrix(
                 transpose(hcat(data_testing[1, tspan_array], data_testing[2, tspan_array])),
             )
-            if type_of_loss =="RE"
+            if type_of_loss == "RE"
 
                 loss_to_use = "RE_fixed_end"
 
-            elseif    type_of_loss =="L2"
+            elseif type_of_loss == "L2"
 
                 loss_to_use = "L2_fixed_end"
             else
 
 
                 loss_to_use = string(type_of_loss)
-            end    
+            end
             # imposing_bounduary condition
-            data_temp = hcat(data_temp,bc)
+            data_temp = hcat(data_temp, bc)
         end
 
-        model_selection_results =  NL_model_selection(data_temp, # dataset first row times second row OD
-        name_well, # name of the well
-        label_exp, #label of the experiment
-        list_of_models, # ode model to use
-        list_lb_param, # lower bound param
-        list_ub_param; # upper bound param
-        method_of_fitting=method_of_fitting,
-        nrep=nrep,
-        list_u0=list_u0,# initial guess param
-        optmizator=optmizator,
-        display_plots=false, # display plots in julia or not
-        size_bootstrap=size_bootstrap,
-        pt_avg=pt_avg, # numebr of the point to generate intial condition
-        pt_smooth_derivative=pt_smooth_derivative,
-        smoothing=smoothing, # the smoothing is done or not?
-        type_of_smoothing=type_of_smoothing,
-        type_of_loss=loss_to_use, # type of used loss
-        multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-        method_multiple_scattering_correction=method_multiple_scattering_correction,
-        calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
-        PopulationSize=PopulationSize,
-        maxiters=maxiters,
-        abstol=abstol,
-        thr_lowess=thr_lowess,
-        write_res=false,
-        beta_param=  beta_smoothing_ms,
-       penality_CI = penality_CI
-    )
+        model_selection_results = NL_model_selection(data_temp, # dataset first row times second row OD
+            name_well, # name of the well
+            label_exp, #label of the experiment
+            list_of_models, # ode model to use
+            list_lb_param, # lower bound param
+            list_ub_param; # upper bound param
+            method_of_fitting=method_of_fitting,
+            nrep=nrep,
+            list_u0=list_u0,# initial guess param
+            optmizator=optmizator,
+            display_plots=false, # display plots in julia or not
+            size_bootstrap=size_bootstrap,
+            pt_avg=pt_avg, # numebr of the point to generate intial condition
+            pt_smooth_derivative=pt_smooth_derivative,
+            smoothing=smoothing, # the smoothing is done or not?
+            type_of_smoothing=type_of_smoothing,
+            type_of_loss=loss_to_use, # type of used loss
+            multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
+            calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
+            PopulationSize=PopulationSize,
+            maxiters=maxiters,
+            abstol=abstol,
+            thr_lowess=thr_lowess,
+            write_res=false,
+            beta_param=beta_smoothing_ms,
+            penality_CI=penality_CI
+        )
 
         # param of the best model
         temp_res_win = model_selection_results[2]
 
 
-        time_sol = data_temp[1,:]
+        time_sol = data_temp[1, :]
         sol_fin = model_selection_results[3]
-      
+
         value_bonduary = sol_fin[1]
         time_bonduary = time_sol[1]
 
-        bc = [time_bonduary,value_bonduary]
-        
+        bc = [time_bonduary, value_bonduary]
+
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
         if i == length(interval_changepoints)
@@ -1121,17 +1121,17 @@ function selection_NL_fixed_interval(
         else
 
 
-            composed_time = vcat( time_sol[index_not_zero],composed_time)
-            composed_sol = vcat(sol_fin,composed_sol)
+            composed_time = vcat(time_sol[index_not_zero], composed_time)
+            composed_sol = vcat(sol_fin, composed_sol)
             temp_res_win = push!(temp_res_win, i - 1)
             param_out = push!(param_out, temp_res_win)
         end
-    end 
+    end
 
-    
-    return param_out,composed_sol,composed_time
 
-end   
+    return param_out, composed_sol, composed_time
+
+end
 
 function selection_NL_maxiumum_change_points(
     data_testing::Matrix{Float64}, # dataset first row times second row OD
@@ -1166,16 +1166,16 @@ function selection_NL_maxiumum_change_points(
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.000000001,
-    dectect_number_cdp= true,
-    fixed_cpd = false,
+    dectect_number_cdp=true,
+    fixed_cpd=false,
     penality_CI=8.0,
-    size_bootstrap = 0.7 )
+    size_bootstrap=0.7)
 
     top_aicc = 10^20
     top_param = Vector{Any}
-    top_fit =Vector{Any}
-    top_time =Vector{Any}
-    top_intervals =Vector{Any}
+    top_fit = Vector{Any}
+    top_time = Vector{Any}
+    top_intervals = Vector{Any}
 
     if multiple_scattering_correction == true
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
@@ -1206,12 +1206,12 @@ function selection_NL_maxiumum_change_points(
             number_of_bin=n_bins,
         )
 
-     combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2], 
-         n_fix = 0)
+        combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2],
+            n_fix=0)
 
 
-    elseif fixed_cpd == true      
-    
+    elseif fixed_cpd == true
+
         list_change_points_dev = cpd_local_detection(
             data_testing,
             n_change_points;
@@ -1223,15 +1223,15 @@ function selection_NL_maxiumum_change_points(
             number_of_bin=n_bins,
         )
 
-        combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2], 
-        n_fix = n_change_points)
+        combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2],
+            n_fix=n_change_points)
 
-    
-    
-    else 
+
+
+    else
         list_change_points_dev = cpd_local_detection(
             data_testing,
-            2*n_change_points;
+            2 * n_change_points;
             type_of_detection=type_of_detection,
             type_of_curve=type_of_curve,
             pt_derivative=pt_smooth_derivative,
@@ -1240,12 +1240,12 @@ function selection_NL_maxiumum_change_points(
             number_of_bin=n_bins,
         )
 
-        combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2], 
-        n_fix = n_change_points)
+        combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2],
+            n_fix=n_change_points)
 
-   
+
     end
-      
+
     for i in 1:eachindex(combination_to_test)[end]
 
         cpd_temp = sort(combination_to_test[i])
@@ -1258,7 +1258,7 @@ function selection_NL_maxiumum_change_points(
             list_lb_param, # lower bound param
             list_ub_param, # upper bound param
             cpd_temp;
-            list_u0 = list_u0,
+            list_u0=list_u0,
             type_of_loss=type_of_loss, # type of used loss
             optmizator=optmizator, # selection of optimization method
             method_of_fitting=method_of_fitting, # selection of sciml integrator
@@ -1267,7 +1267,7 @@ function selection_NL_maxiumum_change_points(
             thr_lowess=thr_lowess,
             pt_avg=pt_avg,
             nrep=nrep,
-            size_bootstrap = size_bootstrap,
+            size_bootstrap=size_bootstrap,
             pt_smooth_derivative=pt_smooth_derivative,
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
             method_multiple_scattering_correction=method_multiple_scattering_correction,
@@ -1277,38 +1277,38 @@ function selection_NL_maxiumum_change_points(
             maxiters=maxiters,
             abstol=abstol,
             penality_CI=penality_CI)
- 
-
-         n_param_full_model = sum([
-                 length(res_this_combination[1][kk][3:(end-5)]) for
-                 kk = 1:length(res_this_combination[1])
-             ]) + n_change_points
-
-            
 
 
-              
-        AICc_full_model = AICc_evaluation(n_param_full_model,beta_smoothing_ms,res_this_combination[3],res_this_combination[2])
+        n_param_full_model = sum([
+            length(res_this_combination[1][kk][3:(end-5)]) for
+            kk = 1:length(res_this_combination[1])
+        ]) + n_change_points
 
- 
+
+
+
+
+        AICc_full_model = AICc_evaluation(n_param_full_model, beta_smoothing_ms, res_this_combination[3], res_this_combination[2])
+
+
         if i == 1
 
             top_aicc = copy(AICc_full_model)
-            top_param =copy(res_this_combination[1])
-            top_fit =copy(res_this_combination[2])
-            top_time =copy(res_this_combination[3])
-            top_intervals =copy(cpd_temp)
+            top_param = copy(res_this_combination[1])
+            top_fit = copy(res_this_combination[2])
+            top_time = copy(res_this_combination[3])
+            top_intervals = copy(cpd_temp)
 
 
         elseif AICc_full_model < top_aicc
-            
+
             top_aicc = copy(AICc_full_model)
-            top_param =copy(res_this_combination[1])
-            top_fit =copy(res_this_combination[2])
-            top_time =copy(res_this_combination[3])
-            top_intervals =copy(cpd_temp)
-        end    
-     
+            top_param = copy(res_this_combination[1])
+            top_fit = copy(res_this_combination[2])
+            top_time = copy(res_this_combination[3])
+            top_intervals = copy(cpd_temp)
+        end
+
     end
     if display_plots
         if_display = display
@@ -1364,5 +1364,5 @@ function selection_NL_maxiumum_change_points(
         )
     end
 
-    return top_param,sort(top_intervals),top_fit,top_time
+    return top_param, sort(top_intervals), top_fit, top_time
 end

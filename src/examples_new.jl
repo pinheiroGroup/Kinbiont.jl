@@ -920,7 +920,7 @@ K=  fit_NL_segmentation_file(
         list_ub, # upper bound param
         3;
         method_of_fitting="MCMC",
-        nrep=2,
+        nrep=20,
         list_u0=list_lb .+ (list_ub .- list_lb) ./ 2,# initial guess param
         optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
         path_to_results="NA", # path where save results
@@ -940,15 +940,15 @@ K=  fit_NL_segmentation_file(
         multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
         method_multiple_scattering_correction="interpolation",
         calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-        PopulationSize=300,
-        maxiters=20000,
+        PopulationSize=100,
+        maxiters=2000000,
         abstol=0.00001,
         thr_lowess=0.05,
         dectect_number_cdp= true,
         fixed_cpd = false,
-        penality_CI=8.0,
-        beta_smoothing_ms = 0.5,
-        verbose =true
+        penality_CI=4.0,
+        beta_smoothing_ms = 0.0,
+        verbose =false
     
 )
     

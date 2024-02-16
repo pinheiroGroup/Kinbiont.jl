@@ -36,7 +36,7 @@ function fit_NL_model_file(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-    penality_CI = 8.0
+    penality_CI=8.0
 )
 
 
@@ -161,9 +161,7 @@ function fit_NL_model_file(
                 abstol=abstol,
                 thr_lowess=thr_lowess,
                 write_res=write_res,
-                penality_CI = penality_CI
-
-            )
+                penality_CI=penality_CI)
 
 
         elseif method_NL_fit == "Morris_sensitivity"
@@ -193,9 +191,7 @@ function fit_NL_model_file(
                 abstol=abstol,
                 thr_lowess=thr_lowess,
                 write_res=write_res,
-                penality_CI = penality_CI
-
-            )
+                penality_CI=penality_CI)
         elseif method_of_fitting == "MCMC"
 
 
@@ -222,9 +218,7 @@ function fit_NL_model_file(
                 maxiters=maxiters,
                 abstol=abstol,
                 thr_lowess=thr_lowess,
-                penality_CI = penality_CI
-
-            )
+                penality_CI=penality_CI)
 
 
         else
@@ -254,7 +248,7 @@ function fit_NL_model_file(
                 maxiters=maxiters,
                 abstol=abstol,
                 thr_lowess=thr_lowess,
-                penality_CI = penality_CI
+                penality_CI=penality_CI
             )
 
 
@@ -333,11 +327,8 @@ function fit_NL_model_selection_file(
     abstol=0.00001,
     thr_lowess=0.05,
     beta_param=2.0,
-    penality_CI = 8.0,
-    size_bootstrap =0.7,
-
-
-)
+    penality_CI=8.0,
+    size_bootstrap=0.7,)
 
 
     if write_res == true
@@ -429,38 +420,38 @@ function fit_NL_model_selection_file(
         data = Matrix(data)
 
         # defining time steps of the inference
-       
 
-        temp_results_1 =  NL_model_selection(data, # dataset first row times second row OD
-        string(well_name), # name of the well
-        label_exp, #label of the experiment
-        list_model_function, # ode model to use
-        list_lb_param, # lower bound param
-        list_ub_param; # upper bound param
-        method_of_fitting=method_of_fitting,
-        nrep=nrep,
-        list_u0=list_u0,# initial guess param
-        optmizator=optmizator,
-        display_plots=display_plots, # display plots in julia or not
-        save_plot=save_plot,
-        size_bootstrap=size_bootstrap,
-        path_to_plot=path_to_plot, # where save plots
-        pt_avg=pt_avg, # numebr of the point to generate intial condition
-        pt_smooth_derivative=pt_smooth_derivative,
-        smoothing=smoothing, # the smoothing is done or not?
-        type_of_smoothing=type_of_smoothing,
-        type_of_loss=loss_type, # type of used loss
-        multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-        method_multiple_scattering_correction=method_multiple_scattering_correction,
-        calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
-        PopulationSize=PopulationSize,
-        maxiters=maxiters,
-        abstol=abstol,
-        thr_lowess=thr_lowess,
-        write_res=false,
-        beta_param=  beta_param,
-       penality_CI = penality_CI
-    )
+
+        temp_results_1 = NL_model_selection(data, # dataset first row times second row OD
+            string(well_name), # name of the well
+            label_exp, #label of the experiment
+            list_model_function, # ode model to use
+            list_lb_param, # lower bound param
+            list_ub_param; # upper bound param
+            method_of_fitting=method_of_fitting,
+            nrep=nrep,
+            list_u0=list_u0,# initial guess param
+            optmizator=optmizator,
+            display_plots=display_plots, # display plots in julia or not
+            save_plot=save_plot,
+            size_bootstrap=size_bootstrap,
+            path_to_plot=path_to_plot, # where save plots
+            pt_avg=pt_avg, # numebr of the point to generate intial condition
+            pt_smooth_derivative=pt_smooth_derivative,
+            smoothing=smoothing, # the smoothing is done or not?
+            type_of_smoothing=type_of_smoothing,
+            type_of_loss=loss_type, # type of used loss
+            multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
+            calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
+            PopulationSize=PopulationSize,
+            maxiters=maxiters,
+            abstol=abstol,
+            thr_lowess=thr_lowess,
+            write_res=false,
+            beta_param=beta_param,
+            penality_CI=penality_CI
+        )
 
 
 
@@ -530,17 +521,17 @@ function fit_NL_segmentation_file(
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
-    size_bootstrap =0.7,
+    size_bootstrap=0.7,
     thr_lowess=0.05,
-    dectect_number_cdp= true,
+    dectect_number_cdp=true,
     type_of_detection="sliding_win",
     type_of_curve="original",
-        fixed_cpd = false,
+    fixed_cpd=false,
     penality_CI=8.0,
-    beta_smoothing_ms = 2.0,
+    beta_smoothing_ms=2.0,
     win_size=7, # number of the point of cpd sliding win
-    n_bins =40,
-    )
+    n_bins=40,
+)
 
 
     if write_res == true
@@ -550,7 +541,7 @@ function fit_NL_segmentation_file(
     if save_plots == true
         mkpath(path_to_plot)
     end
-    parameter_of_optimization = initialize_res_ms(list_ub_param,number_of_segment = n_change_points)
+    parameter_of_optimization = initialize_res_ms(list_ub_param, number_of_segment=n_change_points)
 
 
 
@@ -632,9 +623,9 @@ function fit_NL_segmentation_file(
         data = Matrix(data)
 
         # defining time steps of the inference
-       
 
-        temp_results_1 =  selection_NL_maxiumum_change_points(
+
+        temp_results_1 = selection_NL_maxiumum_change_points(
             data, # dataset first row times second row OD
             string(well_name), # name of the well
             label_exp, #label of the experiment
@@ -666,10 +657,10 @@ function fit_NL_segmentation_file(
             PopulationSize=PopulationSize,
             maxiters=maxiters,
             abstol=abstol,
-            dectect_number_cdp= dectect_number_cdp,
-            fixed_cpd = fixed_cpd,
+            dectect_number_cdp=dectect_number_cdp,
+            fixed_cpd=fixed_cpd,
             penality_CI=penality_CI,
-            size_bootstrap =size_bootstrap )
+            size_bootstrap=size_bootstrap)
 
 
         data = Matrix(data)
@@ -680,9 +671,9 @@ function fit_NL_segmentation_file(
         if verbose == true
             println("the results are:")
             println(temp_results_1[1])
-        end  
+        end
 
-        results_to_bind =  expand_res(
+        results_to_bind = expand_res(
             temp_results_1[1],
             list_lb_param,
             string(well_name),

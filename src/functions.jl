@@ -40,7 +40,7 @@ function specific_gr_evaluation(data_smooted::Any, pt_smoothing_derivative::Int)
 
     if pt_smoothing_derivative > 1
 
-        for r = 1:1:(eachindex(data_smooted[2, :])[end].- pt_smoothing_derivative)
+        for r = 1:1:(eachindex(data_smooted[2, :])[end].-pt_smoothing_derivative)
             M = [ones(pt_smoothing_derivative) data_smooted[1, r:(r+pt_smoothing_derivative-1)]]
             Y = log.(data_smooted[2, r:(r+pt_smoothing_derivative-1)])
 
@@ -121,7 +121,7 @@ function generation_of_combination_of_IC_morris(
 
     starting_guess = copy(lb_param)
     delta_vec =
-        [(ub_param[i] - lb_param[i]) / (N_step_morris + 1) for i in  eachindex(ub_param)]
+        [(ub_param[i] - lb_param[i]) / (N_step_morris + 1) for i in eachindex(ub_param)]
 
     # generating combinations of all possible parameters values
     combinations_par = copy(starting_guess)
@@ -480,17 +480,17 @@ function initialize_df_results_ode_custom(list_of_model_parameters::Any)
 end
 
 
-function AICc_evaluation(n_param,beta_penality,data,data_th)
+function AICc_evaluation(n_param, beta_penality, data, data_th)
     n_data = length(data)
-    if n_data> n_param - 2
-      RSS = sum((data_th .- data).^2)
-      correction = beta_penality *(((n_param +1)*(n_param +2) )/(n_data - n_param - 2))
-      AIC = +beta_penality * n_param + n_data * log(RSS / n_data )  
-      AICc = AIC + correction
+    if n_data > n_param - 2
+        RSS = sum((data_th .- data) .^ 2)
+        correction = beta_penality * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
+        AIC = +beta_penality * n_param + n_data * log(RSS / n_data)
+        AICc = AIC + correction
     else
-        AICc =10^9
+        AICc = 10^9
 
     end
     return AICc
 
-end   
+end
