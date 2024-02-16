@@ -54,9 +54,9 @@ function fit_NL_model_file(
 
 
     annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l = 1:length(annotation)]
+    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
     # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
+    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
@@ -153,7 +153,6 @@ function fit_NL_model_file(
                 smoothing=smoothing, # the smoothing is done or not?
                 type_of_smoothing=type_of_smoothing,
                 type_of_loss=loss_type, # type of used loss
-                blank_array=blank_array, # data of all blanks
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
                 method_multiple_scattering_correction=method_multiple_scattering_correction,
                 calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
@@ -186,7 +185,6 @@ function fit_NL_model_file(
                 smoothing=smoothing, # the smoothing is done or not?
                 type_of_smoothing=type_of_smoothing,
                 type_of_loss=loss_type, # type of used loss
-                blank_array=blank_array, # data of all blanks
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
                 method_multiple_scattering_correction=method_multiple_scattering_correction,
                 calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
@@ -217,7 +215,6 @@ function fit_NL_model_file(
                 smoothing=smoothing, # the smoothing is done or not?
                 type_of_smoothing=type_of_smoothing,
                 type_of_loss=type_of_loss, # type of used loss
-                blank_array=blank_array, # data of all blanks
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
                 method_multiple_scattering_correction=method_multiple_scattering_correction,
                 calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
@@ -250,7 +247,6 @@ function fit_NL_model_file(
                 smoothing=smoothing, # the smoothing is done or not?
                 type_of_smoothing=type_of_smoothing,
                 type_of_loss=loss_type, # type of used loss
-                blank_array=blank_array, # data of all blanks
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
                 method_multiple_scattering_correction=method_multiple_scattering_correction,
                 calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
@@ -355,9 +351,9 @@ function fit_NL_model_selection_file(
 
 
     annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l = 1:length(annotation)]
+    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
     # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
+    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
@@ -452,7 +448,6 @@ function fit_NL_model_selection_file(
         smoothing=smoothing, # the smoothing is done or not?
         type_of_smoothing=type_of_smoothing,
         type_of_loss=loss_type, # type of used loss
-        blank_array=blank_array, # data of all blanks
         multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
         method_multiple_scattering_correction=method_multiple_scattering_correction,
         calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data

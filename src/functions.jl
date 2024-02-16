@@ -39,7 +39,8 @@ function specific_gr_evaluation(data_smooted::Any, pt_smoothing_derivative::Int)
     """
 
     if pt_smoothing_derivative > 1
-        for r = 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)
+
+        for r = 1:1:(eachindex(data_smooted[2, :])[end].- pt_smoothing_derivative)
             M = [ones(pt_smoothing_derivative) data_smooted[1, r:(r+pt_smoothing_derivative-1)]]
             Y = log.(data_smooted[2, r:(r+pt_smoothing_derivative-1)])
 
@@ -120,7 +121,7 @@ function generation_of_combination_of_IC_morris(
 
     starting_guess = copy(lb_param)
     delta_vec =
-        [(ub_param[i] - lb_param[i]) / (N_step_morris + 1) for i = 1:length(ub_param)]
+        [(ub_param[i] - lb_param[i]) / (N_step_morris + 1) for i in  eachindex(ub_param)]
 
     # generating combinations of all possible parameters values
     combinations_par = copy(starting_guess)

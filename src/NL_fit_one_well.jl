@@ -652,8 +652,8 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
         )
 
     end
-    mean_param = [mean(fin_param[i, 2:end]) for i in 3:size(fin_param, 1)]
-    sd_param = [std(fin_param[i, 2:end]) for i in 3:size(fin_param, 1)]
+    mean_param = [mean(fin_param[i, 2:end]) for i in 3:axes(fin_param)[1][end]]
+    sd_param = [std(fin_param[i, 2:end]) for i in 3:axes(fin_param)[1][end]]
 
     return best_res_param, best_fitted_model, fin_param, mean_param, sd_param
 end
@@ -709,7 +709,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     top_model = Vector{Any}
     top_fitted_sol = Vector{Any}
 
-    for mm in 1:size(list_model_function, 1)
+    for mm in 1:eachindex(list_model_function)[end]
 
         model_to_test = list_model_function[mm]
         lb_param = list_lb_param[mm]
@@ -1246,7 +1246,7 @@ function selection_NL_maxiumum_change_points(
    
     end
       
-    for i in 1:size(combination_to_test, 1)
+    for i in 1:eachindex(combination_to_test)[end]
 
         cpd_temp = sort(combination_to_test[i])
 

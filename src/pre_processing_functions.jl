@@ -55,11 +55,11 @@ function smoothing_data(
     if method == "rolling_avg"
         times = [
             sum(@view data[1, i:(i+pt_avg-1)]) / pt_avg for
-            i = 1:(length(data[1, :])-(pt_avg-1))
+            i = 1:(eachindex(data[1, :])[end]-(pt_avg-1))
         ]
         values = [
             sum(@view data[2, i:(i+pt_avg-1)]) / pt_avg for
-            i = 1:(length(data[2, :])-(pt_avg-1))
+            i = 1:(eachindex(data[2, :])[end]-(pt_avg-1))
         ]
         smoothed_data = Matrix(transpose(hcat(times, values)))
     elseif method == "lowess"
@@ -94,7 +94,7 @@ function blank_subtraction(
     elseif method == "time_blank"
 
         blank_values =
-            [mean([dfs_data[k][j] for k in list_of_blank]) for j = 1:length(times_data)]
+            [mean([dfs_data[k][j] for k in list_of_blank]) for j in eachindex(times_data)]
 
     else
 
@@ -125,7 +125,7 @@ function average_replicate(dfs_data, times_data, properties_of_annotation, names
             )
         replicate_mean = [
             mean([dfs_data[k][j] for k in names_of_replicate_temp]) for
-            j = 1:length(times_data)
+            j in eachindex(times_data)
         ]
 
         new_data = hcat(new_data, replicate_mean)

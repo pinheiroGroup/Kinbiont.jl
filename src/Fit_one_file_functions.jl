@@ -22,9 +22,9 @@ function plot_data(
     function that plot a dataset
     """
     annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l = 1:length(annotation)]
+    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
     # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
+    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
@@ -205,9 +205,9 @@ function fit_one_file_Log_Lin(
         mkpath(path_to_results)
     end
     annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l = 1:length(annotation)]
+    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
     # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
+    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
@@ -385,9 +385,9 @@ function fit_file_ODE(
 
 
     annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l = 1:length(annotation)]
+    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
     # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
+    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
@@ -576,9 +576,9 @@ function fit_file_custom_ODE(
 
 
     annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l = 1:length(annotation)]
+    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
     # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
+    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
@@ -761,9 +761,9 @@ function ODE_model_selection_file(
 
 
     annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l = 1:length(annotation)]
+    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
     # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
+    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
@@ -964,9 +964,9 @@ function selection_ODE_fixed_change_points_file(
 
 
     annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l = 1:length(annotation)]
+    names_of_annotated_df = [annotation[l][1] for l  in eachindex(annotation)]
     # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l = 1:length(annotation)]
+    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]

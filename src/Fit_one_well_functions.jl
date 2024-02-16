@@ -40,7 +40,7 @@ function fitting_one_well_Log_Lin(
     specific_gr = specific_gr_evaluation(data_smooted, pt_smoothing_derivative)
     specific_gr_times = [
         (data_smooted[1, r] + data_smooted[1, (r+pt_smoothing_derivative)]) / 2 for
-        r = 1:1:(length(data_smooted[2, :])-pt_smoothing_derivative)
+        r = 1:1:(eachindex(data_smooted[2, :][end])-pt_smoothing_derivative)
     ]
 
     # selecting the max
@@ -72,7 +72,7 @@ function fitting_one_well_Log_Lin(
         # searching t_end of the exp phase
         t_end = specific_gr_times[end]
 
-        for yy = index_of_max:(length(specific_gr)-1)
+        for yy = index_of_max:(eachindex(specific_gr)[end]-1)
             if specific_gr[yy] >= lb_of_distib
                 t_end = copy(specific_gr_times[yy])
             else
@@ -560,7 +560,7 @@ function ODE_Model_selection(
     ## defining loss function
     # loop over the models
 
-    for mm = 1:length(models_list)
+    for mm in eachindex(models_list)
         if verbose == true
             println(string("fitting ", models_list[mm]))
         end
@@ -912,7 +912,7 @@ function selection_ODE_fixed_change_points(
     composed_sol = Type{Any}
     composed_time = Type{Any}
 
-    for i = 2:(length(interval_changepoints))
+    for i = 2:(eachindexa(interval_changepoints)[end])
         if i == 2
             tspan_array = findall((data_testing[1, :] .<= interval_changepoints[i]))
             data_temp = Matrix(
