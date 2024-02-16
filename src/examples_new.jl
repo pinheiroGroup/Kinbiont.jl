@@ -894,8 +894,64 @@ A = selection_ODE_fixed_change_points_file(
     )
 
 
+nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
+nl_lb_1 =  [0.0001 , 0.00000001, 0.00 ]
+    
+nl_ub_2 =  [2.0001 , 10.00000001, 5.00,5.0]
+nl_lb_2 =  [0.0001 , 0.00000001, 0.00,0.0 ]
+    
+nl_ub_3 =  [2.0001 , 10.00000001]
+nl_lb_3 =  [0.0001 , 0.00000001]
+    
+nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
+nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
+
+list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_logistic"]
+list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
+list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
 
 
+K=  fit_NL_segmentation_file(
+        "", #label of the experiment
+        path_to_data, # path to the folder to analyze
+        path_to_annotation,# path to the annotation of the wells
+        list_models_f, # ode model to use
+        list_lb, # lower bound param
+        list_ub, # upper bound param
+        3;
+        method_of_fitting="MCMC",
+        nrep=2,
+        list_u0=list_lb .+ (list_ub .- list_lb) ./ 2,# initial guess param
+        optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+        path_to_results="NA", # path where save results
+        path_to_plot="NA", # path where to save Plots
+        loss_type="RE", # string of the type of the used loss
+        smoothing=false, # 1 do smoothing of data with rolling average
+        type_of_smoothing="lowess",
+        display_plots=true,# display plots in julia or not
+        save_plots=false,
+        write_res=false, # write results
+        pt_avg=1, # number of points to do smoothing average
+        pt_smooth_derivative=0, # number of points to do ssmooth_derivative
+        do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
+        avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+        correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+        thr_negative=0.01,  # used only if correct_negative == "thr_correction"
+        multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+        method_multiple_scattering_correction="interpolation",
+        calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+        PopulationSize=300,
+        maxiters=20000,
+        abstol=0.00001,
+        thr_lowess=0.05,
+        dectect_number_cdp= true,
+        fixed_cpd = false,
+        penality_CI=8.0,
+        beta_smoothing_ms = 0.5,
+        verbose =true
+    
+)
+    
 
 
 
