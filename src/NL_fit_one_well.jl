@@ -994,8 +994,8 @@ function selection_NL_fixed_interval(
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     method_of_fitting="MCMC", # selection of sciml integrator
     smoothing=false,
-    size_bootstrap=size_bootstrap,
-    nrep=nrep,
+    size_bootstrap=0.7,
+    nrep=100,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     pt_avg=1,
@@ -1016,7 +1016,7 @@ function selection_NL_fixed_interval(
     param_out = Vector{Vector{Any}}()
     composed_sol = Type{Any}
     composed_time = Type{Any}
-    loss_to_use = " "
+    loss_to_use = ""
 
     for i = (length(interval_changepoints)):-1:2
 
@@ -1036,17 +1036,18 @@ function selection_NL_fixed_interval(
             else
                 loss_to_use = string(type_of_loss)
             end
+            data_temp = hcat(data_temp, bc)
 
         elseif i == (length(interval_changepoints))
 
 
-            tspan_array_1 = findall((data_testing[1, :] .> interval_changepoints[i-1]))
-            tspan_array_2 = findall((data_testing[1, :] .<= interval_changepoints[i]))
-            tspan_array = intersect(tspan_array_1, tspan_array_2)
+            tspan_array = findall((data_testing[1, :] .> interval_changepoints[i-1]))
+
             data_temp = Matrix(
                 transpose(hcat(data_testing[1, tspan_array], data_testing[2, tspan_array])),
             )
             loss_to_use = string(type_of_loss)
+
         else
             tspan_array_1 = findall((data_testing[1, :] .> interval_changepoints[i-1]))
             tspan_array_2 = findall((data_testing[1, :] .<= interval_changepoints[i]))
