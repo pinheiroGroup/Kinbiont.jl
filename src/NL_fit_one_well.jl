@@ -1184,7 +1184,7 @@ function selection_NL_maxiumum_change_points(
 
     if smoothing == true
         data_testing = smoothing_data(
-            data;
+            data_testing;
             method=type_of_smoothing,
             pt_avg=pt_avg,
             thr_lowess=thr_lowess
