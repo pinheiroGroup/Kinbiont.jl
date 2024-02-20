@@ -136,16 +136,16 @@ function fit_NL_model_file(
 
 
             temp_results_1 = fit_NL_model_bootstrap(data, # dataset first row times second row OD
-                name_well, # name of the well
+                string(well_name), # name of the well
                 label_exp, #label of the experiment
-                model_to_test, # ode model to use
+                model, # ode model to use
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 nrep=nrep,
                 u0=u0,# initial guess param
                 optmizator=optmizator,
                 display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plot,
+                save_plot=save_plots,
                 size_bootstrap=size_bootstrap,
                 path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
@@ -167,16 +167,16 @@ function fit_NL_model_file(
         elseif method_NL_fit == "Morris_sensitivity"
 
 
-            temp_res = fit_NL_model_with_sensitivity(data, # dataset first row times second row OD
-                name_well, # name of the well
+            temp_results_1 = fit_NL_model_with_sensitivity(data, # dataset first row times second row OD
+            string(well_name), # name of the well
                 label_exp, #label of the experiment
-                model_to_test, # ode model to use
+                model, # ode model to use
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 nrep=nrep,
                 optmizator=optmizator,
                 display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plot,
+                save_plot=save_plots,
                 path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
@@ -195,16 +195,16 @@ function fit_NL_model_file(
         elseif method_NL_fit == "MCMC"
 
 
-            temp_res = fit_NL_model_MCMC_intialization(data, # dataset first row times second row OD
-                name_well, # name of the well
+            temp_results_1 = fit_NL_model_MCMC_intialization(data, # dataset first row times second row OD
+            string(well_name), # name of the well
                 label_exp, #label of the experiment
-                model_to_test, # ode model to use
+                model, # ode model to use
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 nrep=nrep,
                 optmizator=optmizator,
                 display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plot,
+                save_plot=save_plots,
                 path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
@@ -225,16 +225,16 @@ function fit_NL_model_file(
 
 
 
-            temp_res = fit_NL_model(data, # dataset first row times second row OD
-                name_well, # name of the well
+            temp_results_1 = fit_NL_model(data, # dataset first row times second row OD
+            string(well_name), # name of the well
                 label_exp, #label of the experiment
-                model_to_test, # ode model to use
+                model, # ode model to use
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 u0=u0,# initial guess param
                 optmizator=optmizator,
                 display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plot,
+                save_plot=save_plots,
                 path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
