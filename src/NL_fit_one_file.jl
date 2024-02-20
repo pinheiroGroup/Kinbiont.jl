@@ -192,7 +192,7 @@ function fit_NL_model_file(
                 thr_lowess=thr_lowess,
                 write_res=write_res,
                 penality_CI=penality_CI)
-        elseif method_of_fitting == "MCMC"
+        elseif method_NL_fit == "MCMC"
 
 
             temp_res = fit_NL_model_MCMC_intialization(data, # dataset first row times second row OD
