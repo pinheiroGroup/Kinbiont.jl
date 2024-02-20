@@ -210,7 +210,7 @@ function fit_NL_model_file(
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
                 type_of_smoothing=type_of_smoothing,
-                type_of_loss=type_of_loss, # type of used loss
+                type_of_loss=loss_type, # type of used loss
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
                 method_multiple_scattering_correction=method_multiple_scattering_correction,
                 calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
