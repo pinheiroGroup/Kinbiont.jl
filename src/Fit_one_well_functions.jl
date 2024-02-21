@@ -1343,7 +1343,7 @@ function selection_ODE_fixed_intervals(
     list_of_models::Vector{String}, # ode models to use
     list_lb_param::Any, # lower bound param
     list_ub_param::Any, # upper bound param
-    interval_changepoints::Int;
+    interval_changepoints::Any;
     type_of_loss="L2", # type of used loss
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
