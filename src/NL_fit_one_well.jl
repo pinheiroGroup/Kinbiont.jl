@@ -1431,7 +1431,7 @@ function selection_NL_maxiumum_change_points(
         )
 
         combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2],
-            n_fix=n_change_points)
+            n_fix = n_change_points)
 
 
     end

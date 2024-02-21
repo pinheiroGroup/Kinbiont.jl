@@ -313,8 +313,8 @@ function generation_of_combination_of_cpds(
     cp_list;
     n_fix=0
 )
-    if n_fix >= length(cp_list)
-        n_fix = length(cp_list) - 1
+    if n_fix > length(cp_list)
+        n_fix = length(cp_list) 
     end
 
     if n_fix == 0 #return al possible combinations 
