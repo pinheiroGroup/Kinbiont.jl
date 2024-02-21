@@ -110,7 +110,6 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
 
     data_th = transpose(hcat(data[1, index_not_zero], sol_fin))
 
-
     max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
 
     # max empirical gr
@@ -988,7 +987,7 @@ function selection_NL_fixed_interval(
     list_of_models::Vector{String}, # ode models to use
     list_lb_param::Any, # lower bound param
     list_ub_param::Any, # upper bound param
-    interval_changepoints::Any;
+    intervals_changepoints::Any;
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,# initial guess param
     type_of_loss="L2", # type of used loss
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
@@ -1008,19 +1007,20 @@ function selection_NL_fixed_interval(
     maxiters=2000000,
     abstol=0.000000001,
     penality_CI=8.0)
-
+    interval_changepoints = copy(intervals_changepoints)
     interval_changepoints = push!(interval_changepoints, data_testing[1, 1])
+
     interval_changepoints = push!(interval_changepoints, data_testing[1, end])
+
     interval_changepoints = sort(interval_changepoints)
     bc = [data_testing[1, end], data_testing[2, end]]
     param_out = Vector{Vector{Any}}()
     composed_sol = Type{Any}
     composed_time = Type{Any}
     loss_to_use = ""
-
     for i = (length(interval_changepoints)):-1:2
 
-        if i == 2
+        if i == 2 &&  i != (length(interval_changepoints))
             tspan_array = findall((data_testing[1, :] .<= interval_changepoints[i]))
             data_temp = Matrix(
                 transpose(hcat(data_testing[1, tspan_array], data_testing[2, tspan_array])),
@@ -1052,6 +1052,8 @@ function selection_NL_fixed_interval(
             tspan_array_1 = findall((data_testing[1, :] .> interval_changepoints[i-1]))
             tspan_array_2 = findall((data_testing[1, :] .<= interval_changepoints[i]))
             tspan_array = intersect(tspan_array_1, tspan_array_2)
+
+            
             data_temp = Matrix(
                 transpose(hcat(data_testing[1, tspan_array], data_testing[2, tspan_array])),
             )
@@ -1070,7 +1072,6 @@ function selection_NL_fixed_interval(
             # imposing_bounduary condition
             data_temp = hcat(data_temp, bc)
         end
-
         model_selection_results = NL_model_selection(data_temp, # dataset first row times second row OD
             name_well, # name of the well
             label_exp, #label of the experiment

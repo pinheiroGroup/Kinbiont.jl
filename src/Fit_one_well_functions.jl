@@ -133,7 +133,6 @@ function fitting_one_well_Log_Lin(
     d = TDist(N - 2)     # t-Student distribution with N-2 degrees of freedom
     cf = quantile(d, 0.975)  # correction factor for 95% confidence intervals (two-tailed distribution)
     confidence_band = cf * Cantrell_errors * sqrt.(1 / N .+ (data_to_fit_times .- mean(data_to_fit_times)) .^ 2 / var(data_to_fit_times) / (N - 1))
-    println(confidence_band)
 
 
     # storing results
@@ -617,6 +616,7 @@ function ODE_Model_selection(
         #max_theoretical gr
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
+
         data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
         max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
 
@@ -656,7 +656,6 @@ function ODE_Model_selection(
     param_min = df_res_optimization[index_minimal_AIC_model-1]
     param_out_full = copy(param_min)
     param_min = param_min[3:(end-3)]
-    println(param_min)
 
     tsteps = data[1, :]
     tspan = (data[1, 1], data[1, end])
@@ -903,9 +902,10 @@ function selection_ODE_fixed_change_points(
         method=method_peaks_detection,
         number_of_bin=n_bins,
     )
-
-    interval_changepoints = push!(list_change_points_dev[2], data_testing[1, 1])
-    interval_changepoints = push!(list_change_points_dev[2], data_testing[1, end])
+    intervals_changepoint = list_change_points_dev[2]
+    interval_changepoints = copy(intervals_changepoint)
+    interval_changepoints = push!(interval_changepoints, data_testing[1, 1])
+    interval_changepoints = push!(interval_changepoints, data_testing[1, end])
     interval_changepoints = sort(interval_changepoints)
     bc = [data_testing[1, 1], data_testing[2, 2]]
     param_out = Vector{Vector{Any}}()
@@ -1343,7 +1343,7 @@ function selection_ODE_fixed_intervals(
     list_of_models::Vector{String}, # ode models to use
     list_lb_param::Any, # lower bound param
     list_ub_param::Any, # upper bound param
-    interval_changepoints::Any;
+    intervals_changepoints::Any;
     type_of_loss="L2", # type of used loss
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
@@ -1363,7 +1363,6 @@ function selection_ODE_fixed_intervals(
     maxiters=2000000,
     abstol=0.0000000001,
 )
-
     if multiple_scattering_correction == true
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
     end
@@ -1377,7 +1376,14 @@ function selection_ODE_fixed_intervals(
         )
     end
 
-
+    interval_changepoints  = copy(intervals_changepoints)
+    interval_changepoints = push!(interval_changepoints, data_testing[1, 1])
+    interval_changepoints = push!(interval_changepoints, data_testing[1, end])
+    interval_changepoints = sort(interval_changepoints)
+    param_out = Vector{Vector{Any}}()
+    composed_sol = Type{Any}
+    composed_time = Type{Any}
+    bc = [data_testing[1, 1], data_testing[2, 2]]
 
     for i = 2:(eachindex(interval_changepoints)[end])
         if i == 2
@@ -1517,7 +1523,7 @@ function selection_ODE_fixed_intervals(
     )
     if_display(
         Plots.vline!(
-            interval_changepoints[2:end],
+            interval_changepoints[1:end],
             c=:black,
             label=["change points" nothing],
         ),
