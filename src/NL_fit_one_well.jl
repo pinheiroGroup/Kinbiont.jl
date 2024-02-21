@@ -652,15 +652,15 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
 
     end
 
-    quantile_loss = quantile( fin_param[end, 2:end],0.90)
-    index_loss = findall(fin_param[end, 2:end] .< quantile_loss )
-    new_param_fin = fin_param[:,(index_loss .+ 1)]
+    quantile_loss = quantile(fin_param[end, 2:end], 0.90)
+    index_loss = findall(fin_param[end, 2:end] .< quantile_loss)
+    new_param_fin = fin_param[:, (index_loss.+1)]
     mean_param = [mean(new_param_fin[i, 2:end]) for i in 3:axes(new_param_fin)[1][end]]
     sd_param = [std(new_param_fin[i, 2:end]) for i in 3:axes(new_param_fin)[1][end]]
-    CI_param_low = [quantile(new_param_fin[i, 2:end],0.1) for i in 3:axes(new_param_fin)[1][end]]
-    CI_param_up = [quantile(new_param_fin[i, 2:end],0.9) for i in 3:axes(new_param_fin)[1][end]]
+    CI_param_low = [quantile(new_param_fin[i, 2:end], 0.1) for i in 3:axes(new_param_fin)[1][end]]
+    CI_param_up = [quantile(new_param_fin[i, 2:end], 0.9) for i in 3:axes(new_param_fin)[1][end]]
 
-    return best_res_param, best_fitted_model, fin_param, new_param_fin,mean_param, sd_param,CI_param_low,CI_param_up
+    return best_res_param, best_fitted_model, fin_param, new_param_fin, mean_param, sd_param, CI_param_low, CI_param_up
 end
 
 
@@ -735,9 +735,9 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
 
 
     for i = 1:nrep
-     
-        data[2,:] = data[2,:] .+rand(Normal(0.0,std(blank_array)),length(data[2,:]))
-        sol_fin, index_not_zero = remove_negative_value(data[2,:])
+
+        data[2, :] = data[2, :] .+ rand(Normal(0.0, std(blank_array)), length(data[2, :]))
+        sol_fin, index_not_zero = remove_negative_value(data[2, :])
 
         data = transpose(hcat(data[1, index_not_zero], sol_fin))
 
@@ -831,16 +831,16 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
 
     end
 
-    
-    quantile_loss = quantile( fin_param[end, 2:end],0.90)
-    index_loss = findall(fin_param[end, 2:end] .< quantile_loss )
-    new_param_fin = fin_param[:,(index_loss .+ 1)]
+
+    quantile_loss = quantile(fin_param[end, 2:end], 0.90)
+    index_loss = findall(fin_param[end, 2:end] .< quantile_loss)
+    new_param_fin = fin_param[:, (index_loss.+1)]
     mean_param = [mean(new_param_fin[i, 2:end]) for i in 3:axes(new_param_fin)[1][end]]
     sd_param = [std(new_param_fin[i, 2:end]) for i in 3:axes(new_param_fin)[1][end]]
-    CI_param_low = [quantile(new_param_fin[i, 2:end],0.1) for i in 3:axes(new_param_fin)[1][end]]
-    CI_param_up = [quantile(new_param_fin[i, 2:end],0.9) for i in 3:axes(new_param_fin)[1][end]]
+    CI_param_low = [quantile(new_param_fin[i, 2:end], 0.1) for i in 3:axes(new_param_fin)[1][end]]
+    CI_param_up = [quantile(new_param_fin[i, 2:end], 0.9) for i in 3:axes(new_param_fin)[1][end]]
 
-    return best_res_param, best_fitted_model, fin_param, new_param_fin,mean_param, sd_param,CI_param_low,CI_param_up
+    return best_res_param, best_fitted_model, fin_param, new_param_fin, mean_param, sd_param, CI_param_low, CI_param_up
 end
 
 
@@ -883,7 +883,8 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     thr_lowess=0.05,
     write_res=false,
     beta_param=2.0,
-    penality_CI=8.0
+    penality_CI=8.0,
+    correction_AIC=false,
 )
     score_res = ["AIC"]
     top_score = 10^20
@@ -932,7 +933,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2])
+            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2], correction=correction_AIC)
             temp = [model_to_test, temp_res[end], temp_AIC]
             score_res = hcat(score_res, temp_AIC)
             if mm == 1
@@ -982,7 +983,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2])
+            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2], correction=correction_AIC)
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
@@ -1031,7 +1032,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2])
+            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2], correction=correction_AIC)
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
@@ -1083,7 +1084,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2])
+            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2], correction=correction_AIC)
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
@@ -1188,7 +1189,9 @@ function selection_NL_fixed_interval(
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.000000001,
-    penality_CI=8.0)
+    penality_CI=8.0,
+    correction_AIC=true,
+)
     interval_changepoints = copy(intervals_changepoints)
     interval_changepoints = push!(interval_changepoints, data_testing[1, 1])
 
@@ -1202,7 +1205,7 @@ function selection_NL_fixed_interval(
     loss_to_use = ""
     for i = (length(interval_changepoints)):-1:2
 
-        if i == 2 &&  i != (length(interval_changepoints))
+        if i == 2 && i != (length(interval_changepoints))
             tspan_array = findall((data_testing[1, :] .<= interval_changepoints[i]))
             data_temp = Matrix(
                 transpose(hcat(data_testing[1, tspan_array], data_testing[2, tspan_array])),
@@ -1235,7 +1238,7 @@ function selection_NL_fixed_interval(
             tspan_array_2 = findall((data_testing[1, :] .<= interval_changepoints[i]))
             tspan_array = intersect(tspan_array_1, tspan_array_2)
 
-            
+
             data_temp = Matrix(
                 transpose(hcat(data_testing[1, tspan_array], data_testing[2, tspan_array])),
             )
@@ -1280,7 +1283,8 @@ function selection_NL_fixed_interval(
             thr_lowess=thr_lowess,
             write_res=false,
             beta_param=beta_smoothing_ms,
-            penality_CI=penality_CI
+            penality_CI=penality_CI,
+            correction_AIC=correction_AIC
         )
 
         # param of the best model
@@ -1353,7 +1357,9 @@ function selection_NL_maxiumum_change_points(
     dectect_number_cdp=true,
     fixed_cpd=false,
     penality_CI=8.0,
-    size_bootstrap=0.7)
+    size_bootstrap=0.7,
+    correction_AIC=true
+)
 
     top_aicc = 10^20
     top_param = Vector{Any}
@@ -1460,7 +1466,9 @@ function selection_NL_maxiumum_change_points(
             PopulationSize=PopulationSize,
             maxiters=maxiters,
             abstol=abstol,
-            penality_CI=penality_CI)
+            penality_CI=penality_CI,
+            correction_AIC=correction_AIC
+        )
 
 
         n_param_full_model = sum([
@@ -1472,7 +1480,7 @@ function selection_NL_maxiumum_change_points(
 
 
 
-        AICc_full_model = AICc_evaluation(n_param_full_model, beta_smoothing_ms, res_this_combination[3], res_this_combination[2])
+        AICc_full_model = AICc_evaluation(n_param_full_model, beta_smoothing_ms, res_this_combination[3], res_this_combination[2], correction=correction_AIC)
 
 
         if i == 1

@@ -528,7 +528,7 @@ function ODE_Model_selection(
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
-)
+    correction_AIC=true,)
     if multiple_scattering_correction == true
 
         data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
@@ -611,7 +611,7 @@ function ODE_Model_selection(
 
         param_number = length(temp_start_param)
 
-        AICc = AICc_evaluation(param_number, beta_penality, data[2, :], sol_fin)
+        AICc = AICc_evaluation(param_number, beta_penality, data[2, :], sol_fin, correction=correction_AIC)
 
         #max_theoretical gr
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
@@ -877,7 +877,7 @@ function selection_ODE_fixed_change_points(
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.000,
-)
+    correction_AIC=true)
 
     if multiple_scattering_correction == true
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
@@ -952,7 +952,7 @@ function selection_ODE_fixed_change_points(
             PopulationSize=PopulationSize,
             maxiters=maxiters,
             abstol=abstol,
-        )
+            correction_AIC=correction_AIC)
 
         # selection of te model
         model = model_selection_results[6]
@@ -1116,7 +1116,7 @@ function ODE_selection_NMAX_change_points(
     abstol=0.00001,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
-)
+    correction_AIC=true)
 
     # fitting single models
     change_point_list = Vector{Vector{Any}}()
@@ -1148,7 +1148,7 @@ function ODE_selection_NMAX_change_points(
         abstol=abstol,
         type_of_smoothing=type_of_smoothing,
         thr_lowess=thr_lowess,
-    )
+        correction_AIC=correction_AIC)
 
     if save_all_model == true
         mkpath(path_to_results)
@@ -1232,7 +1232,7 @@ function ODE_selection_NMAX_change_points(
                     kk = 1:length(direct_search_results[1])
                 ]) + n_change_points
 
-            new_penality = AICc_evaluation(n_param, penality_parameter, data_testing[2, :], unique(direct_search_results[end]))
+            new_penality = AICc_evaluation(n_param, penality_parameter, data_testing[2, :], unique(direct_search_results[end]), correction=correction_AIC)
 
 
             if new_penality <= score_of_the_models
@@ -1362,7 +1362,7 @@ function selection_ODE_fixed_intervals(
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.0000000001,
-)
+    correction_AIC=true)
     if multiple_scattering_correction == true
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
     end
@@ -1376,7 +1376,7 @@ function selection_ODE_fixed_intervals(
         )
     end
 
-    interval_changepoints  = copy(intervals_changepoints)
+    interval_changepoints = copy(intervals_changepoints)
     interval_changepoints = push!(interval_changepoints, data_testing[1, 1])
     interval_changepoints = push!(interval_changepoints, data_testing[1, end])
     interval_changepoints = sort(interval_changepoints)
@@ -1425,7 +1425,7 @@ function selection_ODE_fixed_intervals(
             PopulationSize=PopulationSize,
             maxiters=maxiters,
             abstol=abstol,
-        )
+            correction_AIC=correction_AIC)
 
         # selection of te model
         model = model_selection_results[6]
@@ -1593,7 +1593,7 @@ function segmentation_ODE(
     abstol=0.00001,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
-)
+    correction_AIC=true)
 
     # fitting single models
     change_point_list = Vector{Vector{Any}}()
@@ -1625,7 +1625,7 @@ function segmentation_ODE(
         abstol=abstol,
         type_of_smoothing=type_of_smoothing,
         thr_lowess=thr_lowess,
-    )
+        correction_AIC=correction_AIC)
 
     if save_all_model == true
         mkpath(path_to_results)
@@ -1763,7 +1763,7 @@ function segmentation_ODE(
                     kk = 1:length(direct_search_results[1])
                 ]) + n_change_points
 
-            new_penality = AICc_evaluation(n_param, penality_parameter, data_testing[2, :], unique(direct_search_results[end]))
+            new_penality = AICc_evaluation(n_param, penality_parameter, data_testing[2, :], unique(direct_search_results[end]), correction=correction_AIC)
 
 
             if new_penality <= score_of_the_models

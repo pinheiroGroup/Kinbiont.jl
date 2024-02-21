@@ -13,7 +13,7 @@ function fit_NL_model_file(
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     method_of_fitting="MCMC",
     nrep=100,
-    errors_estimation = false,
+    errors_estimation=false,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
@@ -38,9 +38,7 @@ function fit_NL_model_file(
     abstol=0.00001,
     thr_lowess=0.05,
     penality_CI=8.0,
-    size_bootstrap = 0.7,
-
-)
+    size_bootstrap=0.7,)
 
 
     if write_res == true
@@ -52,9 +50,9 @@ function fit_NL_model_file(
     end
 
     parameter_of_optimization = initialize_df_results_ode_custom(lb_param)
-    errors_of_optimization  = initialize_df_results_ode_custom(lb_param)
+    errors_of_optimization = initialize_df_results_ode_custom(lb_param)
 
-    errors_of_optimization =errors_of_optimization[3:end] 
+    errors_of_optimization = errors_of_optimization[3:end]
 
 
 
@@ -168,11 +166,11 @@ function fit_NL_model_file(
                 thr_lowess=thr_lowess,
                 write_res=write_res,
                 penality_CI=penality_CI)
-      
 
-                errors_of_optimization = hcat(errors_of_optimization, temp_results_1[5])
-                errors_of_optimization = hcat(errors_of_optimization, temp_results_1[7])
-                errors_of_optimization = hcat(errors_of_optimization, temp_results_1[8])
+
+            errors_of_optimization = hcat(errors_of_optimization, temp_results_1[5])
+            errors_of_optimization = hcat(errors_of_optimization, temp_results_1[7])
+            errors_of_optimization = hcat(errors_of_optimization, temp_results_1[8])
 
 
 
@@ -180,7 +178,7 @@ function fit_NL_model_file(
 
 
             temp_results_1 = fit_NL_model_with_sensitivity(data, # dataset first row times second row OD
-            string(well_name), # name of the well
+                string(well_name), # name of the well
                 label_exp, #label of the experiment
                 model, # ode model to use
                 lb_param, # lower bound param
@@ -208,7 +206,7 @@ function fit_NL_model_file(
 
 
             temp_results_1 = fit_NL_model_MCMC_intialization(data, # dataset first row times second row OD
-            string(well_name), # name of the well
+                string(well_name), # name of the well
                 label_exp, #label of the experiment
                 model, # ode model to use
                 lb_param, # lower bound param
@@ -238,7 +236,7 @@ function fit_NL_model_file(
 
 
             temp_results_1 = fit_NL_model(data, # dataset first row times second row OD
-            string(well_name), # name of the well
+                string(well_name), # name of the well
                 label_exp, #label of the experiment
                 model, # ode model to use
                 lb_param, # lower bound param
@@ -283,10 +281,10 @@ function fit_NL_model_file(
         parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[1])
 
         if errors_estimation == true && method_of_fitting != "Bootstrap"
-         
+
 
             best_param = temp_results_1[1][3:(end-3)]
-            best_param = convert.(Float64,best_param)
+            best_param = convert.(Float64, best_param)
             temp_errors_of_optimization = NL_error_blanks(data, # dataset first row times second row OD
                 string(well_name), # name of the well
                 label_exp, #label of the experiment
@@ -310,16 +308,16 @@ function fit_NL_model_file(
                 abstol=abstol,
                 thr_lowess=thr_lowess,
                 penality_CI=penality_CI
-                )
- 
-                errors_of_optimization = hcat(errors_of_optimization, temp_errors_of_optimization[5])
-                errors_of_optimization = hcat(errors_of_optimization, temp_errors_of_optimization[7])
-                errors_of_optimization = hcat(errors_of_optimization, temp_errors_of_optimization[8])
+            )
+
+            errors_of_optimization = hcat(errors_of_optimization, temp_errors_of_optimization[5])
+            errors_of_optimization = hcat(errors_of_optimization, temp_errors_of_optimization[7])
+            errors_of_optimization = hcat(errors_of_optimization, temp_errors_of_optimization[8])
 
 
 
 
-        end    
+        end
 
 
     end
@@ -334,7 +332,7 @@ function fit_NL_model_file(
 
 
     end
-    return parameter_of_optimization,errors_of_optimization
+    return parameter_of_optimization, errors_of_optimization
 
 
 
@@ -380,7 +378,9 @@ function fit_NL_model_selection_file(
     thr_lowess=0.05,
     beta_param=2.0,
     penality_CI=8.0,
-    size_bootstrap=0.7,)
+    size_bootstrap=0.7,
+    correction_AIC=true
+)
 
 
     if write_res == true
@@ -502,8 +502,8 @@ function fit_NL_model_selection_file(
             thr_lowess=thr_lowess,
             write_res=false,
             beta_param=beta_param,
-            penality_CI=penality_CI
-        )
+            penality_CI=penality_CI,
+            correction_AIC=correction_AIC)
 
 
 
@@ -583,7 +583,7 @@ function fit_NL_segmentation_file(
     beta_smoothing_ms=2.0,
     win_size=7, # number of the point of cpd sliding win
     n_bins=40,
-)
+    correction_AIC=true)
 
 
     if write_res == true
@@ -710,7 +710,9 @@ function fit_NL_segmentation_file(
             dectect_number_cdp=dectect_number_cdp,
             fixed_cpd=fixed_cpd,
             penality_CI=penality_CI,
-            size_bootstrap=size_bootstrap)
+            size_bootstrap=size_bootstrap,
+            correction_AIC=correction_AIC
+        )
 
 
         data = Matrix(data)

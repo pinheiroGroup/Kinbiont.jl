@@ -745,7 +745,7 @@ function ODE_model_selection_file(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-)
+    correction_AIC=true)
 
 
     if write_res == true
@@ -867,6 +867,7 @@ function ODE_model_selection_file(
             PopulationSize=PopulationSize,
             maxiters=maxiters,
             abstol=abstol,
+            correction_AIC=correction_AIC
         )
 
         vectorized_temp_results = expand_res(
@@ -948,7 +949,7 @@ function selection_ODE_fixed_change_points_file(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     verbose=false,
-)
+    correction_AIC=true)
 
 
     if write_res == true
@@ -1070,7 +1071,7 @@ function selection_ODE_fixed_change_points_file(
             PopulationSize=PopulationSize,
             maxiters=maxiters,
             abstol=abstol,
-        )
+            correction_AIC=correction_AIC)
 
         vectorized_temp_results = expand_res(
             temp_results_1[1],
@@ -1155,7 +1156,7 @@ function segmentation_ODE_file(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     verbose=false,
-)
+    correction_AIC=true)
 
 
     if write_res == true
@@ -1281,7 +1282,7 @@ function segmentation_ODE_file(
             abstol=abstol,
             type_of_smoothing=type_of_smoothing,
             thr_lowess=thr_lowess,
-        )
+            correction_AIC=correction_AIC)
 
         vectorized_temp_results = expand_res(
             temp_results_1[1],

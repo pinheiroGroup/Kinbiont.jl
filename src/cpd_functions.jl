@@ -310,22 +310,22 @@ end
 
 
 function generation_of_combination_of_cpds(
-   cp_list;
-    n_fix = 0
-)   
+    cp_list;
+    n_fix=0
+)
     if n_fix >= length(cp_list)
         n_fix = length(cp_list) - 1
-    end  
-    
+    end
+
     if n_fix == 0 #return al possible combinations 
 
-        combinations_tot =    collect(combinations(cp_list))
+        combinations_tot = collect(combinations(cp_list))
 
     else #return   combinations  with fixed lenght
-        combinations_tot =    collect(combinations(cp_list, n_fix))
-    end   
+        combinations_tot = collect(combinations(cp_list, n_fix))
+    end
 
- 
+
 
     return combinations_tot
 end
