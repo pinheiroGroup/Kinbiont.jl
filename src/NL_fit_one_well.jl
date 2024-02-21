@@ -1472,7 +1472,7 @@ function selection_NL_maxiumum_change_points(
 
 
         n_param_full_model = sum([
-            length(res_this_combination[1][kk][3:(end-5)]) for
+            length(res_this_combination[1][kk][3:(end-4)]) for
             kk = 1:length(res_this_combination[1])
         ]) + n_change_points
 
