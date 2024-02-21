@@ -1354,7 +1354,7 @@ function selection_NL_maxiumum_change_points(
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.000000001,
-    dectect_number_cdp=true,
+    dectect_number_cpd=false,
     fixed_cpd=false,
     penality_CI=8.0,
     size_bootstrap=0.7,
@@ -1383,7 +1383,7 @@ function selection_NL_maxiumum_change_points(
 
 
 
-    if dectect_number_cdp == true
+    if dectect_number_cpd == true
 
         list_change_points_dev = cpd_local_detection(
             data_testing,
@@ -1421,7 +1421,7 @@ function selection_NL_maxiumum_change_points(
     else
         list_change_points_dev = cpd_local_detection(
             data_testing,
-            2 * n_change_points;
+             n_change_points + 2;
             type_of_detection=type_of_detection,
             type_of_curve=type_of_curve,
             pt_derivative=pt_smooth_derivative,
