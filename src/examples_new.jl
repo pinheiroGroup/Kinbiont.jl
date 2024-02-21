@@ -880,7 +880,7 @@ A = selection_ODE_fixed_change_points_file(
     path_to_results="NA",
     win_size=8, 
     pt_smooth_derivative=0,
-    penality_parameter=2.0,
+    penality_parameter=0.0,
     multiple_scattering_correction="false", # if true uses the given calibration curve to fix the data
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     write_res =false ,
@@ -894,14 +894,14 @@ A = selection_ODE_fixed_change_points_file(
     )
 
 
-nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
+nl_ub_1 =  [2.0001 , 10.00000001, 5000.00]
 nl_lb_1 =  [0.0001 , 0.00000001, 0.00 ]
     
 nl_ub_2 =  [2.0001 , 10.00000001, 5.00,5.0]
 nl_lb_2 =  [0.0001 , 0.00000001, 0.00,0.0 ]
     
 nl_ub_3 =  [2.0001 , 10.00000001]
-nl_lb_3 =  [0.0001 , 0.00000001]
+nl_lb_3 =  [0.0001 ,- 1.10000001]
     
 nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
 nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
@@ -910,7 +910,50 @@ list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_logistic"]
 list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
 list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
 
+path_to_plot = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/example_for_fernanda/new_test/plots_LG119/"
+path_to_results = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/example_for_fernanda/new_test/res_LG119/"
+path_to_data  = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/example_for_fernanda/LG119/data_channel_1.csv"
+path_to_annotation  = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/example_for_fernanda/LG119/annotation_channel_1.csv"
 
+
+K=  fit_NL_model_file(
+        "", #label of the experiment
+        path_to_data, # path to the folder to analyze
+        path_to_annotation,# path to the annotation of the wells
+        "NL_Gompertz", # ode model to use
+        nl_lb_1, # lower bound param
+        nl_ub_1;
+        method_of_fitting="single",
+        nrep=5,
+        u0=nl_lb_1 .+ (nl_ub_1 .- nl_lb_1) ./ 2,# initial guess param
+        optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+        path_to_results="NA", # path where save results
+        path_to_plot="NA", # path where to save Plots
+        loss_type="RE", # string of the type of the used loss
+        smoothing=true, # 1 do smoothing of data with rolling average
+        type_of_smoothing="lowess",
+        errors_estimation = true,
+        display_plots=true,# display plots in julia or not
+        save_plots=false,
+        write_res=false, # write results
+        pt_avg=1, # number of points to do smoothing average
+        pt_smooth_derivative=0, # number of points to do ssmooth_derivative
+        do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
+        avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+        correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+        thr_negative=0.01,  # used only if correct_negative == "thr_correction"
+        multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+        method_multiple_scattering_correction="interpolation",
+        calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+        PopulationSize=100,
+        maxiters=2000000,
+        abstol=0.00001,
+        thr_lowess=0.05,
+        penality_CI=4.0,
+        verbose =false,
+
+    
+)
 K=  fit_NL_segmentation_file(
         "", #label of the experiment
         path_to_data, # path to the folder to analyze
@@ -918,15 +961,15 @@ K=  fit_NL_segmentation_file(
         list_models_f, # ode model to use
         list_lb, # lower bound param
         list_ub, # upper bound param
-        3;
-        method_of_fitting="MCMC",
-        nrep=20,
+        4;
+        method_of_fitting="Bootstrap",
+        nrep=5,
         list_u0=list_lb .+ (list_ub .- list_lb) ./ 2,# initial guess param
         optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
         path_to_results="NA", # path where save results
         path_to_plot="NA", # path where to save Plots
         loss_type="RE", # string of the type of the used loss
-        smoothing=false, # 1 do smoothing of data with rolling average
+        smoothing=true, # 1 do smoothing of data with rolling average
         type_of_smoothing="lowess",
         display_plots=true,# display plots in julia or not
         save_plots=false,
@@ -944,14 +987,390 @@ K=  fit_NL_segmentation_file(
         maxiters=2000000,
         abstol=0.00001,
         thr_lowess=0.05,
-        dectect_number_cdp= true,
-        fixed_cpd = false,
+        dectect_number_cdp= false,
+        fixed_cpd = true,
         penality_CI=4.0,
-        beta_smoothing_ms = 0.0,
-        verbose =false
+        beta_smoothing_ms = 2.0,
+        verbose =false,
+        win_size=14, # number of the point of cpd sliding win
+
     
 )
     
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+model = "exponential"
+n_start =[0.1]
+tstart =0.0
+
+tmax = 0100.0
+delta_t=2.0
+param_of_ode= [0.01
+]
+sim_1 = ODE_sim(model, #string of the model
+    n_start, # starting condition
+    tstart, # start time of the sim
+    tmax, # final time of the sim
+    delta_t, # delta t for poisson approx
+    param_of_ode # parameters of the ODE model
+)
+
+sol_1 =reduce(vcat,sim_1)
+
+# second segment ODE
+n_start =[sol_1[end]]
+tstart =102.0
+
+tmax = 0200.0
+delta_t=2.0
+param_of_ode= [-0.01
+]
+sim_2 = ODE_sim(model, #string of the model
+    n_start, # starting condition
+    tstart, # start time of the sim
+    tmax, # final time of the sim
+    delta_t, # delta t for poisson approx
+    param_of_ode # parameters of the ODE model
+)
+
+sol_2 =reduce(vcat,sim_2)
+
+model = "logistic"
+n_start =[sol_2[end]]
+tstart =202.0
+tmax = 0300.0
+delta_t=2.0
+param_of_ode= [00.2,0.5
+]
+
+
+sim_3= ODE_sim(model, #string of the model
+    n_start, # starting condition
+    tstart, # start time of the sim
+    tmax, # final time of the sim
+    delta_t, # delta t for poisson approx
+    param_of_ode # parameters of the ODE model
+)
+
+sol_3 =reduce(vcat,sim_3)
+# third segment ODE
+
+
+times_sim =vcat(sim_1.t,sim_2.t)
+times_sim =vcat(times_sim,sim_3.t)
+
+# binding the simulatios
+sol_sim =vcat(sol_1,sol_2)
+sol_sim =vcat(sol_sim,sol_3)
+
+
+
+
+Plots.scatter(sol_sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],  color=:blue, size = (300,300))
+
+
+
+data_OD = Matrix(transpose(hcat(times_sim,sol_sim)))
+
+#adding noise_unifo
+noise_unifom = rand(Uniform(-0.001,0.001),length(sol_sim))
+
+data_OD[2,:] = data_OD[2,:] .+ noise_unifom
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:blue,markersize =2 ,size = (300,300))
+# testing change point function 
+
+
+L = selection_NL_fixed_interval(
+    data_OD, # dataset first row times second row OD
+    "", # name of the well
+   "", #label of the experiment
+   ["NL_logistic","NL_exponential"], # ode models to use
+   [[0.0,0.0,-1.0],[0.0,-0.1]], # upper bound param
+   [[1.0,1.0,100000.0],[1.0,1.0]],
+   [100,200];
+    list_u0=[[0.001,0.99,00.5],[0.9001,0.91]],# initial guess param
+    type_of_loss="L2", # type of used loss
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    method_of_fitting="single", # selection of sciml integrator
+    smoothing=false,
+    nrep =20,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    pt_avg=1,
+    pt_smooth_derivative=0,
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    beta_smoothing_ms=2.0, #  parameter of the AIC penality
+    PopulationSize=500,
+    maxiters=20000000,
+    abstol=0.000000001,
+    penality_CI=80000000.0)
+
+    Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:blue,markersize =2 ,size = (300,300))
+
+    plot!(L[3],L[2])
+
+    data_OD_1 = Matrix(transpose(hcat(sim_3.t,sol_3)))
+
+    #adding noise_unifo
+    noise_unifom = rand(Uniform(-0.001,0.001),length(sim_3.t))
+    
+    data_OD_1[2,:] = data_OD_1[2,:] .+ noise_unifom
+    Plots.scatter(data_OD_1[1,:],data_OD_1[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:blue,markersize =2 ,size = (300,300))
+    # testing change point function 
+    
+
+
+
+@time H_1 = fit_NL_model_with_sensitivity(data_OD_1, # dataset first row times second row OD
+"", # name of the well
+"test", #label of the experiment
+"NL_logistic", # ode models to use
+[0.0,0.0,-1.0], # upper bound param
+[1.0,1.0,10000.0];
+nrep=500,
+optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+display_plots=true, # display plots in julia or not
+save_plot=false,
+path_to_plot="NA", # where save plots
+pt_avg=1, # numebr of the point to generate intial condition
+pt_smooth_derivative=7,
+smoothing=false, # the smoothing is done or not?
+type_of_smoothing="rolling_avg",
+type_of_loss="RE", # type of used loss
+multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+method_multiple_scattering_correction="interpolation",
+calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+PopulationSize=50,
+maxiters=20000000,
+abstol=0.0000001,
+thr_lowess=0.05,
+write_res=false,
+penality_CI=80000000.0
+)
+
+
+Plots.scatter(H_1[3][3,2:end], xlabel="Hyper param configuration", ylabel="P1", label=[ nothing],color=:blue,markersize =2 ,size = (300,300))
+Plots.scatter(H_1[3][4,2:end], xlabel="Hyper param configuration", ylabel="P2", label=[ nothing],color=:blue,markersize =2 ,size = (300,300))
+Plots.scatter(H_1[3][5,2:end], xlabel="Hyper param configuration", ylabel="P3", label=[ nothing],color=:blue,markersize =2 ,size = (300,300))
+lb =[0.0,0.0,-1.0] # upper bound param
+ ub =  [1.0,1.0,10000.0]
+ mc_res = Any
+initial_u0=[  rand(Uniform(lb[s],ub[s]))[1] for s in 1:length([0.0,0.0,-1.0])]
+ for i in 1:200
+    initial_u0=[  rand(Uniform(lb[s],ub[s]))[1] for s in 1:length([0.0,0.0,-1.0])]
+
+   mcmc = fit_NL_model_MCMC_intialization(data_OD_1, # dataset first row times second row OD
+   "", # name of the well
+   "test", #label of the experiment
+   "NL_logistic", # ode models to use
+   lb, # upper bound param
+   ub;
+    u0= initial_u0 ,
+    nrep=10,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    display_plots=true, #  display plots in julia or not
+    save_plot=false,
+    path_to_plot="NA", # where save plots
+    pt_avg=1, # numebr of the point to generate intial condition
+    pt_smooth_derivative=7,
+    smoothing=false, # the smoothing is done or not?
+    type_of_smoothing="rolling_avg",
+    type_of_loss="RE", # type of used loss
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    penality_CI=3.0,
+)
+    if i == 1
+
+     mc_res =mcmc[1]
+
+        else
+            mc_res =hcat(mc_res,mcmc[1])
+
+        end 
+
+    
+end   
+
+
+
+
+Plots.scatter(mc_res[3,1:end], xlabel="Hyper param configuration", ylabel="P1", label=[ nothing],color=:blue,markersize =2 ,size = (300,300))
+Plots.scatter(mc_res[4,1:end], xlabel="Hyper param configuration", ylabel="P2", label=[ nothing],color=:blue,markersize =2 ,size = (300,300))
+Plots.scatter(mc_res[5,1:end], xlabel="Hyper param configuration", ylabel="P3", label=[ nothing],color=:blue,markersize =2 ,size = (300,300))
+
+
+
+
+
+
+
+
+path_to_data  = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/example_for_fernanda/LG119/data_channel_1.csv"
+path_to_annotation  = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/example_for_fernanda/LG119/annotation_channel_1.csv"
+
+model_list_ODE= ["logistic","exponential","gompertz"]
+model_list_NL= ["NL_logistic","NL_exponential","NL_Gompertz"]
+
+ode_lb_logistic = [0.01, 0.0]
+ode_ub_logistic = [0.1, 2.5]
+
+
+ode_lb_exp = [-0.01]
+ode_ub_exp = [0.1]
+
+ode_lb_gompertz = [0.01, 0.3]
+ode_ub_gompertz = [0.1, 2.5]
+
+
+
+NL_lb_logistic = [0.0, 0.01, -1200]
+NL_ub_logistic = [2.5, 0.1, +1200]
+
+NL_lb_exp= [0.0, - 0.01]
+NL_ub_exp = [2.5, 0.1]
+
+
+NL_lb_gompertz = [0.0, 0.01, -1200]
+NL_ub_gompertz = [2.5, 0.1, +1200]
+
+list_lb_ODE =[ode_lb_logistic,ode_lb_exp,ode_lb_gompertz]
+list_ub_ODE =[ode_ub_logistic,ode_ub_exp,ode_ub_gompertz]
+
+list_lb_NL =[NL_lb_logistic,NL_lb_exp,NL_lb_gompertz]
+list_ub_NL =[NL_ub_logistic,NL_ub_exp,NL_ub_gompertz]
+
+
+
+data_1 = CSV.File(path_to_data);
+# 
+names_of_cols = propertynames(data_1);
+data_temp = data_1[names_of_cols[1]];
+times_data= convert(Vector{Float64}, data_temp)
+
+data_OD =    Matrix(transpose(hcat(times_data, data_1[names_of_cols[4]])));
+
+plot(data_OD[1,:],data_OD[2,:])
+
+
+
+segment_intervals = [250.0]
+
+
+ODE_fit = selection_ODE_fixed_intervals(
+    data_OD, # dataset first row times second row OD
+    "", # name of the well
+    "", #label of the experiment
+    model_list_ODE, # ode models to use
+    list_lb_ODE, # lower bound param
+    list_ub_ODE, # upper bound param
+    segment_intervals;
+    type_of_loss="RE", # type of used loss
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    integrator=Tsit5(), # selection of sciml integrator
+    smoothing=false,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    pt_avg=1,
+    save_plot=false, # do plots or no
+    display_plots=true,
+    path_to_plot="NA", # where save plots
+    pt_smooth_derivative=0,
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    beta_smoothing_ms=2.0, #  parameter of the AIC penality
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.0000000001,
+)
+
+
+
+ODE_fit[1]
+
+u0_NL_logistic =[data_OD[2,end],0.00018677420615663637,250.0]
+u0_NL_exp =[data_OD[2,1],0.00018677420615663637]
+u0_NL_gompertz =[0.6,0.01,250.0]
+
+segment_intervals = [250.0]
+NL_fit = selection_NL_fixed_interval(
+    data_OD, # dataset first row times second row OD
+    "", # name of the well
+   "", #label of the experiment
+   model_list_NL, # ode models to use
+   list_lb_NL, # upper bound param
+   list_ub_NL,
+   segment_intervals;
+    #list_u0=[[0.001,0.99,00.5],[0.9001,0.91]],# initial guess param
+    type_of_loss="RE", # type of used loss
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    method_of_fitting="single", # selection of sciml integrator
+    smoothing=false,
+    nrep =10,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    pt_avg=1,
+    pt_smooth_derivative=0,
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    beta_smoothing_ms=2.0, #  parameter of the AIC penality
+    PopulationSize=500,
+    maxiters=20000000,
+    abstol=0.000000001,
+    penality_CI=2.0)
+
+plot(NL_fit[3],NL_fit[2])
+
+
+segment_intervals = [250.0]
+
+NL_fit = selection_NL_fixed_interval(
+    data_OD, # dataset first row times second row OD
+    "", # name of the well
+   "", #label of the experiment
+   model_list_NL, # ode models to use
+   list_lb_NL, # upper bound param
+   list_ub_NL,
+   segment_intervals;
+    #list_u0=[[0.001,0.99,00.5],[0.9001,0.91]],# initial guess param
+    type_of_loss="L2", # type of used loss
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    method_of_fitting="MCMC", # selection of sciml integrator
+    smoothing=false,
+    nrep =10,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    pt_avg=1,
+    pt_smooth_derivative=0,
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    beta_smoothing_ms=2.0, #  parameter of the AIC penality
+    PopulationSize=500,
+    maxiters=20000000,
+    abstol=0.000000001,
+    penality_CI=2.0)
+
+    plot(NL_fit[3],NL_fit[2])
