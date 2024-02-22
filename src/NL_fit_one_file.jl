@@ -7,7 +7,7 @@ function fit_NL_model_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
     path_to_annotation::String,# path to the annotation of the wells
-    model::String, # string of the used model
+    model::Any, # string of the used model
     lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
     ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
@@ -51,9 +51,18 @@ function fit_NL_model_file(
 
     parameter_of_optimization = initialize_df_results_ode_custom(lb_param)
     errors_of_optimization = initialize_df_results_ode_custom(lb_param)
+  
+    if typeof(model) == String
 
-    errors_of_optimization = errors_of_optimization[3:end]
+        model_string = NL_models[model_function].name
 
+
+    else
+
+        model_string = "custom"
+
+
+    end
 
 
 
@@ -167,10 +176,24 @@ function fit_NL_model_file(
                 write_res=write_res,
                 penality_CI=penality_CI)
 
+            temp_mean = temp_results_1[5]
+            temp_mean = vcat("mean",temp_mean)
+            temp_mean = vcat(string(well_name),temp_mean)
 
-            errors_of_optimization = hcat(errors_of_optimization, temp_results_1[5])
-            errors_of_optimization = hcat(errors_of_optimization, temp_results_1[7])
-            errors_of_optimization = hcat(errors_of_optimization, temp_results_1[8])
+            errors_of_optimization = hcat(errors_of_optimization, temp_mean)
+
+            temp_ci_low = temp_results_1[7]
+            temp_ci_low = vcat("lower_CI",temp_ci_low)
+            temp_ci_low = vcat(string(well_name),temp_ci_low)
+
+            errors_of_optimization = hcat(errors_of_optimization, temp_ci_low)
+            
+            temp_ci_up = temp_results_1[8]
+            temp_ci_up = vcat("upper_CI",temp_ci_up)
+            temp_ci_up = vcat(string(well_name),temp_ci_up)
+
+
+            errors_of_optimization = hcat(errors_of_optimization, temp_ci_up)
 
 
 
@@ -310,10 +333,27 @@ function fit_NL_model_file(
                 penality_CI=penality_CI
             )
 
-            errors_of_optimization = hcat(errors_of_optimization, temp_errors_of_optimization[5])
-            errors_of_optimization = hcat(errors_of_optimization, temp_errors_of_optimization[7])
-            errors_of_optimization = hcat(errors_of_optimization, temp_errors_of_optimization[8])
 
+
+
+            temp_mean = temp_errors_of_optimization[5]
+            temp_mean = vcat("mean",temp_mean)
+            temp_mean = vcat(string(well_name),temp_mean)
+
+            errors_of_optimization = hcat(errors_of_optimization, temp_mean)
+
+            temp_ci_low = temp_errors_of_optimization[7]
+            temp_ci_low = vcat("lower_CI",temp_ci_low)
+            temp_ci_low = vcat(string(well_name),temp_ci_low)
+
+            errors_of_optimization = hcat(errors_of_optimization, temp_ci_low)
+            
+            temp_ci_up = temp_errors_of_optimization[8]
+            temp_ci_up = vcat("upper_CI",temp_ci_up)
+            temp_ci_up = vcat(string(well_name),temp_ci_up)
+
+
+            errors_of_optimization = hcat(errors_of_optimization, temp_ci_up)
 
 
 
@@ -326,7 +366,7 @@ function fit_NL_model_file(
     if write_res == true
 
         CSV.write(
-            string(path_to_results, label_exp, "_parameters_", model, ".csv"),
+            string(path_to_results, label_exp, "_parameters_", model_string, ".csv"),
             Tables.table(Matrix(parameter_of_optimization)),
         )
 
@@ -575,7 +615,7 @@ function fit_NL_segmentation_file(
     abstol=0.00001,
     size_bootstrap=0.7,
     thr_lowess=0.05,
-    dectect_number_cdp=true,
+    detect_number_cpd=true,
     type_of_detection="sliding_win",
     type_of_curve="original",
     fixed_cpd=false,
@@ -707,7 +747,7 @@ function fit_NL_segmentation_file(
             PopulationSize=PopulationSize,
             maxiters=maxiters,
             abstol=abstol,
-            dectect_number_cdp=dectect_number_cdp,
+            detect_number_cpd=detect_number_cpd,
             fixed_cpd=fixed_cpd,
             penality_CI=penality_CI,
             size_bootstrap=size_bootstrap,

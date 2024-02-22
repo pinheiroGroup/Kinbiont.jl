@@ -375,7 +375,7 @@ list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
 data_OD = Matrix(transpose(hcat(unique(data_OD[1,:]),unique(data_OD[2,1:length(unique(data_OD[1,:]))]))))
 scatter(data_OD[1,:],data_OD[2,:])
 
-
+collect(combinations([1,2,3,4,5,6], 3))
 R= selection_NL_maxiumum_change_points(
     data_OD, # dataset first row times second row OD
     "", # name of the well
@@ -383,18 +383,19 @@ R= selection_NL_maxiumum_change_points(
     list_models_f, # ode model to use
     list_lb, # lower bound param
     list_ub, # upper bound param
-  3;
+    3;
     type_of_loss="L2", # type of used loss
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     method_of_fitting="MCMC", # selection of sciml integrator
     type_of_detection="sliding_win",
     type_of_curve="original",
-    smoothing=false,
+    smoothing=true,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
-    dectect_number_cdp= false,
+    detect_number_cpd= true,
+    fixed_cpd= false,
     pt_avg=1,
-    nrep=20,
+    nrep=10,
     save_plot=false, # do plots or no
     display_plots=true,
     path_to_plot="NA", # where save plots
@@ -403,13 +404,14 @@ R= selection_NL_maxiumum_change_points(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-    beta_smoothing_ms=10.0, #  parameter of the AIC penality
+    beta_smoothing_ms= 2.0, #  parameter of the AIC penality
     method_peaks_detection="peaks_prominence",
-    n_bins=40,
     PopulationSize=50,
     maxiters=2000000,
     abstol=0.000000001,
-    penality_CI=9.0)
+    penality_CI =6.0,
+    correction_AIC = false
+)
 
 
 
@@ -987,7 +989,7 @@ K=  fit_NL_segmentation_file(
         maxiters=2000000,
         abstol=0.00001,
         thr_lowess=0.05,
-        dectect_number_cdp= false,
+        detect_number_cdp= false,
         fixed_cpd = true,
         penality_CI=4.0,
         beta_smoothing_ms = 2.0,

@@ -1354,7 +1354,7 @@ function selection_NL_maxiumum_change_points(
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.000000001,
-    dectect_number_cpd=false,
+    detect_number_cpd=false,
     fixed_cpd=false,
     penality_CI=8.0,
     size_bootstrap=0.7,
@@ -1366,6 +1366,7 @@ function selection_NL_maxiumum_change_points(
     top_fit = Vector{Any}
     top_time = Vector{Any}
     top_intervals = Vector{Any}
+
 
     if multiple_scattering_correction == true
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
@@ -1383,7 +1384,7 @@ function selection_NL_maxiumum_change_points(
 
 
 
-    if dectect_number_cpd == true
+    if detect_number_cpd == true
 
         list_change_points_dev = cpd_local_detection(
             data_testing,

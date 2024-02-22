@@ -1566,7 +1566,7 @@ function segmentation_ODE(
     list_lb_param::Any, # lower bound param
     list_ub_param::Any, # upper bound param
     n_max_change_points::Int;
-    dectect_number_cpd=true,
+    detect_number_cpd=true,
     fixed_cpd=false,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
@@ -1672,7 +1672,7 @@ function segmentation_ODE(
     if n_max_change_points > 0
 
 
-        if dectect_number_cpd == true
+        if detect_number_cpd == true
 
             list_change_points_dev = cpd_local_detection(
                 data_testing,
