@@ -925,7 +925,7 @@ K=  fit_NL_model_file(
         "NL_Gompertz", # ode model to use
         nl_lb_1, # lower bound param
         nl_ub_1;
-        method_of_fitting="single",
+        method_of_fitting="Bootstrap",
         nrep=5,
         u0=nl_lb_1 .+ (nl_ub_1 .- nl_lb_1) ./ 2,# initial guess param
         optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
