@@ -1160,7 +1160,7 @@ function ODE_selection_NMAX_change_points(
                 name_well,
                 "_seg_0.csv",
             ),
-            Tables.table(Matrix(res[3])),
+            Tables.table(Matrix(res[2])),
         )
         CSV.write(
             string(
@@ -1630,7 +1630,7 @@ function segmentation_ODE(
         type_of_smoothing=type_of_smoothing,
         thr_lowess=thr_lowess,
         correction_AIC=correction_AIC)
-
+  
     if save_all_model == true
         mkpath(path_to_results)
         CSV.write(
@@ -1641,7 +1641,7 @@ function segmentation_ODE(
                 name_well,
                 "_seg_0.csv",
             ),
-            Tables.table(Matrix(res[3])),
+            Tables.table(res[1]),
         )
         CSV.write(
             string(
@@ -1651,18 +1651,9 @@ function segmentation_ODE(
                 name_well,
                 "_seg_0.csv",
             ),
-            Tables.table(Vector(res[5])),
+            Tables.table(Vector(res[2])),
         )
-        CSV.write(
-            string(
-                path_to_results,
-                label_exp,
-                "_segmented_ODE_solution_",
-                name_well,
-                "_seg_0.csv",
-            ),
-            Tables.table(Vector(res[7])),
-        )
+
     end
 
     top_model = res[5]
@@ -1789,7 +1780,7 @@ function segmentation_ODE(
                         "_segmented_ODE_",
                         name_well,
                         "_seg_",
-                        n,
+                        length(cpd_temp) +1,
                         ".csv",
                     ),
                     Tables.table(Vector(direct_search_results[1])),
@@ -1801,10 +1792,10 @@ function segmentation_ODE(
                         "_segmented_ODE_solution_",
                         name_well,
                         "_seg_",
-                        n,
+                        length(cpd_temp) +1,
                         ".csv",
                     ),
-                    Tables.table(Vector(direct_search_results[3])),
+                    Tables.table(Vector(direct_search_results[4])),
                 )
             end
         end
