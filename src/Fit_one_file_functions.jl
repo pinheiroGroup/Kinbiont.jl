@@ -907,7 +907,7 @@ end
 
 
 """
-ODE segementation fitting fixed number of cdp for a full file
+ODE segementation fitting fixed number of cpd for a full file
 """
 
 
@@ -1096,7 +1096,7 @@ function selection_ODE_fixed_change_points_file(
             string(
                 path_to_results,
                 label_exp,
-                "_parameters_model_cdp_nseg_",
+                "_parameters_model_cpd_nseg_",
                 n_change_points + 1,
                 ".csv",
             ),
@@ -1122,8 +1122,8 @@ function segmentation_ODE_file(
     list_of_models::Vector{String}, # ode model to use 
     lb_param_array::Any, # lower bound param
     ub_param_array::Any,# upper bound param
-    n_change_points::Int;
-    dectect_number_cdp=true,
+    n_max_change_points::Int;
+    dectect_number_cpd=true,
     fixed_cpd=false,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
@@ -1254,8 +1254,8 @@ function segmentation_ODE_file(
             list_of_models, # ode model to use
             lb_param_array, # lower bound param
             ub_param_array, # upper bound param
-            n_max_change_points::Int;
-            dectect_number_cdp=dectect_number_cdp,
+            n_max_change_points;
+            dectect_number_cpd=dectect_number_cpd,
             fixed_cpd=fixed_cpd,
             optmizator=optmizator, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
@@ -1307,7 +1307,7 @@ function segmentation_ODE_file(
             string(
                 path_to_results,
                 label_exp,
-                "_parameters_model_cdp_nseg_",
+                "_parameters_model_cpd_nseg_",
                 n_change_points + 1,
                 ".csv",
             ),
