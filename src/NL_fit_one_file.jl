@@ -54,7 +54,7 @@ function fit_NL_model_file(
   
     if typeof(model) == String
 
-        model_string = NL_models[model_function].name
+        model_string = NL_models[model].name
 
 
     else
