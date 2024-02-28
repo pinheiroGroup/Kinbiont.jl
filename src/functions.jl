@@ -28,15 +28,14 @@ function model_selector(model::String, u0, tspan, param=nothing)
     return ODE_prob
 end
 
-
-
+"""
+specific gr evaluation with slinding window log-lin fitting
+data_smooted = matrix of data
+pt_smoothing_derivative = size of the win, if <2 the the numerical derivative of (log) data is evaluate with interpolation algorithm
+"""
 
 function specific_gr_evaluation(data_smooted::Any, pt_smoothing_derivative::Int)
-    """
-    specific gr evaluation with slinding window log-lin fitting
-    data_smooted = matrix of data
-    pt_smoothing_derivative = size of the win, if <2 the the numerical derivative of (log) data is evaluate with interpolation algorithm
-    """
+
 
     if pt_smoothing_derivative > 1
 
@@ -496,5 +495,25 @@ function AICc_evaluation(n_param, beta_penality, data, data_th; correction=true)
 
     end
     return AICc
+
+end
+
+function remove_replicate_data(composed_time, composed_sol)
+    duplicates_index = [0]
+    for k = 2:length(composed_time)
+        if composed_time[k-1] == composed_time[k]
+            duplicates_index = vcat(k-1,duplicates_index)
+
+        end
+      end
+      if length(duplicates_index) > 1
+        index_tot = 1:1:length(composed_time)
+        index_to_use = setdiff(index_tot,duplicates_index)
+        composed_time = composed_time[index_to_use]
+        composed_sol = composed_sol[index_to_use]
+
+      end 
+
+    return composed_time,composed_sol
 
 end

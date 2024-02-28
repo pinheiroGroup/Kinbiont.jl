@@ -1315,7 +1315,7 @@ function selection_NL_fixed_interval(
             param_out = push!(param_out, temp_res_win)
         end
     end
-
+    composed_time, composed_sol = remove_replicate_data(composed_time, composed_sol)
 
     return param_out, composed_sol, composed_time
 
@@ -1475,15 +1475,18 @@ function selection_NL_maxiumum_change_points(
         n_param_full_model = sum([
             length(res_this_combination[1][kk][3:(end-4)]) for
             kk = 1:length(res_this_combination[1])
-        ]) + n_change_points
+        ])
 
+        n_param_full_model = n_param_full_model + length(cpd_temp)
 
+        println(length(data_testing[2,:]))
+        println(length(res_this_combination[2]))
+        println(length(unique(res_this_combination[2])))
 
-
-
-        AICc_full_model = AICc_evaluation(n_param_full_model, beta_smoothing_ms, res_this_combination[3], res_this_combination[2], correction=correction_AIC)
-
-
+        AICc_full_model = AICc_evaluation(n_param_full_model, beta_smoothing_ms, data_testing[2,:], res_this_combination[2], correction=correction_AIC)
+        println("######")
+        println(cpd_temp)
+        println(AICc_full_model)
         if i == 1
 
             top_aicc = copy(AICc_full_model)

@@ -1230,8 +1230,9 @@ function ODE_selection_NMAX_change_points(
                 sum([
                     length(direct_search_results[1][kk][3:(end-4)]) for
                     kk = 1:length(direct_search_results[1])
-                ]) + n_change_points
-
+                ]) 
+            
+                n_param = n_param + n
             new_penality = AICc_evaluation(n_param, penality_parameter, data_testing[2, :], unique(direct_search_results[end]), correction=correction_AIC)
 
 
@@ -1499,6 +1500,9 @@ function selection_ODE_fixed_intervals(
         end
     end
 
+    composed_time, composed_sol = remove_replicate_data(composed_time, composed_sol)
+
+
     if display_plots
         if_display = display
     else
@@ -1761,7 +1765,10 @@ function segmentation_ODE(
                 sum([
                     length(direct_search_results[1][kk][3:(end-4)]) for
                     kk = 1:length(direct_search_results[1])
-                ]) + n_change_points
+                ]) 
+            
+            n_param = n_param + length(cpd_temp)
+    
 
             new_penality = AICc_evaluation(n_param, penality_parameter, data_testing[2, :], unique(direct_search_results[end]), correction=correction_AIC)
 
