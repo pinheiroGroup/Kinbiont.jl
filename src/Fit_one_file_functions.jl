@@ -1284,6 +1284,8 @@ function segmentation_ODE_file(
             thr_lowess=thr_lowess,
             correction_AIC=correction_AIC,
             )
+        
+        println(temp_results_1[1])
 
         vectorized_temp_results = expand_res(
             temp_results_1[1],

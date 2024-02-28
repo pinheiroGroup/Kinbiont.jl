@@ -962,6 +962,7 @@ function selection_ODE_fixed_change_points(
         param_fitting = copy(temp_res_win)
         temp_res_win = vcat(model, temp_res_win)
         temp_res_win = vcat(temp_res_win, model_selection_results[4])
+        temp_res_win = vcat(label_exp, temp_res_win)
 
         #temp_res_win = push!(temp_res_win,model)
         u0 = generating_IC(data_temp, model, smoothing, pt_avg)
@@ -1436,6 +1437,7 @@ function selection_ODE_fixed_intervals(
         param_fitting = copy(temp_res_win)
         temp_res_win = vcat(model, temp_res_win)
         temp_res_win = vcat(temp_res_win, model_selection_results[4])
+        temp_res_win = vcat(label_exp, model_selection_results[4])
 
         #temp_res_win = push!(temp_res_win,model)
         u0 = generating_IC(data_temp, model, smoothing, pt_avg)

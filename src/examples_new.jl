@@ -1134,7 +1134,7 @@ L = selection_NL_fixed_interval(
     data_OD_1[2,:] = data_OD_1[2,:] .+ noise_unifom
     Plots.scatter(data_OD_1[1,:],data_OD_1[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:blue,markersize =2 ,size = (300,300))
     # testing change point function 
-    
+a,b = remove_replicate_data(L[3], L[2])
 
 
 
@@ -1376,3 +1376,63 @@ NL_fit = selection_NL_fixed_interval(
     penality_CI=2.0)
 
     plot(NL_fit[3],NL_fit[2])
+
+    ub_exp =[ 1.6 ]
+    lb_exp =[ -00.1 ]
+    
+    ub_logistic =[ 0.9 , 1.001]
+    lb_logistic =[ 0.0001 , 0.001]
+    
+    
+    ub_hpm =[ 0.1 , 20 , 50.001  ]
+    lb_hpm =[ 0.0001 , 0.000001, 0.001  ]
+    
+    
+    ub_hpm_exp = [ 0.1 , 20   ]
+    lb_hpm_exp = [ 0.0001 , 0.0000001  ]
+    
+    
+    ub_dhpm =[ 0.6 , 3, 20.001  ,10.0]
+    lb_dhpm =[ 0.0001 , 0.000010, 0.001  ,0.001]
+    
+    
+    list_of_models = ["exponential","HPM","HPM_exp","logistic","aHPM"]
+    list_ub_param =[ub_exp,ub_hpm,ub_hpm_exp,ub_logistic,ub_dhpm]
+    list_lb_param =[lb_exp,lb_hpm,lb_hpm_exp,lb_logistic,lb_dhpm]
+    
+    
+seg_ODE_res = segmentation_ODE_file(
+        "segmented_ODE_LG106", #label of the experiment
+        path_to_data, # path to the folder to analyze
+        path_to_annotation,# path to the annotation of the wells
+        list_of_models, # ode model to use 
+        list_lb_param, # lower bound param
+        list_ub_param,# upper bound param
+        2;
+        detect_number_cpd=true,
+        fixed_cpd=false,
+        optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+        integrator=Tsit5(), # selection of sciml integrator
+        type_of_loss="RE", # type of used loss 
+        type_of_detection="sliding_win",
+        type_of_curve="original",
+        do_blank_subtraction="avg_blank",
+        correct_negative="remove",
+        thr_negative=0.01,
+        pt_avg=1, # number of the point to generate intial condition
+        smoothing=false, # the smoothing is done or not?
+        save_plots=true, # do plots or no
+        display_plots=true, # do plots or no
+        path_to_plot=path_to_plot, # where save plots
+        path_to_results=path_to_results,
+        win_size=7, # numebr of the point to generate intial condition
+        pt_smooth_derivative=0,
+        penality_parameter=2.0,
+        write_res=true,
+        save_all_model=true,
+        method_peaks_detection="peaks_prominence",
+        n_bins=40,
+        PopulationSize=5,
+        maxiters=2,
+        abstol=0.00000001,
+        )
