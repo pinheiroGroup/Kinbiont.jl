@@ -918,7 +918,7 @@ function selection_ODE_fixed_change_points_file(
     list_of_models::Vector{String}, # ode model to use 
     lb_param_array::Any, # lower bound param
     ub_param_array::Any,# upper bound param
-    n_change_points::Int;
+    n_max_change_points::Int;
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     type_of_loss="L2", # type of used loss 
@@ -960,7 +960,7 @@ function selection_ODE_fixed_change_points_file(
         mkpath(path_to_plot)
     end
 
-    parameter_of_optimization = initialize_res_ms(ub_param_array, number_of_segment=n_change_points + 1)
+    parameter_of_optimization = initialize_res_ms(ub_param_array, number_of_segment=n_max_change_points + 1)
 
 
 
@@ -1047,7 +1047,7 @@ function selection_ODE_fixed_change_points_file(
             list_of_models, # ode models to use 
             lb_param_array, # lower bound param
             ub_param_array, # upper bound param
-            n_change_points;
+            n_max_change_points;
             type_of_loss=type_of_loss, # type of used loss 
             optmizator=optmizator, # selection of optimization method 
             integrator=integrator, # selection of sciml integrator
@@ -1078,7 +1078,7 @@ function selection_ODE_fixed_change_points_file(
             lb_param_array,
             string(well_name),
             label_exp;
-            number_of_segment=n_change_points + 1
+            number_of_segment=n_max_change_points + 1
         )
         if verbose == true
             println("the results are:")
@@ -1097,7 +1097,7 @@ function selection_ODE_fixed_change_points_file(
                 path_to_results,
                 label_exp,
                 "_parameters_model_cpd_nseg_",
-                n_change_points + 1,
+                n_max_change_points + 1,
                 ".csv",
             ),
             Tables.table(Matrix(parameter_of_optimization)),
@@ -1123,7 +1123,7 @@ function segmentation_ODE_file(
     lb_param_array::Any, # lower bound param
     ub_param_array::Any,# upper bound param
     n_max_change_points::Int;
-    dectect_number_cpd=true,
+    detect_number_cpd=true,
     fixed_cpd=false,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
@@ -1167,7 +1167,7 @@ function segmentation_ODE_file(
         mkpath(path_to_plot)
     end
 
-    parameter_of_optimization = initialize_res_ms(ub_param_array, number_of_segment=n_change_points + 1)
+    parameter_of_optimization = initialize_res_ms(ub_param_array, number_of_segment=n_max_change_points + 1)
 
 
 
@@ -1248,14 +1248,14 @@ function segmentation_ODE_file(
         # inference
 
         temp_results_1 = segmentation_ODE(
-            data_testing, # dataset x times y OD/fluorescence
+            data, # dataset x times y OD/fluorescence
             string(well_name), # name of the well
             label_exp, #label of the experiment
             list_of_models, # ode model to use
             lb_param_array, # lower bound param
             ub_param_array, # upper bound param
             n_max_change_points;
-            dectect_number_cpd=dectect_number_cpd,
+            detect_number_cpd=detect_number_cpd,
             fixed_cpd=fixed_cpd,
             optmizator=optmizator, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
@@ -1282,14 +1282,15 @@ function segmentation_ODE_file(
             abstol=abstol,
             type_of_smoothing=type_of_smoothing,
             thr_lowess=thr_lowess,
-            correction_AIC=correction_AIC)
+            correction_AIC=correction_AIC,
+            )
 
         vectorized_temp_results = expand_res(
             temp_results_1[1],
             lb_param_array,
             string(well_name),
             label_exp;
-            number_of_segment=n_change_points + 1
+            number_of_segment=n_max_change_points + 1
         )
         if verbose == true
             println("the results are:")
@@ -1308,7 +1309,7 @@ function segmentation_ODE_file(
                 path_to_results,
                 label_exp,
                 "_parameters_model_cpd_nseg_",
-                n_change_points + 1,
+                n_max_change_points + 1,
                 ".csv",
             ),
             Tables.table(Matrix(parameter_of_optimization)),

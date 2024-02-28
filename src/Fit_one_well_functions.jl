@@ -1680,7 +1680,7 @@ function segmentation_ODE(
 
             list_change_points_dev = cpd_local_detection(
                 data_testing,
-                n_change_points;
+                n_max_change_points;
                 type_of_detection=type_of_detection,
                 type_of_curve=type_of_curve,
                 pt_derivative=pt_smooth_derivative,
@@ -1697,7 +1697,7 @@ function segmentation_ODE(
 
             list_change_points_dev = cpd_local_detection(
                 data_testing,
-                n_change_points;
+                n_max_change_points;
                 type_of_detection=type_of_detection,
                 type_of_curve=type_of_curve,
                 pt_derivative=pt_smooth_derivative,
@@ -1707,14 +1707,14 @@ function segmentation_ODE(
             )
 
             combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2],
-                n_fix= n_change_points  )
+                n_fix= n_max_change_points  )
 
 
 
         else
             list_change_points_dev = cpd_local_detection(
                 data_testing,
-               n_change_points  + 2;
+               n_max_change_points  + 2;
                 type_of_detection=type_of_detection,
                 type_of_curve=type_of_curve,
                 pt_derivative=pt_smooth_derivative,
@@ -1724,7 +1724,7 @@ function segmentation_ODE(
             )
 
             combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2],
-                n_fix=n_change_points)
+                n_fix=n_max_change_points)
 
 
         end
