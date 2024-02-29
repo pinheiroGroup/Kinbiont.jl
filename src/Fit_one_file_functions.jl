@@ -1285,14 +1285,13 @@ function segmentation_ODE_file(
             correction_AIC=correction_AIC,
             )
         
-        println(temp_results_1[1])
 
         vectorized_temp_results = expand_res(
             temp_results_1[1],
             lb_param_array,
             string(well_name),
             label_exp;
-            number_of_segment=n_max_change_points + 1
+            number_of_segment=length(temp_results_1[1])
         )
         if verbose == true
             println("the results are:")

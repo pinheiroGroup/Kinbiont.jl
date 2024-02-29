@@ -1435,22 +1435,18 @@ function selection_ODE_fixed_intervals(
         # param of the best model
         temp_res_win = model_selection_results[5]
         param_fitting = copy(temp_res_win)
-        temp_res_win = vcat(model, temp_res_win)
-        temp_res_win = vcat(temp_res_win, model_selection_results[4])
-        temp_res_win = vcat(label_exp, model_selection_results[4])
+     #temp_res_win = push!(temp_res_win,model)
+     u0 = generating_IC(data_temp, model, smoothing, pt_avg)
 
-        #temp_res_win = push!(temp_res_win,model)
-        u0 = generating_IC(data_temp, model, smoothing, pt_avg)
+     # risimulate data
 
-        # risimulate data
-        remade_solution = ODE_sim_for_iterate(
-            model, #string of the model
-            u0, # starting condition
-            data_temp[1, :], # start time of the sim
-            integrator, # which sciml solver of ode
-            param_fitting, # parameters of the ODE model
-        )
-
+     remade_solution = ODE_sim_for_iterate(
+         model, #string of the model
+         u0, # starting condition
+         data_temp[1, :], # start time of the sim
+         integrator, # which sciml solver of ode
+         param_fitting, # parameters of the ODE model
+     )
         time_sol = reduce(hcat, remade_solution.t)
         sol_fin = reduce(hcat, remade_solution.u)
         sol_fin = sum(sol_fin, dims=1)
@@ -1486,6 +1482,16 @@ function selection_ODE_fixed_intervals(
             temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
             temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
         end
+        temp_res_win = vcat(model, temp_res_win)
+        temp_res_win = vcat(temp_res_win, model_selection_results[4])
+        temp_res_win = vcat(label_exp, temp_res_win)
+        temp_res_win = vcat(name_well, temp_res_win)
+
+
+   
+
+
+        
 
         if i == 2
             composed_time = copy(time_sol[index_not_zero])
