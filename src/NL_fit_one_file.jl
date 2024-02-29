@@ -159,8 +159,8 @@ function fit_NL_model_file(
                 optmizator=optmizator,
                 display_plots=display_plots, # display plots in julia or not
                 save_plot=save_plots,
+                path_to_plot =path_to_plot,
                 size_bootstrap=size_bootstrap,
-                path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -174,7 +174,8 @@ function fit_NL_model_file(
                 abstol=abstol,
                 thr_lowess=thr_lowess,
                 write_res=write_res,
-                penality_CI=penality_CI)
+                penality_CI=penality_CI,
+                path_to_results = path_to_results)
 
             temp_mean = temp_results_1[5]
             temp_mean = vcat("mean",temp_mean)

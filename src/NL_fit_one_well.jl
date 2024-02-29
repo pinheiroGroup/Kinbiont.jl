@@ -174,8 +174,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
         )
     end
     # setting initial conditions
-    # TO DO GIVE THE OPTION TO FIX THEM AT LEAST IN KNOWN MODELS
-    # TO DO MODEL SELECTOR
+
     if typeof(model_function) == String
         model_string = NL_models[model_function].name
         model_function = NL_models[model_string].func
@@ -510,7 +509,8 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     abstol=0.00001,
     thr_lowess=0.05,
     write_res=false,
-    penality_CI=3.0
+    penality_CI=3.0,
+    path_to_results = "NA"
 )
 
 
