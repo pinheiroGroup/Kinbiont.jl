@@ -177,8 +177,8 @@ function negative_value_correction(data::Any,
     else
         times = data[1, :]
         values = data[2, :]
-        values_corrected = remove_negative_value(values)
-        data_corrected = transpose(hcat(times, values_corrected[1]))
+        values_corrected, index_not_zero = remove_negative_value(values)
+        data_corrected = transpose(hcat(times[index_not_zero], values_corrected))
 
     end
 
