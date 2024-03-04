@@ -74,6 +74,7 @@ function fit_NL_model_file(
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -443,6 +444,7 @@ function fit_NL_model_selection_file(
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -644,6 +646,7 @@ function fit_NL_segmentation_file(
     list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
     list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)

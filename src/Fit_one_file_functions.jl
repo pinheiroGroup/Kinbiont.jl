@@ -29,6 +29,7 @@ function plot_data(
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -212,6 +213,7 @@ function fit_one_file_Log_Lin(
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -221,10 +223,12 @@ function fit_one_file_Log_Lin(
 
     # excluding blank data and discarded wells
     names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
-    if length(list_of_discarded) > 0
-        names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
-    end
 
+    if length(list_of_discarded) > 0
+
+        names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
+
+    end
     times_data = dfs_data[names_of_cols[1]]
     if length(list_of_blank) > 0
         blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
@@ -254,7 +258,7 @@ function fit_one_file_Log_Lin(
 
 
     # for on the columns to analyze
-
+      println(names_of_cols)
     for well_name in names_of_cols[2:end]
 
 
@@ -392,6 +396,7 @@ function fit_file_ODE(
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -583,6 +588,7 @@ function fit_file_custom_ODE(
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -768,6 +774,7 @@ function ODE_model_selection_file(
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -972,6 +979,7 @@ function selection_ODE_fixed_change_points_file(
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -1179,6 +1187,7 @@ function segmentation_ODE_file(
     list_of_discarded =
         names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
     list_of_blank = Symbol.(list_of_blank)
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
