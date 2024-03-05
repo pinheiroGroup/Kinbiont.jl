@@ -97,6 +97,8 @@ function fit_NL_model_file(
         )
     else
         blank_value = 0.0
+        blank_array = [0.0]
+
     end
 
 
@@ -463,6 +465,8 @@ function fit_NL_model_selection_file(
         )
     else
         blank_value = 0.0
+        blank_array = [0.0]
+
     end
 
 
@@ -663,6 +667,8 @@ function fit_NL_segmentation_file(
         )
     else
         blank_value = 0.0
+        blank_array = [0.0]
+
     end
 
 

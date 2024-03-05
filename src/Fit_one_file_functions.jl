@@ -229,6 +229,7 @@ function fit_one_file_Log_Lin(
         )
     else
         blank_value = 0.0
+        blank_array = [0.0]
     end
 
 
@@ -405,6 +406,8 @@ function fit_file_ODE(
         )
     else
         blank_value = 0.0
+        blank_array = [0.0]
+
     end
 
 
@@ -593,6 +596,8 @@ function fit_file_custom_ODE(
         )
     else
         blank_value = 0.0
+        blank_array = [0.0]
+
     end
 
 
@@ -778,6 +783,8 @@ function ODE_model_selection_file(
         )
     else
         blank_value = 0.0
+        blank_array = [0.0]
+
     end
 
 
@@ -979,6 +986,8 @@ function selection_ODE_fixed_change_points_file(
         )
     else
         blank_value = 0.0
+        blank_array = [0.0]
+
     end
 
 
@@ -1182,6 +1191,8 @@ function segmentation_ODE_file(
         )
     else
         blank_value = 0.0
+        blank_array = [0.0]
+
     end
 
 
