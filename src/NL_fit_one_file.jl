@@ -38,7 +38,10 @@ function fit_NL_model_file(
     abstol=0.00001,
     thr_lowess=0.05,
     penality_CI=8.0,
-    size_bootstrap=0.7,)
+    size_bootstrap=0.7,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
 
 
     if write_res == true
@@ -95,9 +98,7 @@ function fit_NL_model_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
-        blank_array = [0.0]
+
 
     end
 
@@ -132,7 +133,10 @@ function fit_NL_model_file(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
 
         # correcting negative values after blank subtraction
@@ -420,7 +424,9 @@ function fit_NL_model_selection_file(
     beta_param=2.0,
     penality_CI=8.0,
     size_bootstrap=0.7,
-    correction_AIC=true
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
 )
 
 
@@ -463,9 +469,7 @@ function fit_NL_model_selection_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
-        blank_array = [0.0]
+
 
     end
 
@@ -500,7 +504,10 @@ function fit_NL_model_selection_file(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
 
         # correcting negative values after blank subtraction
@@ -623,7 +630,10 @@ function fit_NL_segmentation_file(
     beta_smoothing_ms=2.0,
     win_size=7, # number of the point of cpd sliding win
     n_bins=40,
-    correction_AIC=true)
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
 
 
     if write_res == true
@@ -665,9 +675,7 @@ function fit_NL_segmentation_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
-        blank_array = [0.0]
+
 
     end
 
@@ -702,7 +710,11 @@ function fit_NL_segmentation_file(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
+
 
 
         # correcting negative values after blank subtraction

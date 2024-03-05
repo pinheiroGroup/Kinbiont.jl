@@ -15,9 +15,9 @@ function plot_data(
     do_blank_subtraction="NO", # string on how to use blank (NO,avg_subtraction,time_avg)
     avg_replicate=false, # if true the average between replicates
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01  # used only if correct_negative == "thr_correction"
-)
-
+    thr_negative=0.01 ,
+    blank_value = 0.0,
+    blank_array = [0.0],)
     """
     function that plot a dataset
     """
@@ -48,8 +48,7 @@ function plot_data(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+
     end
 
 
@@ -79,7 +78,10 @@ function plot_data(
 
         # blank subtraction
         data_values = data_values .- blank_value
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
             blank_array;
@@ -166,8 +168,10 @@ function fit_one_file_Log_Lin(
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     thr_lowess=0.05, # keyword argument of lowees smoothing
-    verbose=false
-)
+    verbose=false,
+    blank_value = 0.0,
+    blank_array = [0.0],)
+
 
 
 
@@ -227,9 +231,7 @@ function fit_one_file_Log_Lin(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
-        blank_array = [0.0]
+
     end
 
 
@@ -262,8 +264,10 @@ function fit_one_file_Log_Lin(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
@@ -361,6 +365,8 @@ function fit_file_ODE(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
+    blank_value = 0.0,
+    blank_array = [0.0],
 )
 
 
@@ -404,9 +410,6 @@ function fit_file_ODE(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
-        blank_array = [0.0]
 
     end
 
@@ -441,8 +444,10 @@ function fit_file_ODE(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
-
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
@@ -553,6 +558,8 @@ function fit_file_custom_ODE(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
+    blank_value = 0.0,
+    blank_array = [0.0],
 )
 
 
@@ -594,9 +601,7 @@ function fit_file_custom_ODE(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
-        blank_array = [0.0]
+
 
     end
 
@@ -631,7 +636,10 @@ function fit_file_custom_ODE(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
@@ -735,7 +743,10 @@ function ODE_model_selection_file(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-    correction_AIC=true)
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
 
 
     if write_res == true
@@ -781,9 +792,6 @@ function ODE_model_selection_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
-        blank_array = [0.0]
 
     end
 
@@ -820,7 +828,10 @@ function ODE_model_selection_file(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
             blank_array;
@@ -941,7 +952,10 @@ function selection_ODE_fixed_change_points_file(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     verbose=false,
-    correction_AIC=true)
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
 
 
     if write_res == true
@@ -984,9 +998,6 @@ function selection_ODE_fixed_change_points_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
-        blank_array = [0.0]
 
     end
 
@@ -1020,7 +1031,10 @@ function selection_ODE_fixed_change_points_file(
         data_values = data_values .- blank_value
 
         data = Matrix(transpose(hcat(times_data, data_values)))
-
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
             blank_array;
@@ -1147,7 +1161,9 @@ function segmentation_ODE_file(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     verbose=false,
-    correction_AIC=true)
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],)
 
 
     if write_res == true
@@ -1189,9 +1205,7 @@ function segmentation_ODE_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
-        blank_array = [0.0]
+ 
 
     end
 
@@ -1224,7 +1238,10 @@ function segmentation_ODE_file(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
