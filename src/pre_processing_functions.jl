@@ -46,7 +46,6 @@ function smoothing_data(
     data  = matrix of data
     pt_avg = size of the windows of the rolling average
     """
-    
     if method == "rolling_avg" && pt_avg < 3
         println("WARNING: the number of points to do rolling average is too low")
         println("changing the method of smoothing to lowess")
@@ -178,8 +177,8 @@ function negative_value_correction(data::Any,
     else
         times = data[1, :]
         values = data[2, :]
-        values_corrected, index_not_zero = remove_negative_value(values)
-        data_corrected = transpose(hcat(times[index_not_zero], values_corrected))
+        values_corrected = remove_negative_value(values)
+        data_corrected = transpose(hcat(times, values_corrected[1]))
 
     end
 

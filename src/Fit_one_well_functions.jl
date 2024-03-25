@@ -646,6 +646,7 @@ function ODE_Model_selection(
     end
 
     AIC_array = rss_array[3, 2:end]
+    println(AIC_array)
     min_AIC = minimum(AIC_array)
     index_minimal_AIC_model = findfirst(item -> item == min_AIC, AIC_array) + 1
 
@@ -710,7 +711,7 @@ function ODE_Model_selection(
     return rss_array,
     df_res_optimization,
     min_AIC,
-    minimum(rss_array[2, 2:end]),
+    rss_array[2, index_minimal_AIC_model],
     param_min,
     model,
     data_th,
@@ -1433,8 +1434,8 @@ function selection_ODE_fixed_intervals(
         model = model_selection_results[6]
 
         # param of the best model
-        temp_res_win = model_selection_results[5]
-        param_fitting = copy(temp_res_win)
+        temp_res_win = model_selection_results[8]
+        param_fitting = copy(model_selection_results[5])
      #temp_res_win = push!(temp_res_win,model)
      u0 = generating_IC(data_temp, model, smoothing, pt_avg)
 
@@ -1456,42 +1457,8 @@ function selection_ODE_fixed_intervals(
 
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
-        if (
-            pt_smooth_derivative > (length(data_temp[1, :]) - 2) &&
-            length(data_temp[1, :]) > 3
-        )
-            emp_max_gr_of_segment =
-                maximum(specific_gr_evaluation(data_temp, pt_smooth_derivative))
-            data_th = transpose(hcat(time_sol[index_not_zero], sol_fin))
-            th_max_gr_of_segment =
-                maximum(specific_gr_evaluation(data_th, pt_smooth_derivative))
-            temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
-            temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
-        elseif length(data_temp[1, :]) <= 3
-
-            emp_max_gr_of_segment = missing
-            th_max_gr_of_segment = missing
-            temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
-            temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
-        else
-            emp_max_gr_of_segment =
-                maximum(specific_gr_evaluation(data_temp, pt_smooth_derivative))
-            data_th = transpose(hcat(time_sol[index_not_zero], sol_fin))
-            th_max_gr_of_segment =
-                maximum(specific_gr_evaluation(data_th, pt_smooth_derivative))
-            temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
-            temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
-        end
-        temp_res_win = vcat(model, temp_res_win)
-        temp_res_win = vcat(temp_res_win, model_selection_results[4])
-        temp_res_win = vcat(label_exp, temp_res_win)
+       
         temp_res_win = vcat(name_well, temp_res_win)
-
-
-   
-
-
-        
 
         if i == 2
             composed_time = copy(time_sol[index_not_zero])

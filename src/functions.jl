@@ -502,44 +502,18 @@ function remove_replicate_data(composed_time, composed_sol)
     duplicates_index = [0]
     for k = 2:length(composed_time)
         if composed_time[k-1] == composed_time[k]
-            duplicates_index = vcat(k - 1, duplicates_index)
+            duplicates_index = vcat(k-1,duplicates_index)
 
         end
-    end
-    if length(duplicates_index) > 1
+      end
+      if length(duplicates_index) > 1
         index_tot = 1:1:length(composed_time)
-        index_to_use = setdiff(index_tot, duplicates_index)
+        index_to_use = setdiff(index_tot,duplicates_index)
         composed_time = composed_time[index_to_use]
         composed_sol = composed_sol[index_to_use]
 
-    end
+      end 
 
-    return composed_time, composed_sol
+    return composed_time,composed_sol
 
-end
-
-
-function reading_annotation(path_to_annotation::Any)
-
-
-    if typeof(path_to_annotation) == String
-
-        annotation = CSV.File(string(path_to_annotation), header=false)
-        names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-        # selecting blank wells
-        properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-        list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-        list_of_discarded =
-            names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-        list_of_blank = Symbol.(list_of_blank)
-        list_of_discarded = Symbol.(list_of_discarded)
-    else
-        names_of_annotated_df = [""]
-        properties_of_annotation = [""]
-        list_of_blank = []
-        list_of_discarded =[]
-    end
-
-
-    return names_of_annotated_df, properties_of_annotation,list_of_blank, list_of_discarded
 end
