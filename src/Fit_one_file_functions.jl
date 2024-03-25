@@ -6,8 +6,8 @@ plotting functions
 """
 function plot_data(
     label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String;# path to the annotation of the wells
+    path_to_data::String; # path to the folder to analyze
+    path_to_annotation::Any = missing,# path to the annotation of the wells
     path_to_plot="NA", # path where to save Plots
     display_plots=true,# display plots in julia or not
     save_plots=false, # save the plot or not
@@ -15,21 +15,14 @@ function plot_data(
     do_blank_subtraction="NO", # string on how to use blank (NO,avg_subtraction,time_avg)
     avg_replicate=false, # if true the average between replicates
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01  # used only if correct_negative == "thr_correction"
-)
-
+    thr_negative=0.01 ,
+    blank_value = 0.0,
+    blank_array = [0.0],)
     """
     function that plot a dataset
     """
-    annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded =
-        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
-
+  
+    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
     # reading files
     dfs_data = CSV.File(path_to_data)
 
@@ -37,7 +30,10 @@ function plot_data(
     names_of_cols = propertynames(dfs_data)
 
     # excluding blank data and discarded wells
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
+
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -52,8 +48,7 @@ function plot_data(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+
     end
 
 
@@ -77,14 +72,16 @@ function plot_data(
         name_well = string(well_name)
         if avg_replicate == true
             data_values = copy(dfs_data[!, well_name])
-            println(data_values)
         else
             data_values = copy(dfs_data[well_name])
         end
 
         # blank subtraction
         data_values = data_values .- blank_value
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
             blank_array;
@@ -150,8 +147,8 @@ end
 
 function fit_one_file_Log_Lin(
     label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String;# path to the annotation of the wells
+    path_to_data::String; # path to the folder to analyze
+    path_to_annotation::Any = missing,# path to the annotation of the wells
     path_to_results="NA",# path where save results
     path_to_plot="NA",# path where to save Plots
     display_plots=true,# display plots in julia or not
@@ -171,8 +168,10 @@ function fit_one_file_Log_Lin(
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     thr_lowess=0.05, # keyword argument of lowees smoothing
-    verbose=false
-)
+    verbose=false,
+    blank_value = 0.0,
+    blank_array = [0.0],)
+
 
 
 
@@ -204,14 +203,8 @@ function fit_one_file_Log_Lin(
     if write_res == true
         mkpath(path_to_results)
     end
-    annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded =
-        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
+    names_of_annotated_df, properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -220,11 +213,14 @@ function fit_one_file_Log_Lin(
     names_of_cols = propertynames(dfs_data)
 
     # excluding blank data and discarded wells
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
-    if length(list_of_discarded) > 0
-        names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
+    if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
     end
+    if length(list_of_discarded) > 0
 
+        names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
+
+    end
     times_data = dfs_data[names_of_cols[1]]
     if length(list_of_blank) > 0
         blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
@@ -235,8 +231,7 @@ function fit_one_file_Log_Lin(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+
     end
 
 
@@ -254,7 +249,6 @@ function fit_one_file_Log_Lin(
 
 
     # for on the columns to analyze
-
     for well_name in names_of_cols[2:end]
 
 
@@ -270,8 +264,10 @@ function fit_one_file_Log_Lin(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
@@ -341,10 +337,10 @@ fitting dataset function ODE
 function fit_file_ODE(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String,# path to the annotation of the wells
     model::String, # string of the used model
     lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
     ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
+    path_to_annotation::Any = missing,# path to the annotation of the wells
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
@@ -369,6 +365,8 @@ function fit_file_ODE(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
+    blank_value = 0.0,
+    blank_array = [0.0],
 )
 
 
@@ -384,14 +382,8 @@ function fit_file_ODE(
 
 
 
-    annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded =
-        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
+    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -400,7 +392,10 @@ function fit_file_ODE(
     names_of_cols = propertynames(dfs_data)
 
     # excluding blank data and discarded wells
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
+
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -415,8 +410,7 @@ function fit_file_ODE(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+
     end
 
 
@@ -450,8 +444,10 @@ function fit_file_ODE(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
-
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
@@ -532,11 +528,12 @@ end
 function fit_file_custom_ODE(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String,# path to the annotation of the wells
     model::Any, # string of the used model
     lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
     ub_param::Vector{Float64}, # array of the array of the upper bound of the parameters
     n_equation::Int;
+    path_to_annotation::Any = missing,# path to the annotation of the wells
+
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
@@ -561,6 +558,8 @@ function fit_file_custom_ODE(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
+    blank_value = 0.0,
+    blank_array = [0.0],
 )
 
 
@@ -574,15 +573,8 @@ function fit_file_custom_ODE(
 
     parameter_of_optimization = initialize_df_results_ode_custom(ub_param)
 
+    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
-    annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded =
-        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -591,7 +583,10 @@ function fit_file_custom_ODE(
     names_of_cols = propertynames(dfs_data)
 
     # excluding blank data and discarded wells
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
+    
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -606,8 +601,8 @@ function fit_file_custom_ODE(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+
+
     end
 
 
@@ -641,7 +636,10 @@ function fit_file_custom_ODE(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
@@ -716,10 +714,10 @@ end
 function ODE_model_selection_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String,# path to the annotation of the wells
     models_list::Vector{String}, # ode model to use 
     lb_param_array::Any, # lower bound param
     ub_param_array::Any; # upper bound param
+    path_to_annotation::Any = missing,# path to the annotation of the wells
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
@@ -745,7 +743,10 @@ function ODE_model_selection_file(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-    correction_AIC=true)
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
 
 
     if write_res == true
@@ -760,14 +761,9 @@ function ODE_model_selection_file(
 
 
 
-    annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded =
-        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
+    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+
+    list_of_discarded = Symbol.(list_of_discarded)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -776,7 +772,12 @@ function ODE_model_selection_file(
     names_of_cols = propertynames(dfs_data)
 
     # excluding blank data and discarded wells
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+
+
+   if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
+    
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -791,8 +792,7 @@ function ODE_model_selection_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+
     end
 
 
@@ -828,7 +828,10 @@ function ODE_model_selection_file(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
             blank_array;
@@ -914,11 +917,11 @@ ODE segementation fitting fixed number of cpd for a full file
 function selection_ODE_fixed_change_points_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String,# path to the annotation of the wells
     list_of_models::Vector{String}, # ode model to use 
     lb_param_array::Any, # lower bound param
     ub_param_array::Any,# upper bound param
     n_max_change_points::Int;
+    path_to_annotation::Any = missing,# path to the annotation of the wells
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     type_of_loss="L2", # type of used loss 
@@ -949,7 +952,10 @@ function selection_ODE_fixed_change_points_file(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     verbose=false,
-    correction_AIC=true)
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
 
 
     if write_res == true
@@ -964,14 +970,8 @@ function selection_ODE_fixed_change_points_file(
 
 
 
-    annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded =
-        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
+    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -980,7 +980,10 @@ function selection_ODE_fixed_change_points_file(
     names_of_cols = propertynames(dfs_data)
 
     # excluding blank data and discarded wells
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
+    
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -995,8 +998,7 @@ function selection_ODE_fixed_change_points_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+
     end
 
 
@@ -1029,7 +1031,10 @@ function selection_ODE_fixed_change_points_file(
         data_values = data_values .- blank_value
 
         data = Matrix(transpose(hcat(times_data, data_values)))
-
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
             blank_array;
@@ -1118,11 +1123,11 @@ end
 function segmentation_ODE_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String,# path to the annotation of the wells
     list_of_models::Vector{String}, # ode model to use 
     lb_param_array::Any, # lower bound param
     ub_param_array::Any,# upper bound param
     n_max_change_points::Int;
+    path_to_annotation::Any = missing,# path to the annotation of the wells
     detect_number_cpd=true,
     fixed_cpd=false,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
@@ -1156,7 +1161,9 @@ function segmentation_ODE_file(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     verbose=false,
-    correction_AIC=true)
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],)
 
 
     if write_res == true
@@ -1170,15 +1177,8 @@ function segmentation_ODE_file(
     parameter_of_optimization = initialize_res_ms(ub_param_array, number_of_segment=n_max_change_points + 1)
 
 
+    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
-    annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded =
-        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -1187,7 +1187,10 @@ function segmentation_ODE_file(
     names_of_cols = propertynames(dfs_data)
 
     # excluding blank data and discarded wells
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
+    
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -1202,8 +1205,8 @@ function segmentation_ODE_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+ 
+
     end
 
 
@@ -1235,7 +1238,10 @@ function segmentation_ODE_file(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,

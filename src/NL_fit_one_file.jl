@@ -6,10 +6,10 @@ fitting dataset function NL
 function fit_NL_model_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String,# path to the annotation of the wells
     model::Any, # string of the used model
     lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
     ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
+    path_to_annotation::Any = missing,# path to the annotation of the wells
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     method_of_fitting="MCMC",
     nrep=100,
@@ -38,7 +38,10 @@ function fit_NL_model_file(
     abstol=0.00001,
     thr_lowess=0.05,
     penality_CI=8.0,
-    size_bootstrap=0.7,)
+    size_bootstrap=0.7,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
 
 
     if write_res == true
@@ -66,14 +69,8 @@ function fit_NL_model_file(
 
 
 
-    annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded =
-        names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
+    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -82,7 +79,11 @@ function fit_NL_model_file(
     names_of_cols = propertynames(dfs_data)
 
     # excluding blank data and discarded wells
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+
+    if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
+    
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -97,8 +98,8 @@ function fit_NL_model_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+
+
     end
 
 
@@ -132,7 +133,10 @@ function fit_NL_model_file(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
 
         # correcting negative values after blank subtraction
@@ -159,8 +163,8 @@ function fit_NL_model_file(
                 optmizator=optmizator,
                 display_plots=display_plots, # display plots in julia or not
                 save_plot=save_plots,
+                path_to_plot =path_to_plot,
                 size_bootstrap=size_bootstrap,
-                path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -174,7 +178,8 @@ function fit_NL_model_file(
                 abstol=abstol,
                 thr_lowess=thr_lowess,
                 write_res=write_res,
-                penality_CI=penality_CI)
+                penality_CI=penality_CI,
+                path_to_results = path_to_results)
 
             temp_mean = temp_results_1[5]
             temp_mean = vcat("mean",temp_mean)
@@ -386,10 +391,10 @@ end
 function fit_NL_model_selection_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String,# path to the annotation of the wells
     list_model_function::Any, # ode model to use
     list_lb_param::Vector{Float64}, # lower bound param
     list_ub_param::Vector{Float64}; # upper bound param
+    path_to_annotation::Any = missing,# path to the annotation of the wells
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
@@ -419,7 +424,9 @@ function fit_NL_model_selection_file(
     beta_param=2.0,
     penality_CI=8.0,
     size_bootstrap=0.7,
-    correction_AIC=true
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
 )
 
 
@@ -434,14 +441,8 @@ function fit_NL_model_selection_file(
 
 
 
+    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
-    annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -450,7 +451,10 @@ function fit_NL_model_selection_file(
     names_of_cols = propertynames(dfs_data)
 
     # excluding blank data and discarded wells
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
+    
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -465,8 +469,8 @@ function fit_NL_model_selection_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+
+
     end
 
 
@@ -500,7 +504,10 @@ function fit_NL_model_selection_file(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
 
         # correcting negative values after blank subtraction
@@ -583,11 +590,11 @@ end
 function fit_NL_segmentation_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
-    path_to_annotation::String,# path to the annotation of the wells
     list_model_function::Any, # ode model to use
     list_lb_param::Vector{Vector{Float64}}, # lower bound param
     list_ub_param::Vector{Vector{Float64}}, # upper bound param
     n_change_points::Int;
+    path_to_annotation::Any = missing,# path to the annotation of the wells
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
@@ -623,7 +630,10 @@ function fit_NL_segmentation_file(
     beta_smoothing_ms=2.0,
     win_size=7, # number of the point of cpd sliding win
     n_bins=40,
-    correction_AIC=true)
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
 
 
     if write_res == true
@@ -636,13 +646,8 @@ function fit_NL_segmentation_file(
     parameter_of_optimization = initialize_res_ms(list_ub_param, number_of_segment=n_change_points)
 
 
-    annotation = CSV.File(string(path_to_annotation), header=false)
-    names_of_annotated_df = [annotation[l][1] for l in eachindex(annotation)]
-    # selcting blank wells
-    properties_of_annotation = [annotation[l][2] for l in eachindex(annotation)]
-    list_of_blank = names_of_annotated_df[findall(x -> x == "b", properties_of_annotation)]
-    list_of_discarded = names_of_annotated_df[findall(x -> x == "X", properties_of_annotation)]
-    list_of_blank = Symbol.(list_of_blank)
+    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -651,7 +656,11 @@ function fit_NL_segmentation_file(
     names_of_cols = propertynames(dfs_data)
 
     # excluding blank data and discarded wells
-    names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
+
+
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -666,8 +675,8 @@ function fit_NL_segmentation_file(
             list_of_blank;
             method=do_blank_subtraction
         )
-    else
-        blank_value = 0.0
+
+
     end
 
 
@@ -701,7 +710,11 @@ function fit_NL_segmentation_file(
         # blank subtraction 
         data_values = data_values .- blank_value
 
-        data = Matrix(transpose(hcat(times_data, data_values)))
+        index_missing = findall(ismissing, data_values)
+        index_tot =  eachindex(data_values)
+        index_tot =  setdiff(index_tot,index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
+
 
 
         # correcting negative values after blank subtraction

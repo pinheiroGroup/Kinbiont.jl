@@ -17,8 +17,10 @@ using Lowess
 using  LsqFit
 using Combinatorics
 # loading the functions  (will be skipped when the package is deployed)
-path_to_functions = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/src/";
-include(string(path_to_functions,"/functions.jl"))
+#path_to_functions = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/src/";
+#include(string(path_to_functions,"/functions.jl"))
+
+include( "E://Lavoro//JMAKi.jl-main//src//functions.jl")
 
 
 # simulating data with a ODE
@@ -1377,6 +1379,10 @@ NL_fit = selection_NL_fixed_interval(
 
     plot(NL_fit[3],NL_fit[2])
 
+
+path_to_data  = "E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//data_channel_1.csv"
+path_to_annotation  = "E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//annotation_channel_1.csv"
+
     ub_exp =[ 1.6 ]
     lb_exp =[ -00.1 ]
     
@@ -1409,8 +1415,8 @@ seg_ODE_res = segmentation_ODE_file(
         list_lb_param, # lower bound param
         list_ub_param,# upper bound param
         2;
-        detect_number_cpd=false,
-        fixed_cpd=false,
+        detect_number_cpd=true,
+        fixed_cpd=true,
         optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
         integrator=Tsit5(), # selection of sciml integrator
         type_of_loss="RE", # type of used loss 
@@ -1421,18 +1427,91 @@ seg_ODE_res = segmentation_ODE_file(
         thr_negative=0.01,
         pt_avg=1, # number of the point to generate intial condition
         smoothing=false, # the smoothing is done or not?
-        save_plots=true, # do plots or no
+        save_plots=false, # do plots or no
         display_plots=true, # do plots or no
-        path_to_plot=path_to_plot, # where save plots
-        path_to_results=path_to_results,
         win_size=7, # numebr of the point to generate intial condition
         pt_smooth_derivative=0,
-        penality_parameter=0.0,
-        write_res=true,
-        save_all_model=true,
+        penality_parameter=2.0,
+        write_res=false,
+        save_all_model=false,
         method_peaks_detection="peaks_prominence",
         n_bins=40,
         PopulationSize=50,
-        maxiters=2000000,
+        maxiters=20000000,
         abstol=0.00000001,
         )
+
+
+
+
+
+
+
+
+
+
+
+
+
+        model = "NL_Bertalanffy"
+        nl_ub = [2.0001, 10.00000001, 5.00, 5.0]
+        nl_lb = [0.0001, 0.00000001, 0.00, 0.0]
+    
+
+        path_to_data = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//data_channel_1.csv")
+        path_to_annotation = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//annotation_channel_1.csv")
+    
+
+        path_to_plot = string("E://Lavoro//dose_response_res//plots/Bertalanffy_bootstrap//LG126//")
+        path_to_results = string("E://Lavoro//dose_response_res//res/Bertalanffy_bootstrap//LG126//")
+        fitting_log_line_test = fit_one_file_Log_Lin(
+        string("log_lin_", exp), #label of the experiment
+        path_to_data, # path to the folder to analyze
+        path_to_annotation;# path to the annotation of the wells
+        path_to_results=path_to_results,# path where save results
+        path_to_plot=path_to_plot,# path where to save Plots
+        display_plots=false,# display plots in julia or not
+        save_plots=true, # save the plot or not    verbose=false, # 1 true verbose
+        write_res=true, # write results
+        type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
+        pt_avg=7, # number of points to do smoothing average
+        pt_smoothing_derivative=7, # number of poits to smooth the derivative
+        pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
+        type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
+        threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
+        do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
+        avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+        correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+        multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    )
+
+
+
+
+exp ="LG126"
+
+    path_to_data = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//", exp, "//data_channel_1.csv")
+    path_to_annotation = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//", exp, "//annotation_channel_1.csv")
+
+    path_to_plot = string("E://Lavoro//dose_response_res//plots/log_lin//", exp, "//")
+    path_to_results = string("E://Lavoro//dose_response_res//res/log_lin//", exp, "//")
+
+    fitting_log_line_test = fit_one_file_Log_Lin(
+        string("log_lin_", exp), #label of the experiment
+        path_to_data, # path to the folder to analyze
+        path_to_results=path_to_results,# path where save results
+        path_to_plot=path_to_plot,# path where to save Plots 
+        display_plots=false,# display plots in julia or not
+        save_plots=true, # save the plot or not    verbose=false, # 1 true verbose
+        write_res=true, # write results
+        type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
+        pt_avg=7, # number of points to do smoothing average
+        pt_smoothing_derivative=7, # number of poits to smooth the derivative
+        pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
+        type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
+        threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
+        do_blank_subtraction="NA", # string on how to use blank (NO,avg_subtraction,time_avg)
+        avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+        correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+        multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    )
