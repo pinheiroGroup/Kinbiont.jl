@@ -120,6 +120,7 @@ NL_models_list = [
         NL_model_Weibull,
         ["model", "well", "N_max", "N_0", "growth_rate", "shape", "th_max_gr", "emp_max_gr", "loss"]
     ),
+
 ]
 
 NL_models = Dict(model.name => model for model in NL_models_list)

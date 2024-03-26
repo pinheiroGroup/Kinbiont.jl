@@ -36,9 +36,8 @@ pt_smoothing_derivative = size of the win, if <2 the the numerical derivative of
 
 function specific_gr_evaluation(data_smooted::Any, pt_smoothing_derivative::Int)
 
-
+    specific_gr = 0.0
     if pt_smoothing_derivative > 1
-
         for r = 1:1:(eachindex(data_smooted[2, :])[end].-pt_smoothing_derivative)
             M = [ones(pt_smoothing_derivative) data_smooted[1, r:(r+pt_smoothing_derivative-1)]]
             Y = log.(data_smooted[2, r:(r+pt_smoothing_derivative-1)])

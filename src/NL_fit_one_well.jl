@@ -113,8 +113,14 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
 
     # max empirical gr
-    max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
-    loss_value = sol.objective
+    if  length(data[2,:])> pt_smooth_derivative +2
+        max_em_gr = missing
+
+    else
+        max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
+
+    end  
+      loss_value = sol.objective
 
 
     res_param = [[name_well, model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
@@ -192,8 +198,13 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
         select_loss_function_NL(type_of_loss, data, penality_CI, model_function)
 
 
-    max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
+    if  length(data[2,:])> pt_smooth_derivative +2
+        max_em_gr = missing
 
+    else
+        max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
+
+    end
     fin_param = initialize_df_results_ode_custom(lb_param)
     param_combination =
         generation_of_combination_of_IC_morris(lb_param, ub_param, nrep)
@@ -363,8 +374,14 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
         select_loss_function_NL(type_of_loss, data, penality_CI, model_function)
 
 
-    max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
+    if  length(data[2,:])> pt_smooth_derivative +2
 
+        max_em_gr = missing
+
+    else
+        max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative ))
+
+    end
 
     for i = 1:nrep
 
@@ -545,10 +562,13 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
 
 
 
+    if  length(data[2,:])> pt_smooth_derivative +2
+        max_em_gr = missing
 
+    else
+        max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
 
-    max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
-
+    end
     fin_param = initialize_df_results_ode_custom(lb_param)
 
 
@@ -729,8 +749,13 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
 
 
 
-    max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
+    if  length(data[2,:])> pt_smooth_derivative +2
+        max_em_gr = missing
 
+    else
+        max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
+
+    end
     fin_param = initialize_df_results_ode_custom(lb_param)
 
 

@@ -17,8 +17,10 @@ using Lowess
 using  LsqFit
 using Combinatorics
 # loading the functions  (will be skipped when the package is deployed)
-path_to_functions = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/src/";
-include(string(path_to_functions,"/functions.jl"))
+#path_to_functions = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/src/";
+#include(string(path_to_functions,"/functions.jl"))
+
+include( "E://Lavoro//JMAKi.jl-main//src//functions.jl")
 
 
 # simulating data with a ODE
@@ -1377,6 +1379,10 @@ NL_fit = selection_NL_fixed_interval(
 
     plot(NL_fit[3],NL_fit[2])
 
+
+path_to_data  = "E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//data_channel_1.csv"
+path_to_annotation  = "E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//annotation_channel_1.csv"
+
     ub_exp =[ 1.6 ]
     lb_exp =[ -00.1 ]
     
@@ -1409,7 +1415,7 @@ seg_ODE_res = segmentation_ODE_file(
         list_lb_param, # lower bound param
         list_ub_param,# upper bound param
         2;
-        detect_number_cpd=false,
+        detect_number_cpd=true,
         fixed_cpd=true,
         optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
         integrator=Tsit5(), # selection of sciml integrator
@@ -1421,18 +1427,173 @@ seg_ODE_res = segmentation_ODE_file(
         thr_negative=0.01,
         pt_avg=1, # number of the point to generate intial condition
         smoothing=false, # the smoothing is done or not?
-        save_plots=true, # do plots or no
+        save_plots=false, # do plots or no
         display_plots=true, # do plots or no
-        path_to_plot=path_to_plot, # where save plots
-        path_to_results=path_to_results,
         win_size=7, # numebr of the point to generate intial condition
         pt_smooth_derivative=0,
-        penality_parameter=0.0,
-        write_res=true,
-        save_all_model=true,
+        penality_parameter=2.0,
+        write_res=false,
+        save_all_model=false,
         method_peaks_detection="peaks_prominence",
         n_bins=40,
         PopulationSize=50,
-        maxiters=2000000,
+        maxiters=20000000,
         abstol=0.00000001,
         )
+
+
+
+
+
+
+
+
+
+
+
+
+
+        model = "NL_Bertalanffy"
+        nl_ub = [2.0001, 10.00000001, 5.00, 5.0]
+        nl_lb = [0.0001, 0.00000001, 0.00, 0.0]
+    
+
+        path_to_data = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//data_channel_1.csv")
+        path_to_annotation = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//annotation_channel_1.csv")
+    
+
+        path_to_plot = string("E://Lavoro//dose_response_res//plots/Bertalanffy_bootstrap//LG126//")
+        path_to_results = string("E://Lavoro//dose_response_res//res/Bertalanffy_bootstrap//LG126//")
+        fitting_log_line_test = fit_one_file_Log_Lin(
+        string("log_lin_", exp), #label of the experiment
+        path_to_data, # path to the folder to analyze
+        path_to_annotation;# path to the annotation of the wells
+        path_to_results=path_to_results,# path where save results
+        path_to_plot=path_to_plot,# path where to save Plots
+        display_plots=false,# display plots in julia or not
+        save_plots=true, # save the plot or not    verbose=false, # 1 true verbose
+        write_res=true, # write results
+        type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
+        pt_avg=7, # number of points to do smoothing average
+        pt_smoothing_derivative=7, # number of poits to smooth the derivative
+        pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
+        type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
+        threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
+        do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
+        avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+        correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+        multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    )
+
+
+
+
+exp ="LG126"
+
+    path_to_data = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//", exp, "//data_channel_1.csv")
+    path_to_annotation = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//", exp, "//annotation_channel_1.csv")
+
+    path_to_plot = string("E://Lavoro//dose_response_res//plots/log_lin//", exp, "//")
+    path_to_results = string("E://Lavoro//dose_response_res//res/log_lin//", exp, "//")
+
+    fitting_log_line_test = fit_one_file_Log_Lin(
+        string("log_lin_", exp), #label of the experiment
+        path_to_data, # path to the folder to analyze
+        path_to_results=path_to_results,# path where save results
+        path_to_plot=path_to_plot,# path where to save Plots 
+        display_plots=true,# display plots in julia or not
+        save_plots=false, # save the plot or not    verbose=false, # 1 true verbose
+        write_res=true, # write results
+        type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
+        pt_avg=7, # number of points to do smoothing average
+        pt_smoothing_derivative=7, # number of poits to smooth the derivative
+        pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
+        type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
+        threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
+        do_blank_subtraction="NA", # string on how to use blank (NO,avg_subtraction,time_avg)
+        avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+        correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+        multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    )
+
+
+
+
+
+
+
+
+#list_of_experiments = ["LG106", "LG110", "LG114", "LG115", "LG117", "LG118", "LG119"]
+path_to_annotation = string("E:/Lavoro/JMAKi_utilities-main/real_dataset_tests/dataset/data_isolate_chem_mixture_clean/annotation.csv")
+
+path_to_data0 = "E:/Lavoro/JMAKi_utilities-main/real_dataset_tests/dataset/data_isolate_chem_mixture_clean/clean_data/"
+list_of_data_chem = readdir(path_to_data0)
+
+for plate in list_of_data_chem
+    println(plate)
+    path_to_data = string(path_to_data0,plate)
+    temp_name = convert(String,split(plate, ".")[1])
+    path_to_plot = string("E://Lavoro//chem_isolates//plots//Segmented_NL//", temp_name, "//")
+    path_to_results = string("E://Lavoro//chem_isolates//res//Segmented_NL//", temp_name, "//")
+
+ 
+    nl_ub_1 = [2.0001, 10.00000001, 5.00, 500000.0]
+    nl_lb_1 = [0.0001, 0.00000001, 0.00, 0.0]
+
+    nl_ub_2 = [2.0001, 10.00000001, 5.00, 5.0]
+    nl_lb_2 = [0.0001, 0.00000001, 0.00, 0.0]
+
+    nl_ub_3 = [2.0001, 10.00000001]
+    nl_lb_3 = [0.0001, -1.10000001]
+
+    nl_ub_4 = [2.0001, 10.00000001, 500.00]
+    nl_lb_4 = [0.0001, 0.00000001, 0.00]
+
+    list_models_f = ["NL_Richards",  "NL_exponential", "NL_logistic"]
+    list_lb = [nl_lb_1,  nl_lb_3, nl_lb_4]
+    list_ub = [nl_ub_1,  nl_ub_3, nl_ub_4]
+
+
+    K = fit_NL_segmentation_file(
+        string("segmented_NL_", temp_name), #label of the experiment
+        path_to_data, # path to the folder to analyze
+        list_models_f, # ode model to use
+        list_lb, # lower bound param
+        list_ub, # upper bound param
+        4;
+        path_to_annotation= path_to_annotation,# path to the annotation of the wells
+        method_of_fitting="MCMC",
+        nrep=25,
+        list_u0=list_lb .+ (list_ub .- list_lb) ./ 2,# initial guess param
+        optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+        path_to_results=path_to_results, # path where save results
+        path_to_plot=path_to_plot, # path where to save Plots
+        loss_type="RE_fixed_end", # string of the type of the used loss
+        smoothing=true, # 1 do smoothing of data with rolling average
+        type_of_smoothing="lowess",
+        display_plots=true,# display plots in julia or not
+        save_plots=true,
+        write_res=true, # write results
+        pt_avg=0, # number of points to do smoothing average
+        pt_smooth_derivative=4, # number of points to do ssmooth_derivative
+        do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
+        avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+        correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+        PopulationSize=50,
+        maxiters=30000000,
+        abstol=0.0000000001,
+        thr_lowess=0.05,
+        detect_number_cpd=true,
+        fixed_cpd=false,
+        penality_CI=5.0,
+        beta_smoothing_ms=2.0,
+        verbose=false,
+        win_size=6, # number of the point of cpd sliding win
+    )
+
+
+
+
+
+
+end
