@@ -1350,7 +1350,7 @@ function selection_NL_maxiumum_change_points(
     data_testing::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
     label_exp::String, #label of the experiment
-    list_of_models::AnyS, # ode models to use
+    list_of_models::Any, # ode models to use
     list_lb_param::Any, # lower bound param
     list_ub_param::Any, # upper bound param
     n_change_points::Int;
