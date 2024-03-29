@@ -468,7 +468,7 @@ lb_triple_exp =[ 0.0001 , -0.001, 0.0  , 00.0 ,  200.0   ]
 
 
 
-ub_dhpm =[ 1.2 , 1.1 , 2.0  ,20  ]
+ub_dhpm =[ 1.2 , 1.1 , 4.0  ,20  ]
 lb_dhpm =[ 0.0001 , 0.00000001, 0.00 ,0 ]
 
 ub_exp=[1.0]
@@ -490,8 +490,8 @@ display_plot_best_model = true,
 save_plot_best_model=false, # one wants the results of the best fit to be plotted
 verbose=true,
 maxiters = 3000000,
-beta_penality=0.0, # penality for AIC evaluation
-integrator =KenCarp4()
+beta_penality=1.0, # penality for AIC evaluation
+correction_AIC= false
 )
 
 

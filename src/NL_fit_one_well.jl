@@ -915,7 +915,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     top_score = 10^20
     top_model = Vector{Any}
     top_fitted_sol = Vector{Any}
-
+   top_loss=  10^20
     for mm in 1:eachindex(list_model_function)[end]
 
         model_to_test = list_model_function[mm]
@@ -957,8 +957,8 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
             )
 
             n_param = length(lb_param)
+            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[1][end], correction=correction_AIC)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2], correction=correction_AIC)
             temp = [model_to_test, temp_res[end], temp_AIC]
             score_res = hcat(score_res, temp_AIC)
             if mm == 1
@@ -966,12 +966,13 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 top_score = copy(temp_AIC)
                 top_model = copy(temp_res[1])
                 top_fitted_sol = copy(temp_res[2])
-
+                top_loss = copy(temp_res[1][end])
 
             elseif top_score > temp_AIC
                 top_score = copy(temp_AIC)
                 top_model = copy(temp_res[1])
                 top_fitted_sol = copy(temp_res[2])
+                top_loss = copy(temp_res[1][end])
 
             end
 
@@ -1008,7 +1009,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2], correction=correction_AIC)
+            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[1][end], correction=correction_AIC)
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
@@ -1018,12 +1019,14 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 top_score = copy(temp_AIC)
                 top_model = copy(temp_res[1])
                 top_fitted_sol = copy(temp_res[2])
+                top_loss = copy(temp_res[1][end])
 
 
             elseif top_score > temp_AIC
                 top_score = copy(temp_AIC)
                 top_model = copy(temp_res[1])
                 top_fitted_sol = copy(temp_res[2])
+                top_loss = copy(temp_res[1][end])
 
             end
 
@@ -1057,7 +1060,10 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2], correction=correction_AIC)
+
+
+
+            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[1][end], correction=correction_AIC)
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
@@ -1066,12 +1072,14 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 top_score = copy(temp_AIC)
                 top_model = copy(temp_res[1])
                 top_fitted_sol = copy(temp_res[2])
+                top_loss = copy(temp_res[1][end])
 
 
             elseif top_score > temp_AIC
                 top_score = copy(temp_AIC)
                 top_model = copy(temp_res[1])
                 top_fitted_sol = copy(temp_res[2])
+                top_loss = copy(temp_res[1][end])
 
             end
 
@@ -1109,7 +1117,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation(n_param, beta_param, data[2, :], temp_res[2], correction=correction_AIC)
+            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[1][end], correction=correction_AIC)
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
@@ -1118,12 +1126,14 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 top_score = copy(temp_AIC)
                 top_model = copy(temp_res[1])
                 top_fitted_sol = copy(temp_res[2])
+                top_loss = copy(temp_res[1][end])
 
 
             elseif top_score > temp_AIC
                 top_score = copy(temp_AIC)
                 top_model = copy(temp_res[1])
                 top_fitted_sol = copy(temp_res[2])
+                top_loss = copy(temp_res[1][end])
 
             end
 
@@ -1171,7 +1181,8 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     end
 
 
-    return top_score, top_model, top_fitted_sol, score_res
+    return top_score, top_model, top_fitted_sol, score_res, top_loss 
+
 end
 
 
@@ -1228,6 +1239,7 @@ function selection_NL_fixed_interval(
     composed_sol = Type{Any}
     composed_time = Type{Any}
     loss_to_use = ""
+    sum_of_loss = 0.0
     for i = (length(interval_changepoints)):-1:2
 
         if i == 2 && i != (length(interval_changepoints))
@@ -1314,6 +1326,7 @@ function selection_NL_fixed_interval(
 
         # param of the best model
         temp_res_win = model_selection_results[2]
+        sum_of_loss = sum_of_loss + model_selection_results[end]
 
 
         time_sol = data_temp[1, :]
@@ -1342,7 +1355,7 @@ function selection_NL_fixed_interval(
     end
     composed_time, composed_sol = remove_replicate_data(composed_time, composed_sol)
 
-    return param_out, composed_sol, composed_time
+    return param_out, composed_sol, composed_time,sum_of_loss
 
 end
 
@@ -1506,7 +1519,7 @@ function selection_NL_maxiumum_change_points(
 
   
 
-        AICc_full_model = AICc_evaluation(n_param_full_model, beta_smoothing_ms, data_testing[2,:], res_this_combination[2], correction=correction_AIC)
+        AICc_full_model = AICc_evaluation2(n_param_full_model, beta_smoothing_ms, data_testing[2,:], res_this_combination[end], correction=correction_AIC)
      
         if i == 1
 

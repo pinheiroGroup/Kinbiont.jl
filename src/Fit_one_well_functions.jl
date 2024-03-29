@@ -611,7 +611,8 @@ function ODE_Model_selection(
 
         param_number = length(temp_start_param)
 
-        AICc = AICc_evaluation(param_number, beta_penality, data[2, :], sol_fin, correction=correction_AIC)
+      #  AICc = AICc_evaluation(param_number, beta_penality, data[2, :], sol_fin, correction=correction_AIC)
+        AICc = AICc_evaluation2(param_number, beta_penality,  data[2, :],res.objective, correction=correction_AIC)
 
         #max_theoretical gr
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
@@ -644,7 +645,6 @@ function ODE_Model_selection(
         df_res_optimization[mm] = res_param
 
     end
-
     AIC_array = rss_array[3, 2:end]
     min_AIC = minimum(AIC_array)
     index_minimal_AIC_model = findfirst(item -> item == min_AIC, AIC_array) + 1
@@ -665,7 +665,7 @@ function ODE_Model_selection(
     sol_t = reduce(hcat, sim.u)
     sol_time = reduce(hcat, sim.t)
     sol_t = sum(sol_t, dims=1)
-    sol_fin, index_not_zero = remove_negative_value(sol_fin)
+    sol_fin, index_not_zero = remove_negative_value(sol_t)
 
     data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
     if display_plot_best_model
@@ -911,7 +911,7 @@ function selection_ODE_fixed_change_points(
     param_out = Vector{Vector{Any}}()
     composed_sol = Type{Any}
     composed_time = Type{Any}
-
+    total_loss = 0.0
     for i = 2:(eachindex(interval_changepoints)[end])
         if i == 2
             tspan_array = findall((data_testing[1, :] .<= interval_changepoints[i]))
@@ -956,7 +956,7 @@ function selection_ODE_fixed_change_points(
 
         # selection of te model
         model = model_selection_results[6]
-
+        total_loss = total_loss + model_selection_results[end][end]
         # param of the best model
         temp_res_win = model_selection_results[5]
         param_fitting = copy(temp_res_win)
@@ -1081,255 +1081,10 @@ function selection_ODE_fixed_change_points(
         )
     end
 
-    return param_out, interval_changepoints, composed_time, composed_sol
+    return param_out, interval_changepoints, composed_time, composed_sol, total_loss
 end
 
-function ODE_selection_NMAX_change_points(
-    data_testing::Matrix{Float64}, # dataset x times y OD/fluorescence
-    name_well::String, # name of the well
-    label_exp::String, #label of the experiment
-    list_lb_param::Any, # lower bound param
-    list_ub_param::Any, # upper bound param
-    list_of_models::Vector{String}, # ode model to use
-    n_max_change_points::Int;
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=Tsit5(), # selection of sciml integrator
-    type_of_loss="L2", # type of used loss
-    type_of_detection="lsdd",
-    type_of_curve="original",
-    pt_avg=1, # number of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    save_plot=false, # do plots or no
-    display_plot=false, # do plots or no
-    path_to_plot="NA", # where save plots
-    path_to_results="NA",
-    win_size=2, # numebr of the point to generate intial condition
-    pt_smooth_derivative=7,
-    penality_parameter=2.0,
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    save_all_model=false,
-    method_peaks_detection="peaks_prominence",
-    n_bins=40,
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-    type_of_smoothing="lowess",
-    thr_lowess=0.05,
-    correction_AIC=true)
 
-    # fitting single models
-    change_point_list = Vector{Vector{Any}}()
-
-    res = ODE_Model_selection(
-        data_testing, # dataset first row times second row OD
-        name_well, # name of the well
-        label_exp, #label of the experiment
-        list_of_models, # ode model to use
-        list_lb_param, # lower bound param
-        list_ub_param; # upper bound param
-        optmizator=optmizator, # selection of optimization method
-        integrator=integrator, # selection of sciml integrator
-        pt_avg=pt_avg, # number of the point to generate intial condition
-        beta_penality=penality_parameter, # penality for AIC evaluation
-        smoothing=smoothing, # the smoothing is done or not?
-        type_of_loss=type_of_loss, # type of used loss
-        blank_array=zeros(100), # data of all blanks
-        display_plot_best_model=false, # one wants the results of the best fit to be plotted
-        save_plot_best_model=false,
-        path_to_plot="NA",
-        pt_smooth_derivative=pt_smooth_derivative,
-        multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-        method_multiple_scattering_correction=method_multiple_scattering_correction,
-        calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
-        verbose=false,
-        PopulationSize=PopulationSize,
-        maxiters=maxiters,
-        abstol=abstol,
-        type_of_smoothing=type_of_smoothing,
-        thr_lowess=thr_lowess,
-        correction_AIC=correction_AIC)
-
-    if save_all_model == true
-        mkpath(path_to_results)
-        CSV.write(
-            string(
-                path_to_results,
-                label_exp,
-                "_segmented_ODE_scoring_",
-                name_well,
-                "_seg_0.csv",
-            ),
-            Tables.table(Matrix(res[2])),
-        )
-        CSV.write(
-            string(
-                path_to_results,
-                label_exp,
-                "_segmented_ODE_param_",
-                name_well,
-                "_seg_0.csv",
-            ),
-            Tables.table(Vector(res[5])),
-        )
-        CSV.write(
-            string(
-                path_to_results,
-                label_exp,
-                "_segmented_ODE_solution_",
-                name_well,
-                "_seg_0.csv",
-            ),
-            Tables.table(Vector(res[7])),
-        )
-    end
-
-    top_model = res[5]
-    score_of_the_models = res[3]
-    change_point_list = [0.0]
-    change_point_to_plot = [0.0, 0.0, 0.0]
-    time_points_to_plot = copy(data_testing[1, :])
-    sol_to_plot = copy(res[7])
-
-    #fitting all model with change points
-    if n_max_change_points > 0
-        for n = 1:n_max_change_points
-            direct_search_results = selection_ODE_fixed_change_points(
-                data_testing, # dataset first row times second row OD
-                name_well, # name of the well
-                label_exp, #label of the experiment
-                list_of_models, # ode models to use
-                list_lb_param, # lower bound param
-                list_ub_param, # upper bound param
-                n;
-                type_of_loss=type_of_loss, # type of used loss
-                optmizator=optmizator, # selection of optimization method
-                integrator=integrator, # selection of sciml integrator
-                type_of_detection=type_of_detection,
-                type_of_curve=type_of_curve,
-                smoothing=smoothing,
-                pt_avg=pt_avg,
-                save_plot=false, # do plots or no
-                display_plots=false, # do plots or no
-                path_to_plot="NA", # where save plots
-                win_size=win_size, # numebr of the point to generate intial condition
-                pt_smooth_derivative=pt_smooth_derivative,
-                multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-                method_multiple_scattering_correction=method_multiple_scattering_correction,
-                calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
-                beta_smoothing_ms=penality_parameter, #  parameter of the AIC penality
-                method_peaks_detection=method_peaks_detection,
-                n_bins=n_bins,
-                type_of_smoothing=type_of_smoothing,
-                thr_lowess=thr_lowess,
-            )
-
-            # composing piecewise penality
-
-            n_param =
-                sum([
-                    length(direct_search_results[1][kk][3:(end-4)]) for
-                    kk = 1:length(direct_search_results[1])
-                ]) 
-            
-                n_param = n_param + n
-            new_penality = AICc_evaluation(n_param, penality_parameter, data_testing[2, :], unique(direct_search_results[end]), correction=correction_AIC)
-
-
-            if new_penality <= score_of_the_models
-                score_of_the_models = copy(new_penality)
-                top_model = copy(direct_search_results[1])
-                time_points_to_plot = copy(direct_search_results[3])
-                sol_to_plot = copy(direct_search_results[4])
-                change_point_to_plot = copy(direct_search_results[2])
-            end
-
-            if save_all_model == true
-                CSV.write(
-                    string(
-                        path_to_results,
-                        label_exp,
-                        "_segmented_ODE_",
-                        name_well,
-                        "_seg_",
-                        n,
-                        ".csv",
-                    ),
-                    Tables.table(Vector(direct_search_results[1])),
-                )
-                CSV.write(
-                    string(
-                        path_to_results,
-                        label_exp,
-                        "_segmented_ODE_solution_",
-                        name_well,
-                        "_seg_",
-                        n,
-                        ".csv",
-                    ),
-                    Tables.table(Vector(direct_search_results[3])),
-                )
-            end
-        end
-    end
-
-    if display_plot
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot == true
-        mkpath(path_to_plot)
-    end
-
-    if_display(
-        Plots.scatter(
-            data_testing[1, :],
-            data_testing[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=1,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),
-    )
-    if_display(
-        Plots.vline!(
-            change_point_to_plot[2:end],
-            c=:black,
-            label=["change points" nothing],
-        ),
-    )
-    if_display(
-        Plots.plot!(
-            reduce(vcat, time_points_to_plot),
-            reduce(vcat, sol_to_plot),
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[" fitting " nothing],
-            color=:red,
-            title=string(label_exp, " fitting ", name_well),
-        ),
-    )
-    if save_plot
-        png(
-            string(
-                path_to_plot,
-                label_exp,
-                "_model_selection_seg_",
-                length(change_point_to_plot[2:end]),
-                "_",
-                name_well,
-                ".png",
-            ),
-        )
-    end
-
-    return top_model, time_points_to_plot, sol_to_plot
-end
 
 
 
@@ -1368,7 +1123,7 @@ function selection_ODE_fixed_intervals(
     if multiple_scattering_correction == true
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
     end
-
+    total_loss = 0.0
     if smoothing == true
         data_testing = smoothing_data(
             data_testing;
@@ -1431,7 +1186,7 @@ function selection_ODE_fixed_intervals(
 
         # selection of te model
         model = model_selection_results[6]
-
+        total_loss = total_loss +  model_selection_results[end][end]
         # param of the best model
         temp_res_win = model_selection_results[5]
         param_fitting = copy(temp_res_win)
@@ -1565,7 +1320,7 @@ function selection_ODE_fixed_intervals(
         )
     end
 
-    return param_out, interval_changepoints, composed_time, composed_sol
+    return param_out, interval_changepoints, composed_time, composed_sol,total_loss
 end
 
 
@@ -1746,7 +1501,7 @@ function segmentation_ODE(
                 integrator=integrator, # selection of sciml integrator
                 smoothing=smoothing,
                 pt_avg=pt_avg,
-                save_plot=false, # do plots or no
+                save_plot=false, # do plots or no 
                 display_plots=false, # do plots or no
                 path_to_plot="NA", # where save plots
                 pt_smooth_derivative=pt_smooth_derivative,
@@ -1769,7 +1524,7 @@ function segmentation_ODE(
             n_param = n_param + length(cpd_temp)
     
 
-            new_penality = AICc_evaluation(n_param, penality_parameter, data_testing[2, :], unique(direct_search_results[end]), correction=correction_AIC)
+            new_penality = AICc_evaluation2(n_param, penality_parameter, data_testing[2, :], direct_search_results[end], correction=correction_AIC)
 
 
             if new_penality <= score_of_the_models
@@ -1786,7 +1541,7 @@ function segmentation_ODE(
                         path_to_results,
                         label_exp,
                         "_segmented_ODE_",
-                        name_well,
+                        name_well,"_conf_",i,
                         "_seg_",
                         length(cpd_temp) +1,
                         ".csv",
@@ -1798,7 +1553,7 @@ function segmentation_ODE(
                         path_to_results,
                         label_exp,
                         "_segmented_ODE_solution_",
-                        name_well,
+                        name_well,"_conf_",i,
                         "_seg_",
                         length(cpd_temp) +1,
                         ".csv",

@@ -480,22 +480,68 @@ end
 
 function AICc_evaluation(n_param, beta_penality, data, data_th; correction=true)
     n_data = length(data)
+
+
+    if n_data ==  length(data_th)
     if n_data > n_param - 2
-        RSS = sum((data_th .- data) .^ 2)
+       # RSS = sum(abs.(data_th .- data ) .^ 2)
+        RSS = sum(abs.(data_th .- data ) .^ 2)
+
+        println(n_param)
+        println(RSS)       
+        println(log(RSS / n_data))
         if correction == true
-            correction = beta_penality * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
+            correction_value = beta_penality * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
         else
-            correction = 0.0
+            correction_value = 0.0
         end
         AIC = +beta_penality * n_param + n_data * log(RSS / n_data)
-        AICc = AIC + correction
+        AICc = AIC + correction_value
     else
         AICc = 10^9
 
     end
+else
+    AICc = 10^9
+
+
+end
+    println(AICc)       
+
     return AICc
 
 end
+
+
+
+
+function AICc_evaluation2(n_param, beta_penality, data,loss; correction=true)
+
+    n_data = length(data)
+    if n_data > n_param - 2
+       # RSS = sum(abs.(data_th .- data ) .^ 2)
+        RSS =loss
+
+        if correction == true
+            correction_value = beta_penality * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
+        else
+            correction_value = 0.0
+        end
+        AIC = +beta_penality * n_param + n_data * log(RSS )
+        AICc = AIC + correction_value
+    else
+        AICc = 10^9
+
+    end
+
+
+
+
+    return AICc
+
+end
+
+
 
 function remove_replicate_data(composed_time, composed_sol)
     duplicates_index = [0]
