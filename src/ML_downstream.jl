@@ -1,32 +1,23 @@
 
-using MLJ
-using SymbolicRegression
-using Zygote
-using DelimitedFiles
-using Plots
-using CSV
-using BetaML
-using DecisionTree
-using MLJDecisionTreeInterface
 
+### downstream decision tree
 
-
-
-function downstream_decision_tree(jmaki_results,
-  feature_matrix,
-  row_to_learn;
-  average_replicate=false,
-  save_to_file=false,
-  output_folder="/res/",
-  output_file="output.txt",
-  max_depth = 3,
-  verbose = true
+function downstream_decision_tree_regression(jmaki_results::Matrix{Any}, # output of jmaki results
+  feature_matrix::Matrix{Any},
+  row_to_learn::Int;
+  max_depth = -1,
+  verbose = true,
+  pruning_purity = 1.0,
+  min_samples_leaf = 5,
+  min_samples_split = 2,  
+  min_purity_increase = 0.0, 
+  n_subfeatures = 0,
+  seed = 3,
+  do_cross_validation = false,
+  n_folds_cv = 3,
 )
+max_depth = convert(Int, max_depth)
 
-
-  if save_to_file == true
-    mkpath(output_folder)
-  end
 
 
   names_of_the_wells_res = jmaki_results[3, 2:end]
@@ -67,20 +58,33 @@ function downstream_decision_tree(jmaki_results,
 
 
   model = build_tree(output, predictors)
+  r2 = Any
+  if do_cross_validation ==  true
+    r2 =  nfoldCV_tree(output, predictors,
+    n_folds_cv,
+    pruning_purity,
+    max_depth,
+    min_samples_leaf,
+    min_samples_split,
+    min_purity_increase;
+    verbose = verbose,
+    rng = seed)
+
+  end
+
   imp_1 = impurity_importance(model)
   imp_2 = split_importance(model)
-
+  #imp_3 = permutation_importance(model)
   if verbose == true
     tree_out = DecisionTree.print_tree(model, max_depth)
   end
-    return model, imp_1, imp_2
+    return model, imp_1, imp_2, r2
 
 end
 
 function downstream_symbolic_regression(jmaki_results,
   feature_matrix,
   row_to_learn;
-  average_replicate=false,
   do_plots=true,
   binary_operators=[+, *, /],
   unary_operators=nothing,
@@ -92,7 +96,11 @@ function downstream_symbolic_regression(jmaki_results,
   niterations=100,
   enable_autodiff=true,
   should_simplify=true,
-  should_optimize_constants=false)
+  should_optimize_constants=false,
+)
+
+
+
   if save_to_file == true
     mkpath(output_folder)
   end
@@ -186,120 +194,3 @@ function downstream_symbolic_regression(jmaki_results,
 
 end
 
-
-jm_res_test = readdlm("/Users/fabrizio.angaroni/Documents/res_chem_isolate/res_to_test_ML_ode.csv", ',')
-annotation_test = CSV.File("/Users/fabrizio.angaroni/Documents/JMAKi_utilities/real_dataset_tests/dataset/Monod_AA_detection/exp_4/annotation.csv")
-names_of_annotation = propertynames(annotation_test)
-feature_matrix = hcat(annotation_test[:V1], annotation_test[:V3])
-jmaki_results = jm_res_test
-
-
-# regression on gr
-
-A = downstream_symbolic_regression(jmaki_results,
-  feature_matrix,
-  8;
-  do_plots=true,)
-
-
-# regression on N max
-
-A2 = downstream_symbolic_regression(jmaki_results,
-  feature_matrix,
-  6;
-  do_plots=true,
-)
-
-A3 = downstream_symbolic_regression(jmaki_results,
-  feature_matrix,
-  5;
-  do_plots=true,
-)
-
-
-
-
-# testing decision trees on big dataset
-
-
-
-
-
-jm_res_test = readdlm("/Users/fabrizio.angaroni/Documents/res_chem_isolate/res_to_test_ML_ode.csv", ',')
-annotation_test = readdlm("/Users/fabrizio.angaroni/Documents/res_chem_isolate/annotation_to_test_ML_ode.csv", ',')
-feature_matrix = annotation_test[:,2:(end-2)]
-jmaki_results = jm_res_test
-
-
-
-a = downstream_decision_tree(jmaki_results,
-feature_matrix,
-7;
-average_replicate=false,
-save_to_file=false,
-output_folder="/res/",
-output_file="output.txt",
-max_depth = 3,
-)
-
-a = downstream_decision_tree(jmaki_results,
-feature_matrix,
-9;
-average_replicate=false,
-save_to_file=false,
-output_folder="/res/",
-output_file="output.txt",
-max_depth = 3,
-)
-
-
-index_coli = findall(annotation_test[:,end].== "E. coli")
-feature_matrix = annotation_test[index_coli,2:(end-2)]
-jmaki_results = jm_res_test[:,index_coli]
-
-a = downstream_decision_tree(jmaki_results,
-feature_matrix,
-7;
-average_replicate=false,
-save_to_file=false,
-output_folder="/res/",
-output_file="output.txt",
-max_depth = 3,
-)
-
-a = downstream_decision_tree(jmaki_results,
-feature_matrix,
-9;
-average_replicate=false,
-save_to_file=false,
-output_folder="/res/",
-output_file="output.txt",
-max_depth = 3,
-)
-
-
-
-
-index_mixture = findall(annotation_test[:,end].== "mixture")
-feature_matrix = annotation_test[index_mixture,2:(end-2)]
-jmaki_results = jm_res_test[:,index_mixture]
-
-a = downstream_decision_tree(jmaki_results,
-feature_matrix,
-7;
-average_replicate=false,
-save_to_file=false,
-output_folder="/res/",
-output_file="output.txt",
-max_depth = 3,
-)
-
-a = downstream_decision_tree(jmaki_results,
-feature_matrix,
-9;
-average_replicate=false,
-save_to_file=false,
-output_folder="/res/",
-output_file="output.txt",
-max_depth = 3,
-)

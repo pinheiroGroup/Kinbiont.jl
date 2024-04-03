@@ -13,6 +13,7 @@ include("NL_fit_one_well.jl");
 include("NL_fit_one_file.jl");
 include("NL_loss_list.jl");
 include("cpd_functions.jl");
+include("ML_downstream.jl");
 
 """
 Internal functions
