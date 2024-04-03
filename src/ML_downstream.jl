@@ -92,7 +92,7 @@ function downstream_symbolic_regression(jmaki_results,
 
 
 
-  names_of_the_wells_res = jmaki_results[3, 2:end]
+  names_of_the_wells_res = jmaki_results[2, 1:end]
   names_of_the_wells_annotation = feature_matrix[1:end, 1]
   wells_to_use = intersect(names_of_the_wells_res, names_of_the_wells_annotation)
 
@@ -120,15 +120,15 @@ function downstream_symbolic_regression(jmaki_results,
 
   # order results and annotation by well in the same order
 
+  iii = [ index_res[1,i][2] for i in eachindex( index_res[1,:] )] 
 
 
 
 
 
 
-  index_res[1, :] = index_res[1, :] .+ 1
   
-  output = convert.(Float64, jmaki_results[row_to_learn, index_res[1, :]])
+  output = convert.(Float64, jmaki_results[row_to_learn, iii])
 
   predictors =Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation[1, :], 2:end])))
   
@@ -138,7 +138,6 @@ function downstream_symbolic_regression(jmaki_results,
   trees = [member.tree for member in dominating]
 
 
-  output2, did_succeed = eval_tree_array(tree, predictors, options)
 
   res_output = ["Complexity","MSE","Equation"]
 
@@ -172,7 +171,7 @@ function downstream_symbolic_regression(jmaki_results,
 
 
 
-  return trees,res_output,predictions
+  return trees,res_output,predictions,index_annotation
 
 end
 
