@@ -108,7 +108,7 @@ function cpd_lsdd_profile(
     pt_derivative number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
     size_win Int size of the used window in all of the methods
     """
-
+    selected_change_point_index = Any
     # evaluating the profile of lsdd on the data or on the derivative of the data
     if type_of_curve == "deriv"
         deriv = specific_gr_evaluation(data, pt_deriv)
@@ -143,7 +143,12 @@ function detect_list_change_points(
      size_win Int size of the used window in all of the methods
     """
     if type_of_curve == "deriv"
-        data = specific_gr_evaluation(data, pt_deriv)
+        data_gr = specific_gr_evaluation(data, pt_deriv)
+        specific_gr_times = [
+            (data[1, r] + data[1, (r+pt_deriv)]) / 2 for
+            r = 1:1:(eachindex(data[2, :])[end].-pt_deriv)
+        ]
+        data = Matrix(transpose(hcat(specific_gr_times,data_gr)))
     end
 
     curve_dissimilitary_deriv = curve_dissimilitary_lin_fitting(
