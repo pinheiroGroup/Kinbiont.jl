@@ -40,8 +40,32 @@ Next, the user need to copy the project folder in the chosen working directory.
 6. at the start of the code or notebook (where you are going to do analyses) you should write 
 
 ```
-using DifferentialEquations, Optimization, Plots, Random, CSV,  DataFrames, Statistics, Optim, OptimizationBBO, NaNMath, CurveFit, StatsBase, Tables, Distributions,Interpolations,GaussianProcesses,Peaks,ChangePointDetection
-
+using DifferentialEquations
+using Optimization
+using Plots
+using Random
+using CSV
+using DataFrames
+using Statistics
+using Optim
+using OptimizationBBO
+using NaNMath
+using StatsBase
+using Tables
+using Distributions
+using Interpolations
+using Peaks
+using ChangePointDetection
+using Lowess  
+using  LsqFit
+using Combinatorics
+using MLJ
+using SymbolicRegression
+using Zygote
+using DelimitedFiles
+using BetaML
+using DecisionTree
+using MLJDecisionTreeInterface
 include("your_path_to_JMAKi_main_folder/src/functions.jl")
 
 
