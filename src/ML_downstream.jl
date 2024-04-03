@@ -85,25 +85,13 @@ end
 function downstream_symbolic_regression(jmaki_results,
   feature_matrix,
   row_to_learn;
-  do_plots=true,
-  binary_operators=[+, *, /],
-  unary_operators=nothing,
-  batching=false,
-  batch_size=1000,
-  save_to_file=false,
-  output_folder="/res/",
-  output_file="output.txt",
-  niterations=100,
-  enable_autodiff=true,
-  should_simplify=true,
-  should_optimize_constants=false,
+  options = SymbolicRegression.Options(),
 )
 
 
 
-  if save_to_file == true
-    mkpath(output_folder)
-  end
+
+
   names_of_the_wells_res = jmaki_results[3, 2:end]
   names_of_the_wells_annotation = feature_matrix[1:end, 1]
   wells_to_use = intersect(names_of_the_wells_res, names_of_the_wells_annotation)
@@ -137,60 +125,54 @@ function downstream_symbolic_regression(jmaki_results,
 
 
 
-  ML_model = SRRegressor(
-    niterations=niterations,
-    binary_operators=binary_operators,
-    # unary_operators=unary_operators,
-    should_simplify=should_simplify,
-    should_optimize_constants=should_optimize_constants,
-    batching=batching,
-    batch_size=batch_size,
-    output_file=output_file,
-    save_to_file=save_to_file
-  )
-
 
   index_res[1, :] = index_res[1, :] .+ 1
+  
   output = convert.(Float64, jmaki_results[row_to_learn, index_res[1, :]])
 
-  predictors = convert.(Float64, feature_matrix[index_annotation[1, :], 2:end])
+  predictors =Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation[1, :], 2:end])))
+  
+  hall_of_fame = SymbolicRegression.equation_search(predictors,output,options =options)
+
+  dominating = calculate_pareto_frontier(hall_of_fame)
+  trees = [member.tree for member in dominating]
 
 
+  output2, did_succeed = eval_tree_array(tree, predictors, options)
+
+  res_output = ["Complexity","MSE","Equation"]
+
+  predictions = Any
+
+  for t in trees
 
 
-  mach = MLJ.machine(ML_model, predictors, output) |> fit!
+    output2, did_succeed = eval_tree_array(t, predictors, options)
+    if t == trees[1]
+      predictions =  output2
+    else
 
-  # MLJ.fit!(mach)
-  # report the fit 
-  res_gr = report(mach)
-  res_1 = res_gr.equation_strings
-  res_2 = res_gr.equations
-  res_3 = res_gr.equations[res_gr.best_idx]
-  res_4 = res_gr.losses
-  res_5 = res_gr.complexities
-  res_6 = res_gr.scores
-  index_min_score = findall(res_6 .== minimum(res_gr.scores))
+      predictions =  hcat(predictions,output2)
 
-
-  if size(feature_matrix)[2] == 2 && do_plots == true
-
-
-
-    display(scatter(predictors, output, xlabel="predictor", ylabel="feature", label=["Data" nothing]))
-    for k in 1:length(res_gr.equations)
-
-      a1 = MLJ.predict(mach, (data=predictors, idx=k))
-      display(scatter!(predictors, a1, xlabel="predictor", ylabel="feature", label=[res_1[k] nothing]))
     end
 
-  elseif size(feature_matrix)[2] != 2 & do_plots == true
-
-    println("Warning: the plots are possible only for 2D data (1 feature, 1 output)")
 
   end
 
 
-  return res_1, res_2, res_3, res_4, res_5, res_6, res_gr.equations[index_min_score]
+
+  for member in dominating
+      complexity = compute_complexity(member, options)
+      loss = member.loss
+      string = string_tree(member.tree, options)
+  
+      res_output = hcat(res_output,[complexity,loss,string])
+  end
+
+
+
+
+  return trees,res_output,predictions
 
 end
 
