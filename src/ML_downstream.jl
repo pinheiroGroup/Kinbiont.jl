@@ -12,6 +12,8 @@ function downstream_decision_tree_regression(jmaki_results::Matrix{Any}, # outpu
   min_samples_split = 2,  
   min_purity_increase = 0.0, 
   n_subfeatures = 0,
+  do_pruning = true,
+  pruning_accuracy = 0.8,
   seed = 3,
   do_cross_validation = false,
   n_folds_cv = 3,
@@ -58,7 +60,18 @@ max_depth = convert(Int, max_depth)
 
 
 
-  model = build_tree(output, predictors)
+  model = build_tree(output, predictors, 
+    0,
+    max_depth,
+    min_samples_leaf,
+    min_samples_split,
+    min_purity_increase;
+    rng = seed)
+
+  if do_pruning ==  true
+    model = prune_tree(model, pruning_accuracy)
+  end 
+
   r2 = Any
   if do_cross_validation ==  true
     r2 =  nfoldCV_tree(output, predictors,
@@ -79,8 +92,7 @@ max_depth = convert(Int, max_depth)
   if verbose == true
     tree_out = DecisionTree.print_tree(model, max_depth)
   end
-    return model, imp_1, imp_2, r2
-
+    return model, imp_1, imp_2, r2 
 end
 
 function downstream_symbolic_regression(jmaki_results,
