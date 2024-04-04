@@ -35,7 +35,12 @@ function getpoints_mod(profile; number_of_bin=100)
     return reverse(points_list[1:(end-1)])
 end
 
-
+"""
+perform the analyses with the required change point detection algorithm
+type_of_detection="lsdd" or piecewise linear fitting on the specific growth rate
+pt_derivative number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
+size_win Int size of the used window in all of the methods
+"""
 function cpd_local_detection(
     data::Matrix{Float64},
     n_max_cp::Int;
@@ -48,12 +53,7 @@ function cpd_local_detection(
 )
 
 
-    """
-        perform the analyses with the required change point detection algorithm
-        type_of_detection="lsdd" or piecewise linear fitting on the specific growth rate
-        pt_derivative number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
-        size_win Int size of the used window in all of the methods
-    """
+
 
 
     if type_of_detection == "lsdd" && type_of_curve == "deriv"
@@ -92,7 +92,12 @@ function cpd_local_detection(
     return list_of_cpds
 end
 
-
+"""
+evaluate change points using peak detection on a lsdd profile
+type_of_detection="lsdd" or piecewise linear fitting on the specific growth rate
+pt_derivative number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
+size_win Int size of the used window in all of the methods
+"""
 function cpd_lsdd_profile(
     data::Matrix{Float64},
     n_max::Int;
@@ -102,12 +107,7 @@ function cpd_lsdd_profile(
     method="peaks_prominence",
     number_of_bin=40,
 )
-    """
-    evaluate change points using peak detection on a lsdd profile
-    type_of_detection="lsdd" or piecewise linear fitting on the specific growth rate
-    pt_derivative number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
-    size_win Int size of the used window in all of the methods
-    """
+
     selected_change_point_index = Any
     # evaluating the profile of lsdd on the data or on the derivative of the data
     if type_of_curve == "deriv"

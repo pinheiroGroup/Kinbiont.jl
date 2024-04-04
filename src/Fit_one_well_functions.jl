@@ -611,8 +611,8 @@ function ODE_Model_selection(
 
         param_number = length(temp_start_param)
 
-      #  AICc = AICc_evaluation(param_number, beta_penality, data[2, :], sol_fin, correction=correction_AIC)
-        AICc = AICc_evaluation2(param_number, beta_penality,  data[2, :],res.objective, correction=correction_AIC)
+        #  AICc = AICc_evaluation(param_number, beta_penality, data[2, :], sol_fin, correction=correction_AIC)
+        AICc = AICc_evaluation2(param_number, beta_penality, data[2, :], res.objective, correction=correction_AIC)
 
         #max_theoretical gr
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
@@ -1186,22 +1186,22 @@ function selection_ODE_fixed_intervals(
 
         # selection of te model
         model = model_selection_results[6]
-        total_loss = total_loss +  model_selection_results[end][end]
+        total_loss = total_loss + model_selection_results[end][end]
         # param of the best model
         temp_res_win = model_selection_results[5]
         param_fitting = copy(temp_res_win)
-     #temp_res_win = push!(temp_res_win,model)
-     u0 = generating_IC(data_temp, model, smoothing, pt_avg)
+        #temp_res_win = push!(temp_res_win,model)
+        u0 = generating_IC(data_temp, model, smoothing, pt_avg)
 
-     # risimulate data
+        # risimulate data
 
-     remade_solution = ODE_sim_for_iterate(
-         model, #string of the model
-         u0, # starting condition
-         data_temp[1, :], # start time of the sim
-         integrator, # which sciml solver of ode
-         param_fitting, # parameters of the ODE model
-     )
+        remade_solution = ODE_sim_for_iterate(
+            model, #string of the model
+            u0, # starting condition
+            data_temp[1, :], # start time of the sim
+            integrator, # which sciml solver of ode
+            param_fitting, # parameters of the ODE model
+        )
         time_sol = reduce(hcat, remade_solution.t)
         sol_fin = reduce(hcat, remade_solution.u)
         sol_fin = sum(sol_fin, dims=1)
@@ -1243,10 +1243,10 @@ function selection_ODE_fixed_intervals(
         temp_res_win = vcat(name_well, temp_res_win)
 
 
-   
 
 
-        
+
+
 
         if i == 2
             composed_time = copy(time_sol[index_not_zero])
@@ -1262,6 +1262,8 @@ function selection_ODE_fixed_intervals(
             param_out = push!(param_out, temp_res_win)
         end
     end
+
+
 
     composed_time, composed_sol = remove_replicate_data(composed_time, composed_sol)
 
@@ -1320,7 +1322,7 @@ function selection_ODE_fixed_intervals(
         )
     end
 
-    return param_out, interval_changepoints, composed_time, composed_sol,total_loss
+    return param_out, interval_changepoints, composed_time, composed_sol, total_loss
 end
 
 
@@ -1364,68 +1366,76 @@ function segmentation_ODE(
 
     # fitting single models
     change_point_list = Vector{Vector{Any}}()
+    if n_max_change_points == 0 || detect_number_cpd == true
+        res = ODE_Model_selection(
+            data_testing, # dataset first row times second row OD
+            name_well, # name of the well
+            label_exp, #label of the experiment
+            list_of_models, # ode model to use
+            list_lb_param, # lower bound param
+            list_ub_param; # upper bound param
+            optmizator=optmizator, # selection of optimization method
+            integrator=integrator, # selection of sciml integrator
+            pt_avg=pt_avg, # number of the point to generate intial condition
+            beta_penality=penality_parameter, # penality for AIC evaluation
+            smoothing=smoothing, # the smoothing is done or not?
+            type_of_loss=type_of_loss, # type of used loss
+            blank_array=zeros(100), # data of all blanks
+            display_plot_best_model=false, # one wants the results of the best fit to be plotted
+            save_plot_best_model=false,
+            path_to_plot="NA",
+            pt_smooth_derivative=pt_smooth_derivative,
+            multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
+            calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
+            verbose=false,
+            PopulationSize=PopulationSize,
+            maxiters=maxiters,
+            abstol=abstol,
+            type_of_smoothing=type_of_smoothing,
+            thr_lowess=thr_lowess,
+            correction_AIC=correction_AIC)
 
-    res = ODE_Model_selection(
-        data_testing, # dataset first row times second row OD
-        name_well, # name of the well
-        label_exp, #label of the experiment
-        list_of_models, # ode model to use
-        list_lb_param, # lower bound param
-        list_ub_param; # upper bound param
-        optmizator=optmizator, # selection of optimization method
-        integrator=integrator, # selection of sciml integrator
-        pt_avg=pt_avg, # number of the point to generate intial condition
-        beta_penality=penality_parameter, # penality for AIC evaluation
-        smoothing=smoothing, # the smoothing is done or not?
-        type_of_loss=type_of_loss, # type of used loss
-        blank_array=zeros(100), # data of all blanks
-        display_plot_best_model=false, # one wants the results of the best fit to be plotted
-        save_plot_best_model=false,
-        path_to_plot="NA",
-        pt_smooth_derivative=pt_smooth_derivative,
-        multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-        method_multiple_scattering_correction=method_multiple_scattering_correction,
-        calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
-        verbose=false,
-        PopulationSize=PopulationSize,
-        maxiters=maxiters,
-        abstol=abstol,
-        type_of_smoothing=type_of_smoothing,
-        thr_lowess=thr_lowess,
-        correction_AIC=correction_AIC)
-  
-    if save_all_model == true
-        mkpath(path_to_results)
-        CSV.write(
-            string(
-                path_to_results,
-                label_exp,
-                "_segmented_ODE_scoring_",
-                name_well,
-                "_seg_0.csv",
-            ),
-            Tables.table(res[1]),
-        )
-        CSV.write(
-            string(
-                path_to_results,
-                label_exp,
-                "_segmented_ODE_param_",
-                name_well,
-                "_seg_0.csv",
-            ),
-            Tables.table(Vector(res[2])),
-        )
+        if save_all_model == true
+            mkpath(path_to_results)
+            CSV.write(
+                string(
+                    path_to_results,
+                    label_exp,
+                    "_segmented_ODE_scoring_",
+                    name_well,
+                    "_seg_0.csv",
+                ),
+                Tables.table(res[1]),
+            )
+            CSV.write(
+                string(
+                    path_to_results,
+                    label_exp,
+                    "_segmented_ODE_param_",
+                    name_well,
+                    "_seg_0.csv",
+                ),
+                Tables.table(Vector(res[2])),
+            )
 
+        end
+
+        top_model = res[5]
+        score_of_the_models = res[3]
+        change_point_list = [0.0]
+        change_point_to_plot = [0.0, 0.0, 0.0]
+        time_points_to_plot = copy(data_testing[1, :])
+        sol_to_plot = copy(reduce(vcat,results_ms[7])[2:2:end] )
+    else
+
+        top_model = "NO"
+        score_of_the_models = 10^9
+        change_point_list = [0.0]
+        change_point_to_plot = [0.0, 0.0, 0.0]
+        time_points_to_plot = copy(data_testing[1, :])
+        sol_to_plot = copy(data_testing[1, :])
     end
-
-    top_model = res[5]
-    score_of_the_models = res[3]
-    change_point_list = [0.0]
-    change_point_to_plot = [0.0, 0.0, 0.0]
-    time_points_to_plot = copy(data_testing[1, :])
-    sol_to_plot = copy(res[7])
-
     #fitting all model with change points
     if n_max_change_points > 0
 
@@ -1461,14 +1471,14 @@ function segmentation_ODE(
             )
 
             combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2],
-                n_fix= n_max_change_points  )
+                n_fix=n_max_change_points)
 
 
 
         else
             list_change_points_dev = cpd_local_detection(
                 data_testing,
-               n_max_change_points  + 2;
+                n_max_change_points + 2;
                 type_of_detection=type_of_detection,
                 type_of_curve=type_of_curve,
                 pt_derivative=pt_smooth_derivative,
@@ -1519,10 +1529,10 @@ function segmentation_ODE(
                 sum([
                     length(direct_search_results[1][kk][3:(end-4)]) for
                     kk = 1:length(direct_search_results[1])
-                ]) 
-            
+                ])
+
             n_param = n_param + length(cpd_temp)
-    
+
 
             new_penality = AICc_evaluation2(n_param, penality_parameter, data_testing[2, :], direct_search_results[end], correction=correction_AIC)
 
@@ -1541,9 +1551,9 @@ function segmentation_ODE(
                         path_to_results,
                         label_exp,
                         "_segmented_ODE_",
-                        name_well,"_conf_",i,
+                        name_well, "_conf_", i,
                         "_seg_",
-                        length(cpd_temp) +1,
+                        length(cpd_temp) + 1,
                         ".csv",
                     ),
                     Tables.table(Vector(direct_search_results[1])),
@@ -1553,9 +1563,9 @@ function segmentation_ODE(
                         path_to_results,
                         label_exp,
                         "_segmented_ODE_solution_",
-                        name_well,"_conf_",i,
+                        name_well, "_conf_", i,
                         "_seg_",
-                        length(cpd_temp) +1,
+                        length(cpd_temp) + 1,
                         ".csv",
                     ),
                     Tables.table(Vector(direct_search_results[4])),
@@ -1564,6 +1574,9 @@ function segmentation_ODE(
         end
     end
 
+
+    println(size(time_points_to_plot))
+    println(size(sol_to_plot))
     if display_plot
         if_display = display
     else
