@@ -1426,7 +1426,7 @@ function segmentation_ODE(
         change_point_list = [0.0]
         change_point_to_plot = [0.0, 0.0, 0.0]
         time_points_to_plot = copy(data_testing[1, :])
-        sol_to_plot = copy(reduce(vcat,results_ms[7])[2:2:end] )
+        sol_to_plot = copy(reduce(vcat,res[7])[2:2:end] )
     else
 
         top_model = "NO"
@@ -1495,7 +1495,7 @@ function segmentation_ODE(
 
 
         for i in 1:eachindex(combination_to_test)[end]
-
+      
             cpd_temp = sort(combination_to_test[i])
 
             direct_search_results = selection_ODE_fixed_intervals(
