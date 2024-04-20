@@ -1631,5 +1631,5 @@ function segmentation_ODE(
         )
     end
 
-    return top_model, time_points_to_plot, sol_to_plot
+    return top_model, time_points_to_plot, sol_to_plot,score_of_the_models
 end

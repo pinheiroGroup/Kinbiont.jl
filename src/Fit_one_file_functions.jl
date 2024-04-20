@@ -1166,6 +1166,8 @@ function segmentation_ODE_file(
     blank_array = [0.0],)
 
 
+    vector_AIC = ["AIC"]
+
     if write_res == true
         mkpath(path_to_results)
     end
@@ -1290,7 +1292,7 @@ function segmentation_ODE_file(
             thr_lowess=thr_lowess,
             correction_AIC=correction_AIC,
             )
-        
+            vector_AIC =  hcat( vector_AIC,temp_results_1[end])
 
         vectorized_temp_results = expand_res(
             temp_results_1[1],
@@ -1324,7 +1326,7 @@ function segmentation_ODE_file(
 
 
     end
-    return parameter_of_optimization
+    return parameter_of_optimization,vector_AIC
 
 
 
