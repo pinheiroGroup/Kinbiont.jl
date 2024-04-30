@@ -359,7 +359,7 @@ function fitting_one_well_ODE_constrained(
     res_param =
         vectorize_df_results(name_well, model, res_temp, max_th_gr, max_em_gr, loss_value)
 
-    return res_param, remade_solution.t, sol_fin[1, 1:end]
+    return res_param, remade_solution.t, sol_fin
 end
 
 #######################################################################
