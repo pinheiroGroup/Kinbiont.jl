@@ -188,3 +188,7 @@ function downstream_symbolic_regression(jmaki_results,
 
 end
 
+
+export downstream_decision_tree_regression
+export downstream_symbolic_regression
+

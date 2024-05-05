@@ -1,4 +1,3 @@
-
 #######################################################################
 
 """
@@ -1332,3 +1331,9 @@ function segmentation_ODE_file(
 
 
 end
+
+export fit_file_ODE
+export fit_file_custom_ODE
+export ODE_model_selection_file
+export selection_ODE_fixed_change_points_file
+export segmentation_ODE_file

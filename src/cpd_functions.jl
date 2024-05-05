@@ -334,3 +334,11 @@ function generation_of_combination_of_cpds(
 
     return combinations_tot
 end
+
+export getpoints_mod
+export cpd_local_detection
+export cpd_lsdd_profile
+export detect_list_change_points
+export peaks_detection
+export curve_dissimilitary_lin_fitting
+export generation_of_combination_of_cpds
