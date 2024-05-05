@@ -225,4 +225,11 @@ function select_loss_function(loss_name, data, ODE_prob, integrator, tsteps, bla
     end
 end
 
-
+export loss_L2_derivative
+export loss_blank_weighted_L2
+export loss_L2
+export loss_L2_log
+export loss_RE
+export loss_RE_log
+export loss_L2_std_blank
+export select_loss_export

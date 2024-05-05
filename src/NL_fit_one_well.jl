@@ -1596,3 +1596,12 @@ function selection_NL_maxiumum_change_points(
 
     return top_param, sort(top_intervals), top_fit, top_time
 end
+
+export fit_NL_model
+export fit_NL_model_with_sensitivity
+export fit_NL_model_MCMC_intialization
+export fit_NL_model_bootstrap
+export NL_error_blanks
+export NL_model_selection
+export selection_NL_fixed_interval
+export selection_NL_maxiumum_change_points

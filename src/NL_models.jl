@@ -1,17 +1,12 @@
-
-
 struct NL_Model
     name::String
     func::Function
     params::Vector{String}
 end
 
-
-
 # from "Statistical evaluation of mathematical models for microbial growth"
 # non linear model 
 # exponential
-
 
 
 function NL_model_exp(p, times)
@@ -125,4 +120,10 @@ NL_models_list = [
 
 NL_models = Dict(model.name => model for model in NL_models_list)
 
-
+export NL_model_exp
+export NL_model_logistic
+export NL_model_Gompertz
+export NL_model_Bertalanffy
+export NL_model_Richards
+export NL_model_Morgan
+export NL_model_Weibull

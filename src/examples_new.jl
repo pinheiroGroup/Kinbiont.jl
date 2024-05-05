@@ -1,26 +1,13 @@
 
 # uploading package this part of the code will be skipped when the github is online 
 # you have only to write using JMAKI
-using DifferentialEquations, Optimization, Plots, Random
-using CSV,  DataFrames
-using Statistics
-using Optim
-using OptimizationBBO
-using NaNMath
-using StatsBase
-using Tables
-using Distributions
-using Interpolations
-using Peaks
-using ChangePointDetection
-using Lowess  
-using  LsqFit
-using Combinatorics
+
+using JMAKi
+using DifferentialEquations
+
 # loading the functions  (will be skipped when the package is deployed)
 #path_to_functions = "/Users/fabrizio.angaroni/Documents/J-MAKi.jl-main.jl/src/";
 #include(string(path_to_functions,"/functions.jl"))
-
-include( "E://Lavoro//JMAKi.jl-main//src//functions.jl")
 
 
 # simulating data with a ODE

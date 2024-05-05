@@ -805,3 +805,7 @@ function fit_NL_segmentation_file(
 
 
 end
+
+export fit_NL_model_file
+export fit_NL_model_selection_file
+export fit_NL_segmentation_file
