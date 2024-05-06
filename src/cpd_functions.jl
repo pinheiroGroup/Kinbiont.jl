@@ -1,3 +1,5 @@
+using Peaks
+
 """
 change points functions
 """
