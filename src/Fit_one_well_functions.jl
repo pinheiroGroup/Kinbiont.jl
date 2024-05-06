@@ -87,7 +87,7 @@ function fitting_one_well_Log_Lin(
 
     # selection of exp win with a global thr on the growht rate
     if type_of_win == "global_thr"
-        index_of_max = findfirst(x -> x == maximum(specific_gr), specific_gr)[1]
+        index_of_max = argmax(specific_gr)[1]
         index_gr_max =
             index_of_max +
             findfirst(x -> x < lb_of_distib, specific_gr[index_of_max:end])[1]

@@ -203,7 +203,7 @@ function peaks_detection(
     if method == "thr_scan"
         if n_max == 1
             selected_change_point_index =
-                findfirst(x -> x == maximum(data[2, :]), data[2, :])
+                argmax(data[2, :])
         else
             selected_change_point_list =
                 getpoints_mod(data[2, :], number_of_bin=number_of_bin)
