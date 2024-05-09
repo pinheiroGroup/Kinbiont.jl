@@ -1,11 +1,10 @@
 using Peaks
 
 """
-change points functions
+   getpoints_mod(profile; number_of_bin=100)
+
+  Function from changepoints detections.jl with modification of its usage
 """
-# function from changepoints detections.jl with modification of thr usage
-
-
 function getpoints_mod(profile; number_of_bin=100)
     points_list = ()
     # list of points
@@ -38,10 +37,12 @@ function getpoints_mod(profile; number_of_bin=100)
 end
 
 """
-perform the analyses with the required change point detection algorithm
-type_of_detection="lsdd" or piecewise linear fitting on the specific growth rate
-pt_derivative number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
-size_win Int size of the used window in all of the methods
+Perform the analyses with the required change point detection algorithm
+
+# Arguments
+- `type_of_detection="lsdd"`: or piecewise linear fitting on the specific growth rate
+- `pt_derivative`: number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
+- `size_win::Int`: size of the used window in all of the methods
 """
 function cpd_local_detection(
     data::Matrix{Float64},
@@ -129,7 +130,6 @@ function cpd_lsdd_profile(
 end
 
 
-
 function detect_list_change_points(
     data::Matrix{Float64},
     n_max::Int;
@@ -172,18 +172,19 @@ function detect_list_change_points(
     return selected_change_point_index
 end
 
+"""
+     peaks_detection
+
+# Arguments
+- `n_max`: maximum number of peaks
+- `size_win::Int`: size of the used window in all of the methods
+"""
 function peaks_detection(
     data::Matrix{Float64},
     n_max::Int;
     method="peaks_prominence",
     number_of_bin=40,
 )
-
-    """
-    peaks detection
-    n_max maximum number of peaks
-    size_win Int size of the used window in all of the methods
-    """
     if method == "peaks_prominence"
         index_of_peaks = findmaxima(data[2, :]; strict=true)
         array_prominence = peakproms(index_of_peaks[1], data[2, :])[2]
