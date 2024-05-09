@@ -328,7 +328,6 @@ end
 """
 fitting dataset function ODE
 """
-
 function fit_file_ODE(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
@@ -907,8 +906,6 @@ end
 """
 ODE segementation fitting fixed number of cpd for a full file
 """
-
-
 function selection_ODE_fixed_change_points_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
@@ -1111,7 +1108,6 @@ function selection_ODE_fixed_change_points_file(
 
 
 end
-
 
 
 

@@ -393,7 +393,6 @@ end
 """
 fitting custom ODE
 """
-
 function fitting_one_well_custom_ODE(
     data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
@@ -526,7 +525,6 @@ end
 """
 model selection functions
 """
-
 function ODE_Model_selection(
     data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
