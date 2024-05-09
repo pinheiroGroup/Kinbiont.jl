@@ -113,3 +113,13 @@ function select_loss_function_NL(loss_name, data, pen, model_function)
         return (u, p) -> loss_functions[loss_name](data, model_function, u, p)
     end
 end
+
+export NL_Log_L2
+export NL_L2
+export NL_RE
+export NL_Log_RE
+export NL_RE_fixed_CI
+export NL_L2_fixed_CI
+export NL_RE_fixed_end
+export NL_L2_fixed_end
+export select_loss_export_NL

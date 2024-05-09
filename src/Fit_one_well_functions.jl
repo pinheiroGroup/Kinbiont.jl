@@ -1633,3 +1633,12 @@ function segmentation_ODE(
 
     return top_model, time_points_to_plot, sol_to_plot,score_of_the_models
 end
+
+export fitting_one_well_Log_Lin
+export fitting_one_well_ODE_constrained
+export fitting_one_well_custom_ODE
+export ODE_Model_selection
+export one_well_morris_sensitivity
+export selection_ODE_fixed_change_points
+export selection_ODE_fixed_intervals
+export segmentation_ODE

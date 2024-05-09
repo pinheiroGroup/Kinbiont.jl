@@ -1,3 +1,4 @@
+using NaNMath
 
 struct JModel
   name::String
@@ -385,3 +386,35 @@ models_list = [
 
 models = Dict(model.name => model for model in models_list)
 
+export HPM_3_inhibition
+export HPM_3_death
+export HPM_3_death_resistance_old
+export aHPM_3_death_resistance
+export ODEs_McKellar
+export ODEs_HPM_exp
+export ODEs_HPM_inhibition
+export ODEs_aHPM_inhibition
+export ODEs_HPM_SR
+export ODEs_adjusted_McKellar
+export ODE_Diauxic_replicator_1
+export ODE_Diauxic_replicator_2
+export ODE_Diauxic_piecewise_adjusted_logistic
+export ODE_Diauxic_piecewise_adjusted_logistic_bk
+export ODE_exponential
+export ODE_piecewise_adjusted_logistic
+export ODE_triple_piecewise_adjusted_logistic
+export ODE_triple_piecewise
+export ODE_triple_piecewise_sub_linear
+export ODE_gbsm_piecewise
+export ODE_four_piecewise
+export hyper_gompertz
+export hyper_logistic
+export bertalanffy_richards
+export ODE_von_bertalanffy
+export ODE_triple_piecewise_bertalanffy_richards
+export logistic
+export alogistic
+export gompertz
+export baranyi_richards
+export baranyi_exp
+export baranyi_roberts

@@ -1,3 +1,6 @@
+using Lowess
+using CSV
+
 function correction_OD_multiple_scattering(
     data::Matrix{Float64},
     calibration_curve::String;
@@ -32,8 +35,6 @@ function correction_OD_multiple_scattering(
 
     return data_fin
 end
-
-
 
 function smoothing_data(
     data::Matrix{Float64};
@@ -78,10 +79,6 @@ function smoothing_data(
     return smoothed_data
 end
 
-
-
-
-
 function blank_subtraction(
     dfs_data::Any, # dataset first row times second row OD ,
     list_of_blank::Any;
@@ -105,7 +102,6 @@ function blank_subtraction(
 
     return blank_values
 end
-
 
 function average_replicate(dfs_data, times_data, properties_of_annotation, names_of_annotated_df)
 
@@ -152,7 +148,6 @@ function remove_negative_value(data::Any)
     return data, index_not_zero
 end
 
-
 function negative_value_correction(data::Any,
     list_of_blank::Any;
     method="remove",
@@ -183,11 +178,12 @@ function negative_value_correction(data::Any,
 
     end
 
-
-
-
     return Matrix(data_corrected)
 end
 
-
-
+export correction_OD_multiple_scattering
+export smoothing_data
+export blank_subtraction
+export average_replicate
+export remove_negative_value
+export negative_value_correction

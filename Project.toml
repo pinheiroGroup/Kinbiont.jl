@@ -1,3 +1,8 @@
+name = "JMAKi"
+uuid = "3b7c519f-be5e-4159-a208-6486ce96bb37"
+authors = ["Fabrizio Angaroni"]
+version = "1.0.0"
+
 [deps]
 BetaML = "024491cd-cc6b-443e-8034-08ea7eb7db2b"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -16,6 +21,7 @@ NaNMath = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Optimization = "7f7a1694-90dd-40f0-9382-eb1efda571ba"
 OptimizationBBO = "3e6eede4-6085-4f62-9a71-46d9bc1eb92b"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
 Peaks = "18e31ff7-3703-566c-8e60-38913d67486b"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"

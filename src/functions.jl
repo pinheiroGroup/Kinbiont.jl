@@ -1,7 +1,6 @@
-
+using OrdinaryDiffEq
 
 #######################################################################
-#
 
 include("models.jl");
 include("Fit_one_file_functions.jl");
@@ -221,6 +220,8 @@ function ODE_sim(
 
     return sim
 end
+
+export ODE_sim
 
 function ODE_sim_for_iterate(
     model::String, #string of the model
