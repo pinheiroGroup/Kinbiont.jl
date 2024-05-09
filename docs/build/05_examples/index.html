@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples and Tutorial · JMAKi Documentation</title><meta name="title" content="Examples and Tutorial · JMAKi Documentation"/><meta property="og:title" content="Examples and Tutorial · JMAKi Documentation"/><meta property="twitter:title" content="Examples and Tutorial · JMAKi Documentation"/><meta name="description" content="Documentation for JMAKi Documentation."/><meta property="og:description" content="Documentation for JMAKi Documentation."/><meta property="twitter:description" content="Documentation for JMAKi Documentation."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="JMAKi Documentation logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">JMAKi Documentation</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">JMAKi - Julia Model-based Analyses of microbial Kinetics</a></li><li><a class="tocitem" href="../01_install/">Installation &amp; requirements</a></li><li><a class="tocitem" href="../02_data/">Data and annotation formatting</a></li><li><a class="tocitem" href="../03_main/">The main functions of JMAKi</a></li><li><a class="tocitem" href="../04_math/">The mathematical models</a></li><li class="is-active"><a class="tocitem" href>Examples and Tutorial</a><ul class="internal"><li><a class="tocitem" href="#Simulating-Data"><span>Simulating Data</span></a></li><li><a class="tocitem" href="#Data-Preprocessing"><span>Data Preprocessing</span></a></li><li><a class="tocitem" href="#Fitting-single-well"><span>Fitting single well</span></a></li><li><a class="tocitem" href="#Fitting-one-file-(a-plate)"><span>Fitting one file (a plate)</span></a></li><li><a class="tocitem" href="#ODE-segmentation-with-fixed-number-of-change-points"><span>ODE segmentation with fixed number of change points</span></a></li><li><a class="tocitem" href="#ODE-segmentation"><span>ODE segmentation</span></a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Examples and Tutorial</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Examples and Tutorial</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/pinheiroGroup/JMAKi.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/pinheiroGroup/JMAKi.jl/blob/main/docs/src/05_examples/index.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="examples"><a class="docs-heading-anchor" href="#examples">Examples and Tutorial</a><a id="examples-1"></a><a class="docs-heading-anchor-permalink" href="#examples" title="Permalink"></a></h1><p>This section provides some copy-and-paste examples of JMAKi.jl</p><ol><li><a href="#simulating-data">Simulating Data with ODEs</a> -<a href="#simulating-data-ODE">Simulating Data with ODEs</a> -<a href="#simulating-data-stochastic">Simulating Data with stochastic simulations</a></li><li><a href="#data-preprocessing">Data Preprocessing</a></li><li><a href="#model-fitting">Fitting single well</a><ul><li><a href="#fitting-log-lin">Log-Lin fitting</a></li><li><a href="#fitting-ode">Fitting ODE Models</a></li><li><a href="#custom-ode-fitting">Custom ODE Fitting</a></li><li><a href="#sensitivity-analysis">Sensitivity Analysis</a></li><li><a href="#model-selection">ODE Model Selection</a></li></ul></li></ol><ol><li><p><a href="#model-fitting-plate">Fitting one file (a plate)</a></p><ul><li><a href="#plot-file">Plot one file</a></li><li><a href="#fitting-log-lin-file">Log-Lin fitting</a></li><li><a href="#fitting-ode-file">Fitting ODE Models</a></li></ul></li><li><p><a href="#ODE-segmented-fixed">ODE segmentation with fixed number of change points</a></p></li><li><p><a href="#ODE-segmented">ODE segmentation</a></p></li></ol><h2 id="Simulating-Data"><a class="docs-heading-anchor" href="#Simulating-Data">Simulating Data</a><a id="Simulating-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Simulating-Data" title="Permalink"></a></h2><h3 id="Simulating-Data-with-ODEs"><a class="docs-heading-anchor" href="#Simulating-Data-with-ODEs">Simulating Data with ODEs</a><a id="Simulating-Data-with-ODEs-1"></a><a class="docs-heading-anchor-permalink" href="#Simulating-Data-with-ODEs" title="Permalink"></a></h3><p>To simulate data using Ordinary Differential Equations (ODEs):</p><pre><code class="language-julia hljs"># Simulating data with an ODE
+model = &quot;triple_piecewise_damped_logistic&quot;
+n_start = [0.1]
+tstart = 0.0
+tmax = 600.0
+delta_t = 10.0
+
+param_of_ode = [0.06, 1.0, 200, 0.5, 0.001, 450, -0.0002]
+
+# Calling the simulation function
+sim = ODE_sim(model, n_start, tstart, tmax, delta_t, param_of_ode)
+
+# Plotting scatterplot of data
+Plots.scatter(sim, xlabel=&quot;Time&quot;, ylabel=&quot;Arb. Units&quot;, label=[&quot;Data &quot; nothing], color=:blue, size=(300, 300))</code></pre><h3 id="Simulating-Data-with-stochastic-simulations"><a class="docs-heading-anchor" href="#Simulating-Data-with-stochastic-simulations">Simulating Data with stochastic simulations</a><a id="Simulating-Data-with-stochastic-simulations-1"></a><a class="docs-heading-anchor-permalink" href="#Simulating-Data-with-stochastic-simulations" title="Permalink"></a></h3><p>To simulate data using  stochastic models:</p><pre><code class="language-julia hljs">sim =stochastic_sim(&quot;Monod&quot;, #string of the model
+   1, # number of starting cells
+   10000.1, # starting # molecules (in &quot;biomass units&quot;) of the limiting nutrients
+    0.0, # start time of the sim
+    2000.0, # final time of the sim
+    0.1, # delta t for poisson approx
+    11.1,
+    10.1, # monod constant
+    0.06, # massimum possible growth rate
+   10.0, # lag time
+    0.0000001,# nutrient consumed per division (conc)
+    1000.0 #volume
+)
+plot(sim[3],sim[1], xlabel=&quot;Time&quot;,ylabel=&quot;# of indivuals&quot;)
+plot(sim[3],sim[2], xlabel=&quot;Time&quot;,ylabel=&quot;nutrients/volume&quot;)
+
+data_OD = Matrix(transpose(hcat(sim[3],sim[1])))</code></pre><h2 id="Data-Preprocessing"><a class="docs-heading-anchor" href="#Data-Preprocessing">Data Preprocessing</a><a id="Data-Preprocessing-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Preprocessing" title="Permalink"></a></h2><p>We start applying a rolling average smoothing to the data. In the example, a rolling window of size 7 is applied to the original data (data_OD generated in the previous examples). </p><pre><code class="language-julia hljs">data_ODsmooth = smoothing_data(data_OD, 7)
+data_ODsmooth = Matrix(data_ODsmooth)
+
+# Plotting scatterplot of smoothed data
+Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel=&quot;Time&quot;, ylabel=&quot;Arb. Units&quot;, label=[&quot;Smoothed data &quot; nothing], markersize=2, color=:blue, size=(300, 300))</code></pre><p>Furthermore, to address potential external influences, a correction for multiple scattering is applied to the smoothed data. This correction is executed through the correction<em>OD</em>multiple<em>scattering function, requiring an external file (calibration</em>curve.csv).  it is  optional in the provided example. </p><pre><code class="language-julia hljs">
+# Multiple scattering correction (optional, comment out if not needed)
+data_ODsmooth = correction_OD_multiple_scattering(data_ODsmooth, &quot;/your_path/calibration_curve.csv&quot;)
+
+# Plotting scatterplot of preprocessed data
+Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel=&quot;Time&quot;, ylabel=&quot;Arb. Units&quot;, label=[&quot;Pre-processed data&quot; nothing], markersize=2, color=:blue, size=(300, 300))</code></pre><h2 id="Fitting-single-well"><a class="docs-heading-anchor" href="#Fitting-single-well">Fitting single well</a><a id="Fitting-single-well-1"></a><a class="docs-heading-anchor-permalink" href="#Fitting-single-well" title="Permalink"></a></h2><h3 id="Log-Lin-fitting"><a class="docs-heading-anchor" href="#Log-Lin-fitting">Log-Lin fitting</a><a id="Log-Lin-fitting-1"></a><a class="docs-heading-anchor-permalink" href="#Log-Lin-fitting" title="Permalink"></a></h3><p>This code snippet performs log-linear fitting using the fitting<em>one</em>well<em>Log</em>Lin function (of data generated in the previous examples). </p><pre><code class="language-julia hljs">res_log_lin = fitting_one_well_Log_Lin(
+    data_OD,  # dataset, first row times, second row OD
+    &quot;test&quot;,           # name of the well
+    &quot;test&quot;            # label of the experiment
+)</code></pre><p>The results are stored in the res<em>log</em>lin variable. With the following form</p><pre><code class="language-julia hljs">results_lin_log_fit = [label_exp, name_well, start_exp_win, end_exp_win, time_max_gr ,gr_of_max, gr_log_lin_fitting, 2_sigma_confidence_gr, doubling time , doubling time  - 2 sigma,  doubling time  + 2 sigma, intercept log-lin fitting, ntercept log-lin fitting 2 sigma ,R^2]
+</code></pre><h3 id="Fitting-ODE-Models"><a class="docs-heading-anchor" href="#Fitting-ODE-Models">Fitting ODE Models</a><a id="Fitting-ODE-Models-1"></a><a class="docs-heading-anchor-permalink" href="#Fitting-ODE-Models" title="Permalink"></a></h3><p>Before fitting, upper and lower bounds for the ODE parameters are defined </p><pre><code class="language-julia hljs">
+# Upper bounds of the parameters of the ODE
+ub_dhpm = [1.2, 1.1, 2.0, 20]
+
+# Lower bounds of the parameters of the ODE
+lb_dhpm = [0.0001, 0.00000001, 0.00, 0]</code></pre><p>The actual fitting is accomplished through the fitting<em>one</em>well<em>ODE</em>constrained function. This function takes the  dataset (data<em>OD generated in the previous examples), the name and label of the well, the ODE model to use (&quot;dHPM&quot; in this case), as well as the upper and lower bounds for the ODE parameters. Additionally, the function allows for plotting the results (do</em>plot=true) and specifying the path to save the generated plots (path<em>to</em>plot=path<em>to</em>plotting).</p><pre><code class="language-julia hljs"># Performing ODE fitting
+results_ODE_fit = fitting_one_well_ODE_constrained(
+    data_OD, &quot;&quot;, &quot;&quot;, &quot;dHPM&quot;, lb_dhpm, ub_dhpm,
+    do_plot=true, path_to_plot=&quot;path_to_plotting&quot;
+)
+</code></pre><p>The results are stored in &#39;results<em>ODE</em>fit&#39; with the following format</p><pre><code class="language-julia hljs"> results_ODE_fit = [&quot;name of model&quot;, &quot;well&quot;, &quot;param_1&quot;,&quot;param_2&quot;,..,&quot;param_n&quot;,&quot;maximum specific gr using ode&quot;,&quot;maximum specific gr using data&quot;, &quot;objective function value (i.e. loss of the solution)&quot;]</code></pre><p>where &#39; &quot;param<em>1&quot;,&quot;param</em>2&quot;,..,&quot;param<em>n&quot; &#39; are the parameter of the selected ODE as in this [table](#ODE</em>list)</p><h3 id="Custom-ODE-Fitting"><a class="docs-heading-anchor" href="#Custom-ODE-Fitting">Custom ODE Fitting</a><a id="Custom-ODE-Fitting-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-ODE-Fitting" title="Permalink"></a></h3><p>The custom ODE function (ODE_custom) is defined with specific dynamics tailored to the characteristics of the microbial system. In this example, the function computes the rates of change (du) for two state variables (u) based on the provided parameters (param) and time (t). The specific structure of this function should be adjusted to match the dynamics of the microbial system under investigation.</p><pre><code class="language-julia hljs">
+# Custom ODE function
+function ODE_custom(du, u, param, t)
+    du[1] = u[1] * (1 - u[1]) * param[2] + param[1] * u[1]
+    du[2] = u[1] * param[2] + param[4] * u[2] * (1 - (u[1] + u[2]) / param[3])
+end
+</code></pre><p>The upper and lower bounds for the custom ODE parameters (custom<em>ub and custom</em>lb) are defined, and the fitting process is initiated using the fitting<em>one</em>well<em>custom</em>ODE function. This function takes the  dataset (data<em>OD  generated in the previous examples), the name and label of the well, the custom ODE function (ODE</em>custom), and the upper and lower bounds for the ODE parameters. Additionally, the number of ODEs in the system is specified (2 in this example). The results can be visualized through plotting (do<em>plot=true) with the option to save the generated plots (path</em>to<em>plot=path</em>to_plotting).</p><pre><code class="language-julia hljs"># Bounds for the custom ODE parameters
+custom_ub = [1.2, 1.1, 2.0, 20]
+custom_lb = [0.0001, 0.00000001, 0.00, 0]
+
+# Performing custom ODE fitting
+results_ODE_fit = fitting_one_well_custom_ODE(
+    data_OD, &quot;test&quot;, &quot;test_model_custom&quot;, ODE_custom,
+    custom_lb, custom_ub, 2,
+    do_plot=true, path_to_plot=path_to_plotting
+)</code></pre><p>The results are stored in &#39;results<em>ODE</em>fit&#39; with the same format of the previous examples</p><h3 id="Sensitivity-Analysis"><a class="docs-heading-anchor" href="#Sensitivity-Analysis">Sensitivity Analysis</a><a id="Sensitivity-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Sensitivity-Analysis" title="Permalink"></a></h3><p>The sensitivity analysis is initiated with the one<em>well</em>morris<em>sensitivity function. This function takes the preprocessed dataset (data</em>OD generated in the previous examples), the name and label of the well, the ODE model to use (&quot;dHPM&quot; in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (n<em>step</em>sensitivity) is specified to control the granularity of the analysis.</p><pre><code class="language-julia hljs"># Number of steps for Morris sensitivity analysis
+n_step_sensitivity = 3
+
+# Performing Morris sensitivity analysis
+sensitivity_test = one_well_morris_sensitivity(
+    data_OD, &quot;test&quot;, &quot;test_sensitivity&quot;, &quot;dHPM&quot;, lb_dhpm, ub_dhpm,
+    N_step_morris=n_step_sensitivity
+)
+</code></pre><h3 id="ODE-Model-Selection"><a class="docs-heading-anchor" href="#ODE-Model-Selection">ODE Model Selection</a><a id="ODE-Model-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#ODE-Model-Selection" title="Permalink"></a></h3><p>Several ODE models are considered for the selection process, each defined by upper (<code>list_ub</code>) and lower (<code>list_lb</code>) bounds for their respective parameters. The models include &quot;dHPM,&quot; &quot;piecewise<em>damped</em>logistic,&quot; &quot;triple<em>piecewise,&quot; and &quot;baranyi</em>roberts.&quot;</p><pre><code class="language-julia hljs"># Model candidates and their parameter bounds
+list_of_models = [&quot;dHPM&quot;, &quot;piecewise_damped_logistic&quot;, &quot;triple_piecewise&quot;, &quot;baranyi_roberts&quot;]
+
+ub_piece_wise_logistic =[ 0.06 , 2.0 , 500.0 , 10.0 ,  0.001    ]
+lb_piece_wise_logistic =[ 0.0001 , 0.001,0.0  , 0.001 ,  - 0.001  ]
+ub_baranyi_roberts =[ 0.06 , 2.0 , 500.0 , 10.0,  10   ]
+lb_baranyi_roberts =[ 0.0001 , 0.001, 0.0 ,  0.01 , 0  ]
+ub_triple_exp =[ 1.2 , 0.001 ,  0.2 , 500.0  , 2000   ]
+lb_triple_exp =[ 0.0001 , -0.001, 0.0  , 00.0 ,  200.0   ]
+ub_dhpm =[ 1.2 , 1.1 , 2.0  ,20  ]
+lb_dhpm =[ 0.0001 , 0.00000001, 0.00 ,0 ]
+
+list_ub = [ub_dhpm, ub_piece_wise_logistic, ub_triple_exp, ub_baranyi_roberts]
+list_lb = [lb_dhpm, lb_piece_wise_logistic, lb_triple_exp, lb_baranyi_roberts]</code></pre><p>The model selection process is initiated with the <code>ODE_Model_selection</code> function. This function takes the preprocessed dataset (<code>data_OD</code> generated in the previous examples), the name and label of the well, the list of models, and their respective upper and lower bounds. Additionally, the function allows for plotting the results of the best-fit model (<code>plot_best_model=true</code>) and specifies the path to save the generated plots (<code>path_to_plot=path_to_plotting</code>). The <code>verbose=true</code> option provides detailed output during the model selection process.</p><pre><code class="language-julia hljs"># Performing model selection
+results_ms = ODE_Model_selection(
+    data_OD, &quot;test&quot;, &quot;test_model_selection&quot;,
+    list_of_models, list_lb, list_ub,
+    plot_best_model=true, path_to_plot=path_to_plotting, verbose=true
+)</code></pre><p>The results of the model selection process are stored in the <code>results_ms</code> variable.</p><h2 id="Fitting-one-file-(a-plate)"><a class="docs-heading-anchor" href="#Fitting-one-file-(a-plate)">Fitting one file (a plate)</a><a id="Fitting-one-file-(a-plate)-1"></a><a class="docs-heading-anchor-permalink" href="#Fitting-one-file-(a-plate)" title="Permalink"></a></h2><p>The next three functions work directly on a file. So in this case are mandatory the .csv of data and annotation (see  <a href="#data">Data and annotation formatting</a> ). Aslo in XXXXX the user can download an examples of data and annotation.</p><h3 id="Plot-one-file"><a class="docs-heading-anchor" href="#Plot-one-file">Plot one file</a><a id="Plot-one-file-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-one-file" title="Permalink"></a></h3><p>The provided code  is an example of plotting experimental data in a .csv file:</p><pre><code class="language-julia hljs">
+# Paths to data, annotation, results, and plots
+path_to_data = &quot;/example/data_channel_1.csv&quot;
+path_to_annotation = &quot;/example/annotation_channel_1_media_M9 + 0.2% Glucose.csv&quot;
+path_to_plot = &quot;/example/plots/&quot;
+
+plot_data(   &quot;example&quot;, #label of the experiment
+    path_to_data, # path to the folder to analyze
+    path_to_annotation;# path to the annotation of the wells
+    path_to_plot=path_to_plot, # path where to save Plots
+    display_plots=true ,# display plots in julia or not
+    save_plot=true, # save the plot or not
+    overlay_plots=true, # true a single plot for all dataset false one plot per well
+    blank_subtraction=&quot;avg_blank&quot; # string on how to use blank (NO,avg_blank,time_avg)
+)</code></pre><h3 id="Log-Lin-fitting-2"><a class="docs-heading-anchor" href="#Log-Lin-fitting-2">Log-Lin fitting</a><a class="docs-heading-anchor-permalink" href="#Log-Lin-fitting-2" title="Permalink"></a></h3><p>The provided code  is an example of Log-Lin fitting of experimental data in a .csv file:</p><pre><code class="language-julia hljs">
+# Paths to data, annotation, results, and plots
+path_to_data = &quot;/example/data_channel_1.csv&quot;
+path_to_annotation = &quot;/example/annotation_channel_1_media_M9 + 0.2% Glucose.csv&quot;
+path_to_results = &quot;/example/results/&quot;
+path_to_plot = &quot;/example/plots/&quot;
+
+res = fit_one_file_Log_Lin(
+    &quot;log_lin_WT_CHL_dose_reponse&quot;, #label of the experiment
+    path_to_data, # path to the folder to analyze
+    path_to_annotation;
+  path_to_results = path_to_results,  # path where to save results
+    path_to_plot = path_to_plot,        # path where to save plots
+    do_plot = true,          # do and visualize the plots of data
+    write_res = true,        # write results
+    )</code></pre><h3 id="Fitting-ODE-Models-2"><a class="docs-heading-anchor" href="#Fitting-ODE-Models-2">Fitting ODE Models</a><a class="docs-heading-anchor-permalink" href="#Fitting-ODE-Models-2" title="Permalink"></a></h3><p>The provided code  is an example of fitting a differential equation model to experimental data in a .csv file:</p><pre><code class="language-julia hljs"># Define upper and lower bounds for the parameters of the ODE model
+ub_dhpm = [0.1, 0.1, 2.0, 5.0]
+lb_dhpm = [0.001, 0.00001, 0.01, 0.5]
+
+# Paths to data, annotation, results, and plots
+path_to_data = &quot;/example/data_channel_1.csv&quot;
+path_to_annotation = &quot;/example/annotation_channel_1_media_M9 + 0.2% Glucose.csv&quot;
+path_to_results = &quot;/example/results/&quot;
+path_to_plot = &quot;/example/plots/&quot;
+
+# Fit the ODE model to the experimental data
+res = fit_file_ODE(
+    &quot;WT_CHL_dose_reponse&quot;,  # label of the experiment
+    path_to_data,            # path to the data
+    path_to_annotation,      # path to the annotation of the wells
+    &quot;dHPM&quot;,                   # string of the used model
+    lb_dhpm,                  # array of the lower bound of the parameters
+    ub_dhpm;                 # array of the upper bound of the parameters
+    path_to_results = path_to_results,  # path where to save results
+    path_to_plot = path_to_plot,        # path where to save plots
+    do_plot = true,          # do and visualize the plots of data
+    write_res = true,        # write results
+    pt_avg = 2,              # number of points to do smoothing average
+    PopulationSize = 500,    # population size for optimization
+    maxiters = 500000,       # maximum number of iterations
+    abstol = 0.00000000001   # absolute tolerance for optimization
+)</code></pre><p>This example is fitting an ODE model (specifically the &quot;dHPM&quot; model) to experimental data provided in CSV files.</p><h2 id="ODE-segmentation-with-fixed-number-of-change-points"><a class="docs-heading-anchor" href="#ODE-segmentation-with-fixed-number-of-change-points">ODE segmentation with fixed number of change points</a><a id="ODE-segmentation-with-fixed-number-of-change-points-1"></a><a class="docs-heading-anchor-permalink" href="#ODE-segmentation-with-fixed-number-of-change-points" title="Permalink"></a></h2><p>In this example, we demonstrate the process of fitting a dataset with a sequence of ODEs using a segmentation approach. The dataset is generated with three segments, each modeled by a different ODE. Then we fit it with the &#39;selection<em>ODE</em>fixed<em>change</em>points&#39; function</p><pre><code class="language-julia hljs"># First segment ODE
+model = &quot;exponential&quot;
+n_start = [0.1]
+tstart = 0.0
+tmax = 10.0
+delta_t = 2.0
+param_of_ode = [0.00]
+sim_1 = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
+sol_1 = reduce(vcat, sim_1)
+
+# Second segment ODE
+model = &quot;logistic&quot;
+n_start = [sol_1[end]]
+tstart = 10.0
+tmax = 80.0
+delta_t = 2.0
+param_of_ode = [0.2, 0.4]
+sim_2 = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
+sol_2 = reduce(vcat, sim_2)
+
+# Third segment ODE
+model = &quot;logistic&quot;
+n_start = [sol_2[end]]
+tstart = 80.0
+tmax = 200.0
+delta_t = 2.0
+param_of_ode = [0.1, 0.8]
+sim_3 = ODE_sim(model, n_start, tstart, tmax, delta_t, integrator, param_of_ode)
+sol_3 = reduce(vcat, sim_3)
+
+# Concatenating simulations
+times_sim = vcat(sim_1.t, sim_2.t)
+times_sim = vcat(times_sim, sim_3.t)
+sol_sim = vcat(sol_1, sol_2)
+sol_sim = vcat(sol_sim, sol_3)
+
+# Plotting the generated dataset
+Plots.scatter(sol_sim, xlabel=&quot;Time&quot;, ylabel=&quot;Arb. Units&quot;, label=[&quot;Data &quot; nothing], color=:blue, size=(300, 300))
+
+# Computing and visualizing the first derivative
+data_OD = Matrix(transpose(hcat(times_sim, sol_sim)))
+deriv = specific_gr_evaluation(data_OD, 0)
+Plots.scatter(deriv, xlabel=&quot;Time&quot;, ylabel=&quot;Arb. Units&quot;, label=[&quot;Data &quot; nothing], color=:blue, size=(300, 300))
+
+# Adding uniform noise to the dataset
+noise_uniform = rand(Uniform(-0.01, 0.01), length(sol_sim))
+data_OD = Matrix(transpose(hcat(times_sim, sol_sim)))
+data_OD[2, :] = data_OD[2, :] .+ noise_uniform
+
+# Plotting the noisy dataset
+Plots.scatter(data_OD[1, :], data_OD[2, :], xlabel=&quot;Time&quot;, ylabel=&quot;Arb. Units&quot;, label=[&quot;Data &quot; nothing], color=:blue, markersize=2, size=(300, 300))
+
+# Initializing all the models for selection
+ub_exp = [0.1]
+lb_exp = [-0.01]
+ub_logistic = [0.9, 5.0]
+lb_logistic = [0.0001, 0.001]
+ub_hpm = [0.1, 20.0, 50.001]
+lb_hpm = [0.0001, 0.000001, 0.001]
+ub_hpm_exp = [0.1, 20.0]
+lb_hpm_exp = [0.0001, 0.0000001]
+
+list_of_models = [&quot;exponential&quot;, &quot;HPM&quot;, &quot;HPM_exp&quot;, &quot;logistic&quot;]
+list_ub_param = [ub_exp, ub_hpm, ub_hpm_exp, ub_logistic]
+list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
+
+# Fitting with a fixed number of change points
+test_fixed_cdp = selection_ODE_fixed_change_points(
+    data_OD, &quot;test&quot;, &quot;test&quot;, list_of_models, list_lb_param, list_ub_param, 2;
+    do_plot=true, path_to_plot=path_to_plotting, pt_smooth_derivative=0
+)</code></pre><p>results are stored in test<em>fixed</em>cdp.</p><h2 id="ODE-segmentation"><a class="docs-heading-anchor" href="#ODE-segmentation">ODE segmentation</a><a id="ODE-segmentation-1"></a><a class="docs-heading-anchor-permalink" href="#ODE-segmentation" title="Permalink"></a></h2><p>Using the same code as the previous example to generate the data the  fit  is performed with </p><pre><code class="language-julia hljs"># Fitting with direct search on the number of change points
+ test_cdp = ODE_selection_NMAX_change_points(data_OD,
+    &quot;test&quot;,
+    &quot;test&quot;,
+    list_lb_param,
+    list_ub_param,
+    list_of_models,
+   3;
+    do_plot=true,
+ path_to_plot=path_to_plotting,
+ pt_smooth_derivative=0)</code></pre><p>results are stored in test_cdp.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../04_math/">« The mathematical models</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.4.1 on <span class="colophon-date" title="Monday 6 May 2024 00:24">Monday 6 May 2024</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
