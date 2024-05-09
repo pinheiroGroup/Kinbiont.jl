@@ -3,7 +3,6 @@
 """
 fitting single data functions log-lin
 """
-
 function fitting_one_well_Log_Lin(
     data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
@@ -223,13 +222,40 @@ function fitting_one_well_Log_Lin(
 end
 
 
+"""
+    fitting_onde_well_ODE_contrained()
 
+  Fitting one well data with ODE constrained
 
+  # Arguments
+  - `data::Matrix{Float63}`:  dataset first row times second row OD
+  - `name_well::String`:  name of the well
+  - `label_exp::String`: label of the experiment
+  - `model::String`: ode model to use
+  - `lb_param::Vector{Float64}`:  lower bound param
+  - `ub_param::Vector{Float64}`:  upper bound param
+  - `param=lb_param .+ (ub_param .- lb_param) ./ 2`: initial guess param
+  - `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`:  selection of optimization method
+  - `integrator=Tsit5()`:  selection of sciml integrator
+  - `display_plots=true`:  display plots in julia or not
+  - `save_plot=false`: save plots to files
+  - `path_to_plot="NA"`:  where to save plots
+  - `pt_avg=1`: number of the point to generate intial condition
+  - `pt_smooth_derivative=7`
+  - `smoothing=false`: the smoothing is done or not?
+  - `type_of_smoothing="rolling_avg"`: type of smoothing
+  - `type_of_loss="RE"`: type of used loss
+  - `blank_array=zeros(100)`: data of all blanks
+  - `multiple_scattering_correction=false`: if true uses the given calibration curve to fix the data
+  - `method_multiple_scattering_correction="interpolation"`
+  - `calibration_OD_curve="NA"`:  the path to calibration curve to fix the data
+  - `PopulationSize=300`
+  - `maxiters=2000000`
+  - `abstol=0.00001`
+  - `thr_lowess=0.05`
+ 
 
-
-
-
-
+"""
 function fitting_one_well_ODE_constrained(
     data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
@@ -845,7 +871,6 @@ end
 """
 ODE segementation fitting
 """
-
 function selection_ODE_fixed_change_points(
     data_testing::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
