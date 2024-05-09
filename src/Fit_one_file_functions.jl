@@ -306,18 +306,14 @@ function fit_one_file_Log_Lin(
 
         results_Log_Lin = hcat(results_Log_Lin, temp_results_1)
 
+    end
 
+    if write_res == true
 
-
-        if write_res == true
-
-            CSV.write(
-                string(path_to_results, label_exp, "_results.csv"),
-                Tables.table(Matrix(results_Log_Lin)),
-            )
-
-
-        end
+        CSV.write(
+            string(path_to_results, label_exp, "_results.csv"),
+            Tables.table(Matrix(results_Log_Lin)),
+        )
 
     end
 
