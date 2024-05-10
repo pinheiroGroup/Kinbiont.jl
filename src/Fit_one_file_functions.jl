@@ -1,6 +1,23 @@
 #######################################################################
 
 """
+
+`
+plot_data(
+    label_exp::String, 
+    path_to_data::String; 
+    path_to_annotation::Any = missing,
+    path_to_plot="NA",
+    display_plots=true,
+    save_plots=false,
+    overlay_plots=true, 
+    do_blank_subtraction="NO", vg)
+    avg_replicate=false, 
+    correct_negative="thr_correction", 
+    thr_negative=0.01 ,
+    blank_value = 0.0,
+    blank_array = [0.0],)
+`
 This function plot all the data from .csv file, note that assume that the first colums is the time
     Arguments:
     - `label_exp::String`: The label of the experiment.  
@@ -163,6 +180,36 @@ function plot_data(
 end
 
 """
+`
+fit_one_file_Log_Lin(
+    label_exp::String, 
+    path_to_data::String; 
+    path_to_annotation::Any = missing,
+    path_to_results="NA",
+    path_to_plot="NA",
+    display_plots=true,
+    save_plots=false, 
+    write_res=false,
+    type_of_smoothing="rolling_avg",
+    pt_avg=7,
+    pt_smoothing_derivative=7, 
+    pt_min_size_of_win=7, 
+    type_of_win="maximum", 
+    threshold_of_exp=0.9,
+    do_blank_subtraction="avg_blank",
+    avg_replicate=false, 
+    correct_negative="thr_correction", 
+    thr_negative=0.01, 
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",
+    thr_lowess=0.05, 
+    verbose=false,
+    blank_value = 0.0,
+    blank_array = [0.0],)
+`
+
+
 This function fits a logarithmic-linear model to a csv file. The function assumes that the first column is the time, see the documentation for example of the data format. It evaluate the specific growht rate, the with a statistical threshold it individuates a exponetial window and perform a-log lin fitting
     Arguments:
     
@@ -388,6 +435,43 @@ end
 
 
 """
+`
+fit_file_ODE(
+    label_exp::String, 
+    path_to_data::String, 
+    model::String,
+    lb_param::Vector{Float64},
+    ub_param::Vector{Float64};
+    path_to_annotation::Any = missing,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator=Tsit5(),
+    path_to_results="NA",
+    path_to_plot="NA",
+    loss_type="RE", 
+    smoothing=false,
+    type_of_smoothing="lowess",
+    display_plots=true,
+    save_plots=false,
+    verbose=false, 
+    write_res=false, 
+    pt_avg=1, 
+    pt_smooth_derivative=7, 
+    do_blank_subtraction="avg_blank", 
+    avg_replicate=false,
+    correct_negative="thr_correction",
+    thr_negative=0.01,  
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", 
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
+`
+
 This function fits a ODE model to a csv file. The function assumes that the first column is the time, see the documentation for example of the data format. It evaluate the specific growht rate, the with a statistical threshold it individuates a exponetial window and perform a-log lin fitting
     Arguments:
     
@@ -629,6 +713,44 @@ function fit_file_ODE(
 end
 
 """
+
+`
+fit_file_custom_ODE(
+    label_exp::String, 
+    path_to_data::String,
+    model::Any, 
+    lb_param::Vector{Float64},
+    ub_param::Vector{Float64},
+    n_equation::Int;
+    path_to_annotation::Any = missing,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator=Tsit5(),
+    path_to_results="NA",
+    path_to_plot="NA", 
+    loss_type="RE",
+    smoothing=false,
+    type_of_smoothing="lowess",
+    display_plots=true,
+    save_plots=false,
+    verbose=false, 
+    write_res=false,
+    pt_avg=1,
+    pt_smooth_derivative=7,
+    do_blank_subtraction="avg_blank",
+    avg_replicate=false,
+    correct_negative="thr_correction", 
+    thr_negative=0.01,  
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", 
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
+`
 This function is designed for fitting an ordinary differential equation (ODE) model to a dataset in a csv file. . It utilizes a customizable ODE model, see documentation on how declare the model
 
     Arguments:
@@ -869,6 +991,45 @@ end
 
 
 """
+`
+ODE_model_selection_file(
+    label_exp::String, 
+    path_to_data::String, 
+    models_list::Vector{String}, 
+    lb_param_array::Any, 
+    ub_param_array::Any; 
+    path_to_annotation::Any = missing,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator=Tsit5(), 
+    path_to_results="NA",
+    path_to_plot="NA", 
+    loss_type="L2", 
+    smoothing=false,
+    type_of_smoothing="lowess",
+    display_plot_best_model=false, 
+    save_plot_best_model=false,
+    beta_penality=2.0, 
+    verbose=false,
+    write_res=false,
+    pt_avg=1,
+    pt_smooth_derivative=7, 
+    do_blank_subtraction="avg_blank", 
+    avg_replicate=false,
+    correct_negative="thr_correction", 
+    thr_negative=0.01,  
+    multiple_scattering_correction=false,
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
+)
+`
+
 This function performs model selection  of ODE for a full csv file.
 
     Arguments:
@@ -1125,6 +1286,51 @@ end
 
 
 """
+` segmentation_ODE_file(
+    label_exp::String, 
+    path_to_data::String, 
+    list_of_models::Vector{String},  
+    lb_param_array::Any, 
+    ub_param_array::Any,
+    n_max_change_points::Int;
+    path_to_annotation::Any = missing,
+    detect_number_cpd=true,
+    fixed_cpd=false,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator=Tsit5(), 
+    type_of_loss="L2", 
+    type_of_detection="sliding_win",
+    type_of_curve="original",
+    do_blank_subtraction="avg_blank",
+    correct_negative="thr_correction",
+    thr_negative=0.01,
+    pt_avg=1,
+    smoothing=true, 
+    save_plots=false, 
+    display_plots=false, 
+    path_to_plot="NA",
+    path_to_results="NA",
+    win_size=7,
+    pt_smooth_derivative=0,
+    penality_parameter=2.0,
+    avg_replicate=false,
+    multiple_scattering_correction="false",
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  
+    write_res=false,
+    save_all_model=false,
+    method_peaks_detection="peaks_prominence",
+    n_bins=40,
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    verbose=false,
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],) `
+
 This function performs model selection for ordinary differential equation (ODE) models while segmenting the time series in various part using change points detection algorithm.
     for a full csv file.
 
