@@ -1,6 +1,26 @@
 
 #######################################################################
 """
+
+`fitting_one_well_Log_Lin(
+    data::Matrix{Float64},
+    name_well::String,
+    label_exp::String; 
+    display_plots=false,
+    save_plot=false,
+    path_to_plot="NA", 
+    type_of_smoothing="rolling_avg"
+    pt_avg=7, 
+    pt_smoothing_derivative=7, 
+    pt_min_size_of_win=7, 
+    type_of_win="maximum",
+    threshold_of_exp=0.9, 
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", 
+    thr_lowess=0.05, 
+) `
+
 This function fits a logarithmic-linear model to a single well's data. It evaluate the specific growht rate, the with a statistical threshold it individuates a exponetial window and perform a-log lin fitting
     Arguments:
     
@@ -251,6 +271,36 @@ end
 
 
 """
+`
+fitting_one_well_ODE_constrained(
+    data::Matrix{Float64},
+    name_well::String, 
+    label_exp::String, 
+    model::String, 
+    lb_param::Vector{Float64},
+    ub_param::Vector{Float64};
+    param=lb_param .+ (ub_param .- lb_param) ./ 2,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator=Tsit5(), 
+    display_plots=true, 
+    save_plot=false,
+    path_to_plot="NA", 
+    pt_avg=1, 
+    pt_smooth_derivative=7,
+    smoothing=false,
+    type_of_smoothing="rolling_avg",
+    type_of_loss="RE",
+    blank_array=zeros(100), 
+    multiple_scattering_correction=false,
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+)
+`
+
 This function performs fitting on a single well's data using an ordinary differential equation (ODE) model. It estimates the model parameters within specified lower and upper bounds.
 
     Arguments:
@@ -430,6 +480,37 @@ end
 #######################################################################
 #######################################################################
 """
+`
+fitting_one_well_custom_ODE(
+    data::Matrix{Float64}
+    name_well::String, 
+    label_exp::String, 
+    model::Any, 
+    lb_param::Vector{Float64},
+    ub_param::Vector{Float64},
+    n_equation::Int;
+    param=lb_param .+ (ub_param .- lb_param) ./ 2,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator=Tsit5(), 
+    display_plots=false, 
+    save_plot=false,
+    path_to_plot="NA", 
+    pt_avg=1, 
+    pt_smooth_derivative=0,
+    smoothing=false, 
+    type_of_loss="RE",
+    blank_array=zeros(100), 
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    type_of_smoothing="lowess",
+)
+`
+
 This function is designed for fitting an ordinary differential equation (ODE) model to a dataset representing the growth curve of a microorganism in a well.
         Arguments:
 
@@ -601,10 +682,41 @@ end
 #######################################################################
 
 """
+
+`
+ODE_Model_selection(
+    data::Matrix{Float64},
+    name_well::String,
+    label_exp::String, 
+    models_list::Vector{String}, 
+    lb_param_array::Any, 
+    ub_param_array::Any; 
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator=Tsit5(), 
+    pt_avg=1,
+    beta_penality=2.0,
+    smoothing=false,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    type_of_loss="L2",
+    blank_array=zeros(100),
+    display_plot_best_model=false, 
+    save_plot_best_model=false,
+    path_to_plot="NA",
+    pt_smooth_derivative=7,
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", 
+    verbose=false,
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    correction_AIC=true,)
+`
 This function performs model selection based on a dataset representing the growth curve of a microorganism in a well. It evaluates multiple ODE models and selects the best-fitting model using the Akaike Information Criterion (AIC) or corrected AIC (AICc).
 
     - `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see documentation.
-    -  `model::Sting`: ODE model to use
+    -  `models_list::Vector{String}`: list of ODE model used
     - `name_well::String`: Name of the well.
     - `label_exp::String`: Label of the experiment.
     - `models_list::Vector{String}`: A vector of ODE models to evaluate.
@@ -870,6 +982,33 @@ end
 #######################################################################
 
 """
+`
+one_well_morris_sensitivity(
+    data::Matrix{Float64},
+    name_well::String, 
+    label_exp::String, 
+    model::String,
+    lb_param::Vector{Float64}, 
+    ub_param::Vector{Float64};
+    N_step_morris=7,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator=Tsit5(),
+    pt_avg=1, 
+    pt_smooth_derivative=7,
+    write_res=false,
+    smoothing=false, 
+    type_of_smoothing="lowess",
+    type_of_loss="RE", 
+    blank_array=zeros(100), 
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", 
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+)
+`
+
 This function is designed to perform Morris sensitivity analysis on a dataset representing the growth curve of a microorganism in a well. It assesses the sensitivity of the model to variations in input parameters of the optimization.
     Arguments:
     
@@ -1031,6 +1170,36 @@ end
 
 
 """
+`
+selection_ODE_fixed_intervals(
+    data_testing::Matrix{Float64}, 
+    name_well::String, 
+    label_exp::String, 
+    list_of_models::Vector{String}, 
+    list_lb_param::Any, 
+    list_ub_param::Any, 
+    intervals_changepoints::Any;
+    type_of_loss="L2", 
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    integrator=Tsit5(), 
+    smoothing=false,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    pt_avg=1,
+    save_plot=false, 
+    display_plots=false,
+    path_to_plot="NA", 
+    pt_smooth_derivative=7,
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", 
+    beta_smoothing_ms=2.0, 
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.0000000001,
+    correction_AIC=true)
+    `
+
 This function performs a fitting of a segmented ODE on one curve. For this function the user must supply the change points 
 
     - `data_testing::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
@@ -1313,6 +1482,45 @@ end
 
 
 """
+`
+segmentation_ODE(
+    data_testing::Matrix{Float64}, 
+    name_well::String, 
+    label_exp::String, 
+    list_of_models::Vector{String}, 
+    list_lb_param::Any,
+    list_ub_param::Any,
+    n_max_change_points::Int;
+    detect_number_cpd=true,
+    fixed_cpd=false,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    integrator=Tsit5(),
+    type_of_loss="L2",
+    type_of_detection="slinding_win",
+    type_of_curve="original",
+    pt_avg=1, 
+    smoothing=true, 
+    save_plot=false, 
+    display_plot=false,
+    path_to_plot="NA", 
+    path_to_results="NA",
+    win_size=14, 
+    pt_smooth_derivative=7,
+    penality_parameter=2.0,
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  
+    save_all_model=false,
+    method_peaks_detection="peaks_prominence",
+    n_bins=40,
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    type_of_smoothing="lowess",
+    thr_lowess=0.05,
+    correction_AIC=true)
+`
+
 This function performs model selection for ordinary differential equation (ODE) models while segmenting the time series in various part using change points detection algorithm.
 
     - `data_testing::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
