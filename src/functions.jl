@@ -269,17 +269,17 @@ end
 
 """
     stochastic_sim(
-    model::String, #string of the model
-    n_start::Int, # number of starting cells
-    n_mol_start::Float64, # starting concentration of the limiting nutrients
-    tstart::Float64, # start time of the sim
-    tmax::Float64, # final time of the sim
-    delta_t::Float64, # delta t for poisson approx
+    model::String,
+    n_start::Int, 
+    n_mol_start::Float64, 
+    tstart::Float64, 
+    tmax::Float64, 
+    delta_t::Float64, 
     k_1_val::Float64,
-    k_2_val::Float64, # monod constant
-    alpha_val::Float64, # massimum possible growth rate
-    lambda::Float64, # lag time
-    n_mol_per_birth::Float64,# nutrient consumed per division (conc)
+    k_2_val::Float64, 
+    alpha_val::Float64, 
+    lambda::Float64, 
+    n_mol_per_birth::Float64,
     volume::Float64,
     )
 
@@ -636,3 +636,7 @@ function reading_annotation(path_to_annotation::Any)
 
     return names_of_annotated_df, properties_of_annotation,list_of_blank, list_of_discarded
 end
+
+export specific_gr_evaluation
+export stochastic_sim
+export ODE_sim

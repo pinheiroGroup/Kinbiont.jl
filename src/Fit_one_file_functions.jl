@@ -1585,7 +1585,8 @@ function segmentation_ODE_file(
 
 
 end
-
+export plot_data
+export fit_one_file_Log_Lin
 export fit_file_ODE
 export fit_file_custom_ODE
 export ODE_model_selection_file

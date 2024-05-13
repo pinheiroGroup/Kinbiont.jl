@@ -1,10 +1,6 @@
 using Peaks
 
-"""
-getpoints_mod(profile; number_of_bin=100)
 
-Function from changepoints detections.jl with modification of its usage
-"""
 function getpoints_mod(profile; number_of_bin=100)
     points_list = ()
     # list of points
@@ -37,12 +33,27 @@ function getpoints_mod(profile; number_of_bin=100)
 end
 
 """
+    cpd_local_detection(
+    data::Matrix{Float64},
+    n_max_cp::Int;
+    type_of_detection="lsdd",
+    type_of_curve="original",
+    pt_derivative=0,
+    size_win=2,
+    method="peaks_prominence",
+    number_of_bin=40,
+    )
+
 Perform the analyses with the required change point detection algorithm
 
-# Arguments
+# Arguments:
 - `type_of_detection="lsdd"`: or piecewise linear fitting on the specific growth rate
 - `pt_derivative`: number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
 - `size_win::Int`: size of the used window in all of the methods
+
+# Output:
+
+- Array with the list of change points
 """
 function cpd_local_detection(
     data::Matrix{Float64},
@@ -95,12 +106,6 @@ function cpd_local_detection(
     return list_of_cpds
 end
 
-"""
-evaluate change points using peak detection on a lsdd profile
-type_of_detection="lsdd" or piecewise linear fitting on the specific growth rate
-pt_derivative number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
-size_win Int size of the used window in all of the methods
-"""
 function cpd_lsdd_profile(
     data::Matrix{Float64},
     n_max::Int;
@@ -139,11 +144,7 @@ function detect_list_change_points(
     type_of_curve="original",
     pt_deriv=7,
 )
-    """
-     evaluate change points using piecewise linear fitting
-     n_max
-     size_win Int size of the used window in all of the methods
-    """
+
     if type_of_curve == "deriv"
         data_gr = specific_gr_evaluation(data, pt_deriv)
         specific_gr_times = [
@@ -172,13 +173,7 @@ function detect_list_change_points(
     return selected_change_point_index
 end
 
-"""
-     peaks_detection
 
-# Arguments
-- `n_max`: maximum number of peaks
-- `size_win::Int`: size of the used window in all of the methods
-"""
 function peaks_detection(
     data::Matrix{Float64},
     n_max::Int;
