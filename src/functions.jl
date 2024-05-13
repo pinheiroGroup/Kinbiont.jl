@@ -14,14 +14,9 @@ include("NL_loss_list.jl");
 include("cpd_functions.jl");
 include("ML_downstream.jl");
 
-"""
-Internal functions
-"""
 
 function model_selector(model::String, u0, tspan, param=nothing)
-    """
-      generate sciML ODE problem
-    """
+
 
     ODE_prob = ODEProblem(models[model].func, u0, tspan, param)
 
@@ -29,14 +24,18 @@ function model_selector(model::String, u0, tspan, param=nothing)
 end
 
 """
-specific gr evaluation with slinding window log-lin fitting
+    specific_gr_evaluation(data_smooted::Any, 
+    pt_smoothing_derivative::Int)
 
-Arguments:
+
+Function that evalauates specific gr evaluation with slinding window log-lin fitting
+
+# Arguments:
 
 - 'data_smooted':  matrix of data 2xn_time points, it is a single curve.
 - 'pt_smoothing_derivative': Int size of the win, if <2 the the numerical derivative of (log) data is evaluate with interpolation algorithm
 
-Output:
+# Output:
 
 - 'specific_gr' an array with the specific growth rate 
 """
@@ -72,9 +71,7 @@ function specific_gr_interpol_evaluation(data_testing)
     return specific_gr_interpol
 end
 
-"""
-internal function to reder as vector the results of the hardcoded ODE
-"""
+
 function vectorize_df_results(
     well_name::String,
     model::String,
@@ -92,9 +89,7 @@ function vectorize_df_results(
     return res_param
 end
 
-"""
-internal function to name the vectors the results of the hardcoded ODE
-"""
+
 function initialize_df_results(model::String)
 
 
@@ -103,9 +98,7 @@ function initialize_df_results(model::String)
     return param_names
 end
 
-"""
-internal function to set the start of the optimization problem in the middle of the  box constrains
-"""
+
 function guess_param(lb_param::Vector{Float64}, ub_param::Vector{Float64})
    
     param = lb_param .+ (ub_param - lb_param) ./ 2
@@ -204,23 +197,34 @@ end
 
 
 """
+
+    ODE_sim(
+    model::String, 
+    n_start::Vector{Float64}, 
+    tstart::Float64, 
+    tmax::Float64,
+    delta_t::Float64, 
+    param_of_ode::Vector{Float64};
+    integrator=KenCarp4(),
+    )
+
+
 This function performs an ODE simulation of a model
 
-    Arguments:
-    - `model::String`: The model to simulate. For the possible options please check the documentation.
-    - `n_start::Vector{Float64}`: The starting conditions.
-    - `tstart::Float64`: The start time of the simulation.
-    - `tmax::Float64`: The final time of the simulation.
-    - `delta_t::Float64`: The time step of the output.
-    - `param_of_ode::Vector{Float64}`: The parameters of the ODE model.
+# Arguments:
+- `model::String`: The model to simulate. For the possible options please check the documentation.
+- `n_start::Vector{Float64}`: The starting conditions.
+- `tstart::Float64`: The start time of the simulation.
+- `tmax::Float64`: The final time of the simulation.
+- `delta_t::Float64`: The time step of the output.
+- `param_of_ode::Vector{Float64}`: The parameters of the ODE model.
+     
+# Key argument:
+- `integrator=KenCarp4() `: The chosen solver from the SciML ecosystem for ODE integration, default KenCarp4 algorithm. 
+
+# Output:
     
-      
-    Key argument:
-    - `integrator=KenCarp4() `: The chosen solver from the SciML ecosystem for ODE integration, default KenCarp4 algorithm.
-    
-    Output:
-    
-    - it returns a standard SciML output (i.e., if `sim =ODE_sim(...)`, then `sim.t` is the array of times and `sim.u` is the array of the simulation)
+- it returns a standard SciML output (i.e., if `sim =ODE_sim(...)`, then `sim.t` is the array of times and `sim.u` is the array of the simulation)
 """
 function ODE_sim(
     model::String, #string of the model
@@ -264,29 +268,45 @@ end
 
 
 """
+    stochastic_sim(
+    model::String, #string of the model
+    n_start::Int, # number of starting cells
+    n_mol_start::Float64, # starting concentration of the limiting nutrients
+    tstart::Float64, # start time of the sim
+    tmax::Float64, # final time of the sim
+    delta_t::Float64, # delta t for poisson approx
+    k_1_val::Float64,
+    k_2_val::Float64, # monod constant
+    alpha_val::Float64, # massimum possible growth rate
+    lambda::Float64, # lag time
+    n_mol_per_birth::Float64,# nutrient consumed per division (conc)
+    volume::Float64,
+    )
+
+
 This function performs a stochastic simulation of a model, considering cell growth and nutrient consumption over time.
 
-    Arguments:
-    
-    - `model::String`: The model to simulate. Possible options "Monod","Haldane","Blackman","Tessier","Moser","Aiba-Edwards", and "Verhulst"
-    - `n_start::Int`: The number of starting cells.
-    - `n_mol_start::Float64`: The starting concentration of the limiting nutrient.
-    - `tstart::Float64`: The start time of the simulation.
-    - `tmax::Float64`: The final time of the simulation.
-    - `delta_t::Float64`: The time step for the Poisson approximation.
-    - `k_1_val::Float64`: The value of parameter k1.
-    - `k_2_val::Float64`: The value of the Monod constant.
-    - `alpha_val::Float64`: The maximum possible growth rate.
-    - `lambda::Float64`: The lag time, simulated as a zero growht time span at the start
-    - `n_mol_per_birth::Float64`: The nutrient consumed per division (mass).
-    - `volume::Float64`: The volume.
-    
-    
-    Output (if `sim =stochastic_sim(...)`):
-    
-    - `sim[1]`: array of the number of individuals in the population.
-    - `sim[2]`: array of the number of biomass equivalent mass of the limiting nutrient concentration.
-    - `sim[3]`: array of the times of the simulation. 
+# Arguments:
+
+- `model::String`: The model to simulate. Possible options "Monod","Haldane","Blackman","Tessier","Moser","Aiba-Edwards", and "Verhulst"
+- `n_start::Int`: The number of starting cells.
+- `n_mol_start::Float64`: The starting concentration of the limiting nutrient.
+- `tstart::Float64`: The start time of the simulation.
+- `tmax::Float64`: The final time of the simulation.
+- `delta_t::Float64`: The time step for the Poisson approximation.
+- `k_1_val::Float64`: The value of parameter k1.
+- `k_2_val::Float64`: The value of the Monod constant.
+- `alpha_val::Float64`: The maximum possible growth rate.
+- `lambda::Float64`: The lag time, simulated as a zero growht time span at the start
+- `n_mol_per_birth::Float64`: The nutrient consumed per division (mass).
+- `volume::Float64`: The volume.
+
+
+# Output (if `sim =stochastic_sim(...)`):
+
+- `sim[1]`: array of the number of individuals in the population.
+- `sim[2]`: array of the number of biomass equivalent mass of the limiting nutrient concentration.
+- `sim[3]`: array of the times of the simulation. 
 """
 function stochastic_sim(
     model::String, #string of the model

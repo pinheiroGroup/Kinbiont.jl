@@ -1,9 +1,9 @@
 using Peaks
 
 """
-   getpoints_mod(profile; number_of_bin=100)
+getpoints_mod(profile; number_of_bin=100)
 
-  Function from changepoints detections.jl with modification of its usage
+Function from changepoints detections.jl with modification of its usage
 """
 function getpoints_mod(profile; number_of_bin=100)
     points_list = ()

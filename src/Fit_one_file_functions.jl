@@ -2,8 +2,7 @@
 
 """
 
-`
-plot_data(
+    plot_data(
     label_exp::String, 
     path_to_data::String; 
     path_to_annotation::Any = missing,
@@ -17,29 +16,29 @@ plot_data(
     thr_negative=0.01 ,
     blank_value = 0.0,
     blank_array = [0.0],)
-`
-This function plot all the data from .csv file, note that assume that the first colums is the time
-    Arguments:
-    - `label_exp::String`: The label of the experiment.  
-    - `path_to_data::String`: The path to the .csv of data
-    
-    Key Arguments:
-    -  `path_to_annotation::Any = missing`: The path to the .csv of annotation 
-    - `path_to_plot= "NA"`:String, path to save the plots.
-    -  `save_plot=false` :Bool, save the plot or not
-    - ` display_plots=true`:Bool,  Whether or not diplay the plot in julia
-    -   `overlay_plots =true` :Bool, if true it does one plot overlaying  all dataset curves
-    - `blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
-    - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
-    - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank
-    - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values
-    -  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted,
-        if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
 
-    
-    Output:
-    
-    - For this function the output are saved or displayed depending on the values of key arguments.
+This function plot all the data from .csv file, note that assume that the first colums is the time
+
+# Arguments:
+- `label_exp::String`: The label of the experiment.  
+- `path_to_data::String`: The path to the .csv of data
+
+# Key Arguments:
+-  `path_to_annotation::Any = missing`: The path to the .csv of annotation 
+- `path_to_plot= "NA"`:String, path to save the plots.
+-  `save_plot=false` :Bool, save the plot or not
+- ` display_plots=true`:Bool,  Whether or not diplay the plot in julia
+-   `overlay_plots =true` :Bool, if true it does one plot overlaying  all dataset curves
+- `blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+- `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
+- `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank
+- `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values
+-  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted,
+    if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
+
+
+# Output:
+- For this function the output are saved or displayed depending on the values of key arguments.
 """
 function plot_data(
     label_exp::String, #label of the experiment
@@ -180,8 +179,7 @@ function plot_data(
 end
 
 """
-`
-fit_one_file_Log_Lin(
+    fit_one_file_Log_Lin(
     label_exp::String, 
     path_to_data::String; 
     path_to_annotation::Any = missing,
@@ -207,49 +205,46 @@ fit_one_file_Log_Lin(
     verbose=false,
     blank_value = 0.0,
     blank_array = [0.0],)
-`
 
 
 This function fits a logarithmic-linear model to a csv file. The function assumes that the first column is the time, see the documentation for example of the data format. It evaluate the specific growht rate, the with a statistical threshold it individuates a exponetial window and perform a-log lin fitting
-    Arguments:
-    
-    
 
-    - `label_exp::String`: The label of the experiment.
-    -  `path_to_data::String`: Path to csv file containing the data    - `label_exp::String`: The label of the experiment.
-    
-    Key Arguments:
-    -  `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-    - `path_to_plot= "NA"`:String, path to save the plots.
-    -   `write_res=false`: Bool, write the results in path_to_results folder.
-    -  ` path_to_results= "NA"`:String, path to the folder where save the results.
-    -  `save_plot=false` :Bool, save the plot or not.
-    - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
-    - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
-    -  `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
-    - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
-    - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-    - `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
-    - `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
-    - `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
-    - `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
-    - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-    - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-    - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
-    -  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-    -   `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
-    - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as average value of the blank.
-    - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as array of the blanks values.
-    -  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted,
-        if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
-    -   `thr_negative=0.01`: FLoat: used only if `correct_negative == "thr_correction"` the data under this threshold will be changed to this value.
-    - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+# Arguments:
 
-    Output:
-    
-    - an matrix with the following contents :
-    `fit_one_file_Log_Lin = [label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
-    - The plots of the log-linear fitting and of the dynamics of specific growth rate if `save_plot=true` or `display_plots=true`
+- `label_exp::String`: The label of the experiment.
+-  `path_to_data::String`: Path to csv file containing the data    - `label_exp::String`: The label of the experiment.
+
+# Key Arguments:
+
+-  `path_to_annotation::Any = missing`: The path to the .csv of annotation .
+- `path_to_plot= "NA"`:String, path to save the plots.
+-   `write_res=false`: Bool, write the results in path_to_results folder.
+-  ` path_to_results= "NA"`:String, path to the folder where save the results.
+-  `save_plot=false` :Bool, save the plot or not.
+- `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
+- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
+-  `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
+- `pt_avg=7`:Int, The number of points to do rolling average smoothing.
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
+- `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
+- `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
+- `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+-  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
+-  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+- `blank_value = 0.0`: used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as average value of the blank.
+- `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as array of the blanks values.
+-  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
+-  `thr_negative=0.01`: FLoat: used only if `correct_negative == "thr_correction"` the data under this threshold will be changed to this value.
+- `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+
+# Output:
+
+- a matrix with the following contents in each row : `[label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
+- The plots of the log-linear fitting and of the dynamics of specific growth rate if `save_plot=true` or `display_plots=true`
 
 """
 function fit_one_file_Log_Lin(
@@ -435,8 +430,7 @@ end
 
 
 """
-`
-fit_file_ODE(
+    fit_file_ODE(
     label_exp::String, 
     path_to_data::String, 
     model::String,
@@ -468,59 +462,53 @@ fit_file_ODE(
     abstol=0.00001,
     thr_lowess=0.05,
     blank_value = 0.0,
-    blank_array = [0.0],
-)
-`
+    blank_array = [0.0],)
 
 This function fits a ODE model to a csv file. The function assumes that the first column is the time, see the documentation for example of the data format. It evaluate the specific growht rate, the with a statistical threshold it individuates a exponetial window and perform a-log lin fitting
-    Arguments:
-    
-    - `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see documentation.
-    - `label_exp::String`: The label of the experiment.
-    -  `model::String`:String of the ODE to be fitted. See the documentation for the complete list.
-    - `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
-    - `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
-    
-    Key Arguments:
-    - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-    - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-    - `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-    - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
-    - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
-    - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-    - `path_to_plot= "NA"`:String, path to save the plots.
-    - `write_res=false`: Bool, write the results in path_to_results folder.
-    - `path_to_results= "NA"`:String, path to the folder where save the results.
-    - `save_plot=false` :Bool, save the plot or not.
-    - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
-    - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
-    - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
-    - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-    - `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
-    - `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
-    - `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
-    - `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
-    - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-    - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-    - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
-    - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-    - `PopulationSize =100`: Size of the population of the optimization
-    - `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-    - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
-    -  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
-    - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as average value of the blank.
-    - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as array of the blanks values.
-    -  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted,
-        if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
-    - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+# Arguments:
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see documentation.
+- `label_exp::String`: The label of the experiment.
+-  `model::String`:String of the ODE to be fitted. See the documentation for the complete list.
+- `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
+- `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
+
+# Key Arguments:
+- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
+- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
+- `path_to_annotation::Any = missing`: The path to the .csv of annotation .
+- `path_to_plot= "NA"`:String, path to save the plots.
+- `write_res=false`: Bool, write the results in path_to_results folder.
+- `path_to_results= "NA"`:String, path to the folder where save the results.
+- `save_plot=false` :Bool, save the plot or not.
+- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
+- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
+- `pt_avg=7`:Int, The number of points to do rolling average smoothing.
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
+- `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
+- `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
+- `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+- `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
+- `PopulationSize =100`: Size of the population of the optimization
+- `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
+- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+-  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+- `blank_value = 0.0`: used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as average value of the blank.
+- `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as array of the blanks values.
+-  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+- `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 
 
-    Output:
-    
-    - an matrix with the following contents for each row :
-    `fit_ODE = "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`
-    where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation.
-    - The plots of the fit if `save_plot=true` or `display_plots=true`.
+# Output:
+
+- an matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation.
+- The plots of the fit if `save_plot=true` or `display_plots=true`.
 """
 function fit_file_ODE(
     label_exp::String, #label of the experiment
@@ -714,8 +702,7 @@ end
 
 """
 
-`
-fit_file_custom_ODE(
+    fit_file_custom_ODE(
     label_exp::String, 
     path_to_data::String,
     model::Any, 
@@ -748,62 +735,58 @@ fit_file_custom_ODE(
     abstol=0.00001,
     thr_lowess=0.05,
     blank_value = 0.0,
-    blank_array = [0.0],
-)
-`
+    blank_array = [0.0],)
+
 This function is designed for fitting an ordinary differential equation (ODE) model to a dataset in a csv file. . It utilizes a customizable ODE model, see documentation on how declare the model
 
-    Arguments:
-    
-
-    - `label_exp::String`: The label of the experiment.
-    -  `path_to_data::String`: Path to csv file containing the data
-    -  `model::Any`: Function of the ODE to be fitted. See the documentation for examples.
-    - `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
-    - `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
-   - `n_equation::Int`:  number ode in the system
-
-    Key Arguments:
-
-    - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-    - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-    - `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-    - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
-    - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
-    - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-    - `path_to_plot= "NA"`:String, path to save the plots.
-    - `write_res=false`: Bool, write the results in path_to_results folder.
-    - `path_to_results= "NA"`:String, path to the folder where save the results.
-    - `save_plot=false` :Bool, save the plot or not.
-    - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
-    - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
-    - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
-    - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-    - `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
-    - `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
-    - `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
-    - `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
-    - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-    - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-    - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
-    - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-    - `PopulationSize =100`: Size of the population of the optimization
-    - `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-    - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
-    -  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
-    - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
-    - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
-    -  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted,
-        if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
-    - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+# Arguments:
 
 
-    Output:
-    
-    - an matrix with the following contents for each row :
-    `fit_ODE = "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`
-    where ' "param_1","param_2",..,"param_n" ' .
-    - The plots of the fit if `save_plot=true` or `display_plots=true`
+- `label_exp::String`: The label of the experiment.
+-  `path_to_data::String`: Path to csv file containing the data
+-  `model::Any`: Function of the ODE to be fitted. See the documentation for examples.
+- `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
+- `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
+- `n_equation::Int`:  number ode in the system
+
+# Key Arguments:
+
+- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
+- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
+- `path_to_annotation::Any = missing`: The path to the .csv of annotation .
+- `path_to_plot= "NA"`:String, path to save the plots.
+- `write_res=false`: Bool, write the results in path_to_results folder.
+- `path_to_results= "NA"`:String, path to the folder where save the results.
+- `save_plot=false` :Bool, save the plot or not.
+- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
+- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
+- `pt_avg=7`:Int, The number of points to do rolling average smoothing.
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
+- `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
+- `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
+- `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+- `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
+- `PopulationSize =100`: Size of the population of the optimization
+- `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
+- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+-  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+- `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
+- `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
+-  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+- `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+
+
+# Output:
+
+- a matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
+- The plots of the fit if `save_plot=true` or `display_plots=true`
 
 """
 function fit_file_custom_ODE(
@@ -991,8 +974,7 @@ end
 
 
 """
-`
-ODE_model_selection_file(
+    ODE_model_selection_file(
     label_exp::String, 
     path_to_data::String, 
     models_list::Vector{String}, 
@@ -1026,64 +1008,58 @@ ODE_model_selection_file(
     thr_lowess=0.05,
     correction_AIC=true,
     blank_value = 0.0,
-    blank_array = [0.0],
-)
-`
+    blank_array = [0.0],)
 
 This function performs model selection  of ODE for a full csv file.
 
-    Arguments:
-    
+# Arguments:
 
-    - `label_exp::String`: The label of the experiment.
-    -  `path_to_data::String`: Path to csv file containing the data    
-    -  `models_list::Vector{String}`: list of ODE model used
-    - `models_list::Vector{String}`: A vector of ODE models to evaluate.
-    - `lb_param_array::Any`: Lower bounds for the parameters (compatible with the models).
-    - `ub_param_array::Any`: Upper bounds
+- `label_exp::String`: The label of the experiment.
+-  `path_to_data::String`: Path to csv file containing the data    
+-  `models_list::Vector{String}`: list of ODE model used
+- `models_list::Vector{String}`: A vector of ODE models to evaluate.
+- `lb_param_array::Any`: Lower bounds for the parameters (compatible with the models).
+- `ub_param_array::Any`: Upper bounds
 
 
-    Key Arguments:
-    - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-    - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-    - `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-    - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
-    - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
-    - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-    - `path_to_plot= "NA"`:String, path to save the plots.
-    - `write_res=false`: Bool, write the results in path_to_results folder.
-    - `path_to_results= "NA"`:String, path to the folder where save the results.
-    - `save_plot=false` :Bool, save the plot or not.
-    - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
-    - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
-    - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
-    - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-    - `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
-    - `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
-    - `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
-    - `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
-    - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-    - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-    - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
-    - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-    - `PopulationSize =100`: Size of the population of the optimization
-    - `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-    - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
-    -  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
-    - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
-    - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
-    -  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted,
-        if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
-    - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
-    -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
-    -  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+# Key Arguments:
+- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
+- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
+- `path_to_annotation::Any = missing`: The path to the .csv of annotation .
+- `path_to_plot= "NA"`:String, path to save the plots.
+- `write_res=false`: Bool, write the results in path_to_results folder.
+- `path_to_results= "NA"`:String, path to the folder where save the results.
+- `save_plot=false` :Bool, save the plot or not.
+- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
+- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
+- `pt_avg=7`:Int, The number of points to do rolling average smoothing.
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
+- `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
+- `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
+- `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+- `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
+- `PopulationSize =100`: Size of the population of the optimization
+- `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
+- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+-  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+- `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
+- `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
+-  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+- `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+-  `correction_AIC=true`: Bool, do finite samples correction of AIC.
+-  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
 
-    Output:
-    
-    - an matrix with the following contents for each row :
-    `fit_ODE = "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`
-    where ' "param_1","param_2",..,"param_n" ' .
-    - The plots of the fit if `save_plot=true` or `display_plots=true`
+# Output:
+
+- an matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
+- The plots of the fit if `save_plot=true` or `display_plots=true`
 
 """
 function ODE_model_selection_file(
@@ -1286,7 +1262,7 @@ end
 
 
 """
-` segmentation_ODE_file(
+    segmentation_ODE_file(
     label_exp::String, 
     path_to_data::String, 
     list_of_models::Vector{String},  
@@ -1329,78 +1305,73 @@ end
     verbose=false,
     correction_AIC=true,
     blank_value = 0.0,
-    blank_array = [0.0],) `
+    blank_array = [0.0],)
 
-This function performs model selection for ordinary differential equation (ODE) models while segmenting the time series in various part using change points detection algorithm.
-    for a full csv file.
+This function performs model selection for ordinary differential equation (ODE) models while segmenting the time series in various part using change points detection algorithm, for a full csv file.
 
-    Arguments:
-    
-
-    - `label_exp::String`: The label of the experiment.
-    -  `path_to_data::String`: Path to csv file containing the data
-    - `list_of_models::Vector{String}`: A vector of ODE models to evaluate.
-    - `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
-    - `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
-    -  `n_max_change_points::Int`: Number of change point used, the results will have different number of cp depending on the values of key argument 'type_of_detection' and 'fixed_cpd'
+# Arguments:
 
 
-
-    Key Arguments:
-    - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-    - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-    - `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-    - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
-    - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
-    - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-    - `path_to_plot= "NA"`:String, path to save the plots.
-    - `write_res=false`: Bool, write the results in path_to_results folder.
-    - `path_to_results= "NA"`:String, path to the folder where save the results.
-    - `save_plot=false` :Bool, save the plot or not.
-    - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
-    - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
-    - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
-    - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-    - `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
-    - `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
-    - `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
-    - `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
-    - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-    - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-    - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
-    - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-    - `PopulationSize =100`: Size of the population of the optimization
-    - `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-    - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
-    -  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
-    - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
-    - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
-    -  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted,
-        if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
-    - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
-    -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
-    -  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
-    - 'type_of_detection="slinding_win"': String, algorithm of cpd to use. Options '"slinding_win"' use a slinding window approach, '"lsdd"' uses least square density difference (LSDD) from ChangePointDetection.jl 
-    - 'type_of_curve="original"': String, on which curve is performed the change point detection algorithm. If '"original"' it use the original time series. With '"deriv"' it use the specific growth rate time series to perform the cdp.
-    - `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
-    - `n_bins=40`: Int, used if `method_peaks_detection="thr_scan"` number of bins used to generate the threshold that has n_change_points peaks
-    - 'detect_number_cpd=true': Bool, if equal to true all the possible combination of lenght 1,2,...,n_change_points are tested and the best for AICc is returned.
-    - 'fixed_cpd=false': Bool If  true it returns the fitting using top n_change_points.
-    -  'win_size=14': Int, size of the windows used by the cdo algorithms
-    -  'path_to_results="NA"':String, where to save the results.
-   -  'save_all_model=false': Bool, if true all the tested model are saved.
-   -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
-    -  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+- `label_exp::String`: The label of the experiment.
+-  `path_to_data::String`: Path to csv file containing the data
+- `list_of_models::Vector{String}`: A vector of ODE models to evaluate.
+- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
+- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
+-  `n_max_change_points::Int`: Number of change point used, the results will have different number of cp depending on the values of key argument 'type_of_detection' and 'fixed_cpd'
 
 
 
-    Output:
-    
-    - an matrix with the following contents for each row :
-    `segmentation_ODE_file = "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)" "segment number"]`
-    where ' "param_1","param_2",..,"param_n" ' .
-    - The plots of the fit if `save_plot=true` or `display_plots=true`
+# Key Arguments:
+- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
+- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
+- `path_to_annotation::Any = missing`: The path to the .csv of annotation .
+- `path_to_plot= "NA"`:String, path to save the plots.
+- `write_res=false`: Bool, write the results in path_to_results folder.
+- `path_to_results= "NA"`:String, path to the folder where save the results.
+- `save_plot=false` :Bool, save the plot or not.
+- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
+- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
+- `pt_avg=7`:Int, The number of points to do rolling average smoothing.
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
+- `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
+- `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
+- `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+- `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
+- `PopulationSize =100`: Size of the population of the optimization
+- `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
+- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+-  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+- `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
+- `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
+-  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+- `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+-  `correction_AIC=true`: Bool, do finite samples correction of AIC.
+-  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+- 'type_of_detection="slinding_win"': String, algorithm of cpd to use. Options '"slinding_win"' use a slinding window approach, '"lsdd"' uses least square density difference (LSDD) from ChangePointDetection.jl 
+- 'type_of_curve="original"': String, on which curve is performed the change point detection algorithm. If '"original"' it use the original time series. With '"deriv"' it use the specific growth rate time series to perform the cdp.
+- `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
+- `n_bins=40`: Int, used if `method_peaks_detection="thr_scan"` number of bins used to generate the threshold that has n_change_points peaks
+- 'detect_number_cpd=true': Bool, if equal to true all the possible combination of lenght 1,2,...,n_change_points are tested and the best for AICc is returned.
+- 'fixed_cpd=false': Bool If  true it returns the fitting using top n_change_points.
+-  'win_size=14': Int, size of the windows used by the cdo algorithms
+-  'path_to_results="NA"':String, where to save the results.
+-  'save_all_model=false': Bool, if true all the tested model are saved.
+-  `correction_AIC=true`: Bool, do finite samples correction of AIC.
+-  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
 
+
+
+# Output:
+
+- an matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)" "segment number"]` where ' "param_1","param_2",..,"param_n" ' .
+- The plots of the fit if `save_plot=true` or `display_plots=true`
 """
 function segmentation_ODE_file(
     label_exp::String, #label of the experiment
