@@ -173,7 +173,13 @@ function detect_list_change_points(
     return selected_change_point_index
 end
 
+"""
+     peaks_detection
 
+# Arguments
+- `n_max`: maximum number of peaks
+- `size_win::Int`: size of the used window in all of the methods
+"""
 function peaks_detection(
     data::Matrix{Float64},
     n_max::Int;

@@ -1,7 +1,72 @@
 
 
 
+"""
+    fit_NL_model(
+    data::Matrix{Float64}, 
+    name_well::String,
+    label_exp::String, 
+    model_function::Any, 
+    lb_param::Vector{Float64}, 
+    ub_param::Vector{Float64}; 
+    u0=lb_param .+ (ub_param .- lb_param) ./ 2,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    display_plots=true, 
+    save_plot=false,
+    path_to_plot="NA", 
+    pt_avg=1, 
+    pt_smooth_derivative=7,
+    smoothing=false, 
+    type_of_smoothing="rolling_avg",
+    type_of_loss="RE", 
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    penality_CI=3.0,
+    )
 
+
+This function performs fitting on a single well's data using an any NL function . 
+# Arguments:
+
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see documentation.
+- `name_well::String`: Name of the well.
+- `label_exp::String`: Label of the experiment.
+-  `model_function::String`: The model to use, here put the non linear function desired (see documentations for examples) or the string of one of the hard-coded NL models
+- `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
+- `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
+
+# Key Arguments:
+
+- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `save_plot=false` :Bool, save the plot or not.
+- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
+- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
+- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
+- `smoothing=false`: Whether to apply smoothing to the data or not.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `blank_array=zeros(100)`: Data of all blanks in single array.
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+-  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
+- ` PopulationSize =100`: Size of the population of the optimization
+- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
+- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- `penality_CI`
+
+
+# Output (if `results_NL_fit =fit_NL_model(...)`:
+
+- `results_NL_fit[1]` an array with the following contents: `["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected model as in the documentation.
+- `results_NL_fit[2]` the numerical solution of the fitted ODE
+"""
 function fit_NL_model(data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
     label_exp::String, #label of the experiment
@@ -136,7 +201,75 @@ end
 
 
 
+"""
+    fit_NL_model_with_sensitivity(
+    data::Matrix{Float64}, 
+    name_well::String,
+    label_exp::String, 
+    model_function::Any, 
+    lb_param::Vector{Float64}, 
+    ub_param::Vector{Float64};
+    nrep=100,
+    u0=lb_param .+ (ub_param .- lb_param) ./ 2,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    display_plots=true, 
+    save_plot=false,
+    path_to_plot="NA", 
+    pt_avg=1, 
+    pt_smooth_derivative=7,
+    smoothing=false, 
+    type_of_smoothing="rolling_avg",
+    type_of_loss="RE", 
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    penality_CI=3.0,
+    )
 
+
+This function performs fitting Morris sensitivity analysis on a single well's data using a NL function. 
+
+# Arguments:
+
+- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see documentation.
+- `name_well::String`: Name of the well.
+- `label_exp::String`: Label of the experiment.
+-  `model_function::String`: The model to use, here put the non linear function desired (see documentations for examples) or the string of one of the hard-coded NL models
+- `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
+- `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
+
+# Key Arguments:
+- `nrep=100`. Number of Morris steps.
+- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `save_plot=false` :Bool, save the plot or not.
+- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
+- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
+- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
+- `smoothing=false`: Whether to apply smoothing to the data or not.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `blank_array=zeros(100)`: Data of all blanks in single array.
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+-  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
+- ` PopulationSize =100`: Size of the population of the optimization
+- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
+- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- `penality_CI`
+
+# Output (if `results_NL_fit =fit_NL_model_with_sensitivity(...)`:
+
+- `results_NL_fit[1]` an array with the following contents: `["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected model as in the documentation. This for the fit with less loss.
+- `results_NL_fit[2]`: the parameter of the best fit 
+- `results_NL_fit[3]`: the results of the fit for any combination tested.
+-`results_NL_fit[4]`: the results of the fit for any combination tested.
+"""
 function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
     label_exp::String, #label of the experiment
