@@ -15,7 +15,8 @@
     correct_negative="thr_correction", 
     thr_negative=0.01 ,
     blank_value = 0.0,
-    blank_array = [0.0],)
+    blank_array = [0.0],
+    )
 
 This function plot all the data from .csv file, note that assume that the first colums is the time
 

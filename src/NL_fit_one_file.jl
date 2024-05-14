@@ -1,8 +1,94 @@
 
 """
-fitting dataset function NL
-"""
+    fit_NL_model_file(
+    label_exp::String,
+    path_to_data::String, 
+    model::Any,
+    lb_param::Vector{Float64},
+    ub_param::Vector{Float64};
+    path_to_annotation::Any = missing,
+    u0=lb_param .+ (ub_param .- lb_param) ./ 2,
+    method_of_fitting="MCMC",
+    nrep=100,
+    errors_estimation=false,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    path_to_results="NA", 
+    path_to_plot="NA", 
+    loss_type="RE", 
+    smoothing=false,
+    type_of_smoothing="lowess",
+    display_plots=true,
+    save_plots=false,
+    verbose=false, 
+    write_res=false, 
+    pt_avg=1, 
+    pt_smooth_derivative=7, 
+    do_blank_subtraction="avg_blank", 
+    avg_replicate=false, 
+    correct_negative="thr_correction",
+    thr_negative=0.01,  
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    penality_CI=8.0,
+    size_bootstrap=0.7,
+    blank_value = 0.0,
+    blank_array = [0.0],
+    )
 
+
+
+This function performs NL model selection of one NL model for a full csv file
+# Arguments
+
+- `label_exp::String`,  label of the experiment.
+- `path_to_data::String`. path to the csv data frame. See documentation for formatting it.
+-  `model::Any`:  functions or strings (for harcoded NL model) of the NL models
+-  `lb_param::Any`:Array of Lower bounds for the parameters (compatible with the models).
+-  `ub_param::Any`:Array of Upper bounds for the parameters (compatible with the models).
+
+# Key Arguments:
+- `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
+- `nrep=100`. Number of MCMC steps.
+- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `save_plots=false` :Bool, save the plot or not.
+- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
+- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
+- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
+- `smoothing=false`: Whether to apply smoothing to the data or not.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+-  `thr_lowess=0.05`: Float64, keyword argument of lowess smoothing
+- `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
+- `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
+-  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+- `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+- ` PopulationSize =100`: Size of the population of the optimization
+- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
+- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
+-  `correction_AIC=true`: Bool, do finite samples correction of AIC.
+-  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run. Used only if method is "Bootstrap"
+- `write_res=false`: Bool, write the results in path_to_results folder.
+- `path_to_results= "NA"`:String, path to the folder where save the results.
+-  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+
+# Output (if `results_NL_fit =fit_NL_model_file(...)`:
+
+
+- a matrix with the following contents for each row : `[ "label of exp", "well", "param_1","param_2",..,"param_n","maximum specific gr using model","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
+- The plots of the fit if `save_plot=true` or `display_plots=true`
+
+"""
 function fit_NL_model_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
@@ -388,6 +474,99 @@ end
 
 
 
+"""
+    function fit_NL_model_selection_file(
+    label_exp::String, 
+    path_to_data::String, 
+    list_model_function::Any,
+    list_lb_param::Vector{Float64}, 
+    list_ub_param::Vector{Float64}; 
+    path_to_annotation::Any = missing,
+    method_of_fitting="MCMC",
+    nrep=100,
+    list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    path_to_results="NA", 
+    path_to_plot="NA", 
+    loss_type="RE",
+    smoothing=false, 
+    type_of_smoothing="lowess",
+    display_plots=true,
+    save_plots=false,
+    verbose=false, 
+    write_res=false,
+    pt_avg=1,
+    pt_smooth_derivative=7, 
+    do_blank_subtraction="avg_blank", 
+    avg_replicate=false, 
+    correct_negative="thr_correction", 
+    thr_negative=0.01,  
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", 
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    thr_lowess=0.05,
+    beta_param=2.0,
+    penality_CI=8.0,
+    size_bootstrap=0.7,
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
+    )
+
+
+
+This function performs NL model selection of an array of NL models, it uses AIC or AICc depending on user inputs. This is done for a full .csv file.
+
+# Arguments
+
+
+- `label_exp::String`,  label of the experiment.
+- `path_to_data::String`. path to the csv data frame. See documentation for formatting it.
+-  `list_model_function::Any`: Array containing functions or strings of the NL models
+-  `list_lb_param::Any`:Array of Lower bounds for the parameters (compatible with the models).
+-  `list_ub_param::Any`:Array of Upper bounds for the parameters (compatible with the models).
+
+# Key Arguments:
+- `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
+- `nrep=100`. Number of MCMC steps.
+- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `save_plot_best_model=false` :Bool, save the plot or not.
+- `path_to_plot= "NA"`:String, path to save the plots.
+- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
+- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
+- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
+- `smoothing=false`: Whether to apply smoothing to the data or not.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+-  `thr_lowess=0.05`: Float64 keyword argument of lowess smoothing
+- ` PopulationSize =100`: Size of the population of the optimization
+- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
+- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- `penality_CI=8.0`, used only in segementation to force the optimization to respect continuty on bonduar
+-  `correction_AIC=true`: Bool, do finite samples correction of AIC.
+-  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run. Used only if method is "Bootstrap"
+- `write_res=false`: Bool, write the results in path_to_results folder.
+- `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
+- `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
+-  `correct_negative="thr_correction"`: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+- `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+- `path_to_results= "NA"`:String, path to the folder where save the results.
+
+# Output (if `results_NL_fit =NL_model_selection(...)`:
+
+
+- a matrix with the following contents for each row : `[ "label of exp", "well", "param_1","param_2",..,"param_n","maximum specific gr using model","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
+- The plots of the fit if `save_plot=true` or `display_plots=true`
+
+"""
 function fit_NL_model_selection_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
@@ -587,6 +766,110 @@ end
 
 
 
+"""
+    fit_NL_segmentation_file(
+    label_exp::String, 
+    path_to_data::String, 
+    list_model_function::Any,
+    list_lb_param::Vector{Vector{Float64}}, 
+    list_ub_param::Vector{Vector{Float64}}, 
+    n_change_points::Int;
+    path_to_annotation::Any = missing,
+    method_of_fitting="MCMC",
+    nrep=100,
+    list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    path_to_results="NA",
+    path_to_plot="NA", 
+    loss_type="RE", 
+    smoothing=false, 
+    type_of_smoothing="lowess",
+    display_plots=true,
+    save_plots=false,
+    verbose=false, 
+    write_res=false,
+    pt_avg=1, 
+    pt_smooth_derivative=7, 
+    do_blank_subtraction="avg_blank", 
+    avg_replicate=false,
+    correct_negative="thr_correction", 
+    thr_negative=0.01,  
+    multiple_scattering_correction=false, 
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",  
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    size_bootstrap=0.7,
+    thr_lowess=0.05,
+    detect_number_cpd=true,
+    type_of_detection="sliding_win",
+    type_of_curve="original",
+    fixed_cpd=false,
+    penality_CI=8.0,
+    beta_smoothing_ms=2.0,
+    win_size=7,
+    n_bins=40,
+    correction_AIC=true,
+    blank_value = 0.0,
+    blank_array = [0.0],
+    )
+
+
+
+This function performs NL model selection  on a segmented time series, it uses AIC or AICc depending on user inputs. This fuction works on an entire csv file.
+
+# Arguments
+
+- `label_exp::String`,  label of the experiment./
+- `path_to_data::String`. path to the csv data frame. See documentation for formatting it.
+-  `list_model_function::Any`: Array containing functions or strings of the NL models
+-  `list_lb_param::Any`:Array of Lower bounds for the parameters (compatible with the models).
+-  `list_ub_param::Any`:Array of Upper bounds for the parameters (compatible with the models).
+-  `n_max_change_points::Int`: Number of change point used, the results will have different number of cp depending on the values of key argument 'type_of_detection' and 'fixed_cpd'
+
+# Key Arguments:
+- `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
+- `nrep=100`. Number of MCMC steps.
+- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `save_plots=false` :Bool, save the plot or not.
+- `path_to_plot= "NA"`:String, path to save the plots.
+- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
+- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
+- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
+- `smoothing=false`: Whether to apply smoothing to the data or not.
+- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+-  `thr_lowess=0.05`: Float64 keyword argument of lowess smoothing
+- ` PopulationSize =100`: Size of the population of the optimization
+- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
+- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
+-  `correction_AIC=true`: Bool, do finite samples correction of AIC.
+-  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run. Used only if method is "Bootstrap"
+- `write_res=false`: Bool, write the results in path_to_results folder.
+- `path_to_results= "NA"`:String, path to the folder where save the results.
+- 'type_of_detection="slinding_win"': String, algorithm of cpd to use. Options '"slinding_win"' use a slinding window approach, '"lsdd"' uses least square density difference (LSDD) from ChangePointDetection.jl 
+- 'type_of_curve="original"': String, on which curve is performed the change point detection algorithm. If '"original"' it use the original time series. With '"deriv"' it use the specific growth rate time series to perform the cdp.
+- `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
+- `n_bins=40`: Int, used if `method_peaks_detection="thr_scan"` number of bins used to generate the threshold that has n_change_points peaks
+- 'detect_number_cpd=true': Bool, if equal to true all the possible combination of lenght 1,2,...,n_change_points are tested and the best for AICc is returned.
+- 'fixed_cpd=false': Bool If  true it returns the fitting using top n_change_points.
+-  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+-  'win_size=14': Int, size of the windows used by the cdp algorithms
+
+# Output (if `results_NL_fit =fit_NL_segmentation_file(...)`:
+
+
+- an matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using model","maximum specific gr using data", "objective function value (i.e. loss of the solution)" "segment number"]` where ' "param_1","param_2",..,"param_n" ' .
+- The plots of the fit if `save_plot=true` or `display_plots=true`
+
+"""
 function fit_NL_segmentation_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze

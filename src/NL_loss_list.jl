@@ -1,7 +1,3 @@
-"
-List of loss functions to fit ODE
-"
-
 
 function NL_Log_L2(data, model_function, u, p)
 

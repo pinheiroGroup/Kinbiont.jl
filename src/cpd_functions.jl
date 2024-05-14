@@ -173,13 +173,7 @@ function detect_list_change_points(
     return selected_change_point_index
 end
 
-"""
-     peaks_detection
 
-# Arguments
-- `n_max`: maximum number of peaks
-- `size_win::Int`: size of the used window in all of the methods
-"""
 function peaks_detection(
     data::Matrix{Float64},
     n_max::Int;
@@ -311,12 +305,6 @@ function curve_dissimilitary_lin_fitting(
 
     return discrepancy_measure_curve
 end
-
-
-
-
-
-
 
 function generation_of_combination_of_cpds(
     cp_list;

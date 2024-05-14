@@ -1,7 +1,3 @@
-"
-List of loss functions to fit ODE
-"
-
 
 function loss_L2_derivative(data, ODE_prob, integrator, p, tsteps)
     sol = solve(
