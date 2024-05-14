@@ -6,21 +6,26 @@ This section provides some copy-and-paste examples of JMAKi.jl
    -[Simulating Data with ODEs](#simulating-data-ODE)
    -[Simulating Data with stochastic simulations](#simulating-data-stochastic)
 2. [Data Preprocessing](#data-preprocessing)
-3. [Fitting single well](#model-fitting)
+3. [Fitting a single kinetics](#model-fitting)
     - [Log-Lin fitting](#fitting-log-lin)
     - [Fitting ODE Models](#fitting-ode)
     - [Custom ODE Fitting](#custom-ode-fitting)
     - [Sensitivity Analysis](#sensitivity-analysis)
     - [ODE Model Selection](#model-selection)
-  
+    - [Fitting NL Models](#fitting-nl)
+    - [Custom NL Fitting](#custom-nl-fitting)
+    - [NL Sensitivity Analysis](#nl-sensitivity-analysis)
+    - [NL Model Selection](#nl-model-selection)
+    - [ODE segmentation](#ODE-segmented-single)
+    - [NL segmentation](#NL-segmented-single)
 4. [Fitting one file (a plate)](#model-fitting-plate)
 
      - [Plot one file](#plot-file)
      - [Log-Lin fitting](#fitting-log-lin-file)
     - [Fitting ODE Models](#fitting-ode-file)
-
-5. [ODE segmentation with fixed number of change points](#ODE-segmented-fixed)
-6. [ODE segmentation](#ODE-segmented)
+    - [Fitting NL Models](#fitting-NL-file)
+    - [ODE segmentation](#ODE-segmented)
+    - [NL segmentation](#NL-segmented)
 
 ## Simulating Data 
 

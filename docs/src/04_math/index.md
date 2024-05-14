@@ -6,11 +6,10 @@
 
 ## ODEs for bacterial growth
 
-TO DO
 
 The models and their parameters are sumarrized in the following table
 | Model                                  |  Parameters                                       |
-| --------------------------------------- | -------------------------------------------------------- |
+| ---------------------------------------|--------------------------------------------------------|
 | Diauxic_piecewise_damped_logistic      | gr_1, N_max, shape_1, lag, linear_const, t_shift, gr_2, N_max_2, shape_2, end_second_lag, lag_2_gr |
 | Diauxic_replicator_1                    | gr, N_max, lag, arbitrary_const, linear_const |
 | Diauxic_replicator_2                    | gr, N_max, lag, arbitrary_const, linear_const, growth_stationary |

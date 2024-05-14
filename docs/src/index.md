@@ -17,7 +17,6 @@ It then automatically assembles and fits a segmented ODE model, resulting in a f
 Pages = [
     "01_install/index.md",
     "02_data/index.md",
-    "03_main/index.md",
     "04_math/index.md",
     "05_examples/index.md"
 ]
