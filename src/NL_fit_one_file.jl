@@ -728,7 +728,7 @@ function fit_NL_segmentation_file(
         # defining time steps of the inference
 
 
-        temp_results_1 = selection_NL_maxiumum_change_points(
+        temp_results_1 = selection_NL_max_change_points(
             data, # dataset first row times second row OD
             string(well_name), # name of the well
             label_exp, #label of the experiment

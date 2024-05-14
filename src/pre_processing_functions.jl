@@ -1,20 +1,20 @@
 using Lowess
 using CSV
 """
-`correction_OD_multiple_scattering(
+    correction_OD_multiple_scattering(
     data::Matrix{Float64},
     calibration_curve::String;
     method="interpolation"
-)`
+    )
 
 Does the multiple scattering correction of one time series
-Arguments:
+# Arguments:
 
 - `data`:  matrix of data 2xn_time points, it is a single curve.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - `method`: String, How perform the inference of multiple scattering curve, options: '"interpolation"' or   '"exp_fit"' it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 
-Output:
+# Output:
 
 - 'data_fin' corrected data
 """
@@ -56,23 +56,23 @@ end
 
 
 """
-`smoothing_data(
+    smoothing_data(
     data::Matrix{Float64};
     method="rolling_avg",
     pt_avg=7,
     thr_lowess=0.05
-)`
+    )
 
-Arguments:
+# Arguments:
 
 - `data`:  matrix of data 2xn_time points, it is a single curve.
 - `method="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 -  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
 
-Output:
+# Output:
 
-- `data_fin` corrected data
+- `data_fin`, array of smoothed data
 """
 function smoothing_data(
     data::Matrix{Float64};
