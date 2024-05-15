@@ -30,7 +30,7 @@ This function fits a logarithmic-linear model to a single well's data. It evalua
 - `label_exp::String`: The label of the experiment.
 
 # Key Arguments:
-- `path_to_plot= "NA"`: String, path to save the plots.
+- `path_to_plot="NA"`: String, path to save the plots.
 -  `save_plot=false` : Bool, save the plot or not
 - `display_plots=true`: Bool,  Whether or not diplay the plot in julia
 -  `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess"
