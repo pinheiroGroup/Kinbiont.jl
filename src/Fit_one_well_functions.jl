@@ -30,26 +30,26 @@ This function fits a logarithmic-linear model to a single well's data. It evalua
 - `label_exp::String`: The label of the experiment.
 
 # Key Arguments:
-- `path_to_plot= "NA"`:String, path to save the plots.
--  `save_plot=false` :Bool, save the plot or not
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia
+- `path_to_plot= "NA"`: String, path to save the plots.
+-  `save_plot=false` : Bool, save the plot or not
+- `display_plots=true`: Bool,  Whether or not diplay the plot in julia
 -  `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess"
-- `pt_avg=7`:Int, The number of points to do rolling average smoothing.
-- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-- `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
-- `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
-- `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
-- `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
+- `pt_avg=7`: Int, The number of points to do rolling average smoothing.
+- `pt_smoothing_derivative=7`: Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `pt_min_size_of_win=7`: Int, The minimum size of the exponential windows in the number of smoothed points.
+- `type_of_win="maximum"`: String, How the exponential phase window is selected ("maximum" or "global_thr").
+- `threshold_of_exp=0.9`: Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
+- `multiple_scattering_correction=false`: Bool, Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
--  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
+-  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
 
 # Output:
 
 - an array with the following contents:
-`results_lin_log_fit = [label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
-- The plots of the log-linear fitting and of the dynamics of specific growth rate if `save_plot=true` or `display_plots=true`
+`results_lin_log_fit = [label_exp, name_well, start of exp win, end of exp win, start of exp win, Maximum specific GR, specific GR, 2 sigma  CI of GR, doubling time,doubling time - 2 sigma, doubling time + 2 sigma, intercept log-lin fitting, 2 sigma intercept, R^2]`
+- The plots of the log-linear fitting and of the dynamics of specific growth rate if `save_plot=true` or `display_plots=true`.
 
 """
 function fitting_one_well_Log_Lin(
