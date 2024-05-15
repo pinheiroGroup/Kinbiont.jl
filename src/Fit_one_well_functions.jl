@@ -21,7 +21,7 @@
     thr_lowess=0.05, 
     ) 
 
-This function fits a logarithmic-linear model to a single well's data. It evaluate the specific growht rate, the with a statistical threshold it individuates a exponetial window and perform a-log lin fitting
+This function fits a logarithmic-linear model to the data of a single well. It evaluates the specific growth rate and with a statistical threshold it indentify a exponential window to perform the log-lin fitting.
 
 # Arguments:
     
@@ -31,9 +31,9 @@ This function fits a logarithmic-linear model to a single well's data. It evalua
 
 # Key Arguments:
 - `path_to_plot="NA"`: String, path to save the plots.
--  `save_plot=false` : Bool, save the plot or not
+- `save_plot=false`: Bool, save the plot or not
 - `display_plots=true`: Bool,  Whether or not diplay the plot in julia
--  `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess"
+- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess"
 - `pt_avg=7`: Int, The number of points to do rolling average smoothing.
 - `pt_smoothing_derivative=7`: Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `pt_min_size_of_win=7`: Int, The minimum size of the exponential windows in the number of smoothed points.
@@ -42,8 +42,8 @@ This function fits a logarithmic-linear model to a single well's data. It evalua
 - `multiple_scattering_correction=false`: Bool, Whether or not correct the data qith a calibration curve.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
--  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+- `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
 
 # Output:
 
