@@ -65,7 +65,7 @@ end
 
 # Arguments:
 
-- `data`:  matrix of data 2xn_time points, it is a single curve.
+- `data`: Matrix of data 2xn_time points, it is a single curve.
 - `method="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 -  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
