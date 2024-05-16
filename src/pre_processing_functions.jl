@@ -10,8 +10,8 @@ using CSV
 Does the multiple scattering correction of one time series
 # Arguments:
 
-- `data`:  matrix of data 2xn_time points, it is a single curve.
-- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `data`:  matrix of data 2xn, where n is the number of time points (it is a single curve).
+- `calibration_OD_curve="NA"`: String. The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - `method`: String, How perform the inference of multiple scattering curve, options: '"interpolation"' or   '"exp_fit"' it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 
 # Output:
