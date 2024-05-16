@@ -10,9 +10,9 @@ using CSV
 Does the multiple scattering correction of one time series
 # Arguments:
 
-- `data`:  matrix of data 2xn, where n is the number of time points (it is a single curve).
-- `calibration_OD_curve="NA"`: String. The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-- `method`: String, How perform the inference of multiple scattering curve, options: '"interpolation"' or   '"exp_fit"' it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+- `data`:  matrix of data 2xn, where n is the number of time points (single curve).
+- `calibration_OD_curve="NA"`: String. Path for the calibration data (.csv file). It is used only if `multiple_scattering_correction=true`.
+- `method`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., Enzyme and microbial technology, 118, 1-5., 2018). 
 
 # Output:
 
@@ -65,10 +65,10 @@ end
 
 # Arguments:
 
-- `data`: Matrix of data 2xn_time points, it is a single curve.
-- `method="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
+- `data`: Matrix of data 2xn, where n is the number of time points (single curve).
+- `method="rolling_avg"`: String. Method of choice to smoothen the data. Options: "NO" , "rolling avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
--  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
+- `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
 
 # Output:
 
