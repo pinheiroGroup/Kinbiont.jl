@@ -2,30 +2,10 @@
 
 This section provides some copy-and-paste examples of JMAKi.jl
 
-1. [ Simulating/Loading single kinetics data](#simulating-data)
-   -[Loading  data from a .csv](#loading-data-ODE)
-   -[Simulating Data with ODEs](#simulating-data-ODE)
-   -[Simulating Data with stochastic simulations](#simulating-data-stochastic)
-2. [Data Preprocessing](#data-preprocessing)
-3. [Fitting a single kinetics](#model-fitting)
-    - [Log-Lin fitting](#fitting-log-lin)
-    - [Fitting ODE Models](#fitting-ode)
-    - [Custom ODE Fitting](#custom-ode-fitting)
-    - [Sensitivity Analysis](#sensitivity-analysis)
-    - [ODE Model Selection](#model-selection)
-    - [ODE segmentation](#ODE-segmented-single)
-    - [Fitting NL Models](#fitting-nl)
-    - [Custom NL Fitting](#custom-nl-fitting)
-    - [NL Sensitivity Analysis](#nl-sensitivity-analysis)
-    - [NL Model Selection](#nl-model-selection)
-    - [NL segmentation](#NL-segmented-single)
-4. [Fitting one file (a plate)](#model-fitting-plate)
-    - [Plot one file](#plot-file)
-    - [Log-Lin fitting](#fitting-log-lin-file)
-    - [Fitting ODE Models](#fitting-ode-file)
-    - [Fitting NL Models](#fitting-NL-file)
-    - [ODE segmentation](#ODE-segmented)
-    - [NL segmentation](#NL-segmented)
+```@contents
+Pages = ["index.md"]
+Depth = 3
+```
 
 ## Simulating/Loading single kinetics data
 ### Loading  data from a .csv
@@ -36,7 +16,7 @@ df_data  =CSV.file("your_path/data.csv")
 names_of_cols = propertynames(df_data)  
 # assuming first column is time and we want to fit the second one 
 
-data_OD = Matrix(hcat(df_data[names_of_cols[1]],df_data[names_of_cols[2]],))
+data_OD = Matrix(hcat(df_data[names_of_cols[1]],df_data[names_of_cols[2]]))
 ```
 ### Simulating Data with ODEs
 
@@ -97,7 +77,7 @@ data_OD = Matrix(transpose(hcat(sim[3],sim[1])))
 ```
 
 ## Data Preprocessing
-We start applying a rolling average smoothing to the data. In the example, a rolling window of size 7 is applied to the original data (data_OD generated in the previous examples). 
+We start applying a rolling average smoothing to the data. In the example, a rolling window of size 7 is applied to the original data (```data_OD``` generated in the previous examples). 
 ```julia
 data_ODsmooth = smoothing_data(data_OD, 7)
 data_ODsmooth = Matrix(data_ODsmooth)
@@ -105,7 +85,7 @@ data_ODsmooth = Matrix(data_ODsmooth)
 # Plotting scatterplot of smoothed data
 Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Smoothed data " nothing], markersize=2, color=:blue, size=(300, 300))
 ```
-Furthermore, to address potential external influences, a correction for multiple scattering is applied to the smoothed data. This correction is executed through the correction_OD_multiple_scattering function, requiring an external file (calibration_curve.csv).  it is  optional in the provided example. 
+Furthermore, to address potential external influences, a correction for multiple scattering is applied to the smoothed data. This correction is executed through the ```correction_OD_multiple_scattering``` function, requiring an external file (```calibration_curve.csv```).  it is  optional in the provided example. 
 ```julia
 
 # Multiple scattering correction (optional, comment out if not needed)
@@ -149,7 +129,7 @@ res_log_lin = fitting_one_well_Log_Lin(
     pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
 )
 ```
- The results are stored in the res_log_lin variable. 
+ The results are stored in the ```res_log_lin``` variable. 
 
 
 ###    Fitting ODE Models
@@ -165,7 +145,7 @@ ub_ahpm = [1.2, 1.1, 2.0, 20]
 # Lower bounds of the parameters of the ODE
 lb_ahpm = [0.0001, 0.00000001, 0.00, 0]
 ```
-The actual fitting is accomplished through the fitting_one_well_ODE_constrained function. 
+The actual fitting is accomplished through the ```fitting_one_well_ODE_constrained``` function. 
 ```julia
 # Performing ODE fitting
 results_ODE_fit = fitting_one_well_ODE_constrained(
@@ -184,7 +164,7 @@ results_ODE_fit = fitting_one_well_ODE_constrained(
 )
 
 ```
-The results are stored in 'results_ODE_fit' with the following format
+The results are stored in ```results_ODE_fit``` with the following format
 ```julia
  results_ODE_fit = ["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]
 ```
@@ -231,11 +211,11 @@ results_ODE_fit = fitting_one_well_custom_ODE(
     maxiters=2000000,
 )
 ```
-The results are stored in 'results_ODE_fit' with the same format of the previous examples.
+The results are stored in ```results_ODE_fit``` with the same format of the previous examples.
 
 ###   ODE Sensitivity Analysis
 
-The sensitivity analysis is performed with the one_well_morris_sensitivity function. This function takes the preprocessed dataset (data_OD generated in the previous examples), the name and label of the well, the ODE model to use ("aHPM" in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (n_step_sensitivity) should be specified.
+The sensitivity analysis is performed with the ```one_well_morris_sensitivity``` function. This function takes the preprocessed dataset (```data_OD``` generated in the previous examples), the name and label of the well, the ODE model to use ("aHPM" in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (```n_step_sensitivity```) should be specified.
 
 ```julia
 # Number of steps for Morris sensitivity analysis
@@ -280,7 +260,7 @@ list_lb = [lb_ahpm, lb_piece_wise_logistic, lb_triple_exp, lb_baranyi_roberts]
 ```
 
 
-The model selection process is runned with the `ODE_Model_selection` function. 
+The model selection process is runned with the ```ODE_Model_selection``` function. 
 
 ```julia
 # Performing model selection
@@ -306,7 +286,7 @@ results_ms = ODE_Model_selection(
 ```
 
 
-The results of the model selection process are stored in the `results_ms` variable.
+The results of the model selection process are stored in the ```results_ms``` variable.
 
 ### ODE segmentation
 For a single kinetics it is possible to run the segmentaion in two different ways. A manual selection of the change points or a using a change points detection algorithm to find them.
@@ -476,7 +456,7 @@ segmentation_ODE(
 
 ```
 ### Fitting NL Models
-(we should discuss about this in theory the model selection functio can do all the stuffs except segmentation) With JKMAKi it is possible to fit any non-linear model this can be done by calling the function NL_model_selection in different ways.
+(we should discuss about this in theory the model selection functio can do all the stuffs except segmentation) With JKMAKi it is possible to fit any non-linear model this can be done by calling the function ```NL_model_selection``` in different ways.
 
 
 First we declare upper and lower bound and the model (note that in this case we use array of array because the input can be more than one model)
@@ -490,7 +470,7 @@ list_ub = [nl_ub_1]
 ```
 
 
-To perform a single fit on a time series (i.e., data_OD) then we run the following specifying method_of_fitting = "single_fit":
+To perform a single fit on a time series (i.e., ```data_OD```) then we run the following specifying ```method_of_fitting = "single_fit"```:
 ```julia
  NL_model_selection(data_OD, # dataset first row times second row OD
   "test", # name of the well
@@ -513,7 +493,8 @@ To perform a single fit on a time series (i.e., data_OD) then we run the followi
 ```
 
 
-The user can specify the intial guess list_u0 to improve the convergence of the fit. Otherwise it is possible to automatically find a good guess using a Markov Chain Monte Carlo restart (method_of_fitting ="MCMC"). 
+The user can specify the intial guess ```list_u0``` to improve the convergence of the fit.
+Otherwise it is possible to automatically find a good guess using a Markov Chain Monte Carlo restart (```method_of_fitting ="MCMC"```). 
 This it is done running the following:
 
 ```julia
@@ -537,7 +518,7 @@ This it is done running the following:
 
 ```
 
-Alternately, the user can  opt to a Bootstrap approach (method_of_fitting ="Bootstrap"): 
+Alternately, the user can  opt to a Bootstrap approach (```method_of_fitting ="Bootstrap"```): 
 
 
 
@@ -605,7 +586,7 @@ after this you can just supply this variables to the previous function, e.g.:
 
 ### NL Sensitivity Analysis
 
-As for the ODE model, also for the NL fit it is possible to perform a sensitivity analysis with respect to the initial starting guess of the parameters, in this case we just use method_of_fitting= "Morris_sensitivity" and nrep as the number of Morris steps
+As for the ODE model, also for the NL fit it is possible to perform a sensitivity analysis with respect to the initial starting guess of the parameters, in this case we just use ```method_of_fitting= "Morris_sensitivity"``` and nrep as the number of Morris steps
 
 
 ```julia
@@ -651,7 +632,7 @@ list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
 list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
 
 ```
-and the we perform the fit, tuning the AIC parameter (beta_param) :
+and the we perform the fit, tuning the AIC parameter (```beta_param```) :
 ```julia
 
  NL_model_selection(data_OD, # dataset first row times second row OD
@@ -678,7 +659,7 @@ and the we perform the fit, tuning the AIC parameter (beta_param) :
 ### NL segmentation
 
 As the ODE case, for NL segmentation we can perform a segmente fit with manual selection of the change points or a using a change points detection algorithm to find them.
-Note that in the case of the NL fit, the fit of the segment goes backward and since it is not possible to specificy the bounduary condition of the fit the user can force the optimization problem to mantain the continuty between segment with the parameter  penality_CI=8.0. 
+Note that in the case of the NL fit, the fit of the segment goes backward and since it is not possible to specificy the bounduary condition of the fit the user can force the optimization problem to mantain the continuty between segment with the parameter  ```penality_CI=8.0```. 
 
 we specify the list of used models and parameters bounds:
 
@@ -793,7 +774,7 @@ It is possible to plot or display the plot of an experiment with the following:
 
 ### Log-Lin fitting
 
-If the paths are provided to 'fit_one_file_Log_Lin', the user will obtain a matrix containing the results for each well:
+If the paths are provided to ```fit_one_file_Log_Lin```, the user will obtain a matrix containing the results for each well:
 ```julia
 fit_one_file_Log_Lin(
    "test", #label of the experiment
@@ -808,8 +789,8 @@ fit_one_file_Log_Lin(
 ```
 
 
-Note that if the user wants to subtract blank but their are non in the file with the data the to optional arguments can be used    'blank_value' for one value of blanks,
-  'blank_array' for an array of  blanks
+Note that if the user wants to subtract blank but their are non in the file with the data the to optional arguments can be used    ```blank_value``` for one value of blanks,
+  ```blank_array``` for an array of  blanks
 
 
 ### ODE fitting
@@ -826,7 +807,7 @@ ub_ahpm = [1.2, 1.1, 2.0, 20]
 lb_ahpm = [0.0001, 0.00000001, 0.00, 0]
 ```
 
-We proceed fitting with the 'fit_file_ODE'  function:
+We proceed fitting with the ```fit_file_ODE```  function:
 
 ```julia
 
@@ -861,7 +842,7 @@ custom_ub = [1.2, 1.1]
 custom_lb = [0.0001, 0.00000001]
 ```
 
-Then, we can call the function 'fit_file_custom_ODE':
+Then, we can call the function ```fit_file_custom_ODE```:
 
 ```julia
 
@@ -899,7 +880,7 @@ list_of_models = ["exponential", "HPM", "HPM_exp", "logistic"]
 list_ub_param = [ub_exp, ub_hpm, ub_hpm_exp, ub_logistic]
 list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
 ```
-After, we run the function 'ODE_model_selection_file':
+After, we run the function ```ODE_model_selection_file```:
 
 ```julia
 
@@ -927,7 +908,7 @@ After, we run the function 'ODE_model_selection_file':
 ### Fitting NL Models
 
 
-The user can fit any NL model by calling the function 'fit_NL_model_file'.
+The user can fit any NL model by calling the function ```fit_NL_model_file```.
 As usual the user should declare the model and the bounds
 
 
@@ -953,7 +934,7 @@ nl_lb =  [0.0001 , 0.00000001 ]
 
 ```
 
-Then, we proceed fitting, note that is possible to call any of the previous 'method_of_fitting'
+Then, we proceed fitting, note that is possible to call any of the previous ```method_of_fitting```
 
 ```julia
 
@@ -1023,58 +1004,60 @@ and the we can call the NL model selection function:
 ```
 
 ### ODE segmentation
+
+It is possible to apply the ODE segmentation to the an entire .csv file. Note that in this case all the change points will be detectec using a off-line change point algorithm.
+
+First we declare the models and upper/lower bounds:
+```julia
+# Initializing all the models for selection
+ub_exp = [0.1]
+lb_exp = [-0.01]
+ub_logistic = [0.9, 5.0]
+lb_logistic = [0.0001, 0.001]
+ub_hpm = [0.1, 20.0, 50.001]
+lb_hpm = [0.0001, 0.000001, 0.001]
+ub_hpm_exp = [0.1, 20.0]
+lb_hpm_exp = [0.0001, 0.0000001]
+
+list_of_models = ["exponential", "HPM", "HPM_exp", "logistic"]
+list_ub_param = [ub_exp, ub_hpm, ub_hpm_exp, ub_logistic]
+list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
+
+```
+
+Finally, we perform the fit:
 ```julia
 
  segmentation_ODE_file(
-    label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    list_of_models::Vector{String}, # ode model to use 
-    lb_param_array::Any, # lower bound param
-    ub_param_array::Any,# upper bound param
-    n_max_change_points::Int;
-    path_to_annotation::Any = missing,# path to the annotation of the wells
-    detect_number_cpd=true,
-    fixed_cpd=false,
+    "test seg ODE",
+    path_to_data, # path to the folder to analyze
+    list_of_models, # ode model to use 
+    lb_param_array, # lower bound param
+    ub_param_array,# upper bound param
+    n_max_change_point;
+    path_to_annotation = path_to_annotation,# path to the annotation of the wells
+    detect_number_cpd=false,
+    fixed_cpd=true,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
-    type_of_loss="L2", # type of used loss 
-    type_of_detection="sliding_win",
-    type_of_curve="original",
-    do_blank_subtraction="avg_blank",
-    correct_negative="thr_correction",
+    correct_negative="remove",
     thr_negative=0.01,
-    pt_avg=1, # number of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    save_plots=false, # do plots or no
-    display_plots=false, # do plots or no
-    path_to_plot="NA", # where save plots
-    path_to_results="NA",
-    win_size=7, # numebr of the point to generate intial condition
-    pt_smooth_derivative=0,
-    penality_parameter=2.0,
-    avg_replicate=false,
-    multiple_scattering_correction="false", # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    write_res=false,
-    save_all_model=false,
-    method_peaks_detection="peaks_prominence",
-    n_bins=40,
+    smoothing=false, # the smoothing is done or not?
+    display_plots=true, # do plots or no
+    win_size=8, 
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
-    type_of_smoothing="lowess",
-    thr_lowess=0.05,
-    verbose=false,
-    correction_AIC=true,
-    blank_value = 0.0,
-    blank_array = [0.0],)
+    pt_avgh = 3,
+    type_of_smoothing="rolling_avg",
+    )
 ```
 
 ### NL segmentation
 
+It is possible to apply the NL segmentation to the an entire .csv file. Note that in this case all the change points will be detectec using a off-line change point algorithm.
 
-
+We start declaring models and upper/lower bounds:
 
 ```julia
 
@@ -1094,56 +1077,35 @@ list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_Gompertz"]
 list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
 list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
 
+n_change_points =2
 ```
 
-
+Then, we call the function to perform the fit:
 ```julia
 
 fit_NL_segmentation_file(
-    label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    list_model_function::Any, # ode model to use
-    list_lb_param::Vector{Vector{Float64}}, # lower bound param
-    list_ub_param::Vector{Vector{Float64}}, # upper bound param
-    n_change_points::Int;
-    path_to_annotation::Any = missing,# path to the annotation of the wells
+    "test", #label of the experiment
+    path_to_data, # path to the folder to analyze
+    list_models_f, # ode model to use
+    list_lb, # lower bound param
+    list_ub, # upper bound param
+    n_change_points;
+    detect_number_cpd=false,
+    fixed_cpd=true,
+    path_to_annotation = path_to_annotation,# path to the annotation of the wells
     method_of_fitting="MCMC",
-    nrep=100,
-    list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
+    nrep=50,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
-    smoothing=false, # 1 do smoothing of data with rolling average
-    type_of_smoothing="lowess",
     display_plots=true,# display plots in julia or not
-    save_plots=false,
-    verbose=false, # 1 true verbose
-    write_res=false, # write results
-    pt_avg=1, # number of points to do smoothing average
-    pt_smooth_derivative=7, # number of points to do ssmooth_derivative
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    PopulationSize=200,
     maxiters=2000000,
     abstol=0.00001,
-    size_bootstrap=0.7,
-    thr_lowess=0.05,
-    detect_number_cpd=true,
-    type_of_detection="sliding_win",
-    type_of_curve="original",
-    fixed_cpd=false,
     penality_CI=8.0,
     beta_smoothing_ms=2.0,
     win_size=7, # number of the point of cpd sliding win
-    n_bins=40,
-    correction_AIC=true,
-    blank_value = 0.0,
-    blank_array = [0.0],
+    correction_AIC=false,
 )
 ```
