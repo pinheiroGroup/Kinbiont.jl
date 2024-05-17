@@ -117,7 +117,22 @@ Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="A
 
 ## Fitting a single kinetics
 When data are store in a Matrix of Float64 with 2 rows it is possible to perfor various analyses
+### Evaluation of the dynamics of specific growth rate
+The user can evaluate   of the specific growth rate  during all the curve. This can be done by running the following:
 
+
+```julia
+
+pt_win = 7
+specific_gr_array = specific_gr_evaluation(data_OD,pt_win )
+specific_gr_times = [
+    (data_OD[1, r] + data_OD[1, 	(r+pt_smoopt_winthing_derivative)]) / 2 for
+    r = 1:1:(eachindex(data_OD[2, :])[end].- pt_win)
+ 	]
+Plots.scatter(specific_gr_times,specific_gr_array, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],  color=:blue, size = (300,300))
+
+
+```
 ### Log-Lin fitting
 
 To perform the log-linear fitting  (of data generated in the previous examples) it is suffucient to run. 
@@ -184,7 +199,8 @@ Using the custom ODE fitting, users can fit any ordinary differential equation. 
 
 # Custom ODE function
 function ODE_custom(du, u, param, t)
-    du[1] = u[1] * (1 - u[1]) * param[2] + param[1] * u[1]end
+    du[1] = u[1] * (1 - u[1]) * param[2] + param[1] * u[1]
+end
 
 ```
 Now, we set upper and lower bounds of the parameters of the ODE:
@@ -777,235 +793,232 @@ It is possible to plot or display the plot of an experiment with the following:
 
 ### Log-Lin fitting
 
+If the paths are provided to 'fit_one_file_Log_Lin', the user will obtain a matrix containing the results for each well:
 ```julia
 fit_one_file_Log_Lin(
-    label_exp::String, #label of the experiment
-    path_to_data::String; # path to the folder to analyze
-    path_to_annotation::Any = missing,# path to the annotation of the wells
-    path_to_results="NA",# path where save results
-    path_to_plot="NA",# path where to save Plots
+   "test", #label of the experiment
+    path_to_data; # path to the folder to analyze
+    path_to_annotation = path_to_annotation,# path to the annotation of the wells
     display_plots=true,# display plots in julia or not
-    save_plots=false, # save the plot or not    verbose=false, # 1 true verbose
-    write_res=false, # write results
-    type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
-    pt_avg=7, # number of points to do smoothing average
-    pt_smoothing_derivative=7, # number of poits to smooth the derivative
-    pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
-    type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
-    threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01, # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-    thr_lowess=0.05, # keyword argument of lowees smoothing
-    verbose=false,
+    avg_replicate=true, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     blank_value = 0.0,
     blank_array = [0.0],)
 ```
-### Fitting ODE Models
+
+
+Note that if the user wants to subtract blank but their are non in the file with the data the to optional arguments can be used    'blank_value' for one value of blanks,
+  'blank_array' for an array of  blanks
+
+
+### ODE fitting
+We declare the model and the bounds of it:
+
+```julia
+
+
+model ="aHPM"
+# Upper bounds of the parameters of the ODE
+ub_ahpm = [1.2, 1.1, 2.0, 20]
+
+# Lower bounds of the parameters of the ODE
+lb_ahpm = [0.0001, 0.00000001, 0.00, 0]
+```
+
+We proceed fitting with the 'fit_file_ODE'  function:
+
 ```julia
 
  fit_file_ODE(
-    label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    model::String, # string of the used model
-    lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
-    ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
-    path_to_annotation::Any = missing,# path to the annotation of the wells
+    "test", #label of the experiment
+    path_to_data, # path to the folder to analyze
+    model, # string of the used model
+    lb_ahpm,# array of the array of the lower bound of the parameters
+    ub_ahpm; # array of the array of the upper bound of the parameters
+    path_to_annotation = path_to_annotation,# path to the annotation of the wells
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
-    path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
-    loss_type="RE", # string of the type of the used loss
-    smoothing=false, # 1 do smoothing of data with rolling average
-    type_of_smoothing="lowess",
     display_plots=true,# display plots in julia or not
-    save_plots=false,
-    verbose=false, # 1 true verbose
-    write_res=false, # write results
-    pt_avg=1, # number of points to do smoothing average
-    pt_smooth_derivative=7, # number of points to do ssmooth_derivative
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    correct_negative="removr", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
-    thr_lowess=0.05,
-    blank_value = 0.0,
-    blank_array = [0.0],
 )
 ```
+The user can fit a custom model by declaring the function in advance
+
+```julia
+# Custom ODE function
+function ODE_custom(du, u, param, t)
+    du[1] = u[1] * (1 - u[1]) * param[2] + param[1] * u[1]
+end
+
+
+# Bounds for the custom ODE parameters
+custom_ub = [1.2, 1.1]
+custom_lb = [0.0001, 0.00000001]
+```
+
+Then, we can call the function 'fit_file_custom_ODE':
 
 ```julia
 
  fit_file_custom_ODE(
-    label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    model::Any, # string of the used model
-    lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
-    ub_param::Vector{Float64}, # array of the array of the upper bound of the parameters
-    n_equation::Int;
-    path_to_annotation::Any = missing,# path to the annotation of the wells
+    "test", #label of the experiment
+    path_to_data, # path to the folder to analyze
+    ODE_custom, #  used model
+    custom_lb,# array of the array of the lower bound of the parameters
+    custom_ub, # array of the array of the upper bound of the parameters
+    1;
+   path_to_annotation = path_to_annotation,# path to the annotation of the wells
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
-    path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
-    loss_type="RE", # string of the type of the used loss
-    smoothing=false, # 1 do smoothing of data with rolling average
-    type_of_smoothing="lowess",
     display_plots=true,# display plots in julia or not
-    save_plots=false,
-    verbose=false, # 1 true verbose
-    write_res=false, # write results
-    pt_avg=1, # number of points to do smoothing average
-    pt_smooth_derivative=7, # number of points to do ssmooth_derivative
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    correct_negative="removr", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
-    thr_lowess=0.05,
-    blank_value = 0.0,
-    blank_array = [0.0],
 )
 ```
+It is also possible to perform the model selection on an entire file. First we declare the lis of models
+
+```julia
+ub_exp = [0.1]
+lb_exp = [-0.01]
+ub_logistic = [0.9, 5.0]
+lb_logistic = [0.0001, 0.001]
+ub_hpm = [0.1, 20.0, 50.001]
+lb_hpm = [0.0001, 0.000001, 0.001]
+ub_hpm_exp = [0.1, 20.0]
+lb_hpm_exp = [0.0001, 0.0000001]
+
+list_of_models = ["exponential", "HPM", "HPM_exp", "logistic"]
+list_ub_param = [ub_exp, ub_hpm, ub_hpm_exp, ub_logistic]
+list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
+```
+After, we run the function 'ODE_model_selection_file':
+
 ```julia
 
  ODE_model_selection_file(
-    label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    models_list::Vector{String}, # ode model to use 
-    lb_param_array::Any, # lower bound param
-    ub_param_array::Any; # upper bound param
-    path_to_annotation::Any = missing,# path to the annotation of the wells
+    "test", 
+    path_to_data, # path to the folder to analyze
+    list_of_models, # ode model to use 
+    list_lb_param::Any, # lower bound param
+    list_ub_param::Any; # upper bound param
+    path_to_annotation = path_to_annotation,# path to the annotation of the wells
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
-    path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
-    loss_type="L2", # string of the type of the used loss
-    smoothing=false, # 1 do smoothing of data with rolling average
-    type_of_smoothing="lowess",
-    display_plot_best_model=false, # one wants the results of the best fit to be plotted
+    display_plot_best_model=true, # one wants the results of the best fit to be plotted
     save_plot_best_model=false,
     beta_penality=2.0, # penality for AIC evaluation
-    verbose=false, # 1 true verbose
-    write_res=false, # write results
-    pt_avg=1, # number of points to do smoothing average
-    pt_smooth_derivative=7, # number of points to do ssmooth_derivative
-    do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-    correction_AIC=true,
-    blank_value = 0.0,
-    blank_array = [0.0],
+    correction_AIC=false,
 )
 ```
 
 ### Fitting NL Models
+
+
+The user can fit any NL model by calling the function 'fit_NL_model_file'.
+As usual the user should declare the model and the bounds
+
+
+
+```julia
+nl_lb = [0.0001 , 0.00000001, 0.00,0.0 ]
+nl_ub = [2.0001 , 10.00000001, 5.00,5.0]
+model_nl = "NL_Richards"
+
+```
+
+Alternatively, as in the single kinetics case, the model can also be a function, e.g.,:
+
+```julia
+function model_nl(p, times)
+    model = p[1] .* exp.(times .* p[2])
+    return model
+end
+
+
+nl_ub =  [2.0001 , 10.00000001]
+nl_lb =  [0.0001 , 0.00000001 ]
+
+```
+
+Then, we proceed fitting, note that is possible to call any of the previous 'method_of_fitting'
+
 ```julia
 
 fit_NL_model_file(
-    label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    model::Any, # string of the used model
-    lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
-    ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
-    path_to_annotation::Any = missing,# path to the annotation of the wells
-    u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
+    "test", #label of the experiment
+    path_to_data, # path to the folder to analyze
+    model_nl, # string of the used model
+    nl_lb,# array of the array of the lower bound of the parameters
+    nl_ub; # array of the array of the upper bound of the parameters
+    path_to_annotation = path_to_annotation,# path to the annotation of the wells
     method_of_fitting="MCMC",
-    nrep=100,
-    errors_estimation=false,
+    nrep=50,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
-    loss_type="RE", # string of the type of the used loss
-    smoothing=false, # 1 do smoothing of data with rolling average
-    type_of_smoothing="lowess",
     display_plots=true,# display plots in julia or not
-    save_plots=false,
-    verbose=false, # 1 true verbose
-    write_res=false, # write results
-    pt_avg=1, # number of points to do smoothing average
-    pt_smooth_derivative=7, # number of points to do ssmooth_derivative
-    do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
-    thr_lowess=0.05,
-    penality_CI=8.0,
-    size_bootstrap=0.7,
-    blank_value = 0.0,
-    blank_array = [0.0],
 )
 ```
+The user can perform a NL model selection. To do that we should start declaring the list of models and upper/lower bounds:
+
+
+```julia
+
+nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
+nl_lb_1 =  [0.0001 , 0.00000001, 0.00 ]
+
+nl_ub_2 =  [2.0001 , 10.00000001, 5.00,5.0]
+nl_lb_2 =  [0.0001 , 0.00000001, 0.00,0.0 ]
+
+nl_ub_3 =  [2.0001 , 10.00000001]
+nl_lb_3 =  [0.0001 , 0.00000001]
+
+nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
+nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
+
+list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_Gompertz"]
+list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
+list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
+
+```
+and the we can call the NL model selection function:
 
 ```julia
  fit_NL_model_selection_file(
-    label_exp::String, #label of the experiment
-    path_to_data::String, # path to the folder to analyze
-    list_model_function::Any, # ode model to use
-    list_lb_param::Vector{Float64}, # lower bound param
-    list_ub_param::Vector{Float64}; # upper bound param
-    path_to_annotation::Any = missing,# path to the annotation of the wells
+    "test", #label of the experiment
+    path_to_data, # path to the folder to analyze
+    list_models_f, # ode model to use
+    list_lb, # lower bound param
+   list_ub; # upper bound param
+    path_to_annotation = path_to_annotation,# path to the annotation of the wells
     method_of_fitting="MCMC",
     nrep=100,
-    list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
-    loss_type="RE", # string of the type of the used loss
-    smoothing=false, # 1 do smoothing of data with rolling average
-    type_of_smoothing="lowess",
     display_plots=true,# display plots in julia or not
-    save_plots=false,
-    verbose=false, # 1 true verbose
-    write_res=false, # write results
-    pt_avg=1, # number of points to do smoothing average
-    pt_smooth_derivative=7, # number of points to do ssmooth_derivative
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
-    method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
     beta_param=2.0,
-    penality_CI=8.0,
-    size_bootstrap=0.7,
-    correction_AIC=true,
-    blank_value = 0.0,
-    blank_array = [0.0],
+    correction_AIC=false,
 )
 ```
 
@@ -1059,6 +1072,31 @@ fit_NL_model_file(
 ```
 
 ### NL segmentation
+
+
+
+
+```julia
+
+nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
+nl_lb_1 =  [0.0001 , 0.00000001, 0.00 ]
+
+nl_ub_2 =  [2.0001 , 10.00000001, 5.00,5.0]
+nl_lb_2 =  [0.0001 , 0.00000001, 0.00,0.0 ]
+
+nl_ub_3 =  [2.0001 , 10.00000001]
+nl_lb_3 =  [0.0001 , 0.00000001]
+
+nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
+nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
+
+list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_Gompertz"]
+list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
+list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
+
+```
+
+
 ```julia
 
 fit_NL_segmentation_file(
