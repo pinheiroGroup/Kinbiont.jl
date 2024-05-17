@@ -401,7 +401,7 @@ list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
 
 ```
 
-First we fit giving to JMAKi the list of change points:
+First, we fit giving to JMAKi the list of change points:
 
 ```julia
 cdp_list = [100.0, 200.0]
@@ -460,35 +460,319 @@ segmentation_ODE(
 
 ```
 ### Fitting NL Models
-(we should discuss about this in theory the model selection functio can do all the stuffs except segmentation) With JKMAKi it is possible to fit any non-linear model this can be done trogth a single function 
+(we should discuss about this in theory the model selection functio can do all the stuffs except segmentation) With JKMAKi it is possible to fit any non-linear model this can be done by calling the function NL_model_selection in different ways.
 
 
+First we declare upper and lower bound and the model (note that in this case we use array of array because the input can be more than one model)
 
-### NL Sensitivity Analysis
-### NL Model Selection
-### NL segmentation
 ```julia
+nl_lb_1 = [0.0001 , 0.00000001, 0.00,0.0 ]
+nl_ub_1 = [2.0001 , 10.00000001, 5.00,5.0]
+list_models_f = ["NL_Richards"]
+list_lb =[nl_lb_1]
+list_ub = [nl_ub_1]
+```
+
+
+To perform a single fit on a time series (i.e., data_OD) then we run the following specifying method_of_fitting = "single_fit":
+```julia
+ NL_model_selection(data_OD, # dataset first row times second row OD
+  "test", # name of the well
+    "test NL fit", #label of the experiment
+    list_models_f, #  model to use
+    list_lb, # lower bound param
+    list_ub; # upper bound param
+    method_of_fitting="single_fit",
+    list_u0=list_lb .+ (list_ub .- list_lb) ./ 2,# initial guess param
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    display_plots=true, # display plots in julia or not
+    pt_avg=3, # numebr of the point to generate intial condition
+    smoothing=true, # the smoothing is done or not?
+    type_of_smoothing="rolling_avg",
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+)
 
 ```
 
+
+The user can specify the intial guess list_u0 to improve the convergence of the fit. Otherwise it is possible to automatically find a good guess using a Markov Chain Monte Carlo restart (method_of_fitting ="MCMC"). 
+This it is done running the following:
+
+```julia
+ NL_model_selection(data_OD, # dataset first row times second row OD
+  "test", # name of the well
+    "test NL fit", #label of the experiment
+    list_models_f, #  model to use
+    list_lb, # lower bound param
+    list_ub; # upper bound param
+    method_of_fitting="MCMC",
+    nrep = 100,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    display_plots=true, # display plots in julia or not
+    pt_avg=3, # numebr of the point to generate intial condition
+    smoothing=true, # the smoothing is done or not?
+    type_of_smoothing="rolling_avg",
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+)
+
+```
+
+Alternately, the user can  opt to a Bootstrap approach (method_of_fitting ="Bootstrap"): 
+
+
+
+```julia
+ NL_model_selection(data_OD, # dataset first row times second row OD
+  "test", # name of the well
+    "test NL fit", #label of the experiment
+    list_models_f, #  model to use
+    list_lb, # lower bound param
+    list_ub; # upper bound param
+    method_of_fitting="Bootstrap",
+    nrep = 100,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    display_plots=true, # display plots in julia or not
+    pt_avg=3, # numebr of the point to generate intial condition
+    smoothing=true, # the smoothing is done or not?
+    type_of_smoothing="rolling_avg",
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    size_bootstrap=0.7,
+)
+
+```
+If one wants to specify a custom NL function,he should start declaring the function:
+
+```julia
+function NL_model_exp(p, times)
+    model = p[1] .* exp.(times .* p[2])
+    return model
+end
+
+
+nl_ub =  [2.0001 , 10.00000001]
+nl_lb =  [0.0001 , 0.00000001 ]
+
+
+list_models_f = [NL_model_exp]
+list_lb =[nl_lb]
+list_ub = [nl_ub]
+```
+
+after this you can just supply this variables to the previous function, e.g.:
+
+```julia
+ NL_model_selection(data_OD, # dataset first row times second row OD
+  "test", # name of the well
+    "test NL fit", #label of the experiment
+    list_models_f, #  model to use
+    list_lb, # lower bound param
+    list_ub; # upper bound param
+    method_of_fitting="single_fit",
+    list_u0=list_lb .+ (list_ub .- list_lb) ./ 2,# initial guess param
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    display_plots=true, # display plots in julia or not
+    pt_avg=3, # numebr of the point to generate intial condition
+    smoothing=true, # the smoothing is done or not?
+    type_of_smoothing="rolling_avg",
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+)
+```
+
+
+### NL Sensitivity Analysis
+
+As for the ODE model, also for the NL fit it is possible to perform a sensitivity analysis with respect to the initial starting guess of the parameters, in this case we just use method_of_fitting= "Morris_sensitivity" and nrep as the number of Morris steps
+
+
+```julia
+ NL_model_selection(data_OD, # dataset first row times second row OD
+    "test", # name of the well
+    "test NL fit", #label of the experiment
+    list_models_f, #  model to use
+    list_lb, # lower bound param
+    list_ub; # upper bound param
+    method_of_fitting="Morris_sensitivity",
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    display_plots=true, # display plots in julia or not
+    pt_avg=3, # numebr of the point to generate intial condition
+    smoothing=true, # the smoothing is done or not?
+    type_of_smoothing="rolling_avg",
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    nrep =20,
+)
+```
+
+
+
+### NL Model Selection
+To perform model selection we just specify an array with the list of all the used models:
+```julia
+
+nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
+nl_lb_1 =  [0.0001 , 0.00000001, 0.00 ]
+
+nl_ub_2 =  [2.0001 , 10.00000001, 5.00,5.0]
+nl_lb_2 =  [0.0001 , 0.00000001, 0.00,0.0 ]
+
+nl_ub_3 =  [2.0001 , 10.00000001]
+nl_lb_3 =  [0.0001 , 0.00000001]
+
+nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
+nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
+
+list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_Gompertz"]
+list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
+list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
+
+```
+and the we perform the fit, tuning the AIC parameter (beta_param) :
+```julia
+
+ NL_model_selection(data_OD, # dataset first row times second row OD
+  "test", # name of the well
+    "test NL fit", #label of the experiment
+    list_models_f, #  model to use
+    list_lb, # lower bound param
+    list_ub; # upper bound param
+    method_of_fitting="MCMC",
+    nrep = 100,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    display_plots=true, # display plots in julia or not
+    pt_avg=3, # numebr of the point to generate intial condition
+    smoothing=true, # the smoothing is done or not?
+    type_of_smoothing="rolling_avg",
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    beta_param=2.0,
+    correction_AIC =false,
+)
+```
+
+### NL segmentation
+
+As the ODE case, for NL segmentation we can perform a segmente fit with manual selection of the change points or a using a change points detection algorithm to find them.
+Note that in the case of the NL fit, the fit of the segment goes backward and since it is not possible to specificy the bounduary condition of the fit the user can force the optimization problem to mantain the continuty between segment with the parameter  penality_CI=8.0. 
+
+we specify the list of used models and parameters bounds:
+
+```julia
+
+nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
+nl_lb_1 =  [0.0001 , 0.00000001, 0.00 ]
+
+nl_ub_2 =  [2.0001 , 10.00000001, 5.00,5.0]
+nl_lb_2 =  [0.0001 , 0.00000001, 0.00,0.0 ]
+
+nl_ub_3 =  [2.0001 , 10.00000001]
+nl_lb_3 =  [0.0001 , 0.00000001]
+
+nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
+nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
+
+list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_Gompertz"]
+list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
+list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
+
+```
+
+
+As before we specify the intervals of the segment and we proceed to fit:
+
+
+```julia
+cdp_list = [100.0, 200.0]
+
+selection_NL_fixed_interval(
+    data_OD, # dataset first row times second row OD
+   "test ", # name of the well
+    "test NL segmentation" , #label of the experiment
+    list_models_f, # ode models to use
+    list_lb, # lower bound param
+    list_ub, # upper bound param
+    cdp_list;
+    type_of_loss="L2", # type of used loss
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    method_of_fitting="MCMC", # selection of sciml integrator
+    nrep=100,
+    display_plots=true,
+    beta_smoothing_ms=2.0, #  parameter of the AIC penality
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.000000001,
+    penality_CI=8.0,
+    correction_AIC=true,
+)
+
+```
+Another option could be to  run a cpd algorithm and perfom the fitting:
+
+
+
+
+```julia
+n_change_points = 2
+
+selection_NL_max_change_points(
+    data_OD, # dataset first row times second row OD
+   "test ", # name of the well
+    "test NL segmentation" , #label of the experiment
+    list_models_f, # ode models to use
+    list_lb, # lower bound param
+    list_ub, # upper bound param
+    n_change_points;
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    method_of_fitting="MCMC", # selection of sciml integrator
+    nrep=100,
+    display_plots=true,
+    win_size=7, # numebr of the point to generate intial condition
+    pt_smooth_derivative=0,
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.000000001,
+    detect_number_cpd=false,
+    fixed_cpd=true,
+    penality_CI=8.0,
+)
+
+```
 ## Fitting a .csv file
+
+Instead fitting a single kinetics the user can supply a ".csv" file (formatted as described in the section), and JMAKi will proceed to perform all the analysis on all the wells of the experiment. Note that the user can supply a annotation .csv in this case becomes possible to subtract the blanks and fit the average of replicates.
+
+To use the following functions the user should input to JMAKi variables that contains the string of the path to the .csv files:
+
+```julia
+path_to_data = "your_path_to_data/data.csv"
+path_to_annotation ="your_path_to_annotation/annotation.csv"
+```
+In the following examples we assume that these two variables have a value.
+
+
 ### Plot one file
+
+It is possible to plot or display the plot of an experiment with the following:
 ```julia
 
  plot_data(
-    label_exp::String, #label of the experiment
-    path_to_data::String; # path to the folder to analyze
-    path_to_annotation::Any = missing,# path to the annotation of the wells
-    path_to_plot="NA", # path where to save Plots
-    display_plots=true,# display plots in julia or not
-    save_plots=false, # save the plot or not
+   "test", #label of the experiment
+    path_to_data; # path to the folder to analyze
+    path_to_annotation = path_to_annotation,# path to the annotation of the wells
+    display_plots=true,# display plots in julia or noy
+    save_plot = false,
     overlay_plots=true, # true a single plot for all dataset false one plot per well
-    do_blank_subtraction="NO", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=false, # if true the average between replicates
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01 ,
-    blank_value = 0.0,
-    blank_array = [0.0],)
+    do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
+    )
 ```
 
 ### Log-Lin fitting
