@@ -2,7 +2,8 @@
 
 This section provides some copy-and-paste examples of JMAKi.jl
 
-1. [Simulating Data with ODEs](#simulating-data)
+1. [ Simulating/Loading single kinetics data](#simulating-data)
+   -[Loading  data from a .csv](#loading-data-ODE)
    -[Simulating Data with ODEs](#simulating-data-ODE)
    -[Simulating Data with stochastic simulations](#simulating-data-stochastic)
 2. [Data Preprocessing](#data-preprocessing)
@@ -19,23 +20,31 @@ This section provides some copy-and-paste examples of JMAKi.jl
     - [ODE segmentation](#ODE-segmented-single)
     - [NL segmentation](#NL-segmented-single)
 4. [Fitting one file (a plate)](#model-fitting-plate)
-
-     - [Plot one file](#plot-file)
-     - [Log-Lin fitting](#fitting-log-lin-file)
+    - [Plot one file](#plot-file)
+    - [Log-Lin fitting](#fitting-log-lin-file)
     - [Fitting ODE Models](#fitting-ode-file)
     - [Fitting NL Models](#fitting-NL-file)
     - [ODE segmentation](#ODE-segmented)
     - [NL segmentation](#NL-segmented)
 
-## Simulating Data 
+## Simulating/Loading single kinetics data
+### Loading  data from a .csv
+It is possible to load single curves using CSV package in Julia and format them to be compatible with JMAKi. In this example we suppose that the .csv file is formatted as required in JMAKi documentation.
 
+```julia
+df_data  =CSV.file("your_path/data.csv")
+names_of_cols = propertynames(df_data)  
+# assuming first column is time and we want to fit the second one 
+
+data_OD = Matrix(hcat(df_data[names_of_cols[1]],df_data[names_of_cols[2]],))
+```
 ### Simulating Data with ODEs
 
 To simulate data using Ordinary Differential Equations (ODEs):
 
 ```julia
 # Simulating data with an ODE
-model = "triple_piecewise_damped_logistic"
+model = "triple_piecewise_adjusted_logistic"
 n_start = [0.1]
 tstart = 0.0
 tmax = 600.0
@@ -46,8 +55,21 @@ param_of_ode = [0.06, 1.0, 200, 0.5, 0.001, 450, -0.0002]
 # Calling the simulation function
 sim = ODE_sim(model, n_start, tstart, tmax, delta_t, param_of_ode)
 
-# Plotting scatterplot of data
+# Plotting scatterplot of data without noise
 Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, size=(300, 300))
+
+#adding uniform random noise
+noise_unifom = rand(Uniform(-0.05,0.05),length(sim.t))
+
+
+data_t = reduce(hcat,sim.t)
+data_o = reduce(hcat,sim.u)
+data_OD = vcat(data_t,data_o)
+data_OD[2,:] = data_OD[2,:] .+ noise_unifom
+# ploting scatterplot of data with noise
+
+Plots.scatter!(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+
 ```
 
 ### Simulating Data with stochastic simulations
@@ -94,42 +116,56 @@ Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="A
 ```
 
 ## Fitting single well
-
+When data are store in a Matrix of Float64 with 2 rows and the number of columns 
 ### Log-Lin fitting
 
-This code snippet performs log-linear fitting using the fitting_one_well_Log_Lin function (of data generated in the previous examples). 
+To perform the log-linear fitting  (of data generated in the previous examples) it is suffucient to run. 
 
 ```julia
 res_log_lin = fitting_one_well_Log_Lin(
-    data_OD,  # dataset, first row times, second row OD
-    "test",           # name of the well
-    "test"            # label of the experiment
+    data_OD, # dataset first row times second row OD
+   "test", # name of the well
+    "test log-lin fitting"; #label of the experiment
+    display_plots=true, # do plots or no
+    type_of_smoothing="rolling_avg", # type of smoothing
+    pt_avg=7, # number of the point for rolling avg not used in the other cases
+    pt_smoothing_derivative=7, # number of poits to smooth the derivative
+    pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
 )
 ```
- The results are stored in the res_log_lin variable. With the following form
-```julia
-results_lin_log_fit = [label_exp, name_well, start_exp_win, end_exp_win, time_max_gr ,gr_of_max, gr_log_lin_fitting, 2_sigma_confidence_gr, doubling time , doubling time  - 2 sigma,  doubling time  + 2 sigma, intercept log-lin fitting, ntercept log-lin fitting 2 sigma ,R^2]
+ The results are stored in the res_log_lin variable. 
 
-```
 
 ###    Fitting ODE Models
 
-Before fitting, upper and lower bounds for the ODE parameters are defined 
+Before fitting, the model and upper and lower bounds for the ODE parameters are defined 
 ```julia
 
+
+model ="aHPM"
 # Upper bounds of the parameters of the ODE
-ub_dhpm = [1.2, 1.1, 2.0, 20]
+ub_ahpm = [1.2, 1.1, 2.0, 20]
 
 # Lower bounds of the parameters of the ODE
-lb_dhpm = [0.0001, 0.00000001, 0.00, 0]
+lb_ahpm = [0.0001, 0.00000001, 0.00, 0]
 ```
 The actual fitting is accomplished through the fitting_one_well_ODE_constrained function. This function takes the 
 dataset (data_OD generated in the previous examples), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the upper and lower bounds for the ODE parameters. Additionally, the function allows for plotting the results (do_plot=true) and specifying the path to save the generated plots (path_to_plot=path_to_plotting).
 ```julia
 # Performing ODE fitting
 results_ODE_fit = fitting_one_well_ODE_constrained(
-    data_OD, "", "", "dHPM", lb_dhpm, ub_dhpm,
-    do_plot=true, path_to_plot="path_to_plotting"
+    data_OD, 
+    "test",
+    "test_ODE",
+    model,
+    lb_dhpm,
+    ub_dhpm;
+    display_plots=true, # display plots in julia or not
+    smoothing=true, # the smoothing is done or not?
+    pt_avg=3, # number of the points to do rolling avg
+    PopulationSize=300,
+    maxiters=2000000,
+
 )
 
 ```
@@ -138,40 +174,52 @@ The results are stored in 'results_ODE_fit' with the following format
  results_ODE_fit = ["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]
 ```
 
-where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in this [table](#ODE_list)
+where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE.
 
 
 ###   Custom ODE Fitting
 
-The custom ODE function (ODE_custom) is defined with specific dynamics tailored to the characteristics of the microbial system. In this example, the function computes the rates of change (du) for two state variables (u) based on the provided parameters (param) and time (t). The specific structure of this function should be adjusted to match the dynamics of the microbial system under investigation.
+Using the custom ODE fitting, users can fit any ordinary differential equation. First it is necessary to define the differential equation. This is done by declaring a new function, e.g.:
 ```julia
 
 # Custom ODE function
 function ODE_custom(du, u, param, t)
-    du[1] = u[1] * (1 - u[1]) * param[2] + param[1] * u[1]
-    du[2] = u[1] * param[2] + param[4] * u[2] * (1 - (u[1] + u[2]) / param[3])
-end
+    du[1] = u[1] * (1 - u[1]) * param[2] + param[1] * u[1]end
 
 ```
-The upper and lower bounds for the custom ODE parameters (custom_ub and custom_lb) are defined, and the fitting process is initiated using the fitting_one_well_custom_ODE function. This function takes the  dataset (data_OD  generated in the previous examples), the name and label of the well, the custom ODE function (ODE_custom), and the upper and lower bounds for the ODE parameters. Additionally, the number of ODEs in the system is specified (2 in this example). The results can be visualized through plotting (do_plot=true) with the option to save the generated plots (path_to_plot=path_to_plotting).
+Now, we set upper and lower bounds of the parameters of the ODE:
 
 ```julia
 # Bounds for the custom ODE parameters
-custom_ub = [1.2, 1.1, 2.0, 20]
-custom_lb = [0.0001, 0.00000001, 0.00, 0]
+custom_ub = [1.2, 1.1]
+custom_lb = [0.0001, 0.00000001]
+```
+Finally, we perform the fit:
+```julia
 
 # Performing custom ODE fitting
 results_ODE_fit = fitting_one_well_custom_ODE(
-    data_OD, "test", "test_model_custom", ODE_custom,
-    custom_lb, custom_ub, 2,
-    do_plot=true, path_to_plot=path_to_plotting
+    data_OD, # dataset first row times second row OD
+   "test", # name of the well
+    "test custom ode", #label of the experiment
+   ODE_custom, # ode model to use
+    custom_lb, # lower bound param
+    custom_ub, # upper bound param
+    1; # number ode in the system
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    integrator=Tsit5(), # selection of sciml integrator
+    display_plots=true, # do plots or no
+    pt_avg=3, # numebr of the point to generate intial condition
+    smoothing=true, # the smoothing is done or not?
+    PopulationSize=300,
+    maxiters=2000000,
 )
 ```
-The results are stored in 'results_ODE_fit' with the same format of the previous examples
+The results are stored in 'results_ODE_fit' with the same format of the previous examples.
 
 ###   Sensitivity Analysis
 
-The sensitivity analysis is initiated with the one_well_morris_sensitivity function. This function takes the preprocessed dataset (data_OD generated in the previous examples), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (n_step_sensitivity) is specified to control the granularity of the analysis.
+The sensitivity analysis is performed with the one_well_morris_sensitivity function. This function takes the preprocessed dataset (data_OD generated in the previous examples), the name and label of the well, the ODE model to use ("dHPM" in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (n_step_sensitivity) is specified to control the granularity of the analysis.
 
 ```julia
 # Number of steps for Morris sensitivity analysis
