@@ -375,7 +375,7 @@ function stochastic_sim(
 
         # evaluating the number of birth events with poisson approx
         total_birth_rate = rate_per_cell .* tot_pop[end] .* delta_t
-        n_birth = rand(Poisson(total_birth_rate), 1)
+        n_birth = rand(Distributions.Poisson(total_birth_rate), 1)
 
         # updating states
         new_conc = max(0, conc_of_nutriens[end] - n_birth[1] * n_mol_per_birth / volume)

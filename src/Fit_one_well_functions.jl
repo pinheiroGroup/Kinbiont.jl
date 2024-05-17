@@ -774,10 +774,10 @@ function ODE_Model_selection(
     ub_param_array::Any; # upper bound param
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
-    pt_avg=1, # number of the point to generate intial condition
+    pt_avg=3, # number of the point to generate intial condition
     beta_penality=2.0, # penality for AIC evaluation
     smoothing=false, # the smoothing is done or not?
-    type_of_smoothing="lowess",
+    type_of_smoothing="rolling_avg",
     thr_lowess=0.05,
     type_of_loss="L2", # type of used loss
     blank_array=zeros(100), # data of all blanks
@@ -1067,7 +1067,7 @@ function one_well_morris_sensitivity(
     pt_smooth_derivative=7,
     write_res=false,
     smoothing=false, # the smoothing is done or not?
-    type_of_smoothing="lowess",
+    type_of_smoothing="rolling_avg",
     type_of_loss="RE", # type of used loss
     blank_array=zeros(100), # data of all blanks
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
@@ -1269,7 +1269,7 @@ function selection_ODE_fixed_intervals(
     save_plot=false, # do plots or no
     display_plots=false,
     path_to_plot="NA", # where save plots
-    pt_smooth_derivative=7,
+    pt_smooth_derivative=0,
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
