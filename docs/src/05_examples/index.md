@@ -407,10 +407,57 @@ First we fit giving to JMAKi the list of change points:
 ```julia
 cdp_list = [100.0, 200.0]
 
+res = selection_ODE_fixed_intervals(
+   data_OD, # dataset first row times second row OD
+    "test", # name of the well
+    "test segmentation ODE", #label of the experiment
+    list_of_models, # ode models to use
+    list_lb_param, # lower bound param
+    list_ub_param, # upper bound param
+    cdp_list;
+    type_of_loss="L2", # type of used loss
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    integrator=Tsit5(), # selection of sciml integrator
+    smoothing=true,
+    type_of_smoothing="rolling_avg",
+    pt_avg=3,
+    display_plots=true,
+    path_to_plot="NA", # where save plots
+    pt_smooth_derivative=0,
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.0000000001,
+    correction_AIC=false)
 ```
 Finally we can run a cpd algorithm and perfom the fitting:
 ```julia
-cdp_list = [100.0, 200.0]
+n_change_points =2
+segmentation_ODE(
+    data_OD, # dataset first row times second row OD
+    "test", # name of the well
+    "test segmentation ODE", #label of the experiment
+    list_of_models, # ode model to use
+    list_lb_param, # lower bound param
+    list_ub_param, # upper bound param
+    n_change_pointst;
+    detect_number_cpd=false,
+    fixed_cpd=true,
+    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    integrator=Tsit5(), # selection of sciml integrator
+    type_of_loss="L2", # type of used loss
+    type_of_detection="slinding_win",
+    type_of_curve="original",
+    pt_avg=3, # number of the point to generate intial condition
+    smoothing=true, # the smoothing is done or not?
+    display_plot=true, # do plots or no
+    win_size=10, #  
+    pt_smooth_derivative=0,
+    PopulationSize=300,
+    maxiters=2000000,
+    abstol=0.00001,
+    type_of_smoothing="rolling_average",
+    thr_lowess=0.05,
+    correction_AIC=true)
 
 ```
 ### Fitting NL Models
@@ -420,7 +467,7 @@ cdp_list = [100.0, 200.0]
 ### NL segmentation
 
 ## Fitting one file (a plate)
-The next three functions work directly on a file. So in this case are mandatory the .csv of data and annotation (see  [Data and annotation formatting](#data) ). Aslo in XXXXX the user can download an examples of data and annotation.
+The next  functions work directly on a file. So in this case are mandatory the .csv of data and annotation (see  [Data and annotation formatting](#data) ). Aslo in XXXXX the user can download an examples of data and annotation.
 
 
 ### Plot one file
