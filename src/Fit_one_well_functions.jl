@@ -18,7 +18,7 @@
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", 
-    thr_lowess=0.05, 
+    thr_lowess=0.05 
     ) 
    
     
@@ -300,7 +300,7 @@ end
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
-    thr_lowess=0.05,
+    thr_lowess=0.05
     )
 
 This function uses an ordinary differential equation (ODE) model to fit the data of a on a single well. It estimates the model parameters within specified lower and upper bounds.
@@ -512,7 +512,7 @@ end
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-    type_of_smoothing="lowess",
+    type_of_smoothing="lowess"
     )
 
 This function is designed to fit a user-defined ordinary differential equation (ODE) model to time-series data of a single well.
@@ -717,7 +717,7 @@ end
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
-    correction_AIC=true,
+    correction_AIC=true
     )
 
 Automatic model selection for multiple ODE model fits in the time series of a single well. The best-fitting model is chosen on the basis of the Akaike Information Criterion (AIC) or corrected AIC (AICc).
@@ -1009,7 +1009,7 @@ end
     calibration_OD_curve="NA", 
     PopulationSize=300,
     maxiters=2000000,
-    abstol=0.00001,
+    abstol=0.00001
     )
 
 This function performs the Morris sensitivity analysis, which assesses the sensitivity of the fit parameters to variations of the initial guess (suitable for quality checks of nonlinear model fits. See https://docs.sciml.ai/GlobalSensitivity/stable/methods/morris/). 
@@ -1205,7 +1205,8 @@ end
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.0000000001,
-    correction_AIC=true)
+    correction_AIC=true
+    )
     
 
 This function performs a fitting of a segmented ODE on one curve. For this function the user must supply the change points.
@@ -1699,6 +1700,18 @@ function segmentation_ODE(
     end
     #fitting all model with change points
     if n_max_change_points > 0
+
+        # Fernanda modification to fix non smoothing (to be tested; start)
+        # smooting if required
+        if smoothing == true
+            data_testing = smoothing_data(
+                data_testing;
+                method=type_of_smoothing,
+                pt_avg=pt_avg,
+                thr_lowess=thr_lowess
+            )
+        end
+        # Fernanda modification (end)
 
 
         if detect_number_cpd == true
