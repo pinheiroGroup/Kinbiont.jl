@@ -1209,52 +1209,49 @@ end
     )
     
 
-This function performs a fitting of a segmented ODE on one curve. For this function the user must supply the change points.
+This function fits an ODE model at each segment of the time-series data. Change points are supplied by the user. 
 
 # Arguments:
 
-- `data_testing::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
-- `name_well::String`: The name of the well.
-- `label_exp::String`: The label of the experiment.
-- `list_of_models::Vector{String}`: A vector of string of ODE models to evaluate.
+- `data_testing::Matrix{Float64}`:  The growth curve data. Time values are in the first row and the fit observable (e.g., OD) is in the second row, see documentation.
+- `name_well::String`: Name of the well.
+- `label_exp::String`: Label of the experiment.
+- `list_of_models::Vector{String}`: List of the ODE models of choice.
 - `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
 - `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
-- `intervals_changepoints::Any`: the array containings the change point list, e.g., [0.0 10.0 30.0] 
+- `intervals_changepoints::Any`: Array containing the list of change points, e.g., [0.0 10.0 30.0]. 
 
 
 # Key Arguments:
 
-- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
--  `save_plot_best_model=false` :Bool, save the plot or not.
-- `display_plot_best_model=true`:Bool,  Whether or not diplay the plot in julia.
-- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
-- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
-- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-- `smoothing=false`: Whether to apply smoothing to the data or not.
-- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `param= lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
+- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
+- `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
+- `pt_avg=7`: Int. Size of the rolling average window smoothing. 
+- `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
 - `blank_array=zeros(100)`: Data of all blanks in single array.
+- `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
--  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
-- ` PopulationSize =100`: Size of the population of the optimization
--  ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
--  `correction_AIC=true`: Bool, do finite samples correction of AIC.
+- `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
+- `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
+- `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
+- `PopulationSize=100`: Size of the population of the optimization (Xx).
+- `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
+- `abstol = 0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
 -  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
-
-
 
 # Output (if `res =selection_ODE_fixed_intervals(...)`:
 
-- `res[1]`. Parameters of each segment
-- `res[2]`. Interval of the ODE segment
-- `res[3]`. Time of the fitted solution
-- `res[4]`. Numerical fitted solution
-- `res[5]`. the loss of the solution
-- The plot of the  fitting of the best model if `save_plot_best_model=true` or  `display_plot_best_model=true` .
+- `res[1]`. Parameters of each segment.
+- `res[2]`. Interval of each ODE segment.
+- `res[3]`. Time of the fitted solution.
+- `res[4]`. Numerical value of the fitted solution.
+- `res[5]`. The fit loss score. 
+- The best fitting model plot if `save_plot_best_model=true` or `display_plot_best_model=true` .
 
 """
 function selection_ODE_fixed_intervals(
