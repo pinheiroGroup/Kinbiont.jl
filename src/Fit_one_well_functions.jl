@@ -1242,7 +1242,7 @@ This function fits an ODE model at each segment of the time-series data. Change 
 - `PopulationSize=100`: Size of the population of the optimization (Xx).
 - `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
 - `abstol = 0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
--  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+- `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
 
 # Output (if `res =selection_ODE_fixed_intervals(...)`:
 
@@ -1527,62 +1527,60 @@ end
     thr_lowess=0.05,
     correction_AIC=true)
 
-This function performs model selection for ordinary differential equation (ODE) models while segmenting the time series in various part using change points detection algorithm.
+This function performs model selection for ordinary differential equation (ODE) models in different segments of the input growth time series data. 
+Segmentation is performed with a change points detection algorithm (see (Xx).)
 
 # Arguments:
 
-- `data_testing::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
-- `name_well::String`: The name of the well.
-- `label_exp::String`: The label of the experiment.
-- `list_of_models::Vector{String}`: A vector of ODE models to evaluate.
-- `list_lb_param::Any`: Array of lower bounds for the parameters of all models.
-- `list_ub_param::Any`: Array of upper bounds for the parameters of all models.
--  `n_max_change_points::Int`: Number of change point used, the results will have different number of cp depending on the values of key argument 'type_of_detection' and 'fixed_cpd'
+- `data_testing::Matrix{Float64}`:  The growth curve data. Time values are in the first row and the fit observable (e.g., OD) is in the second row, see documentation.
+- `name_well::String`: Name of the well.
+- `label_exp::String`: Label of the experiment.
+- `list_of_models::Vector{String}`: List of the ODE models of choice.
+- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
+- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
+- `n_max_change_points::Int`: Number of change points of choice, user defined. The results will have different a number of change points depending on the values of the key argument 'type_of_detection' and 'fixed_cpd'.
 
 
 # Key Arguments:
 
-- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
--  `save_plot_best_model=false` :Bool, save the plot or not.
-- `display_plot_best_model=true`:Bool,  Whether or not diplay the plot in julia.
-- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
-- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
-- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-- `smoothing=false`: Whether to apply smoothing to the data or not.
-- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
+- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
+- `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
+- `pt_avg=7`: Int. Size of the rolling average window smoothing. 
+- `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
 - `blank_array=zeros(100)`: Data of all blanks in single array.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: '"interpolation"' or   '"exp_fit"' it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
--  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
-- ` PopulationSize =100`: Size of the population of the optimization
--  ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
--  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
-- 'type_of_detection="slinding_win"': String, algorithm of cpd to use. Options '"slinding_win"' use a slinding window approach, '"lsdd"' uses least square density difference (LSDD) from ChangePointDetection.jl 
-- 'type_of_curve="original"': String, on which curve is performed the change point detection algorithm. If '"original"' it use the original time series. With '"deriv"' it use the specific growth rate time series to perform the cdp.
+- `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
+- `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
+- `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
+- `PopulationSize=100`: Size of the population of the optimization (Xx).
+- `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
+- `abstol = 0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+- 'type_of_detection="slinding_win"': String. Change point detection method of choice. Options `"slinding_win"` (uses a slinding window approach), `"lsdd"` (uses least square density difference (LSDD) from ChangePointDetection.jl). 
+- 'type_of_curve="original"': String. Defines the input curve for the change point detection. Options `"original"` for the original time series, and `"deriv"` for performing change point detection on the specific growth rate time series.
 - `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
-- `n_bins=40`: Int, used if `method_peaks_detection="thr_scan"` number of bins used to generate the threshold that has n_change_points peaks
-- 'detect_number_cpd=true': Bool, if equal to true all the possible combination of lenght 1,2,...,n_change_points are tested and the best for AICc is returned.
-- 'fixed_cpd=false': Bool If  true it returns the fitting using top n_change_points.
--  'win_size=14': Int, size of the windows used by the cdo algorithms
--  'path_to_results="NA"':String, where to save the results.
--  'save_all_model=false': Bool, if true all the tested model are saved.
+- `n_bins=40`: Int. Used if `method_peaks_detection="thr_scan"`. Number of bins used to generate the threshold that has n_change_points peaks.
+- 'detect_number_cpd=true': Bool. Options: true to test all possible combinations of 1, 2, .., n_change_points. The best model is defined on the basis of the AICc criteria. False not to test segment combinations. 
+- 'fixed_cpd=false': Bool. Options: true to return the fit using top n_change_points. False not to.
+- 'win_size=14': Int. Size of the windows used by the cdo algorithms.
+- 'path_to_results="NA"':String. Path to save the results. 
+- 'save_all_model=false': Bool. Options: true to save all tested models. False not to.
 
-
-Note that, if 'detect_number_cpd=false' and 'fixed_cpd=false' JMAKi will use n_change_points but it will test different combinations of the n_change_points+2 top change points
+JMAKi uses n_change_points but tests different combinations of the n_change_points+2 top change points if 'detect_number_cpd=false' and 'fixed_cpd=false'.
 
 
 # Output (if `Model_selection =ODE_Model_selection(...)`:
 
-
-- `res[1]`. Parameters of each segment
-- `res[2]`. Interval of the ODE segment
-- `res[3]`. Time of the fitted solution
-- `res[4]`. Numerical fitted solution
-- The plot of the  fitting of the best model if `save_plot_best_model=true` or  `display_plot_best_model=true` .
+- `res[1]`. Parameters of each segment.
+- `res[2]`. Interval of each ODE segment.
+- `res[3]`. Time of the fitted solution.
+- `res[4]`. Numerical value of the fitted solution.
+- The best fitting model plot if `save_plot_best_model=true` or `display_plot_best_model=true` .
 
 
 """
