@@ -316,9 +316,9 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 
 # Key Arguments:
 
-- `param= lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
-- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -334,7 +334,7 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
 - `PopulationSize=100`: Size of the population of the optimization (Xx)
 - `maxiters=2000000`: Stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol = 0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `abstol=0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
 
 
 # Output (if `results_ODE_fit=fitting_one_well_ODE_constrained(...)`):
@@ -529,9 +529,9 @@ This function is designed to fit a user-defined ordinary differential equation (
 
 # Key Arguments:
 
-- `param= lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
-- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -547,7 +547,7 @@ This function is designed to fit a user-defined ordinary differential equation (
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
 - `PopulationSize=100`: Size of the population of the optimization (Xx)
 - `maxiters=2000000`: Stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol = 0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `abstol=0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
 
 
 # Output (if `results_ODE_fit =fitting_one_well_custom_ODE(...)`):
@@ -732,9 +732,9 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 
 # Key Arguments:
 
-- `param= lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
-- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -749,7 +749,7 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
 - `PopulationSize=100`: Size of the population of the optimization (Xx).
 - `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol = 0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
 - `correction_AIC=true`: Bool. Options: "true" to perform the AIC finite samples correction or "false" not to.
 - `beta_penality=2.0`: Penality parameters for the evaluation of AIC (or AICc).
 
@@ -1027,9 +1027,9 @@ This function performs the Morris sensitivity analysis, which assesses the sensi
 # Key Arguments:
 
 - `N_step_morris=7`: Number of steps for the Morris sensitivity analysis.
-- `param= lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Initial guess for the model parameters.
-- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Initial guess for the model parameters.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
@@ -1043,7 +1043,7 @@ This function performs the Morris sensitivity analysis, which assesses the sensi
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
 - `PopulationSize=100`: Size of the population of the optimization (Xx).
 - `maxiters=2000000`: Stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol = 0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `abstol=0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
 
 
 # Output (if `results_ODE_morris_sensitivity =one_well_morris_sensitivity(...)`):
@@ -1224,9 +1224,9 @@ This function fits an ODE model at each segment of the time-series data. Change 
 
 # Key Arguments:
 
-- `param= lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
-- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -1241,7 +1241,7 @@ This function fits an ODE model at each segment of the time-series data. Change 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
 - `PopulationSize=100`: Size of the population of the optimization (Xx).
 - `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol = 0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
 - `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
 
 # Output (if `res =selection_ODE_fixed_intervals(...)`:
@@ -1543,8 +1543,8 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 
 # Key Arguments:
 
-- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -1559,7 +1559,7 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
 - `PopulationSize=100`: Size of the population of the optimization (Xx).
 - `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol = 0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
 - `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
 - 'type_of_detection="slinding_win"': String. Change point detection method of choice. Options `"slinding_win"` (uses a slinding window approach), `"lsdd"` (uses least square density difference (LSDD) from ChangePointDetection.jl). 
 - 'type_of_curve="original"': String. Defines the input curve for the change point detection. Options `"original"` for the original time series, and `"deriv"` for performing change point detection on the specific growth rate time series.
@@ -1567,7 +1567,7 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 - `n_bins=40`: Int. Used if `method_peaks_detection="thr_scan"`. Number of bins used to generate the threshold that has n_change_points peaks.
 - 'detect_number_cpd=true': Bool. Options: true to test all possible combinations of 1, 2, .., n_change_points. The best model is defined on the basis of the AICc criteria. False not to test segment combinations. 
 - 'fixed_cpd=false': Bool. Options: true to return the fit using top n_change_points. False not to.
-- 'win_size=14': Int. Size of the windows used by the cdo algorithms.
+- 'win_size=14': Int. Size of the window used by the cpd algorithms.
 - 'path_to_results="NA"':String. Path to save the results. 
 - 'save_all_model=false': Bool. Options: true to save all tested models. False not to.
 
