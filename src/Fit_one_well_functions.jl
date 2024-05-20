@@ -5,11 +5,11 @@
     fitting_one_well_Log_Lin(
     data::Matrix{Float64},
     name_well::String,
-    label_exp::String; 
+    label_exp::String, 
     display_plots=false,
     save_plot=false,
     path_to_plot="NA", 
-    type_of_smoothing="rolling_avg"
+    type_of_smoothing="rolling_avg",
     pt_avg=7, 
     pt_smoothing_derivative=7, 
     pt_min_size_of_win=7, 
@@ -18,7 +18,7 @@
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", 
-    thr_lowess=0.05, 
+    thr_lowess=0.05 
     ) 
    
     
@@ -300,7 +300,7 @@ end
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
-    thr_lowess=0.05,
+    thr_lowess=0.05
     )
 
 This function uses an ordinary differential equation (ODE) model to fit the data of a on a single well. It estimates the model parameters within specified lower and upper bounds.
@@ -316,9 +316,9 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 
 # Key Arguments:
 
-- `param= lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
-- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -326,27 +326,27 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
 - `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
 - `blank_array=zeros(100)`: Data of all blanks in single array.
-- `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `pt_smoothing_derivative=7`: Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
 - `calibration_OD_curve="NA"`: String. The path to the calibration curve (a .csv file). Used only if `multiple_scattering_correction=true`.
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
 - `PopulationSize=100`: Size of the population of the optimization (Xx)
-- `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol = 0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `maxiters=2000000`: Stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
+- `abstol=0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
 
 
-# Output (if `results_ODE_fit=fitting_one_well_ODE_constrained(...)`:
+# Output (if `results_ODE_fit=fitting_one_well_ODE_constrained(...)`):
 
 - `results_ODE_fit[1]`. An array with the following contents: 
 
   `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
 where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as in the documentation.
 
-- `results_ODE_fit[2]` the times of the fitted ODE.
+- `results_ODE_fit[2]`. The time coordinates (Xx) of the fitted ODE. 
 
-- `results_ODE_fit[3]` the numerical solution of the fitted ODE.
+- `results_ODE_fit[3]`. The numerical solution of the fitted ODE.
 
 - The fit plot if `do_plot=true`.
 
@@ -512,7 +512,7 @@ end
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-    type_of_smoothing="lowess",
+    type_of_smoothing="lowess"
     )
 
 This function is designed to fit a user-defined ordinary differential equation (ODE) model to time-series data of a single well.
@@ -525,13 +525,13 @@ This function is designed to fit a user-defined ordinary differential equation (
 - `label_exp::String`: Label of the experiment.
 - `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
 - `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
-- `n_equation::Int`: number of ODEs in the model.
+- `n_equation::Int`: Number of ODEs in the model.
 
 # Key Arguments:
 
-- `param= lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
-- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -539,18 +539,18 @@ This function is designed to fit a user-defined ordinary differential equation (
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
 - `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
 - `blank_array=zeros(100)`: Data of all blanks in single array.
-- `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `pt_smoothing_derivative=7`: Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
 - `calibration_OD_curve="NA"`: String. The path to the calibration curve (a .csv file). Used only if `multiple_scattering_correction=true`.
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
 - `PopulationSize=100`: Size of the population of the optimization (Xx)
-- `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol = 0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `maxiters=2000000`: Stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
+- `abstol=0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
 
 
-# Output (if `results_ODE_fit =fitting_one_well_custom_ODE(...)`:
+# Output (if `results_ODE_fit =fitting_one_well_custom_ODE(...)`):
 - `results_ODE_fit[1]`. An array with the following contents: 
 
   `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
@@ -696,7 +696,7 @@ end
     label_exp::String, 
     models_list::Vector{String}, 
     lb_param_array::Any, 
-    ub_param_array::Any; 
+    ub_param_array::Any,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     pt_avg=1,
@@ -717,9 +717,10 @@ end
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.00001,
-    correction_AIC=true,)
+    correction_AIC=true
+    )
 
-Automatic model selection for multiple ODE model fits in the time series of a single well. Best-fitting model is chosen on the basis of the Akaike Information Criterion (AIC) or corrected AIC (AICc).
+Automatic model selection for multiple ODE model fits in the time series of a single well. The best-fitting model is chosen on the basis of the Akaike Information Criterion (AIC) or corrected AIC (AICc).
 
 # Arguments:
 - `data::Matrix{Float64}`: The growth curve data. Time values are in the first row and the fit observable (e.g., OD) is in the second row, see documentation.
@@ -731,14 +732,14 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 
 # Key Arguments:
 
-- `param= lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
-- `integrator =Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
-- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `pt_smoothing_derivative=7`: Int. Number of points for evaluation of the specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
 - `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
 - `blank_array=zeros(100)`: Data of all blanks in single array.
@@ -748,20 +749,20 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
 - `PopulationSize=100`: Size of the population of the optimization (Xx).
 - `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol = 0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
 - `correction_AIC=true`: Bool. Options: "true" to perform the AIC finite samples correction or "false" not to.
 - `beta_penality=2.0`: Penality parameters for the evaluation of AIC (or AICc).
 
 
 
-# Output (if `Model_selection =ODE_Model_selection(...)`:
+# Output (if `Model_selection =ODE_Model_selection(...)`):
 
 - `Model_selection[1]`: Matrix containing the loss and the AIC score for each model.
 - `Model_selection[2]`: Tuple containing all the fitted models.
 - `Model_selection[3]`: The best model's AIC score.
 - `Model_selection[4]`: The best model's loss value. 
 - `Model_selection[5]`: The best model's parameters. 
-- `Model_selection[6]`: (Xx) the string of the best model.
+- `Model_selection[6]`: The best model's name. 
 - `Model_selection[7]`: The fitted ODE numerical value. 
 - The best model fit plot if `save_plot_best_model=true` or `display_plot_best_model=true` .
 """
@@ -992,7 +993,7 @@ end
     label_exp::String, 
     model::String,
     lb_param::Vector{Float64}, 
-    ub_param::Vector{Float64};
+    ub_param::Vector{Float64},
     N_step_morris=7,
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(),
@@ -1008,49 +1009,53 @@ end
     calibration_OD_curve="NA", 
     PopulationSize=300,
     maxiters=2000000,
-    abstol=0.00001,
+    abstol=0.00001
     )
 
-This function is designed to perform Morris sensitivity analysis on a dataset representing the growth curve of a microorganism in a well. It assesses the sensitivity of the model to variations in input parameters of the optimization.
+This function performs the Morris sensitivity analysis, which assesses the sensitivity of the fit parameters to variations of the initial guess (suitable for quality checks of nonlinear model fits. See https://docs.sciml.ai/GlobalSensitivity/stable/methods/morris/). 
 
 # Arguments:
 
-- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
-- `name_well::String`: The name of the well.
-- `label_exp::String`: The label of the experiment.
-- `model::String`: The ODE model to use.
+- `data::Matrix{Float64}`: The growth curve data. Time values are in the first row and the fit observable (e.g., OD) is in the second row, see documentation.
+- `name_well::String`: Name of the well.
+- `label_exp::String`: Label of the experiment.
+- `model::String`: The ODE model of choice.
 - `lb_param::Vector{Float64}`: Lower bounds for the parameters.
 - `ub_param::Vector{Float64}`: Upper bounds for the parameters.
 
+
 # Key Arguments:
 
-    - `N_step_morris=7`: Number of steps for the Morris sensitivity analysis.
-- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
--  `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
-- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
-- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
-- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-- `smoothing=false`: Whether to apply smoothing to the data or not.
-- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
-- `blank_array=zeros(100)`: Data of all blanks in single array.
-- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
--  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
-- `PopulationSize =100`: Size of the population of the optimization
-- `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+- `N_step_morris=7`: Number of steps for the Morris sensitivity analysis.
+- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Initial guess for the model parameters.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
+- `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
+- `pt_avg=7`: Int. Size of the rolling average window smoothing. 
+- `pt_smoothing_derivative=7`: Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
+- `blank_array=zeros(100)`: Data of all blanks in a single array.
+- `calibration_OD_curve="NA"`: String. The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
+- `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
+- `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
+- `PopulationSize=100`: Size of the population of the optimization (Xx).
+- `maxiters=2000000`: Stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
+- `abstol=0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
 
 
-# Output (if `results_ODE_morris_sensitivity =one_well_morris_sensitivity(...)`:
+# Output (if `results_ODE_morris_sensitivity =one_well_morris_sensitivity(...)`):
 
-- `results_ODE_morris_sensitivity[1]` a with in each column the initial guess for the parameters of the optimization in the same order of [table](#ODE_list)
-- `results_ODE_morris_sensitivity[2]` a matrix with the following contents for each column: `["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`. It can be saved into a .csv if `write_res=true`.
-where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in this [table](#ODE_list)
-- The plot of the  fitting of the best model if `save_plot_best_model=true` or  `display_plot_best_model=true` .
+- `results_ODE_morris_sensitivity[1]`. A matrix with the optimzation parameters' initial guess in each column; same parameter order as in this [table](#ODE_list).
+- `results_ODE_morris_sensitivity[2]`. A matrix with the following contents for each column: 
+
+`["name of model", "well", "param_1", "param_2",.., "param_n", "maximum specific gr using ode", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
+
+where  `"param_1","param_2",..,"param_n"` are the parameters of the selected ODE as in this [table](#ODE_list). It can be saved into a .csv if `write_res=true`.
+
+- The best fitting model plot if `save_plot_best_model=true` or `display_plot_best_model=true`.
 
 """
 function one_well_morris_sensitivity(
@@ -1200,55 +1205,53 @@ end
     PopulationSize=300,
     maxiters=2000000,
     abstol=0.0000000001,
-    correction_AIC=true)
+    correction_AIC=true
+    )
     
 
-This function performs a fitting of a segmented ODE on one curve. For this function the user must supply the change points.
+This function fits an ODE model at each segment of the time-series data. Change points are supplied by the user. 
 
 # Arguments:
 
-- `data_testing::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
-- `name_well::String`: The name of the well.
-- `label_exp::String`: The label of the experiment.
-- `list_of_models::Vector{String}`: A vector of string of ODE models to evaluate.
+- `data_testing::Matrix{Float64}`:  The growth curve data. Time values are in the first row and the fit observable (e.g., OD) is in the second row, see documentation.
+- `name_well::String`: Name of the well.
+- `label_exp::String`: Label of the experiment.
+- `list_of_models::Vector{String}`: List of the ODE models of choice.
 - `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
 - `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
-- `intervals_changepoints::Any`: the array containings the change point list, e.g., [0.0 10.0 30.0] 
+- `intervals_changepoints::Any`: Array containing the list of change points, e.g., [0.0 10.0 30.0]. 
 
 
 # Key Arguments:
 
-- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
--  `save_plot_best_model=false` :Bool, save the plot or not.
-- `display_plot_best_model=true`:Bool,  Whether or not diplay the plot in julia.
-- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
-- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
-- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-- `smoothing=false`: Whether to apply smoothing to the data or not.
-- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
+- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
+- `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
+- `pt_avg=7`: Int. Size of the rolling average window smoothing. 
+- `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
 - `blank_array=zeros(100)`: Data of all blanks in single array.
+- `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
--  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
-- ` PopulationSize =100`: Size of the population of the optimization
--  ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
--  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
-
-
+- `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
+- `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
+- `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
+- `PopulationSize=100`: Size of the population of the optimization (Xx).
+- `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
+- `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
 
 # Output (if `res =selection_ODE_fixed_intervals(...)`:
 
-- `res[1]`. Parameters of each segment
-- `res[2]`. Interval of the ODE segment
-- `res[3]`. Time of the fitted solution
-- `res[4]`. Numerical fitted solution
-- `res[5]`. the loss of the solution
-- The plot of the  fitting of the best model if `save_plot_best_model=true` or  `display_plot_best_model=true` .
+- `res[1]`. Parameters of each segment.
+- `res[2]`. Interval of each ODE segment.
+- `res[3]`. Time of the fitted solution.
+- `res[4]`. Numerical value of the fitted solution.
+- `res[5]`. The fit loss score. 
+- The best fitting model plot if `save_plot_best_model=true` or `display_plot_best_model=true` .
 
 """
 function selection_ODE_fixed_intervals(
@@ -1524,62 +1527,60 @@ end
     thr_lowess=0.05,
     correction_AIC=true)
 
-This function performs model selection for ordinary differential equation (ODE) models while segmenting the time series in various part using change points detection algorithm.
+This function performs model selection for ordinary differential equation (ODE) models in different segments of the input growth time series data. 
+Segmentation is performed with a change points detection algorithm (see (Xx).)
 
 # Arguments:
 
-- `data_testing::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents optical density (OD).
-- `name_well::String`: The name of the well.
-- `label_exp::String`: The label of the experiment.
-- `list_of_models::Vector{String}`: A vector of ODE models to evaluate.
-- `list_lb_param::Any`: Array of lower bounds for the parameters of all models.
-- `list_ub_param::Any`: Array of upper bounds for the parameters of all models.
--  `n_max_change_points::Int`: Number of change point used, the results will have different number of cp depending on the values of key argument 'type_of_detection' and 'fixed_cpd'
+- `data_testing::Matrix{Float64}`:  The growth curve data. Time values are in the first row and the fit observable (e.g., OD) is in the second row, see documentation.
+- `name_well::String`: Name of the well.
+- `label_exp::String`: Label of the experiment.
+- `list_of_models::Vector{String}`: List of the ODE models of choice.
+- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
+- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
+- `n_max_change_points::Int`: Number of change points of choice, user defined. The results will have different a number of change points depending on the values of the key argument 'type_of_detection' and 'fixed_cpd'.
 
 
 # Key Arguments:
 
-- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
--  `save_plot_best_model=false` :Bool, save the plot or not.
-- `display_plot_best_model=true`:Bool,  Whether or not diplay the plot in julia.
-- `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
-- `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
-- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-- `smoothing=false`: Whether to apply smoothing to the data or not.
-- `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
+- `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
+- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
+- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
+- `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
+- `pt_avg=7`: Int. Size of the rolling average window smoothing. 
+- `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
 - `blank_array=zeros(100)`: Data of all blanks in single array.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: '"interpolation"' or   '"exp_fit"' it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
--  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
-- ` PopulationSize =100`: Size of the population of the optimization
--  ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
--  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
-- 'type_of_detection="slinding_win"': String, algorithm of cpd to use. Options '"slinding_win"' use a slinding window approach, '"lsdd"' uses least square density difference (LSDD) from ChangePointDetection.jl 
-- 'type_of_curve="original"': String, on which curve is performed the change point detection algorithm. If '"original"' it use the original time series. With '"deriv"' it use the specific growth rate time series to perform the cdp.
+- `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
+- `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
+- `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
+- `PopulationSize=100`: Size of the population of the optimization (Xx).
+- `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
+- `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+- 'type_of_detection="slinding_win"': String. Change point detection method of choice. Options `"slinding_win"` (uses a slinding window approach), `"lsdd"` (uses least square density difference (LSDD) from ChangePointDetection.jl). 
+- 'type_of_curve="original"': String. Defines the input curve for the change point detection. Options `"original"` for the original time series, and `"deriv"` for performing change point detection on the specific growth rate time series.
 - `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
-- `n_bins=40`: Int, used if `method_peaks_detection="thr_scan"` number of bins used to generate the threshold that has n_change_points peaks
-- 'detect_number_cpd=true': Bool, if equal to true all the possible combination of lenght 1,2,...,n_change_points are tested and the best for AICc is returned.
-- 'fixed_cpd=false': Bool If  true it returns the fitting using top n_change_points.
--  'win_size=14': Int, size of the windows used by the cdo algorithms
--  'path_to_results="NA"':String, where to save the results.
--  'save_all_model=false': Bool, if true all the tested model are saved.
+- `n_bins=40`: Int. Used if `method_peaks_detection="thr_scan"`. Number of bins used to generate the threshold that has n_change_points peaks.
+- 'detect_number_cpd=true': Bool. Options: true to test all possible combinations of 1, 2, .., n_change_points. The best model is defined on the basis of the AICc criteria. False not to test segment combinations. 
+- 'fixed_cpd=false': Bool. Options: true to return the fit using top n_change_points. False not to.
+- 'win_size=14': Int. Size of the window used by the cpd algorithms.
+- 'path_to_results="NA"':String. Path to save the results. 
+- 'save_all_model=false': Bool. Options: true to save all tested models. False not to.
 
-
-Note that, if 'detect_number_cpd=false' and 'fixed_cpd=false' JMAKi will use n_change_points but it will test different combinations of the n_change_points+2 top change points
+JMAKi uses n_change_points but tests different combinations of the n_change_points+2 top change points if 'detect_number_cpd=false' and 'fixed_cpd=false'.
 
 
 # Output (if `Model_selection =ODE_Model_selection(...)`:
 
-
-- `res[1]`. Parameters of each segment
-- `res[2]`. Interval of the ODE segment
-- `res[3]`. Time of the fitted solution
-- `res[4]`. Numerical fitted solution
-- The plot of the  fitting of the best model if `save_plot_best_model=true` or  `display_plot_best_model=true` .
+- `res[1]`. Parameters of each segment.
+- `res[2]`. Interval of each ODE segment.
+- `res[3]`. Time of the fitted solution.
+- `res[4]`. Numerical value of the fitted solution.
+- The best fitting model plot if `save_plot_best_model=true` or `display_plot_best_model=true` .
 
 
 """
@@ -1694,6 +1695,18 @@ function segmentation_ODE(
     end
     #fitting all model with change points
     if n_max_change_points > 0
+
+        # Fernanda modification to fix non smoothing (to be tested; start)
+        # smooting if required
+        if smoothing == true
+            data_testing = smoothing_data(
+                data_testing;
+                method=type_of_smoothing,
+                pt_avg=pt_avg,
+                thr_lowess=thr_lowess
+            )
+        end
+        # Fernanda modification (end)
 
 
         if detect_number_cpd == true
