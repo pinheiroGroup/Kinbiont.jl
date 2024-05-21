@@ -1,3 +1,7 @@
+using OptimizationBBO
+using Distributions
+using StatsBase
+import Plots
 
 #######################################################################
 """
