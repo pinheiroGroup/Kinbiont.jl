@@ -49,6 +49,7 @@ threshold to define an exponetial window where the log-linear fit is performed.
 - `calibration_OD_curve="NA"`: String. The path to the calibration curve (a .csv file). Used only if `multiple_scattering_correction=true`.
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
+- `start_exp_win_thr=0.05` minimum value (of OD) to consider the start of exp window
 
 # Output: 
 
@@ -147,7 +148,7 @@ function fitting_one_well_Log_Lin(
 
         index_of_max = argmax(specific_gr)[1]
 
-        index_gr_max = findlast(x -> x < lb_of_distib, specific_gr[1:end])[1]
+        index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[1:end])[1]
         
         index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[1:end])[1]
 
