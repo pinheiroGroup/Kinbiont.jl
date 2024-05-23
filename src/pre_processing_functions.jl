@@ -143,6 +143,7 @@ function average_replicate(dfs_data, times_data, properties_of_annotation, names
 
     list_replicate = unique(properties_of_annotation)
     list_replicate = filter!(e -> e != "b", list_replicate)
+    list_replicate = filter!(e -> e != "X", list_replicate)
 
 
     for replicate_temp in list_replicate
