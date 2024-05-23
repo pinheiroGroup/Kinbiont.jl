@@ -1,7 +1,7 @@
-using Documenter, JMAKi
+using Documenter, Kimchi
 
-makedocs(sitename="JMAKi Documentation",
-        modules = [JMAKi],
+makedocs(sitename="Kimchi Documentation",
+        modules = [Kimchi],
         checkdocs=:none,
         format = Documenter.HTML(
             assets = ["assets/favicon.ico"]

@@ -1,4 +1,4 @@
-# [The main functions of JMAKi](@id API)
+# [The main functions of Kimchi](@id API)
 
 1. [Simulate ODE](#simulating-ODE)
 2. [Stochastic simulation](#simulating-stochastic)

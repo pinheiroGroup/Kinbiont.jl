@@ -2,93 +2,93 @@
 
 ## Pre-processing functions
 ### Smoothing data
-[`JMAKi.smoothing_data`](@ref)
+[`Kimchi.smoothing_data`](@ref)
 
 ```@docs
-JMAKi.smoothing_data
+Kimchi.smoothing_data
 ```
 
 ### Correction for multiple scattering
-[`JMAKi.correction_OD_multiple_scattering`](@ref)
+[`Kimchi.correction_OD_multiple_scattering`](@ref)
 
 ```@docs
-JMAKi.correction_OD_multiple_scattering
+Kimchi.correction_OD_multiple_scattering
 ```
 
 ## Fitting one kinetics
 
 ### Log-Lin fitting
-[`JMAKi.fitting_one_well_Log_Lin`](@ref)
+[`Kimchi.fitting_one_well_Log_Lin`](@ref)
 
 ```@docs
-JMAKi.fitting_one_well_Log_Lin
+Kimchi.fitting_one_well_Log_Lin
 ```
 
 ### ODE fitting
 #### Fitting a harcoded model
 
-[`JMAKi.fitting_one_well_ODE_constrained`](@ref)
+[`Kimchi.fitting_one_well_ODE_constrained`](@ref)
 
 ```@docs
-JMAKi.fitting_one_well_ODE_constrained
+Kimchi.fitting_one_well_ODE_constrained
 ```
 
 #### Fitting a custom model
 
-[`JMAKi.fitting_one_well_custom_ODE`](@ref)
+[`Kimchi.fitting_one_well_custom_ODE`](@ref)
 
 ```@docs
-JMAKi.fitting_one_well_custom_ODE
+Kimchi.fitting_one_well_custom_ODE
 ```
 #### ODE model selection
 
-[`JMAKi.ODE_Model_selection`](@ref)
+[`Kimchi.ODE_Model_selection`](@ref)
 
 ```@docs
-JMAKi.ODE_Model_selection
+Kimchi.ODE_Model_selection
 ```
 #### ODE Morris sensitivity
 
-[`JMAKi.one_well_morris_sensitivity`](@ref)
+[`Kimchi.one_well_morris_sensitivity`](@ref)
 
 ```@docs
-JMAKi.one_well_morris_sensitivity
+Kimchi.one_well_morris_sensitivity
 ```
 
 ### NL Fitting
 
 ### NL Fitting
 
-[`JMAKi.fit_NL_model`](@ref)
+[`Kimchi.fit_NL_model`](@ref)
 
 ```@docs
-JMAKi.fit_NL_model
+Kimchi.fit_NL_model
 ```
-[`JMAKi.fit_NL_model_with_sensitivity`](@ref)
+[`Kimchi.fit_NL_model_with_sensitivity`](@ref)
 
 ```@docs
-JMAKi.fit_NL_model_with_sensitivity
+Kimchi.fit_NL_model_with_sensitivity
 ```
-[`JMAKi.fit_NL_model_MCMC_intialization`](@ref)
+[`Kimchi.fit_NL_model_MCMC_intialization`](@ref)
 
 ```@docs
-JMAKi.fit_NL_model_MCMC_intialization
+Kimchi.fit_NL_model_MCMC_intialization
 ```
-[`JMAKi.fit_NL_model_bootstrap`](@ref)
+[`Kimchi.fit_NL_model_bootstrap`](@ref)
 
 ```@docs
-JMAKi.fit_NL_model_bootstrap
+Kimchi.fit_NL_model_bootstrap
 ```
-[`JMAKi.NL_error_blanks`](@ref)
+[`Kimchi.NL_error_blanks`](@ref)
 
 ```@docs
-JMAKi.NL_error_blanks
+Kimchi.NL_error_blanks
 ```
 #### NL Model selection
-[`JMAKi.NL_model_selection`](@ref)
+[`Kimchi.NL_model_selection`](@ref)
 
 ```@docs
-JMAKi.NL_model_selection
+Kimchi.NL_model_selection
 ```
 
 
@@ -96,102 +96,102 @@ JMAKi.NL_model_selection
 ### Segmented fitting 
 
 #### ODE segmentation
-[`JMAKi.selection_ODE_fixed_intervals`](@ref)
+[`Kimchi.selection_ODE_fixed_intervals`](@ref)
 
 ```@docs
-JMAKi.selection_ODE_fixed_intervals
+Kimchi.selection_ODE_fixed_intervals
 ```
-[`JMAKi.segmentation_ODE`](@ref)
+[`Kimchi.segmentation_ODE`](@ref)
 
 ```@docs
-JMAKi.segmentation_ODE
+Kimchi.segmentation_ODE
 ```
 #### NL segmentation
-[`JMAKi.selection_NL_fixed_interval`](@ref)
+[`Kimchi.selection_NL_fixed_interval`](@ref)
 
 ```@docs
-JMAKi.selection_NL_fixed_interval
+Kimchi.selection_NL_fixed_interval
 ```
-[`JMAKi.selection_NL_max_change_points`](@ref)
+[`Kimchi.selection_NL_max_change_points`](@ref)
 
 ```@docs
-JMAKi.selection_NL_max_change_points
+Kimchi.selection_NL_max_change_points
 ```
 
 ## Plot a file
-[`JMAKi.plot_data`](@ref)
+[`Kimchi.plot_data`](@ref)
 
 ```@docs
-JMAKi.plot_data
+Kimchi.plot_data
 ```
 
 ## Fitting one a .csv file
 
 ### Log-Lin fitting
-[`JMAKi.fit_one_file_Log_Lin`](@ref)
+[`Kimchi.fit_one_file_Log_Lin`](@ref)
 
 ```@docs
-JMAKi.fit_one_file_Log_Lin
+Kimchi.fit_one_file_Log_Lin
 ```
 ### ODE fitting
 
-[`JMAKi.fit_file_ODE`](@ref)
+[`Kimchi.fit_file_ODE`](@ref)
 
 ```@docs
-JMAKi.fit_file_ODE
+Kimchi.fit_file_ODE
 ```
 
-[`JMAKi.fit_file_custom_ODE`](@ref)
+[`Kimchi.fit_file_custom_ODE`](@ref)
 
 ```@docs
-JMAKi.fit_file_custom_ODE
+Kimchi.fit_file_custom_ODE
 ```
 
-[`JMAKi.ODE_model_selection_file`](@ref)
+[`Kimchi.ODE_model_selection_file`](@ref)
 
 ```@docs
-JMAKi.ODE_model_selection_file
+Kimchi.ODE_model_selection_file
 ```
 ### NL fitting
-[`JMAKi.fit_NL_model_file`](@ref)
+[`Kimchi.fit_NL_model_file`](@ref)
 
 ```@docs
-JMAKi.fit_NL_model_file
+Kimchi.fit_NL_model_file
 ```
-[`JMAKi.fit_NL_model_selection_file`](@ref)
+[`Kimchi.fit_NL_model_selection_file`](@ref)
 
 ```@docs
-JMAKi.fit_NL_model_selection_file
+Kimchi.fit_NL_model_selection_file
 ```
 ### Segmented fitting 
-[`JMAKi.segmentation_ODE_file`](@ref)
+[`Kimchi.segmentation_ODE_file`](@ref)
 
 ```@docs
-JMAKi.fit_NL_segmentation_file
+Kimchi.fit_NL_segmentation_file
 ```
-[`JMAKi.fit_NL_segmentation_file`](@ref)
+[`Kimchi.fit_NL_segmentation_file`](@ref)
 
 ```@docs
-JMAKi.segmentation_ODE_file
+Kimchi.segmentation_ODE_file
 ```
 ## Simulations 
 ### ODE simulations
-[`JMAKi.ODE_sim`](@ref)
+[`Kimchi.ODE_sim`](@ref)
 
 ```@docs
-JMAKi.ODE_sim
+Kimchi.ODE_sim
 ```
 ### Stochastic simulations
-[`JMAKi.stochastic_sim`](@ref)
+[`Kimchi.stochastic_sim`](@ref)
 
 ```@docs
-JMAKi.stochastic_sim
+Kimchi.stochastic_sim
 ```
 ## Various
- [`JMAKi.specific_gr_evaluation`](@ref)
+ [`Kimchi.specific_gr_evaluation`](@ref)
 
 ```@docs
-JMAKi.specific_gr_evaluation
+Kimchi.specific_gr_evaluation
 ```
 
 

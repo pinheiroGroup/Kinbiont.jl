@@ -1,8 +1,8 @@
-using Documenter, JMAKi
+using Documenter, Kimchi
 push!(LOAD_PATH,"../src/")
 Documenter.Remotes.URL("../src/", nothing)
-makedocs(sitename="JMAKi Documentation",
-        modules = [JMAKi],
+makedocs(sitename="Kimchi Documentation",
+        modules = [Kimchi],
         source  = "src/",
         checkdocs=:none,
         remotes = nothing,

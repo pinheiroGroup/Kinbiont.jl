@@ -49,7 +49,6 @@ threshold to define an exponetial window where the log-linear fit is performed.
 - `calibration_OD_curve="NA"`: String. The path to the calibration curve (a .csv file). Used only if `multiple_scattering_correction=true`.
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-- `start_exp_win_thr=0.05` minimum value (of OD) to consider the start of exp window
 
 # Output: 
 
@@ -77,7 +76,6 @@ function fitting_one_well_Log_Lin(
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     thr_lowess=0.05, # keyword argument of lowees smoothing
-    start_exp_win_thr=0.05, # minimum value to consider the start of exp window
 )
     if multiple_scattering_correction == true
 
@@ -144,29 +142,15 @@ function fitting_one_well_Log_Lin(
 
     # selection of exp win with a global thr on the growht rate
     if type_of_win == "global_thr"
-
-
         index_of_max = argmax(specific_gr)[1]
-
-        index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[1:end])[1]
-        
-        index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[1:end])[1]
-
-        while data_smooted[2,index_gr_min] <  start_exp_win_thr
-
-            index_gr_min = index_gr_min +1
-        end   
-
-
-
+        index_gr_max =
+            index_of_max +
+            findfirst(x -> x < lb_of_distib, specific_gr[index_of_max:end])[1]
+        index_gr_min = findlast(x -> x > lb_of_distib, specific_gr[1:index_of_max])[1]
         t_start = specific_gr_times[index_gr_min]
         t_end = specific_gr_times[index_gr_max]
-        
         index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
         index_of_t_end = findall(x -> x > t_end, data_smooted[1, :])[1]
-
-
-
     end
 
     # checking the minimum size of the window before fitting
@@ -1591,7 +1575,7 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 - 'path_to_results="NA"':String. Path to save the results. 
 - 'save_all_model=false': Bool. Options: true to save all tested models. False not to.
 
-JMAKi uses n_change_points but tests different combinations of the n_change_points+2 top change points if 'detect_number_cpd=false' and 'fixed_cpd=false'.
+Kimchi uses n_change_points but tests different combinations of the n_change_points+2 top change points if 'detect_number_cpd=false' and 'fixed_cpd=false'.
 
 
 # Output (if `Model_selection =ODE_Model_selection(...)`:

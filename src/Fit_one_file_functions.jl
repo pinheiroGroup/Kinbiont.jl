@@ -1,5 +1,6 @@
 using Optimization
- #######################################################################
+
+#######################################################################
 
 """
 
@@ -242,7 +243,6 @@ This function fits a logarithmic-linear model to a csv file. The function assume
 -  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
 -  `thr_negative=0.01`: FLoat: used only if `correct_negative == "thr_correction"` the data under this threshold will be changed to this value.
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
-- `start_exp_win_thr=0.05` minimum value (of OD) to consider the start of exp window
 
 # Output:
 
@@ -274,7 +274,6 @@ function fit_one_file_Log_Lin(
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     thr_lowess=0.05, # keyword argument of lowees smoothing
     verbose=false,
-    start_exp_win_thr=0.05, 
     blank_value = 0.0,
     blank_array = [0.0],)
 
@@ -403,7 +402,6 @@ function fit_one_file_Log_Lin(
             method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
             thr_lowess=thr_lowess,
-            start_exp_win_thr = start_exp_win_thr
         )
 
         if verbose == true

@@ -1,6 +1,6 @@
 # [Data and annotation formatting](@id data)
 
-JMAKi can operate directly on data files or inside the julia notebook.
+Kimchi can operate directly on data files or inside the julia notebook.
 When are in a julia notebook the  format of single time series that want to be analyzed is a 2 x n_time_points Matrix of FLoat64, e.g.,
 
 
@@ -11,8 +11,8 @@ When are in a julia notebook the  format of single time series that want to be a
 ```
 The first row should be time and the second the quantity to be fitted (e.g., Optical Density or CFU)
 
-Instead, three APIs call direclty the files: the user must input  the paths to  a .csv data file and a .csv annotation to the functions of JMAKi.jl
-; In these cases JMAKi expect for data a matrix where the first row are the names of the wells and the columns the numerical value of the measurements. Note that the first one will be used as time:
+Instead, three APIs call direclty the files: the user must input  the paths to  a .csv data file and a .csv annotation to the functions of Kimchi.jl
+; In these cases Kimchi expect for data a matrix where the first row are the names of the wells and the columns the numerical value of the measurements. Note that the first one will be used as time:
 
 ```
 Time,  A1,     A2,      A3, 
@@ -22,7 +22,7 @@ Time,  A1,     A2,      A3,
 3.0,   0.012,  0.32,    0.22,
 4.0,   0.008,  0.41,    0.122,
 ```
-JMAKi expect a "," as separator between columns
+Kimchi expect a "," as separator between columns
 
 The annotation file instead should be a two columns .csv file where the number of rows correspond to the number of wells, note that the name of the well should be the same between the data.csv and annotation.csv:
 

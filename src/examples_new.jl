@@ -2,7 +2,7 @@
 # uploading package this part of the code will be skipped when the github is online 
 # you have only to write using JMAKI
 
-using JMAKi
+using Kimchi
 using DifferentialEquations
 
 # loading the functions  (will be skipped when the package is deployed)
@@ -1367,8 +1367,8 @@ NL_fit = selection_NL_fixed_interval(
     plot(NL_fit[3],NL_fit[2])
 
 
-path_to_data  = "E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//data_channel_1.csv"
-path_to_annotation  = "E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//annotation_channel_1.csv"
+path_to_data  = "E://Lavoro//Kimchi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//data_channel_1.csv"
+path_to_annotation  = "E://Lavoro//Kimchi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//annotation_channel_1.csv"
 
     ub_exp =[ 1.6 ]
     lb_exp =[ -00.1 ]
@@ -1445,8 +1445,8 @@ seg_ODE_res = segmentation_ODE_file(
         nl_lb = [0.0001, 0.00000001, 0.00, 0.0]
     
 
-        path_to_data = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//data_channel_1.csv")
-        path_to_annotation = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//annotation_channel_1.csv")
+        path_to_data = string("E://Lavoro//Kimchi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//data_channel_1.csv")
+        path_to_annotation = string("E://Lavoro//Kimchi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//LG126//annotation_channel_1.csv")
     
 
         path_to_plot = string("E://Lavoro//dose_response_res//plots/Bertalanffy_bootstrap//LG126//")
@@ -1477,8 +1477,8 @@ seg_ODE_res = segmentation_ODE_file(
 
 exp ="LG126"
 
-    path_to_data = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//", exp, "//data_channel_1.csv")
-    path_to_annotation = string("E://Lavoro//JMAKi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//", exp, "//annotation_channel_1.csv")
+    path_to_data = string("E://Lavoro//Kimchi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//", exp, "//data_channel_1.csv")
+    path_to_annotation = string("E://Lavoro//Kimchi_utilities-main//real_dataset_tests//dataset//N_max_effect//Yield experiments//", exp, "//annotation_channel_1.csv")
 
     path_to_plot = string("E://Lavoro//dose_response_res//plots/log_lin//", exp, "//")
     path_to_results = string("E://Lavoro//dose_response_res//res/log_lin//", exp, "//")
@@ -1511,9 +1511,9 @@ exp ="LG126"
 
 
 #list_of_experiments = ["LG106", "LG110", "LG114", "LG115", "LG117", "LG118", "LG119"]
-path_to_annotation = string("E:/Lavoro/JMAKi_utilities-main/real_dataset_tests/dataset/data_isolate_chem_mixture_clean/annotation.csv")
+path_to_annotation = string("E:/Lavoro/Kimchi_utilities-main/real_dataset_tests/dataset/data_isolate_chem_mixture_clean/annotation.csv")
 
-path_to_data0 = "E:/Lavoro/JMAKi_utilities-main/real_dataset_tests/dataset/data_isolate_chem_mixture_clean/clean_data/"
+path_to_data0 = "E:/Lavoro/Kimchi_utilities-main/real_dataset_tests/dataset/data_isolate_chem_mixture_clean/clean_data/"
 list_of_data_chem = readdir(path_to_data0)
 
 for plate in list_of_data_chem

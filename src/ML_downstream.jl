@@ -24,7 +24,7 @@ Function that
 
 # Arguments:
 
-- `jmaki_results::Matrix{Any}`: The matrix of results of fitting one file with JMAKi. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
+- `jmaki_results::Matrix{Any}`: The matrix of results of fitting one file with Kimchi. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
 - `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the jmaki_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of jmaki_results. 
 - `row_to_learn::Int`: which row of the matrix `jmaki_results` will be the target of the ML inference.
 
@@ -154,7 +154,7 @@ end
 Function that evalauates 
 
 # Arguments:
-- `jmaki_results::Matrix{Any}`: The matrix of results of fitting one file with JMAKi. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
+- `jmaki_results::Matrix{Any}`: The matrix of results of fitting one file with Kimchi. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
 - `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the jmaki_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of jmaki_results. 
 - `row_to_learn::Int`: which row of the matrix `jmaki_results` will be the target of the ML inference.
 # Key Arguments:

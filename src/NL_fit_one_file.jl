@@ -1,5 +1,3 @@
-using Optimization
-using OptimizationBBO
 
 """
     fit_NL_model_file(

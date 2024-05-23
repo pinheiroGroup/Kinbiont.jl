@@ -1,6 +1,6 @@
 # [Examples and Tutorial](@id examples)
 
-This section provides some copy-and-paste examples of JMAKi.jl
+This section provides some copy-and-paste examples of Kimchi.jl
 
 ```@contents
 Pages = ["index.md"]
@@ -9,7 +9,7 @@ Depth = 3
 
 ## Simulating/Loading single kinetics data
 ### Loading  data from a .csv
-It is possible to load single curves using CSV package in Julia and format them to be compatible with JMAKi. In this example we suppose that the .csv file is formatted as required in JMAKi documentation.
+It is possible to load single curves using CSV package in Julia and format them to be compatible with Kimchi. In this example we suppose that the .csv file is formatted as required in Kimchi documentation.
 
 ```julia
 df_data  =CSV.file("your_path/data.csv")
@@ -397,7 +397,7 @@ list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
 
 ```
 
-First, we fit giving to JMAKi the list of change points:
+First, we fit giving to Kimchi the list of change points:
 
 ```julia
 cdp_list = [100.0, 200.0]
@@ -745,9 +745,9 @@ selection_NL_max_change_points(
 ```
 ## Fitting a .csv file
 
-Instead fitting a single kinetics the user can supply a ".csv" file (formatted as described in the section), and JMAKi will proceed to perform all the analysis on all the wells of the experiment. Note that the user can supply a annotation .csv in this case becomes possible to subtract the blanks and fit the average of replicates.
+Instead fitting a single kinetics the user can supply a ".csv" file (formatted as described in the section), and Kimchi will proceed to perform all the analysis on all the wells of the experiment. Note that the user can supply a annotation .csv in this case becomes possible to subtract the blanks and fit the average of replicates.
 
-To use the following functions the user should input to JMAKi variables that contains the string of the path to the .csv files:
+To use the following functions the user should input to Kimchi variables that contains the string of the path to the .csv files:
 
 ```julia
 path_to_data = "your_path_to_data/data.csv"
