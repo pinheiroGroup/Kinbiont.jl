@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/ang-one/Kimchi.jl/blob/main/static/kimchi_logo.png">
+  <img src="https://github.com/pinheiroGroup/Kimchi.jl/blob/main/static/kimchi_logo.png">
 </p>
 
 Kimchi (a Julia package for Model-based Analyses of microbial Kinetics) is a versatile software tool that utilizes Ordinary Differential Equations (ODEs) to fit bacterial growth data from plate reader experiments. 
