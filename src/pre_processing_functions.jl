@@ -1,5 +1,8 @@
 using Lowess
 using CSV
+using Interpolations
+using LsqFit
+using DataFrames
 """
     correction_OD_multiple_scattering(
     data::Matrix{Float64},
