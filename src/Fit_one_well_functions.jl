@@ -1,8 +1,8 @@
 using OptimizationBBO
 using Distributions
 using StatsBase
+using Plots
 import Plots
-using DifferentialEquations
 
 #######################################################################
 """
@@ -50,6 +50,7 @@ threshold to define an exponetial window where the log-linear fit is performed.
 - `calibration_OD_curve="NA"`: String. The path to the calibration curve (a .csv file). Used only if `multiple_scattering_correction=true`.
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
+- `start_exp_win_thr=0.05` minimum value (of OD) to consider the start of exp window
 
 # Output: 
 
@@ -77,6 +78,7 @@ function fitting_one_well_Log_Lin(
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     thr_lowess=0.05, # keyword argument of lowees smoothing
+    start_exp_win_thr=0.05, # minimum value to consider the start of exp window
 )
     if multiple_scattering_correction == true
 
@@ -143,15 +145,29 @@ function fitting_one_well_Log_Lin(
 
     # selection of exp win with a global thr on the growht rate
     if type_of_win == "global_thr"
+
+
         index_of_max = argmax(specific_gr)[1]
-        index_gr_max =
-            index_of_max +
-            findfirst(x -> x < lb_of_distib, specific_gr[index_of_max:end])[1]
-        index_gr_min = findlast(x -> x > lb_of_distib, specific_gr[1:index_of_max])[1]
+
+        index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[1:end])[1]
+        
+        index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[1:end])[1]
+
+        while data_smooted[2,index_gr_min] <  start_exp_win_thr
+
+            index_gr_min = index_gr_min +1
+        end   
+
+
+
         t_start = specific_gr_times[index_gr_min]
         t_end = specific_gr_times[index_gr_max]
+        
         index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
         index_of_t_end = findall(x -> x > t_end, data_smooted[1, :])[1]
+
+
+
     end
 
     # checking the minimum size of the window before fitting
@@ -252,7 +268,7 @@ function fitting_one_well_Log_Lin(
         ),
     )
     if save_plot
-        png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".png"))
+        Plots.png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".Plots.png"))
     end
     if_display(
         Plots.scatter(
@@ -272,7 +288,7 @@ function fitting_one_well_Log_Lin(
         ),
     )
     if save_plot
-        png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
+        Plots.png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".Plots.png"))
     end
 
     return results_lin_log_fit
@@ -466,7 +482,7 @@ function fitting_one_well_ODE_constrained(
         ),
     )
     if save_plot
-        png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+        Plots.png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".Plots.png"))
     end
 
     # max_theoretical gr
@@ -671,7 +687,7 @@ function fitting_one_well_custom_ODE(
         ),
     )
     if save_plot
-        png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".png"))
+        Plots.png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".Plots.png"))
     end
 
     #max_theoretical gr
@@ -974,7 +990,7 @@ function ODE_Model_selection(
         ),
     )
     if save_plot_best_model
-        png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
+        Plots.png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".Plots.png"))
     end
 
     return rss_array,
@@ -1476,7 +1492,7 @@ function selection_ODE_fixed_intervals(
         ),
     )
     if save_plot
-        png(
+        Plots.png(
             string(
                 path_to_plot,
                 label_exp,
@@ -1484,7 +1500,7 @@ function selection_ODE_fixed_intervals(
                 n_change_points,
                 "_",
                 name_well,
-                ".png",
+                ".Plots.png",
             ),
         )
     end
@@ -1576,7 +1592,7 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 - 'path_to_results="NA"':String. Path to save the results. 
 - 'save_all_model=false': Bool. Options: true to save all tested models. False not to.
 
-Kimchi uses n_change_points but tests different combinations of the n_change_points+2 top change points if 'detect_number_cpd=false' and 'fixed_cpd=false'.
+JMAKi uses n_change_points but tests different combinations of the n_change_points+2 top change points if 'detect_number_cpd=false' and 'fixed_cpd=false'.
 
 
 # Output (if `Model_selection =ODE_Model_selection(...)`:
@@ -1892,7 +1908,7 @@ function segmentation_ODE(
         ),
     )
     if save_plot
-        png(
+        Plots.png(
             string(
                 path_to_plot,
                 label_exp,
@@ -1900,7 +1916,7 @@ function segmentation_ODE(
                 length(change_point_to_plot[2:end]),
                 "_",
                 name_well,
-                ".png",
+                ".Plots.png",
             ),
         )
     end
