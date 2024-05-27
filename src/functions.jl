@@ -2,6 +2,7 @@ using OrdinaryDiffEq
 using Missings
 using Statistics
 using Interpolations
+using DataFrames
 #######################################################################
 
 include("models.jl");
@@ -639,6 +640,7 @@ function reading_annotation(path_to_annotation::Any)
     return names_of_annotated_df, properties_of_annotation,list_of_blank, list_of_discarded
 end
 
+export reading_annotation
 export specific_gr_evaluation
 export stochastic_sim
 export ODE_sim

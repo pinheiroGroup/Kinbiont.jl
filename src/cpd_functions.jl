@@ -1,5 +1,6 @@
 using Combinatorics
 using Peaks
+using ChangePointDetection
 
 function getpoints_mod(profile; number_of_bin=100)
     points_list = ()
