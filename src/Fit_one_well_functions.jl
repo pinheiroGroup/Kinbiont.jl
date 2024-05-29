@@ -150,19 +150,19 @@ function fitting_one_well_Log_Lin(
         index_of_max = argmax(specific_gr)[1]
 
         index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[1:end])[1]
-        
+
         index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[1:end])[1]
 
-        while data_smooted[2,index_gr_min] <  start_exp_win_thr
+        while data_smooted[2, index_gr_min] < start_exp_win_thr && index_gr_min < index_gr_max
 
-            index_gr_min = index_gr_min +1
-        end   
+            index_gr_min = index_gr_min + 1
+        end
 
 
 
         t_start = specific_gr_times[index_gr_min]
         t_end = specific_gr_times[index_gr_max]
-        
+
         index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
         index_of_t_end = findall(x -> x > t_end, data_smooted[1, :])[1]
 
@@ -184,111 +184,133 @@ function fitting_one_well_Log_Lin(
         end
     end
 
-    # fitting data
-    data_to_fit_times = data_smooted[1, index_of_t_start:index_of_t_end]
-    data_to_fit_values = log.(data_smooted[2, index_of_t_start:index_of_t_end])
+    if t_end > t_start
+        # fitting data
+        data_to_fit_times = data_smooted[1, index_of_t_start:index_of_t_end]
+        data_to_fit_values = log.(data_smooted[2, index_of_t_start:index_of_t_end])
 
-    N = length(data_to_fit_times)
-    M = [ones(N) data_to_fit_times]
-    (coeff_1, coeff_2) = M \ data_to_fit_values
-    mean_x = mean(data_to_fit_times)
+        N = length(data_to_fit_times)
+        M = [ones(N) data_to_fit_times]
+        (coeff_1, coeff_2) = M \ data_to_fit_values
+        mean_x = mean(data_to_fit_times)
 
-    sigma_a = sigma_b = r = zeros(N)
-    Theoretical_fitting = coeff_1 .+ data_to_fit_times .* coeff_2
+        sigma_a = sigma_b = r = zeros(N)
+        Theoretical_fitting = coeff_1 .+ data_to_fit_times .* coeff_2
 
-    Cantrell_errors = sqrt(sum((data_to_fit_values - coeff_2 * data_to_fit_times .- coeff_1) .^ 2) / (N - 2))  # goodness of fit
-    sigma_b = sqrt(1 / sum((data_to_fit_times .- mean_x) .^ 2))
-    sigma_a = Cantrell_errors * sqrt(1 / N + mean_x^2 * sigma_b^2)
-    sigma_b *= Cantrell_errors
-    # Pearson's correlation coefficient
-    rho = cov(data_to_fit_times, data_to_fit_values) / sqrt(var(data_to_fit_times) * var(data_to_fit_values))
-    d = TDist(N - 2)     # t-Student distribution with N-2 degrees of freedom
-    cf = quantile(d, 0.975)  # correction factor for 95% confidence intervals (two-tailed distribution)
-    confidence_band = cf * Cantrell_errors * sqrt.(1 / N .+ (data_to_fit_times .- mean(data_to_fit_times)) .^ 2 / var(data_to_fit_times) / (N - 1))
+        Cantrell_errors = sqrt(sum((data_to_fit_values - coeff_2 * data_to_fit_times .- coeff_1) .^ 2) / (N - 2))  # goodness of fit
+        sigma_b = sqrt(1 / sum((data_to_fit_times .- mean_x) .^ 2))
+        sigma_a = Cantrell_errors * sqrt(1 / N + mean_x^2 * sigma_b^2)
+        sigma_b *= Cantrell_errors
+        # Pearson's correlation coefficient
+        rho = cov(data_to_fit_times, data_to_fit_values) / sqrt(var(data_to_fit_times) * var(data_to_fit_values))
+        d = TDist(N - 2)     # t-Student distribution with N-2 degrees of freedom
+        cf = quantile(d, 0.975)  # correction factor for 95% confidence intervals (two-tailed distribution)
+        confidence_band = cf * Cantrell_errors * sqrt.(1 / N .+ (data_to_fit_times .- mean(data_to_fit_times)) .^ 2 / var(data_to_fit_times) / (N - 1))
 
 
-    # storing results
+        # storing results
 
-    results_lin_log_fit = [
-        label_exp,
-        name_well,
-        data_to_fit_times[1],
-        data_to_fit_times[end],
-        specific_gr_times[index_of_max],
-        gr_max,
-        coeff_2,
-        sigma_b,
-        log(2) / (coeff_2),
-        log(2) / (coeff_2 - sigma_b),
-        log(2) / (coeff_2 + sigma_b),
-        coeff_1,
-        sigma_a,
-        rho,
-    ]
+        results_lin_log_fit = [
+            label_exp,
+            name_well,
+            data_to_fit_times[1],
+            data_to_fit_times[end],
+            specific_gr_times[index_of_max],
+            gr_max,
+            coeff_2,
+            sigma_b,
+            log(2) / (coeff_2),
+            log(2) / (coeff_2 - sigma_b),
+            log(2) / (coeff_2 + sigma_b),
+            coeff_1,
+            sigma_a,
+            rho,
+        ]
 
-    if display_plots
-        if_display = display
+        if display_plots
+            if_display = display
+        else
+            if_display = identity
+        end
+
+        if save_plot
+            mkpath(path_to_plot)
+        end
+
+        # plotting if requested
+        if_display(
+            Plots.scatter(
+                data_smooted[1, :],
+                log.(data_smooted[2, :]),
+                xlabel="Time",
+                ylabel="Log(Arb. Units)",
+                label=["Data " nothing],
+                markersize=1,
+                color=:black,
+                title=string(label_exp, " ", name_well),
+            ),
+        )
+        if_display(
+            Plots.plot!(
+                data_to_fit_times,
+                Theoretical_fitting,
+                ribbon=confidence_band,
+                xlabel="Time ",
+                ylabel="Log(Arb. Units)",
+                label=[string("Fitting Log-Lin ") nothing],
+                c=:red,
+            ),
+        )
+        if_display(
+            Plots.vline!(
+                [data_to_fit_times[1], data_to_fit_times[end]],
+                c=:black,
+                label=[string("Window of exp. phase ") nothing],
+            ),
+        )
+        if save_plot
+            Plots.png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".Plots.png"))
+        end
+        if_display(
+            Plots.scatter(
+                specific_gr_times,
+                specific_gr,
+                xlabel="Time ",
+                ylabel="1 /time ",
+                label=[string("Dynamics growth rate ") nothing],
+                c=:red,
+            ),
+        )
+        if_display(
+            Plots.vline!(
+                [data_to_fit_times[1], data_to_fit_times[end]],
+                c=:black,
+                label=[string("Window of exp. phase ") nothing],
+            ),
+        )
+        if save_plot
+            Plots.png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".Plots.png"))
+        end
+
     else
-        if_display = identity
-    end
 
-    if save_plot
-        mkpath(path_to_plot)
-    end
+        results_lin_log_fit = [
+            label_exp,
+            name_well,
+            missing,
+            missing,
+            missing,
+            missing,
+            missing,
+            missing,
+            missing,
+            missing,
+            missing,
+            missing,
+            missing,
+            missing,
+        ]
 
-    # plotting if requested
-    if_display(
-        Plots.scatter(
-            data_smooted[1, :],
-            log.(data_smooted[2, :]),
-            xlabel="Time",
-            ylabel="Log(Arb. Units)",
-            label=["Data " nothing],
-            markersize=1,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),
-    )
-    if_display(
-        Plots.plot!(
-            data_to_fit_times,
-            Theoretical_fitting,
-            ribbon=confidence_band,
-            xlabel="Time ",
-            ylabel="Log(Arb. Units)",
-            label=[string("Fitting Log-Lin ") nothing],
-            c=:red,
-        ),
-    )
-    if_display(
-        Plots.vline!(
-            [data_to_fit_times[1], data_to_fit_times[end]],
-            c=:black,
-            label=[string("Window of exp. phase ") nothing],
-        ),
-    )
-    if save_plot
-        Plots.png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".Plots.png"))
-    end
-    if_display(
-        Plots.scatter(
-            specific_gr_times,
-            specific_gr,
-            xlabel="Time ",
-            ylabel="1 /time ",
-            label=[string("Dynamics growth rate ") nothing],
-            c=:red,
-        ),
-    )
-    if_display(
-        Plots.vline!(
-            [data_to_fit_times[1], data_to_fit_times[end]],
-            c=:black,
-            label=[string("Window of exp. phase ") nothing],
-        ),
-    )
-    if save_plot
-        Plots.png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".Plots.png"))
     end
 
     return results_lin_log_fit
@@ -1644,6 +1666,9 @@ function segmentation_ODE(
 
     # fitting single models
     change_point_list = Vector{Vector{Any}}()
+
+
+
     if n_max_change_points == 0 || detect_number_cpd == true
         res = ODE_Model_selection(
             data_testing, # dataset first row times second row OD
@@ -1704,7 +1729,7 @@ function segmentation_ODE(
         change_point_list = [0.0]
         change_point_to_plot = [0.0, 0.0, 0.0]
         time_points_to_plot = copy(data_testing[1, :])
-        sol_to_plot = copy(reduce(vcat,res[7])[2:2:end] )
+        sol_to_plot = copy(reduce(vcat, res[7])[2:2:end])
     else
 
         top_model = "NO"
@@ -1718,22 +1743,20 @@ function segmentation_ODE(
     if n_max_change_points > 0
 
         # Fernanda modification to fix non smoothing (to be tested; start)
-        # smooting if required
         if smoothing == true
-            data_testing = smoothing_data(
+            data_testing_1 = smoothing_data(
                 data_testing;
                 method=type_of_smoothing,
                 pt_avg=pt_avg,
                 thr_lowess=thr_lowess
             )
         end
-        # Fernanda modification (end)
 
 
         if detect_number_cpd == true
 
             list_change_points_dev = cpd_local_detection(
-                data_testing,
+                data_testing_1,
                 n_max_change_points;
                 type_of_detection=type_of_detection,
                 type_of_curve=type_of_curve,
@@ -1750,7 +1773,7 @@ function segmentation_ODE(
         elseif fixed_cpd == true
 
             list_change_points_dev = cpd_local_detection(
-                data_testing,
+                data_testing_1,
                 n_max_change_points;
                 type_of_detection=type_of_detection,
                 type_of_curve=type_of_curve,
@@ -1767,7 +1790,7 @@ function segmentation_ODE(
 
         else
             list_change_points_dev = cpd_local_detection(
-                data_testing,
+                data_testing_1,
                 n_max_change_points + 2;
                 type_of_detection=type_of_detection,
                 type_of_curve=type_of_curve,
@@ -1785,7 +1808,7 @@ function segmentation_ODE(
 
 
         for i in 1:eachindex(combination_to_test)[end]
-      
+
             cpd_temp = sort(combination_to_test[i])
 
             direct_search_results = selection_ODE_fixed_intervals(
@@ -1865,8 +1888,6 @@ function segmentation_ODE(
     end
 
 
-    println(size(time_points_to_plot))
-    println(size(sol_to_plot))
     if display_plot
         if_display = display
     else
@@ -1921,7 +1942,7 @@ function segmentation_ODE(
         )
     end
 
-    return top_model, time_points_to_plot, sol_to_plot,score_of_the_models
+    return top_model, time_points_to_plot, sol_to_plot, score_of_the_models
 end
 
 export fitting_one_well_Log_Lin
