@@ -1898,6 +1898,10 @@ function segmentation_ODE(
         mkpath(path_to_plot)
     end
 
+   if multiple_scattering_correction == true
+    data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
+   end
+
     if_display(
         Plots.scatter(
             data_testing[1, :],
