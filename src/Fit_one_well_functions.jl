@@ -147,24 +147,34 @@ function fitting_one_well_Log_Lin(
     if type_of_win == "global_thr"
 
         index_od_over_thr = findfirst(data_smooted[2,:].> start_exp_win_thr)
-
-        lb_of_distib = quantile(specific_gr[index_od_over_thr:end], threshold_of_exp)
-
-        index_of_max = argmax(specific_gr[index_od_over_thr:end])[1] + index_od_over_thr -1
-
-        index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[index_od_over_thr:end])[1] + index_od_over_thr -1
-
-        index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[index_od_over_thr:index_of_max])[1] + index_od_over_thr -1
+        if isnothing(index_od_over_thr) == true
 
 
 
+            # the conditions are not satisfied i fix t_end and  t_start to be discarded later and have all results to missing
+            t_end = 100
+            t_start  =200 
+            index_of_t_start = 1 
+            index_of_t_end = index_of_t_start + 2 * pt_min_size_of_win
+ 
+        else
+            lb_of_distib = quantile(specific_gr[index_od_over_thr:end], threshold_of_exp)
 
-        t_start = specific_gr_times[index_gr_min]
-        t_end = specific_gr_times[index_gr_max]
+            index_of_max = argmax(specific_gr[index_od_over_thr:end])[1] + index_od_over_thr -1
 
-        index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
-        index_of_t_end = findall(x -> x > t_end, data_smooted[1, :])[1]
+            index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[index_od_over_thr:end])[1] + index_od_over_thr -1
 
+            index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[index_od_over_thr:index_of_max])[1] + index_od_over_thr -1
+
+
+
+
+            t_start = specific_gr_times[index_gr_min]
+            t_end = specific_gr_times[index_gr_max]
+
+            index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
+            index_of_t_end = findall(x -> x > t_end, data_smooted[1, :])[1]
+        end
 
 
     end
