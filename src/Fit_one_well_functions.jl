@@ -146,17 +146,16 @@ function fitting_one_well_Log_Lin(
     # selection of exp win with a global thr on the growht rate
     if type_of_win == "global_thr"
 
+        index_od_over_thr = findfirst(data_smooted[2,:].> start_exp_win_thr)
 
-        index_of_max = argmax(specific_gr)[1]
+        lb_of_distib = quantile(specific_gr[index_od_over_thr:end], threshold_of_exp)
 
-        index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[1:end])[1]
+        index_of_max = argmax(specific_gr[index_od_over_thr:end])[1] + index_od_over_thr -1
 
-        index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[1:end])[1]
+        index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[index_od_over_thr:end])[1] + index_od_over_thr -1
 
-        while data_smooted[2, index_gr_min] < start_exp_win_thr && index_gr_min < index_gr_max
+        index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[index_od_over_thr:index_of_max])[1] + index_od_over_thr -1
 
-            index_gr_min = index_gr_min + 1
-        end
 
 
 
