@@ -1779,7 +1779,7 @@ function segmentation_ODE(
                 n_fix=0)
 
 
-        elseif fixed_cpd == true
+        elseif fixed_cpd == true && detect_number_cpd == false
 
             list_change_points_dev = cpd_local_detection(
                 data_testing_1,
@@ -1797,7 +1797,7 @@ function segmentation_ODE(
 
 
 
-        else
+            elseif fixed_cpd == false && detect_number_cpd == false
             list_change_points_dev = cpd_local_detection(
                 data_testing_1,
                 n_max_change_points + 2;

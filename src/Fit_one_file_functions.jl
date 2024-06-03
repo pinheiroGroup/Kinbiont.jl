@@ -1551,7 +1551,7 @@ function segmentation_ODE_file(
             )
             vector_AIC =  hcat( vector_AIC,temp_results_1[end])
 
-        vectorized_temp_results = expand_res(
+        vectorized_temp_results = expand_res_seg(
             temp_results_1[1],
             lb_param_array,
             string(well_name),
