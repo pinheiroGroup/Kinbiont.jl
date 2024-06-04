@@ -2002,9 +2002,9 @@ function selection_NL_max_change_points(
     if multiple_scattering_correction == true
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
     end
-
+    data_testing_1 =copy(data_testing)
     if smoothing == true
-        data_testing = smoothing_data(
+        data_testing_1 = smoothing_data(
             data_testing;
             method=type_of_smoothing,
             pt_avg=pt_avg,
@@ -2018,7 +2018,7 @@ function selection_NL_max_change_points(
     if detect_number_cpd == true
 
         list_change_points_dev = cpd_local_detection(
-            data_testing,
+            data_testing_1,
             n_change_points;
             type_of_detection=type_of_detection,
             type_of_curve=type_of_curve,
@@ -2035,7 +2035,7 @@ function selection_NL_max_change_points(
     elseif fixed_cpd == true
 
         list_change_points_dev = cpd_local_detection(
-            data_testing,
+            data_testing_1,
             n_change_points;
             type_of_detection=type_of_detection,
             type_of_curve=type_of_curve,
@@ -2052,7 +2052,7 @@ function selection_NL_max_change_points(
 
     else
         list_change_points_dev = cpd_local_detection(
-            data_testing,
+            data_testing_1,
              n_change_points + 2;
             type_of_detection=type_of_detection,
             type_of_curve=type_of_curve,
