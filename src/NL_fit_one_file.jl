@@ -11,7 +11,7 @@
     method_of_fitting="MCMC",
     nrep=100,
     errors_estimation=false,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     path_to_results="NA", 
     path_to_plot="NA", 
     loss_type="RE", 
@@ -55,7 +55,7 @@ This function performs NL model selection of one NL model for a full csv file
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `save_plots=false` :Bool, save the plot or not.
 - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
@@ -100,7 +100,7 @@ function fit_NL_model_file(
     method_of_fitting="MCMC",
     nrep=100,
     errors_estimation=false,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
@@ -246,7 +246,7 @@ function fit_NL_model_file(
                 ub_param; # upper bound param
                 nrep=nrep,
                 u0=u0,# initial guess param
-                optmizator=optmizator,
+                optmizer=optmizer,
                 display_plots=display_plots, # display plots in julia or not
                 save_plot=save_plots,
                 path_to_plot =path_to_plot,
@@ -298,7 +298,7 @@ function fit_NL_model_file(
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 nrep=nrep,
-                optmizator=optmizator,
+                optmizer=optmizer,
                 display_plots=display_plots, # display plots in julia or not
                 save_plot=save_plots,
                 path_to_plot=path_to_plot, # where save plots
@@ -326,7 +326,7 @@ function fit_NL_model_file(
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 nrep=nrep,
-                optmizator=optmizator,
+                optmizer=optmizer,
                 display_plots=display_plots, # display plots in julia or not
                 save_plot=save_plots,
                 path_to_plot=path_to_plot, # where save plots
@@ -356,7 +356,7 @@ function fit_NL_model_file(
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 u0=u0,# initial guess param
-                optmizator=optmizator,
+                optmizer=optmizer,
                 display_plots=display_plots, # display plots in julia or not
                 save_plot=save_plots,
                 path_to_plot=path_to_plot, # where save plots
@@ -408,7 +408,7 @@ function fit_NL_model_file(
                 blank_array; # upper bound param
                 nrep=nrep,
                 u0=best_param,# initial guess param
-                optmizator=optmizator,
+                optmizer=optmizer,
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -485,7 +485,7 @@ end
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     path_to_results="NA", 
     path_to_plot="NA", 
     loss_type="RE",
@@ -533,7 +533,7 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `save_plot_best_model=false` :Bool, save the plot or not.
 - `path_to_plot= "NA"`:String, path to save the plots.
 - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
@@ -577,7 +577,7 @@ function fit_NL_model_selection_file(
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
@@ -709,7 +709,7 @@ function fit_NL_model_selection_file(
             method_of_fitting=method_of_fitting,
             nrep=nrep,
             list_u0=list_u0,# initial guess param
-            optmizator=optmizator,
+            optmizer=optmizer,
             display_plots=display_plots, # display plots in julia or not
             save_plot=save_plot,
             size_bootstrap=size_bootstrap,
@@ -778,7 +778,7 @@ end
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     path_to_results="NA",
     path_to_plot="NA", 
     loss_type="RE", 
@@ -832,7 +832,7 @@ This function performs NL model selection  on a segmented time series, it uses A
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `save_plots=false` :Bool, save the plot or not.
 - `path_to_plot= "NA"`:String, path to save the plots.
 - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
@@ -881,7 +881,7 @@ function fit_NL_segmentation_file(
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
@@ -1021,7 +1021,7 @@ function fit_NL_segmentation_file(
             n_change_points;
             list_u0=list_u0,# initial guess param
             type_of_loss=loss_type, # type of used loss
-            optmizator=optmizator, # selection of optimization method
+            optmizer=optmizer, # selection of optimization method
             method_of_fitting=method_of_fitting, # selection of sciml integrator
             type_of_detection=type_of_detection,
             type_of_curve=type_of_curve,

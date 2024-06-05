@@ -67,7 +67,7 @@ function specific_gr_evaluation(data_smooted::Any, pt_smoothing_derivative::Int)
     return specific_gr
 end
 
-function specific_gr_interpol_evaluation(data_testing)
+function deriv_evaluation(data_testing)
     itp = interpolate((data_testing[1, :],), data_testing[2, :], Gridded(Linear()))
     specific_gr_interpol = only.(Interpolations.gradient.(Ref(itp), data_testing[1, :]))
 
@@ -103,7 +103,7 @@ end
 
 
 function guess_param(lb_param::Vector{Float64}, ub_param::Vector{Float64})
-   
+
     param = lb_param .+ (ub_param - lb_param) ./ 2
 
     return param
@@ -195,9 +195,41 @@ function generating_IC_custom_ODE(
     return u0
 end
 
+function analyze_segment(label_exp, name_well, data, segment_number, pt_smoothing_derivative)
+    if length(data[2, :]) > 2
+        specific_gr = specific_gr_evaluation(data, pt_smoothing_derivative)
+
+        specific_gr_times = [
+            (data[1, r] + data[1, (r+pt_smoothing_derivative)]) / 2 for
+            r = 1:1:(eachindex(data[2, :])[end].-pt_smoothing_derivative)
+        ]
+
+        max_specific_gr = maximum(specific_gr)
+        min_specific_gr = minimum(specific_gr)
+        println(specific_gr)
+        println(max_specific_gr)
+
+        t_of_max = specific_gr_times[argmax(max_specific_gr)]
+        index_of_max_od = findfirst(data[1, :] .> t_of_max)
+        od_of_max = data[2, index_of_max_od]
+
+        derivative = deriv_evaluation(data)
+        min_deriv = maximum(derivative)
+        max_deriv = minimum(derivative)
 
 
 
+
+        res_deriv = [label_exp, name_well, max_specific_gr, min_specific_gr, t_of_max, od_of_max, max_deriv, min_deriv, data[1, end], data[2, end], segment_number]
+    else
+        res_deriv = [label_exp, name_well, missing, missing, missing, missing, missing, missing, data[1, end], data[2, end], segment_number]
+
+
+    end
+    return res_deriv, specific_gr, specific_gr_times, derivative
+
+
+end
 
 """
 
@@ -472,7 +504,7 @@ function expand_res_seg(
             temp_output[i] = param_res[i-1]
         end
         fin_output = copy(temp_output)
-    elseif  number_of_segment > 0
+    elseif number_of_segment > 0
         nmax_param = maximum(length.(list_of_model_parameters))
         fin_output = Matrix{Any}
 
@@ -525,7 +557,7 @@ function expand_res(
             temp_output[i] = param_res[i-1]
         end
         fin_output = copy(temp_output)
-    elseif  number_of_segment > 0
+    elseif number_of_segment > 0
         nmax_param = maximum(length.(list_of_model_parameters))
         fin_output = Matrix{Any}
 
@@ -589,31 +621,31 @@ function AICc_evaluation(n_param, beta_penality, data, data_th; correction=true)
     n_data = length(data)
 
 
-    if n_data ==  length(data_th)
-    if n_data > n_param - 2
-       # RSS = sum(abs.(data_th .- data ) .^ 2)
-        RSS = sum(abs.(data_th .- data ) .^ 2)
+    if n_data == length(data_th)
+        if n_data > n_param - 2
+            # RSS = sum(abs.(data_th .- data ) .^ 2)
+            RSS = sum(abs.(data_th .- data) .^ 2)
 
-        println(n_param)
-        println(RSS)       
-        println(log(RSS / n_data))
-        if correction == true
-            correction_value = beta_penality * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
+            println(n_param)
+            println(RSS)
+            println(log(RSS / n_data))
+            if correction == true
+                correction_value = beta_penality * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
+            else
+                correction_value = 0.0
+            end
+            AIC = +beta_penality * n_param + n_data * log(RSS / n_data)
+            AICc = AIC + correction_value
         else
-            correction_value = 0.0
+            AICc = 10^9
+
         end
-        AIC = +beta_penality * n_param + n_data * log(RSS / n_data)
-        AICc = AIC + correction_value
     else
         AICc = 10^9
 
+
     end
-else
-    AICc = 10^9
-
-
-end
-    println(AICc)       
+    println(AICc)
 
     return AICc
 
@@ -622,19 +654,19 @@ end
 
 
 
-function AICc_evaluation2(n_param, beta_penality, data,loss; correction=true)
+function AICc_evaluation2(n_param, beta_penality, data, loss; correction=true)
 
     n_data = length(data)
     if n_data > n_param - 2
-       # RSS = sum(abs.(data_th .- data ) .^ 2)
-        RSS =loss
+        # RSS = sum(abs.(data_th .- data ) .^ 2)
+        RSS = loss
 
         if correction == true
             correction_value = beta_penality * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
         else
             correction_value = 0.0
         end
-        AIC = +beta_penality * n_param + n_data * log(RSS )
+        AIC = +beta_penality * n_param + n_data * log(RSS)
         AICc = AIC + correction_value
     else
         AICc = 10^9
@@ -689,11 +721,11 @@ function reading_annotation(path_to_annotation::Any)
         names_of_annotated_df = [""]
         properties_of_annotation = [""]
         list_of_blank = []
-        list_of_discarded =[]
+        list_of_discarded = []
     end
 
 
-    return names_of_annotated_df, properties_of_annotation,list_of_blank, list_of_discarded
+    return names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded
 end
 
 export reading_annotation

@@ -146,17 +146,17 @@ function fitting_one_well_Log_Lin(
     # selection of exp win with a global thr on the growht rate
     if type_of_win == "global_thr"
 
-        index_od_over_thr = findfirst(data_smooted[2,:].> start_exp_win_thr)
+        index_od_over_thr = findfirst(data_smooted[2, :] .> start_exp_win_thr)
 
         if isnothing(index_od_over_thr) == false && length(specific_gr[index_od_over_thr:end]) > 2
-            
+
             lb_of_distib = quantile(specific_gr[index_od_over_thr:end], threshold_of_exp)
 
-            index_of_max = argmax(specific_gr[index_od_over_thr:end])[1] + index_od_over_thr -1
+            index_of_max = argmax(specific_gr[index_od_over_thr:end])[1] + index_od_over_thr - 1
 
-            index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[index_od_over_thr:end])[1] + index_od_over_thr -1
+            index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[index_od_over_thr:end])[1] + index_od_over_thr - 1
 
-            index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[index_od_over_thr:index_of_max])[1] + index_od_over_thr -1
+            index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[index_od_over_thr:index_of_max])[1] + index_od_over_thr - 1
 
 
 
@@ -167,13 +167,13 @@ function fitting_one_well_Log_Lin(
             index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
             index_of_t_end = findall(x -> x > t_end, data_smooted[1, :])[1]
 
-  
+
         else
-          # the conditions are not satisfied i fix t_end and  t_start to be discarded later and have all results to missing
-          t_end = 100
-          t_start  =200 
-          index_of_t_start = 1 
-          index_of_t_end = index_of_t_start + 2 * pt_min_size_of_win
+            # the conditions are not satisfied i fix t_end and  t_start to be discarded later and have all results to missing
+            t_end = 100
+            t_start = 200
+            index_of_t_start = 1
+            index_of_t_end = index_of_t_start + 2 * pt_min_size_of_win
 
         end
 
@@ -279,7 +279,7 @@ function fitting_one_well_Log_Lin(
             ),
         )
         if save_plot
-            Plots.png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".Plots.png"))
+            Plots.png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".png"))
         end
         if_display(
             Plots.scatter(
@@ -299,7 +299,7 @@ function fitting_one_well_Log_Lin(
             ),
         )
         if save_plot
-            Plots.png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".Plots.png"))
+            Plots.png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
         end
 
     else
@@ -336,7 +336,7 @@ end
     lb_param::Vector{Float64},
     ub_param::Vector{Float64},
     param=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     display_plots=true, 
     save_plot=false,
@@ -371,7 +371,7 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -412,7 +412,7 @@ function fitting_one_well_ODE_constrained(
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}; # upper bound param
     param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     display_plots=true, # display plots in julia or not
     save_plot=false,
@@ -468,7 +468,7 @@ function fitting_one_well_ODE_constrained(
         Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
     res = Optimization.solve(
         optprob_const,
-        optmizator,
+        optmizer,
         PopulationSize=PopulationSize,
         maxiters=maxiters,
         abstol=abstol,
@@ -514,7 +514,7 @@ function fitting_one_well_ODE_constrained(
         ),
     )
     if save_plot
-        Plots.png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".Plots.png"))
+        Plots.png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
     end
 
     # max_theoretical gr
@@ -548,7 +548,7 @@ end
     ub_param::Vector{Float64},
     n_equation::Int,
     param=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     display_plots=false, 
     save_plot=false,
@@ -584,7 +584,7 @@ This function is designed to fit a user-defined ordinary differential equation (
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -621,7 +621,7 @@ function fitting_one_well_custom_ODE(
     ub_param::Vector{Float64}, # upper bound param
     n_equation::Int; # number ode in the system
     param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     display_plots=false, # do plots or no
     save_plot=false,
@@ -674,7 +674,7 @@ function fitting_one_well_custom_ODE(
         Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
     res = Optimization.solve(
         optprob_const,
-        optmizator,
+        optmizer,
         PopulationSize=PopulationSize,
         maxiters=maxiters,
         abstol=abstol,
@@ -719,7 +719,7 @@ function fitting_one_well_custom_ODE(
         ),
     )
     if save_plot
-        Plots.png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".Plots.png"))
+        Plots.png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".png"))
     end
 
     #max_theoretical gr
@@ -750,7 +750,7 @@ end
     models_list::Vector{String}, 
     lb_param_array::Any, 
     ub_param_array::Any,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     pt_avg=1,
     beta_penality=2.0,
@@ -787,7 +787,7 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -826,7 +826,7 @@ function ODE_Model_selection(
     models_list::Vector{String}, # ode model to use
     lb_param_array::Any, # lower bound param
     ub_param_array::Any; # upper bound param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=3, # number of the point to generate intial condition
     beta_penality=2.0, # penality for AIC evaluation
@@ -915,7 +915,7 @@ function ODE_Model_selection(
         )
         res = Optimization.solve(
             optprob_const,
-            optmizator,
+            optmizer,
             PopulationSize=PopulationSize,
             maxiters=maxiters,
             abstol=abstol,
@@ -1022,7 +1022,7 @@ function ODE_Model_selection(
         ),
     )
     if save_plot_best_model
-        Plots.png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".Plots.png"))
+        Plots.png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
     end
 
     return rss_array,
@@ -1048,7 +1048,7 @@ end
     lb_param::Vector{Float64}, 
     ub_param::Vector{Float64},
     N_step_morris=7,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(),
     pt_avg=1, 
     pt_smooth_derivative=7,
@@ -1082,7 +1082,7 @@ This function performs the Morris sensitivity analysis, which assesses the sensi
 - `N_step_morris=7`: Number of steps for the Morris sensitivity analysis.
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
@@ -1119,7 +1119,7 @@ function one_well_morris_sensitivity(
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}; # upper bound param
     N_step_morris=7,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
@@ -1181,7 +1181,7 @@ function one_well_morris_sensitivity(
             Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
         res = Optimization.solve(
             optprob_const,
-            optmizator,
+            optmizer,
             PopulationSize=PopulationSize,
             maxiters=maxiters,
             abstol=abstol,
@@ -1241,7 +1241,7 @@ end
     list_ub_param::Any, 
     intervals_changepoints::Any;
     type_of_loss="L2", 
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     smoothing=false,
     type_of_smoothing="lowess",
@@ -1279,7 +1279,7 @@ This function fits an ODE model at each segment of the time-series data. Change 
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -1316,7 +1316,7 @@ function selection_ODE_fixed_intervals(
     list_ub_param::Any, # upper bound param
     intervals_changepoints::Any;
     type_of_loss="L2", # type of used loss
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     smoothing=false,
     type_of_smoothing="lowess",
@@ -1380,7 +1380,7 @@ function selection_ODE_fixed_intervals(
             list_of_models, # ode model to use
             list_lb_param, # lower bound param
             list_ub_param; # upper bound param
-            optmizator=optmizator, # selection of optimization method
+            optmizer=optmizer, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
             beta_penality=beta_smoothing_ms, # penality for AIC evaluation
@@ -1532,7 +1532,7 @@ function selection_ODE_fixed_intervals(
                 n_change_points,
                 "_",
                 name_well,
-                ".Plots.png",
+                ".png",
             ),
         )
     end
@@ -1553,7 +1553,7 @@ end
     n_max_change_points::Int;
     detect_number_cpd=true,
     fixed_cpd=false,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     integrator=Tsit5(),
     type_of_loss="L2",
     type_of_detection="slinding_win",
@@ -1597,7 +1597,7 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 # Key Arguments:
 
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -1647,7 +1647,7 @@ function segmentation_ODE(
     n_max_change_points::Int;
     detect_number_cpd=true,
     fixed_cpd=false,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     type_of_loss="L2", # type of used loss
     type_of_detection="slinding_win",
@@ -1687,7 +1687,7 @@ function segmentation_ODE(
             list_of_models, # ode model to use
             list_lb_param, # lower bound param
             list_ub_param; # upper bound param
-            optmizator=optmizator, # selection of optimization method
+            optmizer=optmizer, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
             beta_penality=penality_parameter, # penality for AIC evaluation
@@ -1753,7 +1753,7 @@ function segmentation_ODE(
     if n_max_change_points > 0
 
         # Fernanda modification to fix non smoothing (to be tested; start)
-        data_testing_1 =copy(data_testing)
+        data_testing_1 = copy(data_testing)
         if smoothing == true
             data_testing_1 = smoothing_data(
                 data_testing;
@@ -1799,7 +1799,7 @@ function segmentation_ODE(
 
 
 
-            elseif fixed_cpd == false && detect_number_cpd == false
+        elseif fixed_cpd == false && detect_number_cpd == false
             list_change_points_dev = cpd_local_detection(
                 data_testing_1,
                 n_max_change_points + 2;
@@ -1831,7 +1831,7 @@ function segmentation_ODE(
                 list_ub_param, # upper bound param
                 cpd_temp;
                 type_of_loss=type_of_loss, # type of used loss
-                optmizator=optmizator, # selection of optimization method
+                optmizer=optmizer, # selection of optimization method
                 integrator=integrator, # selection of sciml integrator
                 smoothing=smoothing,
                 pt_avg=pt_avg,
@@ -1909,9 +1909,9 @@ function segmentation_ODE(
         mkpath(path_to_plot)
     end
 
-   if multiple_scattering_correction == true
-    data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
-   end
+    if multiple_scattering_correction == true
+        data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
+    end
 
     if_display(
         Plots.scatter(
@@ -1952,13 +1952,192 @@ function segmentation_ODE(
                 length(change_point_to_plot[2:end]),
                 "_",
                 name_well,
-                ".Plots.png",
+                ".png",
             ),
         )
     end
 
     return top_model, time_points_to_plot, sol_to_plot, score_of_the_models
 end
+
+
+function segment_gr_analysis(
+    data::Matrix{Float64}, # dataset first row times second row OD
+    name_well::String, # name of the well
+    label_exp::String; #label of the experiment
+    n_max_change_points=0,
+    display_plots=false, # do plots or no
+    save_plot=false,
+    path_to_plot="NA", # where save plots
+    type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
+    pt_avg=7, # number of the point for rolling avg not used in the other cases
+    pt_smoothing_derivative=7, # number of poits to smooth the derivative
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    thr_lowess=0.05, # keyword argument of lowees smoothing
+    type_of_detection="slinding_win",
+    type_of_curve="original",
+    win_size=14, #  
+    n_bins=40,
+    method_peaks_detection="peaks_prominence"
+)
+
+
+    if multiple_scattering_correction == true
+
+        data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
+    end
+
+
+    data = smoothing_data(
+        data;
+        method=type_of_smoothing,
+        pt_avg=pt_avg,
+        thr_lowess=thr_lowess
+    )
+
+    if n_max_change_points == 0
+
+
+
+        res_temp = analyze_segment(label_exp, name_well, data, 0, pt_smoothing_derivative)
+        res = res_temp[1]
+        interval_changepoints = [0.0]
+    else
+
+
+        list_change_points_dev = cpd_local_detection(
+            data,
+            n_max_change_points;
+            type_of_detection=type_of_detection,
+            type_of_curve=type_of_curve,
+            pt_derivative=pt_smoothing_derivative,
+            size_win=win_size,
+            method=method_peaks_detection,
+            number_of_bin=n_bins,
+        )
+
+        combination_to_test = generation_of_combination_of_cpds(list_change_points_dev[2],
+            n_fix=n_max_change_points)
+        cpd_temp = sort(combination_to_test[1])
+
+
+        interval_changepoints = copy(cpd_temp)
+        interval_changepoints = push!(cpd_temp, data[1, 1])
+        interval_changepoints = push!(cpd_temp, data[1, end])
+        interval_changepoints = sort(cpd_temp)
+
+        for i = 2:(eachindex(interval_changepoints)[end])
+            if i == 2
+                tspan_array = findall((data[1, :] .<= interval_changepoints[i]))
+                data_temp = Matrix(
+                    transpose(hcat(data[1, tspan_array], data[2, tspan_array])),)
+                res_temp_1 = analyze_segment(label_exp, name_well, data_temp, i - 1, pt_smoothing_derivative)
+
+                res = res_temp_1[1]
+
+            else
+                tspan_array_1 = findall((data[1, :] .> interval_changepoints[i-1]))
+                tspan_array_2 = findall((data[1, :] .<= interval_changepoints[i]))
+                tspan_array = intersect(tspan_array_1, tspan_array_2)
+                data_temp = Matrix(
+                    transpose(hcat(data[1, tspan_array], data[2, tspan_array])),
+                )
+                res_temp_1 = analyze_segment(label_exp, name_well, data_temp, i - 1, pt_smoothing_derivative)
+
+
+                res = hcat(res, res_temp_1[1])
+
+
+            end
+
+        end
+
+    end
+
+    temp_for_plot = analyze_segment(label_exp, name_well, data, 0, pt_smoothing_derivative)
+
+    deriv = temp_for_plot[4]
+    gr_dy = temp_for_plot[2]
+    gr_dy_t = temp_for_plot[3]
+    if display_plots
+        if_display = display
+    else
+        if_display = identity
+    end
+
+    if save_plot
+        mkpath(path_to_plot)
+    end
+
+    # plotting if requested
+
+    if_display(
+        Plots.scatter(
+            data[1, :],
+            data[2, :],
+            xlabel="Time ",
+            ylabel="Arb. units ",
+            label=[string("Data") nothing],
+            c=:red,
+        ),
+    )
+    if_display(
+        Plots.vline!(
+            interval_changepoints,
+            c=:black,
+            label=[string("Change points") nothing],
+        ),
+    )
+    if save_plot
+        Plots.png(string(path_to_plot, label_exp, "_data_with_cp_", name_well, ".png"))
+    end
+
+    if_display(
+        Plots.scatter(
+            data[1, :],
+            deriv,
+            xlabel="Time ",
+            ylabel="1 /time ",
+            label=[string("DN/Dt ") nothing],
+            c=:red,
+        ),
+    )
+    if_display(
+        Plots.vline!(
+            interval_changepoints,
+            c=:black,
+            label=[string("Change points") nothing],
+        ),
+    )
+    if save_plot
+        Plots.png(string(path_to_plot, label_exp, "_derivative_", name_well, ".png"))
+    end
+
+    if_display(
+        Plots.scatter(
+            gr_dy_t,
+            gr_dy,
+            xlabel="Time ",
+            ylabel="1 /time ",
+            label=[string("Dynamics growth rate ") nothing],
+            c=:red,
+        ),
+    )
+    if_display(
+        Plots.vline!(
+            interval_changepoints,
+            c=:black,
+            label=[string("Change points") nothing],
+        ),
+    )
+    if save_plot
+        Plots.png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
+    end
+    return res
+end
+
 
 export fitting_one_well_Log_Lin
 export fitting_one_well_ODE_constrained

@@ -1,5 +1,5 @@
 using Optimization
- #######################################################################
+#######################################################################
 
 """
 
@@ -45,7 +45,7 @@ This function plot all the data from .csv file, note that assume that the first 
 function plot_data(
     label_exp::String, #label of the experiment
     path_to_data::String; # path to the folder to analyze
-    path_to_annotation::Any = missing,# path to the annotation of the wells
+    path_to_annotation::Any=missing,# path to the annotation of the wells
     path_to_plot="NA", # path where to save Plots
     display_plots=true,# display plots in julia or not
     save_plots=false, # save the plot or not
@@ -53,11 +53,11 @@ function plot_data(
     do_blank_subtraction="NO", # string on how to use blank (NO,avg_subtraction,time_avg)
     avg_replicate=false, # if true the average between replicates
     correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01 ,
-    blank_value = 0.0,
-    blank_array = [0.0],)
-  
-    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+    thr_negative=0.01,
+    blank_value=0.0,
+    blank_array=[0.0],)
+
+    names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
     # reading files
     dfs_data = CSV.File(path_to_data)
 
@@ -113,8 +113,8 @@ function plot_data(
         # blank subtraction
         data_values = data_values .- blank_value
         index_missing = findall(ismissing, data_values)
-        index_tot =  eachindex(data_values)
-        index_tot =  setdiff(index_tot,index_missing)
+        index_tot = eachindex(data_values)
+        index_tot = setdiff(index_tot, index_missing)
         data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
@@ -252,7 +252,7 @@ This function fits a logarithmic-linear model to a csv file. The function assume
 function fit_one_file_Log_Lin(
     label_exp::String, #label of the experiment
     path_to_data::String; # path to the folder to analyze
-    path_to_annotation::Any = missing,# path to the annotation of the wells
+    path_to_annotation::Any=missing,# path to the annotation of the wells
     path_to_results="NA",# path where save results
     path_to_plot="NA",# path where to save Plots
     display_plots=true,# display plots in julia or not
@@ -273,9 +273,9 @@ function fit_one_file_Log_Lin(
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     thr_lowess=0.05, # keyword argument of lowees smoothing
     verbose=false,
-    start_exp_win_thr=0.05, 
-    blank_value = 0.0,
-    blank_array = [0.0],)
+    start_exp_win_thr=0.05,
+    blank_value=0.0,
+    blank_array=[0.0],)
 
 
 
@@ -308,7 +308,7 @@ function fit_one_file_Log_Lin(
     if write_res == true
         mkpath(path_to_results)
     end
-    names_of_annotated_df, properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+    names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
 
     # reading files
@@ -370,8 +370,8 @@ function fit_one_file_Log_Lin(
         data_values = data_values .- blank_value
 
         index_missing = findall(ismissing, data_values)
-        index_tot =  eachindex(data_values)
-        index_tot =  setdiff(index_tot,index_missing)
+        index_tot = eachindex(data_values)
+        index_tot = setdiff(index_tot, index_missing)
         data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
@@ -402,7 +402,7 @@ function fit_one_file_Log_Lin(
             method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
             thr_lowess=thr_lowess,
-            start_exp_win_thr = start_exp_win_thr
+            start_exp_win_thr=start_exp_win_thr
         )
 
         if verbose == true
@@ -441,7 +441,7 @@ end
     lb_param::Vector{Float64},
     ub_param::Vector{Float64};
     path_to_annotation::Any = missing,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(),
     path_to_results="NA",
     path_to_plot="NA",
@@ -479,7 +479,7 @@ This function fits a ODE model to a csv file. The function assumes that the firs
 # Key Arguments:
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -520,8 +520,8 @@ function fit_file_ODE(
     model::String, # string of the used model
     lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
     ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
-    path_to_annotation::Any = missing,# path to the annotation of the wells
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    path_to_annotation::Any=missing,# path to the annotation of the wells
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
@@ -545,8 +545,8 @@ function fit_file_ODE(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-    blank_value = 0.0,
-    blank_array = [0.0],
+    blank_value=0.0,
+    blank_array=[0.0],
 )
 
 
@@ -562,7 +562,7 @@ function fit_file_ODE(
 
 
 
-    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+    names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
 
     # reading files
@@ -625,8 +625,8 @@ function fit_file_ODE(
         data_values = data_values .- blank_value
 
         index_missing = findall(ismissing, data_values)
-        index_tot =  eachindex(data_values)
-        index_tot =  setdiff(index_tot,index_missing)
+        index_tot = eachindex(data_values)
+        index_tot = setdiff(index_tot, index_missing)
         data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
@@ -657,7 +657,7 @@ function fit_file_ODE(
             lb_param, # lower bound param
             ub_param; # upper bound param
             param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-            optmizator=optmizator, # selection of optimization method 
+            optmizer=optmizer, # selection of optimization method 
             integrator=integrator, # selection of sciml integrator
             path_to_plot=path_to_plot, # where save plots
             pt_avg=pt_avg, # numebr of the point to generate intial condition
@@ -714,7 +714,7 @@ end
     ub_param::Vector{Float64},
     n_equation::Int;
     path_to_annotation::Any = missing,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(),
     path_to_results="NA",
     path_to_plot="NA", 
@@ -757,7 +757,7 @@ This function is designed for fitting an ordinary differential equation (ODE) mo
 
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -800,8 +800,8 @@ function fit_file_custom_ODE(
     lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
     ub_param::Vector{Float64}, # array of the array of the upper bound of the parameters
     n_equation::Int;
-    path_to_annotation::Any = missing,# path to the annotation of the wells
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    path_to_annotation::Any=missing,# path to the annotation of the wells
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
@@ -825,8 +825,8 @@ function fit_file_custom_ODE(
     maxiters=2000000,
     abstol=0.00001,
     thr_lowess=0.05,
-    blank_value = 0.0,
-    blank_array = [0.0],
+    blank_value=0.0,
+    blank_array=[0.0],
 )
 
 
@@ -840,7 +840,7 @@ function fit_file_custom_ODE(
 
     parameter_of_optimization = initialize_df_results_ode_custom(ub_param)
 
-    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+    names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
 
     # reading files
@@ -853,7 +853,7 @@ function fit_file_custom_ODE(
     if length(list_of_blank) > 0
         names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
     end
-    
+
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -904,8 +904,8 @@ function fit_file_custom_ODE(
         data_values = data_values .- blank_value
 
         index_missing = findall(ismissing, data_values)
-        index_tot =  eachindex(data_values)
-        index_tot =  setdiff(index_tot,index_missing)
+        index_tot = eachindex(data_values)
+        index_tot = setdiff(index_tot, index_missing)
         data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
@@ -928,7 +928,7 @@ function fit_file_custom_ODE(
             lb_param, # lower bound param
             ub_param, # upper bound param
             n_equation; # number ode in the system
-            optmizator=optmizator, # selection of optimization method 
+            optmizer=optmizer, # selection of optimization method 
             integrator=integrator, # selection of sciml integrator
             display_plots=display_plots,# display plots in julia or not
             save_plot=save_plots,
@@ -985,7 +985,7 @@ end
     lb_param_array::Any, 
     ub_param_array::Any; 
     path_to_annotation::Any = missing,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     path_to_results="NA",
     path_to_plot="NA", 
@@ -1029,7 +1029,7 @@ This function performs model selection  of ODE for a full csv file.
 # Key Arguments:
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -1072,8 +1072,8 @@ function ODE_model_selection_file(
     models_list::Vector{String}, # ode model to use 
     lb_param_array::Any, # lower bound param
     ub_param_array::Any; # upper bound param
-    path_to_annotation::Any = missing,# path to the annotation of the wells
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    path_to_annotation::Any=missing,# path to the annotation of the wells
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
     path_to_plot="NA", # path where to save Plots
@@ -1099,8 +1099,8 @@ function ODE_model_selection_file(
     abstol=0.00001,
     thr_lowess=0.05,
     correction_AIC=true,
-    blank_value = 0.0,
-    blank_array = [0.0],
+    blank_value=0.0,
+    blank_array=[0.0],
 )
 
 
@@ -1116,7 +1116,7 @@ function ODE_model_selection_file(
 
 
 
-    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+    names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
     list_of_discarded = Symbol.(list_of_discarded)
 
@@ -1129,10 +1129,10 @@ function ODE_model_selection_file(
     # excluding blank data and discarded wells
 
 
-   if length(list_of_blank) > 0
+    if length(list_of_blank) > 0
         names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
     end
-    
+
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -1184,8 +1184,8 @@ function ODE_model_selection_file(
         data_values = data_values .- blank_value
 
         index_missing = findall(ismissing, data_values)
-        index_tot =  eachindex(data_values)
-        index_tot =  setdiff(index_tot,index_missing)
+        index_tot = eachindex(data_values)
+        index_tot = setdiff(index_tot, index_missing)
         data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
         # correcting negative values after blank subtraction
         data = negative_value_correction(data,
@@ -1205,7 +1205,7 @@ function ODE_model_selection_file(
             models_list, # ode model to use 
             lb_param_array, # lower bound param
             ub_param_array; # upper bound param
-            optmizator=optmizator, # selection of optimization method 
+            optmizer=optmizer, # selection of optimization method 
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
             beta_penality=beta_penality, # penality for AIC evaluation
@@ -1276,7 +1276,7 @@ end
     path_to_annotation::Any = missing,
     detect_number_cpd=true,
     fixed_cpd=false,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     type_of_loss="L2", 
     type_of_detection="sliding_win",
@@ -1328,7 +1328,7 @@ This function performs model selection for ordinary differential equation (ODE) 
 # Key Arguments:
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizator = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -1384,10 +1384,10 @@ function segmentation_ODE_file(
     lb_param_array::Any, # lower bound param
     ub_param_array::Any,# upper bound param
     n_max_change_points::Int;
-    path_to_annotation::Any = missing,# path to the annotation of the wells
+    path_to_annotation::Any=missing,# path to the annotation of the wells
     detect_number_cpd=true,
     fixed_cpd=false,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     type_of_loss="L2", # type of used loss 
     type_of_detection="sliding_win",
@@ -1419,8 +1419,9 @@ function segmentation_ODE_file(
     thr_lowess=0.05,
     verbose=false,
     correction_AIC=true,
-    blank_value = 0.0,
-    blank_array = [0.0],)
+    blank_value=0.0,
+    blank_array=[0.0],
+)
 
 
     vector_AIC = ["AIC"]
@@ -1436,7 +1437,7 @@ function segmentation_ODE_file(
     parameter_of_optimization = initialize_res_ms(ub_param_array, number_of_segment=n_max_change_points + 1)
 
 
-    names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+    names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
 
     # reading files
@@ -1449,7 +1450,7 @@ function segmentation_ODE_file(
     if length(list_of_blank) > 0
         names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
     end
-    
+
     if length(list_of_discarded) > 0
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
     end
@@ -1464,7 +1465,7 @@ function segmentation_ODE_file(
             list_of_blank;
             method=do_blank_subtraction
         )
- 
+
 
     end
 
@@ -1498,8 +1499,8 @@ function segmentation_ODE_file(
         data_values = data_values .- blank_value
 
         index_missing = findall(ismissing, data_values)
-        index_tot =  eachindex(data_values)
-        index_tot =  setdiff(index_tot,index_missing)
+        index_tot = eachindex(data_values)
+        index_tot = setdiff(index_tot, index_missing)
         data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
 
         # correcting negative values after blank subtraction
@@ -1522,7 +1523,7 @@ function segmentation_ODE_file(
             n_max_change_points;
             detect_number_cpd=detect_number_cpd,
             fixed_cpd=fixed_cpd,
-            optmizator=optmizator, # selection of optimization method
+            optmizer=optmizer, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
             type_of_loss=type_of_loss, # type of used loss
             type_of_detection=type_of_detection,
@@ -1548,8 +1549,8 @@ function segmentation_ODE_file(
             type_of_smoothing=type_of_smoothing,
             thr_lowess=thr_lowess,
             correction_AIC=correction_AIC,
-            )
-            vector_AIC =  hcat( vector_AIC,temp_results_1[end])
+        )
+        vector_AIC = hcat(vector_AIC, temp_results_1[end])
 
         vectorized_temp_results = expand_res_seg(
             temp_results_1[1],
@@ -1583,15 +1584,189 @@ function segmentation_ODE_file(
 
 
     end
-    return parameter_of_optimization,vector_AIC
+    return parameter_of_optimization, vector_AIC
 
 
 
 
 end
+
+
+
+
+
+
+
+
+
+
+
+function segment_gr_analysis_file(
+    path_to_data, # dataset first row times second row OD
+    label_exp::String; #label of the experiment
+    path_to_annotation=missing,
+    n_max_change_points=0,
+    display_plots=false, # do plots or no
+    save_plots=false,
+    path_to_plot="NA", # where save plots
+    type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
+    pt_avg=7, # number of the point for rolling avg not used in the other cases
+    pt_smoothing_derivative=7, # number of poits to smooth the derivative
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    thr_lowess=0.05, # keyword argument of lowees smoothing
+    type_of_detection="slinding_win",
+    type_of_curve="original",
+    win_size=14, #  
+    n_bins=40,
+    path_to_results="NA",# path where save results
+    write_res=false, # write results
+    avg_replicate=false,
+    blank_value=0.0,
+    blank_array=[0.0],
+    correct_negative="remove",
+    thr_negative=0.01,
+    verbose=true,)
+
+
+
+
+
+    # TEMPORARY results df
+    results = ["label_exp", "name_well", "max_gr", "min_gr", "t_of_max", "od_of_max", "max_deriv", "min_deriv", "end_time", "end_N", "segment_number"]
+
+    if save_plots == true
+        mkpath(path_to_plot)
+    end
+    if write_res == true
+        mkpath(path_to_results)
+    end
+    names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
+
+
+    # reading files
+    dfs_data = CSV.File(path_to_data)
+
+    # shaping df for the inference
+    names_of_cols = propertynames(dfs_data)
+
+    # excluding blank data and discarded wells
+    if length(list_of_blank) > 0
+        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+    end
+    if length(list_of_discarded) > 0
+
+        names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
+
+    end
+    times_data = dfs_data[names_of_cols[1]]
+    if length(list_of_blank) > 0
+        blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
+        blank_array = convert(Vector{Float64}, blank_array)
+
+        blank_value = blank_subtraction(
+            dfs_data,
+            list_of_blank;
+            method=do_blank_subtraction
+        )
+
+    end
+
+
+    ## considering replicates
+    list_replicate = unique(properties_of_annotation)
+    list_replicate = filter!(e -> e != "b", list_replicate)
+
+    if avg_replicate == true
+
+
+        dfs_data, names_of_cols = average_replicate(dfs_data, times_data, properties_of_annotation, names_of_annotated_df)
+
+
+    end
+
+
+    # for on the columns to analyze
+    for well_name in names_of_cols[2:end]
+
+
+
+        if avg_replicate == true
+
+            data_values = copy(dfs_data[!, well_name])
+
+        else
+            data_values = copy(dfs_data[well_name])
+        end
+
+        # blank subtraction 
+        data_values = data_values .- blank_value
+
+        index_missing = findall(ismissing, data_values)
+        index_tot = eachindex(data_values)
+        index_tot = setdiff(index_tot, index_missing)
+        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
+
+        # correcting negative values after blank subtraction
+        data = negative_value_correction(data,
+            blank_array;
+            method=correct_negative,
+            thr_negative=thr_negative,)
+
+            
+        data = Matrix(transpose(hcat(data[1, :], data[2, :])))
+
+        # inference
+
+
+        temp_results_1 = segment_gr_analysis(
+            data, # dataset first row times second row OD
+            string(well_name), # name of the well
+            label_exp; #label of the experiment
+            n_max_change_points=n_max_change_points,
+            display_plots=display_plots, # do plots or no
+            save_plot=save_plots,
+            path_to_plot=path_to_plot, # where save plots
+            type_of_smoothing=type_of_smoothing, # option, NO, gaussian, rolling avg
+            pt_avg=pt_avg, # number of the point for rolling avg not used in the other cases
+            pt_smoothing_derivative=pt_smoothing_derivative, # number of poits to smooth the derivative
+            multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
+            calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
+            thr_lowess=thr_lowess, # keyword argument of lowees smoothing
+            type_of_detection=type_of_detection,
+            type_of_curve=type_of_curve,
+            win_size=win_size, #  
+            n_bins=n_bins,)
+
+        if verbose == true
+            println("the results are:")
+            println(temp_results_1)
+        end
+
+        results = hcat(results, temp_results_1)
+
+    end
+
+    if write_res == true
+
+        CSV.write(
+            string(path_to_results, label_exp, "_results.csv"),
+            Tables.table(Matrix(results)),
+        )
+
+    end
+
+    return results
+end
+
+
 export plot_data
 export fit_one_file_Log_Lin
-export fit_file_ODE
+export fit_one_file_Log_Lin
+export segment_gr_analysis_file
 export fit_file_custom_ODE
 export ODE_model_selection_file
 export segmentation_ODE_file
+export segment_gr_analysis_file

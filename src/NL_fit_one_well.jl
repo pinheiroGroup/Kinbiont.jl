@@ -10,7 +10,7 @@
     lb_param::Vector{Float64}, 
     ub_param::Vector{Float64}, 
     u0=lb_param .+ (ub_param .- lb_param)./ 2,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=true, 
     save_plot=false,
     path_to_plot="NA", 
@@ -44,7 +44,7 @@ This function fits a nonlinear function to the time series input data of a singl
 # Key Arguments:
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
-- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -79,7 +79,7 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}; # upper bound param
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=true, # display plots in julia or not
     save_plot=false,
     path_to_plot="NA", # where save plots
@@ -134,7 +134,7 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     prob = OptimizationProblem(loss_function, u0, data, lb=lb_param, ub=ub_param)
 
     # Solve the optimization problem
-    sol = solve(prob, optmizator, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
+    sol = solve(prob, optmizer, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
     # evaluate the fitted  model
     fitted_model = model_function(sol, data[1, :])
 
@@ -216,7 +216,7 @@ end
     ub_param::Vector{Float64};
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=true, 
     save_plot=false,
     path_to_plot="NA", 
@@ -252,7 +252,7 @@ This function performs the Morris sensitivity analysis for the non-linear fit op
 # Key Arguments:
 - `nrep=100`.  Number of steps for the Morris sensitivity analysis.
 - `param=lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}. Initial guess for the model parameters.
-- `optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `save_plot=false`:Bool. Options: "true" to save the plot or "false" not to.
 - `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -291,7 +291,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}; # upper bound param
     nrep=100,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=true, # display plots in julia or not
     save_plot=false,
     path_to_plot="NA", # where save plots
@@ -364,7 +364,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
         prob = OptimizationProblem(loss_function, u0, data, lb=lb_param, ub=ub_param)
 
         # Solve the optimization problem
-        sol = solve(prob, optmizator, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
+        sol = solve(prob, optmizer, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
         # evaluate the fitted  model
         fitted_model = model_function(sol, data[1, :])
 
@@ -466,7 +466,7 @@ fit_NL_model_MCMC_intialization(
     ub_param::Vector{Float64};
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=true, 
     save_plot=false,
     path_to_plot="NA", 
@@ -499,7 +499,7 @@ This function performs NL fitting. It tries to automatically detect the optimal 
 # Key Arguments:
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `save_plot=false` :Bool, save the plot or not.
 - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
@@ -532,7 +532,7 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
     ub_param::Vector{Float64}; # upper bound param
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     nrep=100,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=true, # display plots in julia or not
     save_plot=false,
     path_to_plot="NA", # where save plots
@@ -610,7 +610,7 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
         prob = OptimizationProblem(loss_function, u0, data, lb=lb_param, ub=ub_param)
 
         # Solve the optimization problem
-        sol = solve(prob, optmizator, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
+        sol = solve(prob, optmizer, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
         # evaluate the fitted  model
         fitted_model = model_function(sol, data[1, :])
 
@@ -726,7 +726,7 @@ fit_NL_model_bootstrap(
     ub_param::Vector{Float64};
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=true, 
     save_plot=false,
     path_to_plot="NA", 
@@ -760,7 +760,7 @@ This function performs NL fitting. It perform nrep iterations of Bootstrap to ev
 -  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `save_plot=false` :Bool, save the plot or not.
 - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
@@ -798,7 +798,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     ub_param::Vector{Float64}; # upper bound param
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=true, # display plots in julia or not
     save_plot=false,
     size_bootstrap=0.7,
@@ -881,7 +881,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
         prob = OptimizationProblem(loss_function, u0, data_to_fit, lb=lb_param, ub=ub_param)
 
         # Solve the optimization problem
-        sol = solve(prob, optmizator, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
+        sol = solve(prob, optmizer, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
         # evaluate the fitted  model
         fitted_model = model_function(sol, data_to_fit[1, :])
         sol_fin, index_not_zero = remove_negative_value(fitted_model)
@@ -986,7 +986,7 @@ end
     blank_array::Vector{Float64}; 
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=false, 
     save_plot=false,
     path_to_plot="NA", 
@@ -1020,7 +1020,7 @@ This function performs NL fitting. It perform nrep iterations to estimate the po
 # Key Arguments:
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `save_plot=false` :Bool, save the plot or not.
 - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
@@ -1059,7 +1059,7 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
     blank_array::Vector{Float64}; # upper bound param
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=false, # display plots in julia or not
     save_plot=false,
     path_to_plot="NA", # where save plots
@@ -1139,7 +1139,7 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
         prob = OptimizationProblem(loss_function, u0, data, lb=lb_param, ub=ub_param)
 
         # Solve the optimization problem
-        sol = solve(prob, optmizator, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
+        sol = solve(prob, optmizer, PopulationSize=PopulationSize, maxiters=maxiters, abstol=abstol)
         # evaluate the fitted  model
         fitted_model = model_function(sol, data[1, :])
         sol_fin, index_not_zero = remove_negative_value(fitted_model)
@@ -1253,7 +1253,7 @@ end
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=true, 
     save_plot=false,
     size_bootstrap=0.7,
@@ -1291,7 +1291,7 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `save_plot=false` :Bool, save the plot or not.
 - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
@@ -1330,7 +1330,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,# initial guess param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     display_plots=true, # display plots in julia or not
     save_plot=false,
     size_bootstrap=0.7,
@@ -1376,7 +1376,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 ub_param; # upper bound param
                 nrep=nrep,
                 u0=u0,# initial guess param
-                optmizator=optmizator,
+                optmizer=optmizer,
                 display_plots=display_plots, # display plots in julia or not
                 save_plot=save_plot,
                 size_bootstrap=size_bootstrap,
@@ -1428,7 +1428,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 nrep=nrep,
-                optmizator=optmizator,
+                optmizer=optmizer,
                 display_plots=display_plots, # display plots in julia or not
                 save_plot=save_plot,
                 path_to_plot=path_to_plot, # where save plots
@@ -1481,7 +1481,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 nrep=nrep,
-                optmizator=optmizator,
+                optmizer=optmizer,
                 display_plots=display_plots, # display plots in julia or not
                 save_plot=save_plot,
                 path_to_plot=path_to_plot, # where save plots
@@ -1536,7 +1536,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 u0=u0,# initial guess param
-                optmizator=optmizator,
+                optmizer=optmizer,
                 display_plots=display_plots, # display plots in julia or not
                 save_plot=save_plot,
                 path_to_plot=path_to_plot, # where save plots
@@ -1637,7 +1637,7 @@ end
     intervals_changepoints::Any;
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,
     type_of_loss="L2", 
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     method_of_fitting="MCMC",
     smoothing=false,
     size_bootstrap=0.7,
@@ -1675,7 +1675,7 @@ end
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `save_plot=false` :Bool, save the plot or not.
 - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
@@ -1715,7 +1715,7 @@ function selection_NL_fixed_interval(
     intervals_changepoints::Any;
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,# initial guess param
     type_of_loss="L2", # type of used loss
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     method_of_fitting="MCMC", # selection of sciml integrator
     smoothing=false,
     size_bootstrap=0.7,
@@ -1809,7 +1809,7 @@ function selection_NL_fixed_interval(
             method_of_fitting=method_of_fitting,
             nrep=nrep,
             list_u0=list_u0,# initial guess param
-            optmizator=optmizator,
+            optmizer=optmizer,
             display_plots=false, # display plots in julia or not
             size_bootstrap=size_bootstrap,
             pt_avg=pt_avg, # numebr of the point to generate intial condition
@@ -1876,7 +1876,7 @@ end
     n_change_points::Int;
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,
     type_of_loss="L2_fixed_CI", 
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     method_of_fitting="MCMC", 
     type_of_detection="sliding_win",
     type_of_curve="original",
@@ -1923,7 +1923,7 @@ This function performs model selection for NL models while segmenting the time s
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizator =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `save_plot=false` :Bool, save the plot or not.
 - `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
@@ -1962,7 +1962,7 @@ function selection_NL_max_change_points(
     n_change_points::Int;
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,# initial guess param
     type_of_loss="L2_fixed_CI", # type of used loss
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
+    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     method_of_fitting="MCMC", # selection of sciml integrator
     type_of_detection="sliding_win",
     type_of_curve="original",
@@ -2082,7 +2082,7 @@ function selection_NL_max_change_points(
             cpd_temp;
             list_u0=list_u0,
             type_of_loss=type_of_loss, # type of used loss
-            optmizator=optmizator, # selection of optimization method
+            optmizer=optmizer, # selection of optimization method
             method_of_fitting=method_of_fitting, # selection of sciml integrator
             smoothing=smoothing,
             type_of_smoothing=type_of_smoothing,
