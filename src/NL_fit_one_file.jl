@@ -13,12 +13,9 @@
     errors_estimation=false,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     path_to_results="NA", 
-    path_to_plot="NA", 
     loss_type="RE", 
     smoothing=false,
     type_of_smoothing="lowess",
-    display_plots=true,
-    save_plots=false,
     verbose=false, 
     write_res=false, 
     pt_avg=1, 
@@ -56,8 +53,6 @@ This function performs NL model selection of one NL model for a full csv file
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-- `save_plots=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -86,7 +81,6 @@ This function performs NL model selection of one NL model for a full csv file
 
 
 - a matrix with the following contents for each row : `[ "label of exp", "well", "param_1","param_2",..,"param_n","maximum specific gr using model","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
-- The plots of the fit if `save_plot=true` or `display_plots=true`
 
 """
 function fit_NL_model_file(
@@ -102,12 +96,9 @@ function fit_NL_model_file(
     errors_estimation=false,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
     type_of_smoothing="lowess",
-    display_plots=true,# display plots in julia or not
-    save_plots=false,
     verbose=false, # 1 true verbose
     write_res=false, # write results
     pt_avg=1, # number of points to do smoothing average
@@ -132,10 +123,6 @@ function fit_NL_model_file(
 
     if write_res == true
         mkpath(path_to_results)
-    end
-
-    if save_plots == true
-        mkpath(path_to_plot)
     end
 
     parameter_of_optimization = initialize_df_results_ode_custom(lb_param)
@@ -247,9 +234,6 @@ function fit_NL_model_file(
                 nrep=nrep,
                 u0=u0,# initial guess param
                 optmizer=optmizer,
-                display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plots,
-                path_to_plot =path_to_plot,
                 size_bootstrap=size_bootstrap,
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
@@ -299,9 +283,6 @@ function fit_NL_model_file(
                 ub_param; # upper bound param
                 nrep=nrep,
                 optmizer=optmizer,
-                display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plots,
-                path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -327,9 +308,6 @@ function fit_NL_model_file(
                 ub_param; # upper bound param
                 nrep=nrep,
                 optmizer=optmizer,
-                display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plots,
-                path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -357,9 +335,6 @@ function fit_NL_model_file(
                 ub_param; # upper bound param
                 u0=u0,# initial guess param
                 optmizer=optmizer,
-                display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plots,
-                path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -487,12 +462,9 @@ end
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     path_to_results="NA", 
-    path_to_plot="NA", 
     loss_type="RE",
     smoothing=false, 
     type_of_smoothing="lowess",
-    display_plots=true,
-    save_plots=false,
     verbose=false, 
     write_res=false,
     pt_avg=1,
@@ -534,9 +506,6 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-- `save_plot_best_model=false` :Bool, save the plot or not.
-- `path_to_plot= "NA"`:String, path to save the plots.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -564,7 +533,6 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 
 
 - a matrix with the following contents for each row : `[ "label of exp", "well", "param_1","param_2",..,"param_n","maximum specific gr using model","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
-- The plots of the fit if `save_plot=true` or `display_plots=true`
 
 """
 function fit_NL_model_selection_file(
@@ -579,12 +547,9 @@ function fit_NL_model_selection_file(
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
     type_of_smoothing="lowess",
-    display_plots=true,# display plots in julia or not
-    save_plots=false,
     verbose=false, # 1 true verbose
     write_res=false, # write results
     pt_avg=1, # number of points to do smoothing average
@@ -613,15 +578,8 @@ function fit_NL_model_selection_file(
         mkpath(path_to_results)
     end
 
-    if save_plots == true
-        mkpath(path_to_plot)
-    end
     parameter_of_optimization = initialize_res_ms(list_ub_param)
-
-
-
     names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
-
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -710,10 +668,7 @@ function fit_NL_model_selection_file(
             nrep=nrep,
             list_u0=list_u0,# initial guess param
             optmizer=optmizer,
-            display_plots=display_plots, # display plots in julia or not
-            save_plot=save_plot,
             size_bootstrap=size_bootstrap,
-            path_to_plot=path_to_plot, # where save plots
             pt_avg=pt_avg, # numebr of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
             smoothing=smoothing, # the smoothing is done or not?
@@ -780,12 +735,9 @@ end
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     path_to_results="NA",
-    path_to_plot="NA", 
     loss_type="RE", 
     smoothing=false, 
     type_of_smoothing="lowess",
-    display_plots=true,
-    save_plots=false,
     verbose=false, 
     write_res=false,
     pt_avg=1, 
@@ -833,9 +785,6 @@ This function performs NL model selection  on a segmented time series, it uses A
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-- `save_plots=false` :Bool, save the plot or not.
-- `path_to_plot= "NA"`:String, path to save the plots.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -867,7 +816,6 @@ This function performs NL model selection  on a segmented time series, it uses A
 
 
 - an matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using model","maximum specific gr using data", "objective function value (i.e. loss of the solution)" "segment number"]` where ' "param_1","param_2",..,"param_n" ' .
-- The plots of the fit if `save_plot=true` or `display_plots=true`
 
 """
 function fit_NL_segmentation_file(
@@ -883,12 +831,9 @@ function fit_NL_segmentation_file(
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
     type_of_smoothing="lowess",
-    display_plots=true,# display plots in julia or not
-    save_plots=false,
     verbose=false, # 1 true verbose
     write_res=false, # write results
     pt_avg=1, # number of points to do smoothing average
@@ -923,12 +868,7 @@ function fit_NL_segmentation_file(
         mkpath(path_to_results)
     end
 
-    if save_plots == true
-        mkpath(path_to_plot)
-    end
     parameter_of_optimization = initialize_res_ms(list_ub_param, number_of_segment=n_change_points)
-
-
     names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
 
@@ -1030,9 +970,6 @@ function fit_NL_segmentation_file(
             type_of_smoothing=type_of_smoothing,
             thr_lowess=thr_lowess,
             pt_avg=pt_avg,
-            save_plot=save_plots, # do plots or no
-            display_plots=display_plots,
-            path_to_plot=path_to_plot, # where save plots
             win_size=win_size, # numebr of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data

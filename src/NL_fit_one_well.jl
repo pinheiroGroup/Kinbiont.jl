@@ -11,9 +11,6 @@
     ub_param::Vector{Float64}, 
     u0=lb_param .+ (ub_param .- lb_param)./ 2,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, 
-    save_plot=false,
-    path_to_plot="NA", 
     pt_avg=1, 
     pt_smooth_derivative=7,
     smoothing=false, 
@@ -45,8 +42,6 @@ This function fits a nonlinear function to the time series input data of a singl
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
-- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
-- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
@@ -80,9 +75,6 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     ub_param::Vector{Float64}; # upper bound param
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    save_plot=false,
-    path_to_plot="NA", # where save plots
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     smoothing=false, # the smoothing is done or not?
@@ -138,44 +130,6 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     # evaluate the fitted  model
     fitted_model = model_function(sol, data[1, :])
 
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-
-
-    # plotting if required
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            data[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=2,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),)
-
-    if_display(
-        Plots.plot!(
-            data[1, :],
-            fitted_model,
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[string("Fitting ", model_string) nothing],
-            c=:red,
-        ),
-    )
-    if save_plot
-        png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
-    end
-
     sol_fin, index_not_zero = remove_negative_value(fitted_model)
 
     data_th = transpose(hcat(data[1, index_not_zero], sol_fin))
@@ -217,9 +171,6 @@ end
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, 
-    save_plot=false,
-    path_to_plot="NA", 
     pt_avg=1, 
     pt_smooth_derivative=7,
     smoothing=false, 
@@ -253,8 +204,6 @@ This function performs the Morris sensitivity analysis for the non-linear fit op
 - `nrep=100`.  Number of steps for the Morris sensitivity analysis.
 - `param=lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}. Initial guess for the model parameters.
 - `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
-- `save_plot=false`:Bool. Options: "true" to save the plot or "false" not to.
-- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -292,9 +241,6 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
     ub_param::Vector{Float64}; # upper bound param
     nrep=100,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    save_plot=false,
-    path_to_plot="NA", # where save plots
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     smoothing=false, # the smoothing is done or not?
@@ -398,45 +344,6 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
 
     best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
 
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-
-
-    # plotting if required
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            data[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=2,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),)
-
-    if_display(
-        Plots.plot!(
-            data[1, :],
-            best_fitted_model,
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[string("Fitting ", model_string) nothing],
-            c=:red,
-        ),
-    )
-    if save_plot
-        png(string(path_to_plot, label_exp, "_", model_string, "_", name_well, ".png"))
-    end
-
-
     if write_res == true
         mkpath(path_to_results)
         CSV.write(
@@ -467,9 +374,6 @@ fit_NL_model_MCMC_intialization(
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, 
-    save_plot=false,
-    path_to_plot="NA", 
     pt_avg=1, 
     pt_smooth_derivative=7,
     smoothing=false, 
@@ -500,8 +404,6 @@ This function performs NL fitting. It tries to automatically detect the optimal 
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-- `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -533,9 +435,6 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     nrep=100,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    save_plot=false,
-    path_to_plot="NA", # where save plots
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     smoothing=false, # the smoothing is done or not?
@@ -661,53 +560,7 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
 
         end
         loss_chain_best = vcat(loss_chain, loss_best)
-
-
-
     end
-
-
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-
-
-    # plotting if required
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            data[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=2,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),)
-
-    if_display(
-        Plots.plot!(
-            data[1, :],
-            best_fitted_model,
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[string("Fitting ", model_string) nothing],
-            c=:red,
-        ),
-    )
-    if save_plot
-        png(string(path_to_plot, label_exp, "_", model_string, "_", name_well, ".png"))
-    end
-
-
-
-
 
     return best_res_param, best_fitted_model, loss_chain[2:end], loss_chain_best[2:end]
 end
@@ -727,9 +580,6 @@ fit_NL_model_bootstrap(
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, 
-    save_plot=false,
-    path_to_plot="NA", 
     pt_avg=1, 
     size_bootstrap=0.7,
     pt_smooth_derivative=7,
@@ -761,8 +611,6 @@ This function performs NL fitting. It perform nrep iterations of Bootstrap to ev
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-- `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -799,10 +647,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    save_plot=false,
     size_bootstrap=0.7,
-    path_to_plot="NA", # where save plots
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     smoothing=false, # the smoothing is done or not?
@@ -914,45 +759,6 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     best_res_param = fin_param[:, index_best+1]
     best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
 
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-
-
-    # plotting if required
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            data[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=2,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),)
-
-    if_display(
-        Plots.plot!(
-            data[1, :],
-            best_fitted_model,
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[string("Fitting ", model_string) nothing],
-            c=:red,
-        ),
-    )
-    if save_plot
-        png(string(path_to_plot, label_exp, "_", model_string, "_", name_well, ".png"))
-    end
-
-
     if write_res == true
         mkpath(path_to_results)
         CSV.write(
@@ -987,9 +793,6 @@ end
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=false, 
-    save_plot=false,
-    path_to_plot="NA", 
     pt_avg=1, 
     pt_smooth_derivative=7,
     smoothing=false,
@@ -1021,8 +824,6 @@ This function performs NL fitting. It perform nrep iterations to estimate the po
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-- `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -1060,9 +861,6 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=false, # display plots in julia or not
-    save_plot=false,
-    path_to_plot="NA", # where save plots
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     smoothing=false, # the smoothing is done or not?
@@ -1172,45 +970,6 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
     best_res_param = fin_param[:, index_best+1]
     best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
 
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-
-
-    # plotting if required
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            data[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=2,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),)
-
-    if_display(
-        Plots.plot!(
-            data[1, :],
-            best_fitted_model,
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[string("Fitting ", model_string) nothing],
-            c=:red,
-        ),
-    )
-    if save_plot
-        png(string(path_to_plot, label_exp, "_", model_string, "_", name_well, ".png"))
-    end
-
-
     if write_res == true
         mkpath(path_to_results)
         CSV.write(
@@ -1254,10 +1013,7 @@ end
     nrep=100,
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, 
-    save_plot=false,
     size_bootstrap=0.7,
-    path_to_plot="NA",
     pt_avg=1,
     pt_smooth_derivative=7,
     smoothing=false, 
@@ -1292,8 +1048,6 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-- `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -1331,10 +1085,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     nrep=100,
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,# initial guess param
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    save_plot=false,
     size_bootstrap=0.7,
-    path_to_plot="NA", # where save plots
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     smoothing=false, # the smoothing is done or not?
@@ -1377,10 +1128,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 nrep=nrep,
                 u0=u0,# initial guess param
                 optmizer=optmizer,
-                display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plot,
                 size_bootstrap=size_bootstrap,
-                path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -1429,9 +1177,6 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 ub_param; # upper bound param
                 nrep=nrep,
                 optmizer=optmizer,
-                display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plot,
-                path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -1482,9 +1227,6 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 ub_param; # upper bound param
                 nrep=nrep,
                 optmizer=optmizer,
-                display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plot,
-                path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -1537,9 +1279,6 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 ub_param; # upper bound param
                 u0=u0,# initial guess param
                 optmizer=optmizer,
-                display_plots=display_plots, # display plots in julia or not
-                save_plot=save_plot,
-                path_to_plot=path_to_plot, # where save plots
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -1584,43 +1323,6 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
 
     end
-
-    # plotting if required
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            data[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=2,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),)
-
-    if_display(
-        Plots.plot!(
-            data[1, :],
-            top_fitted_sol,
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[string("Fitting ", top_model[2]) nothing],
-            c=:red,
-        ),
-    )
-    if save_plot
-        png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
-    end
-
 
     return top_score, top_model, top_fitted_sol, score_res, top_loss 
 
@@ -1676,8 +1378,6 @@ end
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-- `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -1810,7 +1510,6 @@ function selection_NL_fixed_interval(
             nrep=nrep,
             list_u0=list_u0,# initial guess param
             optmizer=optmizer,
-            display_plots=false, # display plots in julia or not
             size_bootstrap=size_bootstrap,
             pt_avg=pt_avg, # numebr of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
@@ -1885,9 +1584,6 @@ end
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     pt_avg=1,
-    save_plot=false,
-    display_plots=false,
-    path_to_plot="NA", 
     win_size=7, 
     pt_smooth_derivative=0,
     multiple_scattering_correction=false,
@@ -1924,8 +1620,6 @@ This function performs model selection for NL models while segmenting the time s
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
-- `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -1971,9 +1665,6 @@ function selection_NL_max_change_points(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     pt_avg=1,
-    save_plot=false, # do plots or no
-    display_plots=false,
-    path_to_plot="NA", # where save plots
     win_size=7, # numebr of the point to generate intial condition
     pt_smooth_derivative=0,
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
@@ -2132,59 +1823,6 @@ function selection_NL_max_change_points(
             top_intervals = copy(cpd_temp)
         end
 
-    end
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-
-    if_display(
-        Plots.scatter(
-            data_testing[1, :],
-            data_testing[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=1,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),
-    )
-    if_display(
-        Plots.vline!(
-            top_intervals[1:end],
-            c=:black,
-            label=["change points" nothing],
-        ),
-    )
-    if_display(
-        Plots.plot!(
-            reduce(vcat, top_time),
-            reduce(vcat, top_fit),
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[" fitting " nothing],
-            color=:red,
-            title=string(label_exp, " fitting ", name_well),
-        ),
-    )
-    if save_plot
-        png(
-            string(
-                path_to_plot,
-                label_exp,
-                "_model_selection_seg_",
-                n_change_points,
-                "_",
-                name_well,
-                ".png",
-            ),
-        )
     end
 
     return top_param, sort(top_intervals), top_fit, top_time
