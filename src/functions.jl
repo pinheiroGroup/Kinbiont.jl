@@ -16,6 +16,7 @@ include("NL_fit_one_file.jl");
 include("NL_loss_list.jl");
 include("cpd_functions.jl");
 include("ML_downstream.jl");
+include("data_struct_Kimchi.jl");
 
 
 function model_selector(model::String, u0, tspan, param=nothing)
@@ -196,7 +197,7 @@ function generating_IC_custom_ODE(
 end
 
 function analyze_segment(label_exp, name_well, data, segment_number, pt_smoothing_derivative)
-    if length(data[2, :]) > 2
+    if length(data[2, :]) >= pt_smoothing_derivative + 1
         specific_gr = specific_gr_evaluation(data, pt_smoothing_derivative)
 
         specific_gr_times = [
@@ -206,8 +207,7 @@ function analyze_segment(label_exp, name_well, data, segment_number, pt_smoothin
 
         max_specific_gr = maximum(specific_gr)
         min_specific_gr = minimum(specific_gr)
-        println(specific_gr)
-        println(max_specific_gr)
+  
 
         t_of_max = specific_gr_times[argmax(max_specific_gr)]
         index_of_max_od = findfirst(data[1, :] .> t_of_max)
@@ -223,8 +223,9 @@ function analyze_segment(label_exp, name_well, data, segment_number, pt_smoothin
         res_deriv = [label_exp, name_well, max_specific_gr, min_specific_gr, t_of_max, od_of_max, max_deriv, min_deriv, data[1, end], data[2, end], segment_number]
     else
         res_deriv = [label_exp, name_well, missing, missing, missing, missing, missing, missing, data[1, end], data[2, end], segment_number]
-
-
+        specific_gr = [missing]
+        specific_gr_times = [missing]
+        derivative = [missing]
     end
     return res_deriv, specific_gr, specific_gr_times, derivative
 
