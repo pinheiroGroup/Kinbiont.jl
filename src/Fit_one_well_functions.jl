@@ -1,8 +1,6 @@
 using OptimizationBBO
 using Distributions
 using StatsBase
-using Plots
-import Plots
 
 #######################################################################
 """
@@ -11,9 +9,6 @@ import Plots
     data::Matrix{Float64},
     name_well::String,
     label_exp::String, 
-    display_plots=false,
-    save_plot=false,
-    path_to_plot="NA", 
     type_of_smoothing="rolling_avg",
     pt_avg=7, 
     pt_smoothing_derivative=7, 
@@ -37,9 +32,6 @@ threshold to define an exponetial window where the log-linear fit is performed.
 - `label_exp::String`: The label of the experiment.
 
 # Key Arguments:
-- `path_to_plot="NA"`: String. Path to save the plots.
-- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
-- `display_plots=true`: Bool. Options: "true" to display the plot in Julia, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of the specific growth rate. If <2 it uses an interpolation algorithm. Otherwise, it uses a sliding window approach.
@@ -58,16 +50,11 @@ threshold to define an exponetial window where the log-linear fit is performed.
 
   `results_lin_log_fit = [label_exp, name_well, start of exp win, end of exp win, start of exp win, Maximum specific GR, specific GR, 2 sigma  CI of GR, doubling time,doubling time - 2 sigma, doubling time + 2 sigma, intercept log-lin fitting, 2 sigma intercept, R^2]`
 
-- The plots of the log-linear fitting and the specific growth rate dynamics (if `save_plot=true` or `display_plots=true`).
-
 """
 function fitting_one_well_Log_Lin(
     data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
     label_exp::String; #label of the experiment
-    display_plots=false, # do plots or no
-    save_plot=false,
-    path_to_plot="NA", # where save plots
     type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
     pt_avg=7, # number of the point for rolling avg not used in the other cases
     pt_smoothing_derivative=7, # number of poits to smooth the derivative
@@ -237,71 +224,6 @@ function fitting_one_well_Log_Lin(
             rho,
         ]
 
-        if display_plots
-            if_display = display
-        else
-            if_display = identity
-        end
-
-        if save_plot
-            mkpath(path_to_plot)
-        end
-
-        # plotting if requested
-        if_display(
-            Plots.scatter(
-                data_smooted[1, :],
-                log.(data_smooted[2, :]),
-                xlabel="Time",
-                ylabel="Log(Arb. Units)",
-                label=["Data " nothing],
-                markersize=1,
-                color=:black,
-                title=string(label_exp, " ", name_well),
-            ),
-        )
-        if_display(
-            Plots.plot!(
-                data_to_fit_times,
-                Theoretical_fitting,
-                ribbon=confidence_band,
-                xlabel="Time ",
-                ylabel="Log(Arb. Units)",
-                label=[string("Fitting Log-Lin ") nothing],
-                c=:red,
-            ),
-        )
-        if_display(
-            Plots.vline!(
-                [data_to_fit_times[1], data_to_fit_times[end]],
-                c=:black,
-                label=[string("Window of exp. phase ") nothing],
-            ),
-        )
-        if save_plot
-            Plots.png(string(path_to_plot, label_exp, "_Log_Lin_Fit_", name_well, ".png"))
-        end
-        if_display(
-            Plots.scatter(
-                specific_gr_times,
-                specific_gr,
-                xlabel="Time ",
-                ylabel="1 /time ",
-                label=[string("Dynamics growth rate ") nothing],
-                c=:red,
-            ),
-        )
-        if_display(
-            Plots.vline!(
-                [data_to_fit_times[1], data_to_fit_times[end]],
-                c=:black,
-                label=[string("Window of exp. phase ") nothing],
-            ),
-        )
-        if save_plot
-            Plots.png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
-        end
-
     else
 
         results_lin_log_fit = [
@@ -338,9 +260,6 @@ end
     param=lb_param .+ (ub_param .- lb_param) ./ 2,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
-    display_plots=true, 
-    save_plot=false,
-    path_to_plot="NA", 
     pt_avg=1, 
     pt_smooth_derivative=7,
     smoothing=false,
@@ -372,8 +291,6 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
-- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
-- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
@@ -401,8 +318,6 @@ where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as 
 
 - `results_ODE_fit[3]`. The numerical solution of the fitted ODE.
 
-- The fit plot if `do_plot=true`.
-
 """
 function fitting_one_well_ODE_constrained(
     data::Matrix{Float64}, # dataset first row times second row OD
@@ -414,9 +329,6 @@ function fitting_one_well_ODE_constrained(
     param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
-    display_plots=true, # display plots in julia or not
-    save_plot=false,
-    path_to_plot="NA", # where save plots
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     smoothing=false, # the smoothing is done or not?
@@ -480,43 +392,6 @@ function fitting_one_well_ODE_constrained(
     sol_fin = reduce(hcat, remade_solution.u)
     sol_fin = sum(sol_fin, dims=1)
 
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-
-    # plotting if required
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            data[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=2,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),
-    )
-    if_display(
-        Plots.plot!(
-            remade_solution.t,
-            sol_fin[1, 1:end],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[string("Fitting ", model) nothing],
-            c=:red,
-        ),
-    )
-    if save_plot
-        Plots.png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
-    end
-
     # max_theoretical gr
     sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
@@ -550,9 +425,6 @@ end
     param=lb_param .+ (ub_param .- lb_param) ./ 2,
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
-    display_plots=false, 
-    save_plot=false,
-    path_to_plot="NA", 
     pt_avg=1, 
     pt_smooth_derivative=0,
     smoothing=false, 
@@ -585,8 +457,6 @@ This function is designed to fit a user-defined ordinary differential equation (
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
-- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
-- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
@@ -609,8 +479,6 @@ This function is designed to fit a user-defined ordinary differential equation (
   `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
 where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as in the documentation.
 
-- The fit plot if `do_plot=true`.
-
 """
 function fitting_one_well_custom_ODE(
     data::Matrix{Float64}, # dataset first row times second row OD
@@ -623,9 +491,6 @@ function fitting_one_well_custom_ODE(
     param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
-    display_plots=false, # do plots or no
-    save_plot=false,
-    path_to_plot="NA", # where save plots
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=0,
     smoothing=false, # the smoothing is done or not?
@@ -686,42 +551,6 @@ function fitting_one_well_custom_ODE(
     sol_fin = reduce(hcat, remade_solution.u)
     sol_fin = sum(sol_fin, dims=1)
 
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            data[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=2,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),
-    )
-    if_display(
-        Plots.plot!(
-            remade_solution.t,
-            sol_fin[1, 1:end],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[string("Fitting custom model") nothing],
-            c=:red,
-        ),
-    )
-    if save_plot
-        Plots.png(string(path_to_plot, label_exp, "_custom_model_", name_well, ".png"))
-    end
-
     #max_theoretical gr
     sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
@@ -759,9 +588,6 @@ end
     thr_lowess=0.05,
     type_of_loss="L2",
     blank_array=zeros(100),
-    display_plot_best_model=false, 
-    save_plot_best_model=false,
-    path_to_plot="NA",
     pt_smooth_derivative=7,
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
@@ -788,8 +614,6 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
-- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
-- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of the specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -817,7 +641,6 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 - `Model_selection[5]`: The best model's parameters. 
 - `Model_selection[6]`: The best model's name. 
 - `Model_selection[7]`: The fitted ODE numerical value. 
-- The best model fit plot if `save_plot_best_model=true` or `display_plot_best_model=true` .
 """
 function ODE_Model_selection(
     data::Matrix{Float64}, # dataset first row times second row OD
@@ -835,9 +658,6 @@ function ODE_Model_selection(
     thr_lowess=0.05,
     type_of_loss="L2", # type of used loss
     blank_array=zeros(100), # data of all blanks
-    display_plot_best_model=false, # one wants the results of the best fit to be plotted
-    save_plot_best_model=false,
-    path_to_plot="NA",
     pt_smooth_derivative=7,
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
@@ -986,44 +806,10 @@ function ODE_Model_selection(
     sol_fin, index_not_zero = remove_negative_value(sol_t)
 
     data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
-    if display_plot_best_model
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot_best_model
-        mkpath(path_to_plot)
-    end
 
     sol_fin, index_not_zero = remove_negative_value(sol_fin)
 
     data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            data[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=2,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),
-    )
-    if_display(
-        Plots.plot!(
-            data_th[1, :],
-            data_th[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[string("Fitting ", model) nothing],
-            c=:red,
-        ),
-    )
-    if save_plot_best_model
-        Plots.png(string(path_to_plot, label_exp, "_", model, "_", name_well, ".png"))
-    end
 
     return rss_array,
     df_res_optimization,
@@ -1083,7 +869,6 @@ This function performs the Morris sensitivity analysis, which assesses the sensi
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
-- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -1107,8 +892,6 @@ This function performs the Morris sensitivity analysis, which assesses the sensi
 `["name of model", "well", "param_1", "param_2",.., "param_n", "maximum specific gr using ode", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
 
 where  `"param_1","param_2",..,"param_n"` are the parameters of the selected ODE as in this [table](#ODE_list). It can be saved into a .csv if `write_res=true`.
-
-- The best fitting model plot if `save_plot_best_model=true` or `display_plot_best_model=true`.
 
 """
 function one_well_morris_sensitivity(
@@ -1247,9 +1030,6 @@ end
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     pt_avg=1,
-    save_plot=false, 
-    display_plots=false,
-    path_to_plot="NA", 
     pt_smooth_derivative=7,
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
@@ -1280,8 +1060,6 @@ This function fits an ODE model at each segment of the time-series data. Change 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
-- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
-- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
@@ -1304,7 +1082,6 @@ This function fits an ODE model at each segment of the time-series data. Change 
 - `res[3]`. Time of the fitted solution.
 - `res[4]`. Numerical value of the fitted solution.
 - `res[5]`. The fit loss score. 
-- The best fitting model plot if `save_plot_best_model=true` or `display_plot_best_model=true` .
 
 """
 function selection_ODE_fixed_intervals(
@@ -1322,9 +1099,6 @@ function selection_ODE_fixed_intervals(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     pt_avg=1,
-    save_plot=false, # do plots or no
-    display_plots=false,
-    path_to_plot="NA", # where save plots
     pt_smooth_derivative=0,
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
@@ -1387,8 +1161,6 @@ function selection_ODE_fixed_intervals(
             smoothing=smoothing, # the smoothing is done or not?
             type_of_loss=type_of_loss, # type of used loss
             blank_array=zeros(100), # data of all blanks
-            display_plot_best_model=false, # one wants the results of the best fit to be plotted
-            path_to_plot="NA",
             pt_smooth_derivative=pt_smooth_derivative,
             multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
             method_multiple_scattering_correction="interpolation",
@@ -1478,64 +1250,7 @@ function selection_ODE_fixed_intervals(
         end
     end
 
-
-
     composed_time, composed_sol = remove_replicate_data(composed_time, composed_sol)
-
-
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-
-    if_display(
-        Plots.scatter(
-            data_testing[1, :],
-            data_testing[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=1,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),
-    )
-    if_display(
-        Plots.vline!(
-            interval_changepoints[1:end],
-            c=:black,
-            label=["change points" nothing],
-        ),
-    )
-    if_display(
-        Plots.plot!(
-            reduce(vcat, composed_time),
-            reduce(vcat, composed_sol),
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[" fitting " nothing],
-            color=:red,
-            title=string(label_exp, " fitting ", name_well),
-        ),
-    )
-    if save_plot
-        Plots.png(
-            string(
-                path_to_plot,
-                label_exp,
-                "_model_selection_seg_",
-                n_change_points,
-                "_",
-                name_well,
-                ".png",
-            ),
-        )
-    end
 
     return param_out, interval_changepoints, composed_time, composed_sol, total_loss
 end
@@ -1560,9 +1275,6 @@ end
     type_of_curve="original",
     pt_avg=1, 
     smoothing=true, 
-    save_plot=false, 
-    display_plot=false,
-    path_to_plot="NA", 
     path_to_results="NA",
     win_size=14, 
     pt_smooth_derivative=7,
@@ -1598,8 +1310,6 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
-- `save_plot=false`: Bool. Options: "true" to save the plot, or "false" not to.
-- `display_plots=true`: Bool. Options: "true" to display the plot, or "false" not to.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -1633,7 +1343,6 @@ JMAKi uses n_change_points but tests different combinations of the n_change_poin
 - `res[2]`. Interval of each ODE segment.
 - `res[3]`. Time of the fitted solution.
 - `res[4]`. Numerical value of the fitted solution.
-- The best fitting model plot if `save_plot_best_model=true` or `display_plot_best_model=true` .
 
 
 """
@@ -1654,9 +1363,6 @@ function segmentation_ODE(
     type_of_curve="original",
     pt_avg=1, # number of the point to generate intial condition
     smoothing=true, # the smoothing is done or not?
-    save_plot=false, # do plots or no
-    display_plot=false, # do plots or no
-    path_to_plot="NA", # where save plots
     path_to_results="NA",
     win_size=14, #  
     pt_smooth_derivative=7,
@@ -1694,9 +1400,6 @@ function segmentation_ODE(
             smoothing=smoothing, # the smoothing is done or not?
             type_of_loss=type_of_loss, # type of used loss
             blank_array=zeros(100), # data of all blanks
-            display_plot_best_model=false, # one wants the results of the best fit to be plotted
-            save_plot_best_model=false,
-            path_to_plot="NA",
             pt_smooth_derivative=pt_smooth_derivative,
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
             method_multiple_scattering_correction=method_multiple_scattering_correction,
@@ -1835,9 +1538,6 @@ function segmentation_ODE(
                 integrator=integrator, # selection of sciml integrator
                 smoothing=smoothing,
                 pt_avg=pt_avg,
-                save_plot=false, # do plots or no 
-                display_plots=false, # do plots or no
-                path_to_plot="NA", # where save plots
                 pt_smooth_derivative=pt_smooth_derivative,
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
                 method_multiple_scattering_correction=method_multiple_scattering_correction,
@@ -1899,62 +1599,8 @@ function segmentation_ODE(
     end
 
 
-    if display_plot
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot == true
-        mkpath(path_to_plot)
-    end
-
     if multiple_scattering_correction == true
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
-    end
-
-    if_display(
-        Plots.scatter(
-            data_testing[1, :],
-            data_testing[2, :],
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=["Data " nothing],
-            markersize=1,
-            color=:black,
-            title=string(label_exp, " ", name_well),
-        ),
-    )
-    if_display(
-        Plots.vline!(
-            change_point_to_plot[2:end],
-            c=:black,
-            label=["change points" nothing],
-        ),
-    )
-    if_display(
-        Plots.plot!(
-            reduce(vcat, time_points_to_plot),
-            reduce(vcat, sol_to_plot),
-            xlabel="Time",
-            ylabel="Arb. Units",
-            label=[" fitting " nothing],
-            color=:red,
-            title=string(label_exp, " fitting ", name_well),
-        ),
-    )
-    if save_plot
-        Plots.png(
-            string(
-                path_to_plot,
-                label_exp,
-                "_model_selection_seg_",
-                length(change_point_to_plot[2:end]),
-                "_",
-                name_well,
-                ".png",
-            ),
-        )
     end
 
     return top_model, time_points_to_plot, sol_to_plot, score_of_the_models
@@ -1966,9 +1612,6 @@ function segment_gr_analysis(
     name_well::String, # name of the well
     label_exp::String; #label of the experiment
     n_max_change_points=0,
-    display_plots=false, # do plots or no
-    save_plot=false,
-    path_to_plot="NA", # where save plots
     type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
     pt_avg=7, # number of the point for rolling avg not used in the other cases
     pt_smoothing_derivative=7, # number of poits to smooth the derivative
@@ -2061,80 +1704,7 @@ function segment_gr_analysis(
     deriv = temp_for_plot[4]
     gr_dy = temp_for_plot[2]
     gr_dy_t = temp_for_plot[3]
-    if display_plots
-        if_display = display
-    else
-        if_display = identity
-    end
-
-    if save_plot
-        mkpath(path_to_plot)
-    end
-
-    # plotting if requested
-
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            data[2, :],
-            xlabel="Time ",
-            ylabel="Arb. units ",
-            label=[string("Data") nothing],
-            c=:red,
-        ),
-    )
-    if_display(
-        Plots.vline!(
-            interval_changepoints,
-            c=:black,
-            label=[string("Change points") nothing],
-        ),
-    )
-    if save_plot
-        Plots.png(string(path_to_plot, label_exp, "_data_with_cp_", name_well, ".png"))
-    end
-
-    if_display(
-        Plots.scatter(
-            data[1, :],
-            deriv,
-            xlabel="Time ",
-            ylabel="1 /time ",
-            label=[string("DN/Dt ") nothing],
-            c=:red,
-        ),
-    )
-    if_display(
-        Plots.vline!(
-            interval_changepoints,
-            c=:black,
-            label=[string("Change points") nothing],
-        ),
-    )
-    if save_plot
-        Plots.png(string(path_to_plot, label_exp, "_derivative_", name_well, ".png"))
-    end
-
-    if_display(
-        Plots.scatter(
-            gr_dy_t,
-            gr_dy,
-            xlabel="Time ",
-            ylabel="1 /time ",
-            label=[string("Dynamics growth rate ") nothing],
-            c=:red,
-        ),
-    )
-    if_display(
-        Plots.vline!(
-            interval_changepoints,
-            c=:black,
-            label=[string("Change points") nothing],
-        ),
-    )
-    if save_plot
-        Plots.png(string(path_to_plot, label_exp, "_dynamics_gr_", name_well, ".png"))
-    end
+    
     return res
 end
 

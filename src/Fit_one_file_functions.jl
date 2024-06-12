@@ -1,183 +1,4 @@
 using Optimization
-#######################################################################
-
-"""
-
-    plot_data(
-    label_exp::String, 
-    path_to_data::String; 
-    path_to_annotation::Any = missing,
-    path_to_plot="NA",
-    display_plots=true,
-    save_plots=false,
-    overlay_plots=true, 
-    do_blank_subtraction="NO", vg)
-    avg_replicate=false, 
-    correct_negative="thr_correction", 
-    thr_negative=0.01 ,
-    blank_value = 0.0,
-    blank_array = [0.0],
-    )
-
-This function plot all the data from .csv file, note that assume that the first colums is the time
-
-# Arguments:
-- `label_exp::String`: The label of the experiment.  
-- `path_to_data::String`: The path to the .csv of data
-
-# Key Arguments:
--  `path_to_annotation::Any = missing`: The path to the .csv of annotation 
-- `path_to_plot= "NA"`:String, path to save the plots.
--  `save_plot=false` :Bool, save the plot or not
-- ` display_plots=true`:Bool,  Whether or not diplay the plot in julia
--   `overlay_plots =true` :Bool, if true it does one plot overlaying  all dataset curves
-- `blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
-- `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
-- `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank
-- `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values
--  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted,
-    if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
-
-
-# Output:
-- For this function the output are saved or displayed depending on the values of key arguments.
-"""
-function plot_data(
-    label_exp::String, #label of the experiment
-    path_to_data::String; # path to the folder to analyze
-    path_to_annotation::Any=missing,# path to the annotation of the wells
-    path_to_plot="NA", # path where to save Plots
-    display_plots=true,# display plots in julia or not
-    save_plots=false, # save the plot or not
-    overlay_plots=true, # true a single plot for all dataset false one plot per well
-    do_blank_subtraction="NO", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=false, # if true the average between replicates
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,
-    blank_value=0.0,
-    blank_array=[0.0],)
-
-    names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
-    # reading files
-    dfs_data = CSV.File(path_to_data)
-
-    # shaping df for the inference
-    names_of_cols = propertynames(dfs_data)
-
-    # excluding blank data and discarded wells
-    if length(list_of_blank) > 0
-        names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
-    end
-
-    if length(list_of_discarded) > 0
-        names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
-    end
-
-    times_data = dfs_data[names_of_cols[1]]
-    if length(list_of_blank) > 0
-        blank_array = reduce(vcat, [(dfs_data[k]) for k in list_of_blank])
-        blank_array = convert(Vector{Float64}, blank_array)
-
-        blank_value = blank_subtraction(
-            dfs_data,
-            list_of_blank;
-            method=do_blank_subtraction
-        )
-
-    end
-
-
-    ## considering replicates
-    list_replicate = unique(properties_of_annotation)
-    list_replicate = filter!(e -> e != "b", list_replicate)
-
-    if avg_replicate == true
-
-        dfs_data, names_of_cols = average_replicate(dfs_data, times_data, properties_of_annotation, names_of_annotated_df)
-
-
-    end
-    # creating the folder of data if one wants to save
-    if save_plots == true
-        mkpath(path_to_plot)
-    end
-
-    for well_name in names_of_cols[2:end]
-        name_well = string(well_name)
-        if avg_replicate == true
-            data_values = copy(dfs_data[!, well_name])
-        else
-            data_values = copy(dfs_data[well_name])
-        end
-
-        # blank subtraction
-        data_values = data_values .- blank_value
-        index_missing = findall(ismissing, data_values)
-        index_tot = eachindex(data_values)
-        index_tot = setdiff(index_tot, index_missing)
-        data = Matrix(transpose(hcat(times_data[index_tot], data_values[index_tot])))
-        # correcting negative values after blank subtraction
-        data = negative_value_correction(data,
-            blank_array;
-            method=correct_negative,
-            thr_negative=thr_negative,)
-
-        if display_plots
-            if_display = display
-        else
-            if_display = identity
-        end
-
-        if overlay_plots
-            if well_name == names_of_cols[2]
-                if_display(
-                    Plots.plot(
-                        data[1, :],
-                        data[2, :],
-                        xlabel="Time",
-                        ylabel="Arb. Units",
-                        label=[name_well],
-                        title=string(label_exp),
-                        legend=:outertopright,
-                    ),
-                )
-            else
-                if_display(
-                    Plots.plot!(
-                        data[1, :],
-                        data[2, :],
-                        xlabel="Time",
-                        ylabel="Arb. Units",
-                        label=[name_well],
-                        title=string(label_exp),
-                        legend=:outertopright,
-                    ),
-                )
-            end
-
-            if save_plots
-                png(string(path_to_plot, label_exp, ".png"))
-            end
-        else
-            # save & not plot single plot
-            if_display(
-                Plots.plot(
-                    data[1, :],
-                    data[2, :],
-                    xlabel="Time",
-                    ylabel="Arb. Units",
-                    label=["Data " nothing],
-                    color=:black,
-                    title=string(label_exp, " ", name_well),
-                ),
-            )
-            if save_plots
-                png(string(path_to_plot, label_exp, "_", name_well, ".png"))
-            end
-        end
-
-    end
-end
 
 """
     fit_one_file_Log_Lin(
@@ -185,9 +6,6 @@ end
     path_to_data::String; 
     path_to_annotation::Any = missing,
     path_to_results="NA",
-    path_to_plot="NA",
-    display_plots=true,
-    save_plots=false, 
     write_res=false,
     type_of_smoothing="rolling_avg",
     pt_avg=7,
@@ -218,12 +36,9 @@ This function fits a logarithmic-linear model to a csv file. The function assume
 # Key Arguments:
 
 -  `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-- `path_to_plot= "NA"`:String, path to save the plots.
 -   `write_res=false`: Bool, write the results in path_to_results folder.
 -  ` path_to_results= "NA"`:String, path to the folder where save the results.
--  `save_plot=false` :Bool, save the plot or not.
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 -  `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
 - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
 - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -246,7 +61,6 @@ This function fits a logarithmic-linear model to a csv file. The function assume
 # Output:
 
 - a matrix with the following contents in each row : `[label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
-- The plots of the log-linear fitting and of the dynamics of specific growth rate if `save_plot=true` or `display_plots=true`
 
 """
 function fit_one_file_Log_Lin(
@@ -254,9 +68,6 @@ function fit_one_file_Log_Lin(
     path_to_data::String; # path to the folder to analyze
     path_to_annotation::Any=missing,# path to the annotation of the wells
     path_to_results="NA",# path where save results
-    path_to_plot="NA",# path where to save Plots
-    display_plots=true,# display plots in julia or not
-    save_plots=false, # save the plot or not    verbose=false, # 1 true verbose
     write_res=false, # write results
     type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
     pt_avg=7, # number of points to do smoothing average
@@ -302,9 +113,6 @@ function fit_one_file_Log_Lin(
         "Pearson_correlation",
     ]
 
-    if save_plots == true
-        mkpath(path_to_plot)
-    end
     if write_res == true
         mkpath(path_to_results)
     end
@@ -389,9 +197,6 @@ function fit_one_file_Log_Lin(
             data, # dataset first row times second row OD
             string(well_name), # name of the well
             label_exp; #label of the experiment
-            display_plots=display_plots,# display plots in julia or not
-            save_plot=save_plots, # save the plot or not    verbose=false, # 1 true verbose        
-            path_to_plot=path_to_plot, # where save plots
             type_of_smoothing=type_of_smoothing, # option, NO, gaussian, rolling avg
             pt_avg=pt_avg, # number of the point for rolling avg not used in the other cases
             pt_smoothing_derivative=pt_smoothing_derivative, # number of poits to smooth the derivative
@@ -444,12 +249,9 @@ end
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(),
     path_to_results="NA",
-    path_to_plot="NA",
     loss_type="RE", 
     smoothing=false,
     type_of_smoothing="lowess",
-    display_plots=true,
-    save_plots=false,
     verbose=false, 
     write_res=false, 
     pt_avg=1, 
@@ -483,11 +285,8 @@ This function fits a ODE model to a csv file. The function assumes that the firs
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-- `path_to_plot= "NA"`:String, path to save the plots.
 - `write_res=false`: Bool, write the results in path_to_results folder.
 - `path_to_results= "NA"`:String, path to the folder where save the results.
-- `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
 - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
 - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -512,7 +311,6 @@ This function fits a ODE model to a csv file. The function assumes that the firs
 # Output:
 
 - an matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation.
-- The plots of the fit if `save_plot=true` or `display_plots=true`.
 """
 function fit_file_ODE(
     label_exp::String, #label of the experiment
@@ -524,12 +322,9 @@ function fit_file_ODE(
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
     type_of_smoothing="lowess",
-    display_plots=true,# display plots in julia or not
-    save_plots=false,
     verbose=false, # 1 true verbose
     write_res=false, # write results
     pt_avg=1, # number of points to do smoothing average
@@ -552,10 +347,6 @@ function fit_file_ODE(
 
     if write_res == true
         mkpath(path_to_results)
-    end
-
-    if save_plots == true
-        mkpath(path_to_plot)
     end
 
     parameter_of_optimization = initialize_df_results(model)
@@ -659,7 +450,6 @@ function fit_file_ODE(
             param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
             optmizer=optmizer, # selection of optimization method 
             integrator=integrator, # selection of sciml integrator
-            path_to_plot=path_to_plot, # where save plots
             pt_avg=pt_avg, # numebr of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
             smoothing=smoothing, # the smoothing is done or not?
@@ -672,8 +462,6 @@ function fit_file_ODE(
             maxiters=maxiters,
             abstol=abstol,
             thr_lowess=thr_lowess,
-            display_plots=display_plots,# display plots in julia or not
-            save_plot=save_plots,
             type_of_smoothing=type_of_smoothing,
         )
 
@@ -717,12 +505,9 @@ end
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(),
     path_to_results="NA",
-    path_to_plot="NA", 
     loss_type="RE",
     smoothing=false,
     type_of_smoothing="lowess",
-    display_plots=true,
-    save_plots=false,
     verbose=false, 
     write_res=false,
     pt_avg=1,
@@ -761,11 +546,8 @@ This function is designed for fitting an ordinary differential equation (ODE) mo
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-- `path_to_plot= "NA"`:String, path to save the plots.
 - `write_res=false`: Bool, write the results in path_to_results folder.
 - `path_to_results= "NA"`:String, path to the folder where save the results.
-- `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
 - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
 - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -790,7 +572,6 @@ This function is designed for fitting an ordinary differential equation (ODE) mo
 # Output:
 
 - a matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
-- The plots of the fit if `save_plot=true` or `display_plots=true`
 
 """
 function fit_file_custom_ODE(
@@ -804,12 +585,9 @@ function fit_file_custom_ODE(
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
     type_of_smoothing="lowess",
-    display_plots=true,# display plots in julia or not
-    save_plots=false,
     verbose=false, # 1 true verbose
     write_res=false, # write results
     pt_avg=1, # number of points to do smoothing average
@@ -832,10 +610,6 @@ function fit_file_custom_ODE(
 
     if write_res == true
         mkpath(path_to_results)
-    end
-
-    if save_plots == true
-        mkpath(path_to_plot)
     end
 
     parameter_of_optimization = initialize_df_results_ode_custom(ub_param)
@@ -930,9 +704,6 @@ function fit_file_custom_ODE(
             n_equation; # number ode in the system
             optmizer=optmizer, # selection of optimization method 
             integrator=integrator, # selection of sciml integrator
-            display_plots=display_plots,# display plots in julia or not
-            save_plot=save_plots,
-            path_to_plot=path_to_plot, # where save plots
             pt_avg=pt_avg, # number of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
             smoothing=smoothing, # the smoothing is done or not?
@@ -988,12 +759,9 @@ end
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     path_to_results="NA",
-    path_to_plot="NA", 
     loss_type="L2", 
     smoothing=false,
     type_of_smoothing="lowess",
-    display_plot_best_model=false, 
-    save_plot_best_model=false,
     beta_penality=2.0, 
     verbose=false,
     write_res=false,
@@ -1033,11 +801,8 @@ This function performs model selection  of ODE for a full csv file.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-- `path_to_plot= "NA"`:String, path to save the plots.
 - `write_res=false`: Bool, write the results in path_to_results folder.
 - `path_to_results= "NA"`:String, path to the folder where save the results.
-- `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
 - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
 - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -1063,7 +828,6 @@ This function performs model selection  of ODE for a full csv file.
 # Output:
 
 - an matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
-- The plots of the fit if `save_plot=true` or `display_plots=true`
 
 """
 function ODE_model_selection_file(
@@ -1076,12 +840,9 @@ function ODE_model_selection_file(
     optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
-    path_to_plot="NA", # path where to save Plots
     loss_type="L2", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
     type_of_smoothing="lowess",
-    display_plot_best_model=false, # one wants the results of the best fit to be plotted
-    save_plot_best_model=false,
     beta_penality=2.0, # penality for AIC evaluation
     verbose=false, # 1 true verbose
     write_res=false, # write results
@@ -1106,10 +867,6 @@ function ODE_model_selection_file(
 
     if write_res == true
         mkpath(path_to_results)
-    end
-
-    if save_plot_best_model == true
-        mkpath(path_to_plot)
     end
 
     parameter_of_optimization = initialize_res_ms(ub_param_array)
@@ -1214,9 +971,6 @@ function ODE_model_selection_file(
             thr_lowess=thr_lowess,
             type_of_loss=loss_type, # type of used loss 
             blank_array=blank_array, # data of all blanks
-            display_plot_best_model=display_plot_best_model, # one wants the results of the best fit to be plotted
-            save_plot_best_model=save_plot_best_model,
-            path_to_plot=path_to_plot,
             pt_smooth_derivative=pt_smooth_derivative,
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
             method_multiple_scattering_correction=method_multiple_scattering_correction,
@@ -1286,9 +1040,6 @@ end
     thr_negative=0.01,
     pt_avg=1,
     smoothing=true, 
-    save_plots=false, 
-    display_plots=false, 
-    path_to_plot="NA",
     path_to_results="NA",
     win_size=7,
     pt_smooth_derivative=0,
@@ -1332,11 +1083,8 @@ This function performs model selection for ordinary differential equation (ODE) 
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-- `path_to_plot= "NA"`:String, path to save the plots.
 - `write_res=false`: Bool, write the results in path_to_results folder.
 - `path_to_results= "NA"`:String, path to the folder where save the results.
-- `save_plot=false` :Bool, save the plot or not.
-- `display_plots=true`:Bool,  Whether or not diplay the plot in julia.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
 - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
 - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -1375,7 +1123,6 @@ This function performs model selection for ordinary differential equation (ODE) 
 # Output:
 
 - an matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)" "segment number"]` where ' "param_1","param_2",..,"param_n" ' .
-- The plots of the fit if `save_plot=true` or `display_plots=true`
 """
 function segmentation_ODE_file(
     label_exp::String, #label of the experiment
@@ -1397,9 +1144,6 @@ function segmentation_ODE_file(
     thr_negative=0.01,
     pt_avg=1, # number of the point to generate intial condition
     smoothing=true, # the smoothing is done or not?
-    save_plots=false, # do plots or no
-    display_plots=false, # do plots or no
-    path_to_plot="NA", # where save plots
     path_to_results="NA",
     win_size=7, # numebr of the point to generate intial condition
     pt_smooth_derivative=0,
@@ -1428,10 +1172,6 @@ function segmentation_ODE_file(
 
     if write_res == true
         mkpath(path_to_results)
-    end
-
-    if save_plots == true
-        mkpath(path_to_plot)
     end
 
     parameter_of_optimization = initialize_res_ms(ub_param_array, number_of_segment=n_max_change_points + 1)
@@ -1530,9 +1270,6 @@ function segmentation_ODE_file(
             type_of_curve=type_of_curve,
             pt_avg=pt_avg, # number of the point to generate intial condition
             smoothing=smoothing, # the smoothing is done or not?
-            save_plot=save_plots, # do plots or no
-            display_plot=display_plots, # do plots or no
-            path_to_plot=path_to_plot, # where save plots
             path_to_results=path_to_results,
             win_size=win_size, # numebr of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
@@ -1606,9 +1343,6 @@ function segment_gr_analysis_file(
     label_exp::String; #label of the experiment
     path_to_annotation=missing,
     n_max_change_points=0,
-    display_plots=false, # do plots or no
-    save_plots=false,
-    path_to_plot="NA", # where save plots
     type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
     pt_avg=7, # number of the point for rolling avg not used in the other cases
     pt_smoothing_derivative=7, # number of poits to smooth the derivative
@@ -1636,9 +1370,6 @@ function segment_gr_analysis_file(
     # TEMPORARY results df
     results = ["label_exp", "name_well", "max_gr", "min_gr", "t_of_max", "od_of_max", "max_deriv", "min_deriv", "end_time", "end_N", "segment_number"]
 
-    if save_plots == true
-        mkpath(path_to_plot)
-    end
     if write_res == true
         mkpath(path_to_results)
     end
@@ -1725,9 +1456,6 @@ function segment_gr_analysis_file(
             string(well_name), # name of the well
             label_exp; #label of the experiment
             n_max_change_points=n_max_change_points,
-            display_plots=display_plots, # do plots or no
-            save_plot=save_plots,
-            path_to_plot=path_to_plot, # where save plots
             type_of_smoothing=type_of_smoothing, # option, NO, gaussian, rolling avg
             pt_avg=pt_avg, # number of the point for rolling avg not used in the other cases
             pt_smoothing_derivative=pt_smoothing_derivative, # number of poits to smooth the derivative
@@ -1762,7 +1490,6 @@ function segment_gr_analysis_file(
 end
 
 
-export plot_data
 export fit_one_file_Log_Lin
 export fit_one_file_Log_Lin
 export segment_gr_analysis_file
