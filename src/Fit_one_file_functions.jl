@@ -227,8 +227,7 @@ function fit_one_file_Log_Lin(
         )
 
     end
-    Kimchi_res_one_file.method = "Log-Lin"
-    Kimchi_res_one_file.params = results_Log_Lin
+    Kimchi_res_one_file = ("Log-Lin",results_Log_Lin)
 
 
     return Kimchi_res_one_file
@@ -488,9 +487,8 @@ function fit_file_ODE(
 
 
     end
+    Kimchi_res_one_file = ("ODE",parameter_of_optimization)
 
-    Kimchi_res_one_file.method = "ODE"
-    Kimchi_res_one_file.params = parameter_of_optimization
 
     return Kimchi_res_one_file
 
@@ -748,8 +746,7 @@ function fit_file_custom_ODE(
 
     end
     
-    Kimchi_res_one_file.method = "ODE"
-    Kimchi_res_one_file.params = parameter_of_optimization
+    Kimchi_res_one_file = ("ODE",parameter_of_optimization)
 
 
     return Kimchi_res_one_file
@@ -1019,11 +1016,11 @@ function ODE_model_selection_file(
 
 
     end
-    return parameter_of_optimization
+    
 
-    Kimchi_res_one_file.method = "ODE_model_selection"
-    Kimchi_res_one_file.params = parameter_of_optimization
+    Kimchi_res_one_file = ("ODE_model_selection",parameter_of_optimization)
 
+    return Kimchi_res_one_file
 
 
 end
@@ -1335,12 +1332,11 @@ function segmentation_ODE_file(
 
 
     end
-    return parameter_of_optimization, vector_AIC
 
-    Kimchi_res_one_file.method = "ODE_segmentation"
-    Kimchi_res_one_file.params = parameter_of_optimization
+    Kimchi_res_one_file = ("ODE_segmentation",parameter_of_optimization)
 
 
+    return Kimchi_res_one_file, vector_AIC
 
 end
 
@@ -1503,8 +1499,7 @@ function segment_gr_analysis_file(
     end
 
 
-    Kimchi_res_one_file.method = "segment_analysis"
-    Kimchi_res_one_file.params = parameter_of_optimization
+    Kimchi_res_one_file = ("segment_analysis",results)
 
 
     return Kimchi_res_one_file
