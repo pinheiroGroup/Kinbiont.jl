@@ -245,7 +245,10 @@ function fitting_one_well_Log_Lin(
 
     end
 
-    return results_lin_log_fit
+
+    Kimchi_res_one_well = ("Log-lin", results_lin_log_fit,missing,missing)
+
+    return Kimchi_res_one_well
 end
 
 
@@ -408,7 +411,10 @@ function fitting_one_well_ODE_constrained(
     res_param =
         vectorize_df_results(name_well, model, res_temp, max_th_gr, max_em_gr, loss_value)
 
-    return res_param, remade_solution.t, sol_fin
+
+        Kimchi_res_one_well = ("ODE",res_param,sol_fin,remade_solution.t)
+
+    return Kimchi_res_one_well
 end
 
 #######################################################################
@@ -564,6 +570,9 @@ function fitting_one_well_custom_ODE(
 
     res_param =
         [string(name_well), "custom_model", res_temp, max_th_gr, max_em_gr, loss_value]
+
+        Kimchi_res_one_well = ("custom_ODE",res_param,missing,missing)
+     
 
     return res_param
 end
@@ -811,14 +820,22 @@ function ODE_Model_selection(
 
     data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
 
-    return rss_array,
-    df_res_optimization,
-    min_AIC,
-    minimum(rss_array[2, 2:end]),
-    param_min,
-    model,
-    data_th,
-    param_out_full
+    Kimchi_res_model_selection = ("ODE_model_selection",
+                                df_res_optimization,
+                                sol_fin,
+                                sol_time[index_not_zero],
+                                rss_array,
+                                minimum(rss_array[2,2:end]),
+                                param_min,
+                                min_AIC,
+                                model,
+                                param_out_full
+                                )
+
+
+
+    return Kimchi_res_model_selection
+
 end
 
 
@@ -1009,7 +1026,9 @@ function one_well_morris_sensitivity(
         )
     end
 
-    return param_combination, results_sensitivity
+    Kimchi_res_sensitivity = ("ODE_Morris_sensitivity",results_sensitivity,param_combination)
+
+    return Kimchi_res_sensitivity
 end
 
 
@@ -1172,27 +1191,20 @@ function selection_ODE_fixed_intervals(
             correction_AIC=correction_AIC)
 
         # selection of te model
-        model = model_selection_results[6]
+        model = model_selection_results[9]
         total_loss = total_loss + model_selection_results[end][end]
         # param of the best model
-        temp_res_win = model_selection_results[5]
+        temp_res_win = model_selection_results[7]
         param_fitting = copy(temp_res_win)
         #temp_res_win = push!(temp_res_win,model)
         u0 = generating_IC(data_temp, model, smoothing, pt_avg)
 
-        # risimulate data
+    
+        time_sol = model_selection_results[4]
+        sol_fin =  model_selection_results[3]
 
-        remade_solution = ODE_sim_for_iterate(
-            model, #string of the model
-            u0, # starting condition
-            data_temp[1, :], # start time of the sim
-            integrator, # which sciml solver of ode
-            param_fitting, # parameters of the ODE model
-        )
-        time_sol = reduce(hcat, remade_solution.t)
-        sol_fin = reduce(hcat, remade_solution.u)
-        sol_fin = sum(sol_fin, dims=1)
-        time_bonduary = remade_solution.t[end]
+
+        time_bonduary = time_sol[end]
         value_bonduary = sol_fin[end]
         bc = [time_bonduary, value_bonduary]
 
@@ -1225,7 +1237,7 @@ function selection_ODE_fixed_intervals(
             temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
         end
         temp_res_win = vcat(model, temp_res_win)
-        temp_res_win = vcat(temp_res_win, model_selection_results[4])
+        temp_res_win = vcat(temp_res_win, model_selection_results[6])
         temp_res_win = vcat(label_exp, temp_res_win)
         temp_res_win = vcat(name_well, temp_res_win)
 
@@ -1422,7 +1434,7 @@ function segmentation_ODE(
                     name_well,
                     "_seg_0.csv",
                 ),
-                Tables.table(res[1]),
+                Tables.table(res[5]),
             )
             CSV.write(
                 string(
@@ -1436,7 +1448,7 @@ function segmentation_ODE(
             )
 
         end
-
+        top_cps = [0.0]
         top_model = res[5]
         score_of_the_models = res[3]
         change_point_list = [0.0]
@@ -1451,11 +1463,12 @@ function segmentation_ODE(
         change_point_to_plot = [0.0, 0.0, 0.0]
         time_points_to_plot = copy(data_testing[1, :])
         sol_to_plot = copy(data_testing[1, :])
+        top_cps = [0.0]
+
     end
     #fitting all model with change points
     if n_max_change_points > 0
 
-        # Fernanda modification to fix non smoothing (to be tested; start)
         data_testing_1 = copy(data_testing)
         if smoothing == true
             data_testing_1 = smoothing_data(
@@ -1567,6 +1580,7 @@ function segmentation_ODE(
                 time_points_to_plot = copy(direct_search_results[3])
                 sol_to_plot = copy(direct_search_results[4])
                 change_point_to_plot = copy(direct_search_results[2])
+                top_cps = copy(cpd_temp)
             end
 
             if save_all_model == true
@@ -1599,11 +1613,10 @@ function segmentation_ODE(
     end
 
 
-    if multiple_scattering_correction == true
-        data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
-    end
 
-    return top_model, time_points_to_plot, sol_to_plot, score_of_the_models
+
+    Kimchi_res_segmentation_ODE = ("ODE_segmentation",top_model,sol_to_plot,time_points_to_plot,top_cps  ,score_of_the_models)
+    return Kimchi_res_segmentation_ODE
 end
 
 
@@ -1699,13 +1712,13 @@ function segment_gr_analysis(
 
     end
 
-    temp_for_plot = analyze_segment(label_exp, name_well, data, 0, pt_smoothing_derivative)
+  
 
-    deriv = temp_for_plot[4]
-    gr_dy = temp_for_plot[2]
-    gr_dy_t = temp_for_plot[3]
-    
-    return res
+    Kimchi_res_one_well = ("segment_analysis",res,missing,missing)
+
+
+
+    return Kimchi_res_one_well
 end
 
 

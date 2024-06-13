@@ -251,19 +251,19 @@ function fit_NL_model_file(
                 penality_CI=penality_CI,
                 path_to_results = path_to_results)
 
-            temp_mean = temp_results_1[5]
+            temp_mean = temp_results_1[7]
             temp_mean = vcat("mean",temp_mean)
             temp_mean = vcat(string(well_name),temp_mean)
 
             errors_of_optimization = hcat(errors_of_optimization, temp_mean)
 
-            temp_ci_low = temp_results_1[7]
+            temp_ci_low = temp_results_1[9]
             temp_ci_low = vcat("lower_CI",temp_ci_low)
             temp_ci_low = vcat(string(well_name),temp_ci_low)
 
             errors_of_optimization = hcat(errors_of_optimization, temp_ci_low)
             
-            temp_ci_up = temp_results_1[8]
+            temp_ci_up = temp_results_1[10]
             temp_ci_up = vcat("upper_CI",temp_ci_up)
             temp_ci_up = vcat(string(well_name),temp_ci_up)
 
@@ -297,6 +297,7 @@ function fit_NL_model_file(
                 thr_lowess=thr_lowess,
                 write_res=write_res,
                 penality_CI=penality_CI)
+
         elseif method_of_fitting == "MCMC"
 
 
@@ -364,15 +365,15 @@ function fit_NL_model_file(
 
         if verbose == true
             println("the results are:")
-            println(temp_results_1[1])
+            println(temp_results_1[2])
         end
 
-        parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[1])
+        parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[2])
 
         if errors_estimation == true && method_of_fitting != "Bootstrap"
 
 
-            best_param = temp_results_1[1][3:(end-3)]
+            best_param = temp_results_1[2][3:(end-3)]
             best_param = convert.(Float64, best_param)
             temp_errors_of_optimization = NL_error_blanks(data, # dataset first row times second row OD
                 string(well_name), # name of the well
@@ -439,7 +440,7 @@ function fit_NL_model_file(
 
     end
 
-    Kimchi_res_one_file = ("NL",parameter_of_optimization)
+    Kimchi_res_one_file = (temp_results_1[1],parameter_of_optimization)
 
 
     return Kimchi_res_one_file, errors_of_optimization
@@ -1001,15 +1002,15 @@ function fit_NL_segmentation_file(
 
         if verbose == true
             println("the results are:")
-            println(temp_results_1[1])
+            println(temp_results_1[2])
         end
 
         results_to_bind = expand_res(
-            temp_results_1[1],
+            temp_results_1[2],
             list_lb_param,
             string(well_name),
             label_exp;
-            number_of_segment=length(temp_results_1[1]))
+            number_of_segment=length(temp_results_1[2]))
 
         parameter_of_optimization = hcat(parameter_of_optimization, results_to_bind)
 

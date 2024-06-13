@@ -1,38 +1,89 @@
 struct Kimchi_res_one_well
     method::String
-    fit::Vector{Float64}
-    times::Vector{Float64}
     params::Vector{Any}
+    fit::Any
+    times::Any
 end
+struct Kimchi_res_bootstrap_NL
+    method::String
+    params::Matrix{Any}
+    fit::Any
+    times::Any
+    fin_param::Any
+    new_param_fin::Any
+    mean_param::Any
+    sd_param::Any
+    CI_param_low::Any
+    CI_param_up::Any
 
+end
 struct Kimchi_res_one_file
     method::String
     params::Matrix{Any}
 end
 
+
+
 struct Kimchi_res_model_selection
     method::String
+    params::Vector{Any}
     fit::Vector{Float64}
     times::Vector{Float64}
-    params::Vector{Any}
-    AIC::Vector{Float64}
+    rss_array::Any
+    min_rss_array::Any
+    param_min::Any
+    min_AIC::Vector{Any}
     selected_model::String
-    model_comparison::Matrix{Any}
-    params_2::Vector{Any}
+    full_param::Vector{Any}
+end
+
+
+struct Kimchi_res_NL_model_selection
+    method::String
+    params::Vector{Any}
+    fit::Vector{Float64}
+    times::Vector{Float64}
+    score_res::Any
+    top_loss::Any
+end
+
+struct Kimchi_res_sensitivity_NL
+    method::String
+    params::Matrix{Any}
+    fit::Any
+    times::Any
+    combinations::Matrix{Any}
+
 end
 
 struct Kimchi_res_sensitivity
     method::String
-    combinations::Matrix{Any}
     params::Matrix{Any}
+    combinations::Matrix{Any}
 end
 
 struct Kimchi_res_segmentation_ODE
     method::String
     params::Matrix{Any}
-    intervals_cdp::Array{Any}
-    times_of_the_fit::Array{Float64}
     fit::Array{Float64} 
-    total_loss::Float64
+    times::Array{Float64}
+    interval_cdp::Array{Any}
+    score_of_the_models::Any
+end
 
+
+struct Kimchi_res_segmentation_NL
+    method::String
+    params::Matrix{Any}
+    fit::Array{Float64} 
+    times::Array{Float64}
+    interval_cdp::Array{Any}
+end
+
+
+
+struct Kimchi_res_segmentation_ODE_file
+    method::String
+    params::Matrix{Any}
+    vector_AIC::Any
 end

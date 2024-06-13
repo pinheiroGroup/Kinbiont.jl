@@ -153,7 +153,10 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     res_param = reduce(vcat, reduce(vcat, res_param))
 
 
-    return res_param, fitted_model
+    Kimchi_res_one_well = ("NL",res_param,fitted_model, data[1, :])
+
+
+    return Kimchi_res_one_well
 end
 
 
@@ -357,7 +360,9 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
     end
 
 
-    return best_res_param, best_fitted_model, fin_param, Matrix(param_combination)
+    Kimchi_res_sensitivity_NL =("NL_sensitivity",best_res_param,best_fitted_model,data[1, :] , Matrix(param_combination))
+
+    return Kimchi_res_sensitivity_NL
 end
 
 
@@ -452,8 +457,6 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
 
     u0_best = copy(u0)
     loss_best = 10^20
-    loss_chain = copy(loss_best)
-    loss_chain_best = copy(loss_best)
     best_fitted_model = Any
     best_res_param = Any
     if multiple_scattering_correction == true
@@ -524,7 +527,6 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
 
         loss_value = sol.objective
 
-        loss_chain = vcat(loss_chain, loss_value)
         res_param = [[name_well, model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
         res_param = reduce(vcat, reduce(vcat, res_param))
 
@@ -536,7 +538,6 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
 
             best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
             u0_best = copy(u0)
-            loss_chain = vcat(loss_chain, loss_value)
 
 
         else
@@ -559,10 +560,13 @@ function fit_NL_model_MCMC_intialization(data::Matrix{Float64}, # dataset first 
             end
 
         end
-        loss_chain_best = vcat(loss_chain, loss_best)
+
+        
     end
 
-    return best_res_param, best_fitted_model, loss_chain[2:end], loss_chain_best[2:end]
+
+    Kimchi_res_one_well = ("NL",best_res_param,best_fitted_model,data[1, :])
+    return Kimchi_res_one_well
 end
 
 
@@ -776,7 +780,10 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     CI_param_low = [quantile(new_param_fin[i, 2:end], 0.1) for i in 3:axes(new_param_fin)[1][end]]
     CI_param_up = [quantile(new_param_fin[i, 2:end], 0.9) for i in 3:axes(new_param_fin)[1][end]]
 
-    return best_res_param, best_fitted_model, fin_param, new_param_fin, mean_param, sd_param, CI_param_low, CI_param_up
+    Kimchi_res_bootstrap_NL = ("NL_bootstrap" ,best_res_param ,best_fitted_model ,data[1, :],  fin_param, new_param_fin, mean_param, sd_param, CI_param_low, CI_param_up)
+   
+
+    return Kimchi_res_bootstrap_NL 
 end
 
 
@@ -1146,22 +1153,22 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
             )
 
             n_param = length(lb_param)
-            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[1][end], correction=correction_AIC)
+            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[2][end], correction=correction_AIC)
 
             temp = [model_to_test, temp_res[end], temp_AIC]
             score_res = hcat(score_res, temp_AIC)
             if mm == 1
 
                 top_score = copy(temp_AIC)
-                top_model = copy(temp_res[1])
-                top_fitted_sol = copy(temp_res[2])
-                top_loss = copy(temp_res[1][end])
+                top_model = copy(temp_res[2])
+                top_fitted_sol = copy(temp_res[3])
+                top_loss = copy(temp_res[2][end])
 
             elseif top_score > temp_AIC
                 top_score = copy(temp_AIC)
-                top_model = copy(temp_res[1])
-                top_fitted_sol = copy(temp_res[2])
-                top_loss = copy(temp_res[1][end])
+                top_model = copy(temp_res[2])
+                top_fitted_sol = copy(temp_res[3])
+                top_loss = copy(temp_res[2][end])
 
             end
 
@@ -1195,24 +1202,23 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[1][end], correction=correction_AIC)
-            temp = [model_to_test, temp_res[end], temp_AIC]
+            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[2][end], correction=correction_AIC)
 
             score_res = hcat(score_res, temp_AIC)
 
             if mm == 1
 
                 top_score = copy(temp_AIC)
-                top_model = copy(temp_res[1])
-                top_fitted_sol = copy(temp_res[2])
-                top_loss = copy(temp_res[1][end])
+                top_model = copy(temp_res[2])
+                top_fitted_sol = copy(temp_res[3])
+                top_loss = copy(temp_res[2][end])
 
 
             elseif top_score > temp_AIC
                 top_score = copy(temp_AIC)
-                top_model = copy(temp_res[1])
-                top_fitted_sol = copy(temp_res[2])
-                top_loss = copy(temp_res[1][end])
+                top_model = copy(temp_res[2])
+                top_fitted_sol = copy(temp_res[3])
+                top_loss = copy(temp_res[2][end])
 
             end
 
@@ -1246,23 +1252,23 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
 
 
-            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[1][end], correction=correction_AIC)
+            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[2][end], correction=correction_AIC)
             temp = [model_to_test, temp_res[end], temp_AIC]
 
             score_res = hcat(score_res, temp_AIC)
             if mm == 1
 
                 top_score = copy(temp_AIC)
-                top_model = copy(temp_res[1])
-                top_fitted_sol = copy(temp_res[2])
-                top_loss = copy(temp_res[1][end])
+                top_model = copy(temp_res[2])
+                top_fitted_sol = copy(temp_res[3])
+                top_loss = copy(temp_res[2][end])
 
 
             elseif top_score > temp_AIC
                 top_score = copy(temp_AIC)
-                top_model = copy(temp_res[1])
-                top_fitted_sol = copy(temp_res[2])
-                top_loss = copy(temp_res[1][end])
+                top_model = copy(temp_res[2])
+                top_fitted_sol = copy(temp_res[3])
+                top_loss = copy(temp_res[2][end])
 
             end
 
@@ -1297,23 +1303,23 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(lb_param)
 
-            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[1][end], correction=correction_AIC)
-            temp = [model_to_test, temp_res[end], temp_AIC]
+            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[2][end], correction=correction_AIC)
 
             score_res = hcat(score_res, temp_AIC)
             if mm == 1
 
                 top_score = copy(temp_AIC)
-                top_model = copy(temp_res[1])
-                top_fitted_sol = copy(temp_res[2])
-                top_loss = copy(temp_res[1][end])
+                top_model = copy(temp_res[2])
+                top_fitted_sol = copy(temp_res[3])
+                top_loss = copy(temp_res[2][end])
 
 
             elseif top_score > temp_AIC
+
                 top_score = copy(temp_AIC)
-                top_model = copy(temp_res[1])
-                top_fitted_sol = copy(temp_res[2])
-                top_loss = copy(temp_res[1][end])
+                top_model = copy(temp_res[2])
+                top_fitted_sol = copy(temp_res[3])
+                top_loss = copy(temp_res[2][end])
 
             end
 
@@ -1323,9 +1329,8 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
 
     end
-
-    return top_score, top_model, top_fitted_sol, score_res, top_loss 
-
+    Kimchi_res_NL_model_selection = ("NL_model_selection",top_model,top_fitted_sol,data[1,:],  score_res, top_loss )
+    return Kimchi_res_NL_model_selection
 end
 
 """
@@ -1531,7 +1536,7 @@ function selection_NL_fixed_interval(
 
         # param of the best model
         temp_res_win = model_selection_results[2]
-        sum_of_loss = sum_of_loss + model_selection_results[end]
+        sum_of_loss = sum_of_loss + model_selection_results[2][end]
 
 
         time_sol = data_temp[1, :]
@@ -1824,8 +1829,10 @@ function selection_NL_max_change_points(
         end
 
     end
+    Kimchi_res_segmentation_NL = ("NL_segmentation",top_param,top_fit,top_time, sort(top_intervals))
 
-    return top_param, sort(top_intervals), top_fit, top_time
+
+    return Kimchi_res_segmentation_NL
 end
 
 export fit_NL_model

@@ -212,10 +212,10 @@ function fit_one_file_Log_Lin(
 
         if verbose == true
             println("the results are:")
-            println(temp_results_1)
+            println(temp_results_1[2])
         end
 
-        results_Log_Lin = hcat(results_Log_Lin, temp_results_1)
+        results_Log_Lin = hcat(results_Log_Lin, temp_results_1[2])
 
     end
 
@@ -470,10 +470,10 @@ function fit_file_ODE(
 
         if verbose == true
             println("the results are:")
-            println(temp_results_1[1])
+            println(temp_results_1[2])
         end
 
-        parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[1])
+        parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[2])
 
     end
 
@@ -724,7 +724,7 @@ function fit_file_custom_ODE(
             type_of_smoothing=type_of_smoothing,
         )
 
-        well_results = reduce(vcat, temp_results_1)
+        well_results = reduce(vcat, temp_results_1[2])
 
         if verbose == true
             println("the results are:")
@@ -1301,11 +1301,11 @@ function segmentation_ODE_file(
         vector_AIC = hcat(vector_AIC, temp_results_1[end])
 
         vectorized_temp_results = expand_res_seg(
-            temp_results_1[1],
+            temp_results_1[2],
             lb_param_array,
             string(well_name),
             label_exp;
-            number_of_segment=length(temp_results_1[1])
+            number_of_segment=length(temp_results_1[2])
         )
         if verbose == true
             println("the results are:")
@@ -1333,10 +1333,10 @@ function segmentation_ODE_file(
 
     end
 
-    Kimchi_res_one_file = ("ODE_segmentation",parameter_of_optimization)
+    Kimchi_res_segmentation_ODE_file = ("ODE_segmentation",parameter_of_optimization,vector_AIC)
 
 
-    return Kimchi_res_one_file, vector_AIC
+    return Kimchi_res_segmentation_ODE_file
 
 end
 
@@ -1482,10 +1482,10 @@ function segment_gr_analysis_file(
 
         if verbose == true
             println("the results are:")
-            println(temp_results_1)
+            println(temp_results_1[2])
         end
 
-        results = hcat(results, temp_results_1)
+        results = hcat(results, temp_results_1[2])
 
     end
 
