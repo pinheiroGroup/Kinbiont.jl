@@ -438,7 +438,11 @@ function fit_NL_model_file(
 
 
     end
-    return parameter_of_optimization, errors_of_optimization
+
+    Kimchi_res_one_file = ("NL",parameter_of_optimization)
+
+
+    return Kimchi_res_one_file, errors_of_optimization
 
 
 
@@ -712,6 +716,8 @@ function fit_NL_model_selection_file(
 
 
     end
+    Kimchi_res_one_file = ("NL_model_selection",parameter_of_optimization)
+
     return parameter_of_optimization
 
 
@@ -1019,7 +1025,10 @@ function fit_NL_segmentation_file(
 
 
     end
-    return parameter_of_optimization
+
+    Kimchi_res_one_file = ("NL_segmentation",parameter_of_optimization)
+
+    return Kimchi_res_one_file
 
 
 
