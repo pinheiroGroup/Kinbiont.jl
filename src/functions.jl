@@ -732,10 +732,36 @@ end
 
 
 
+function option_OptimizationFunction(opt
 
-function options_OptimizationProblem(opt;
-    lb_ = nothing,
-    ub_ = nothing,
+    )
+        gradient = SciMLBase.requiresgradient(:opt)
+    
+    
+        if gradient == true
+    
+            optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
+    
+    
+        else
+    
+            optf = Optimization.OptimizationFunction((x, p) -> loss_function(x),AutoFiniteDiff())
+    
+        end
+        return optf
+end
+    
+
+
+
+
+
+function options_OptimizationProblem2(opt;
+    lb = nothing,
+    ub = nothing,
+    lcons = nothing,
+    ucons = nothing,
+    sense = nothing,
     maxiters::Union{Number, Nothing} = nothing,
     maxtime::Union{Number, Nothing} = nothing,
     abstol::Union{Number, Nothing} = nothing,
@@ -754,8 +780,16 @@ function options_OptimizationProblem(opt;
     solve_args = (;)
 
 
-    if lb_ !== nothing && ub_ !== nothing
-        solve_args = (; solve_args..., lb = lb_, ub = ub_)
+    if lb !== nothing && ub !== nothing
+        solve_args = (; solve_args..., lb = lb, ub = ub)
+    end
+
+    if lcons  !== nothing && ucons  !== nothing
+        solve_args = (; solve_args..., lcons  = lcons , ucons  = ucons )
+    end
+
+    if sense   !== nothing
+        solve_args = (; solve_args..., sense   = sense  )
     end
 
     if !isnothing(maxiters)
@@ -771,10 +805,16 @@ function options_OptimizationProblem(opt;
     end
 
 
-    if !isnothing(reltol)
+    if !isnothing(maxpop)
         solve_args = (; solve_args..., PopulationSize = maxpop)
     end
 
+
+
+
+    if solve_args == (;)
+        solve_args = nothing
+    end   
 
 
 
@@ -784,46 +824,13 @@ function options_OptimizationProblem(opt;
 
 end
 
-function option_OptimizationFunction(opt,
-          constrains)
-
-
-
-
-    gradient = SciMLBase.requiresgradient(::opt)
-
-
-
-    
-    Opt_args = ()
-
-
-    if gradient == true
-        Opt_args = (AutoFiniteDiff())
-    end
-
-    if !isnothing(constrains)
-        solve_args = (; solve_args..., cons = constrains)
-    end
-
-    return Opt_args
-
-
-
-end
 
 
 
 
 
-
-
-
-
-
-
-
-
+export option_OptimizationFunction
+export options_OptimizationProblem
 export reading_annotation
 export specific_gr_evaluation
 export stochastic_sim
