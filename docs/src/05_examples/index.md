@@ -27,8 +27,9 @@ To simulate data using Ordinary Differential Equations (ODEs):
 model = "triple_piecewise_adjusted_logistic"
 n_start = [0.1]
 tstart = 0.0
-tmax = 600.0
-delta_t = 10.0
+tmax = 500.0
+delta_t = 15.0
+
 
 param_of_ode = [0.06, 1.0, 200, 0.5, 0.001, 450, -0.0002]
 
@@ -122,7 +123,6 @@ res_log_lin = fitting_one_well_Log_Lin(
     data_OD, # dataset first row times second row OD
    "test", # name of the well
     "test log-lin fitting"; #label of the experiment
-    display_plots=true, # do plots or no
     type_of_smoothing="rolling_avg", # type of smoothing
     pt_avg=7, # number of the point for rolling avg not used in the other cases
     pt_smoothing_derivative=7, # number of poits to smooth the derivative
@@ -153,18 +153,18 @@ results_ODE_fit = fitting_one_well_ODE_constrained(
     "test",
     "test_ODE",
     model,
-    lb_dhpm,
-    ub_dhpm;
-    display_plots=true, # display plots in julia or not
+    lb_ahpm,
+    ub_ahpm;
     smoothing=true, # the smoothing is done or not?
     pt_avg=3, # number of the points to do rolling avg
-    PopulationSize=300,
-    maxiters=2000000,
+    PopulationSize=20,
+    maxiters=50000,
+    abstol=0.001
 
 )
 
 ```
-The results are stored in ```results_ODE_fit``` with the following format
+The results are stored in  the second entry of ```results_ODE_fit``` with the following format. 
 ```julia
  results_ODE_fit = ["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]
 ```
@@ -204,12 +204,12 @@ results_ODE_fit = fitting_one_well_custom_ODE(
     1; # number ode in the system
     optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
-    display_plots=true, # do plots or no
     pt_avg=3, # numebr of the point to generate intial condition
     smoothing=true, # the smoothing is done or not?
-    PopulationSize=300,
-    maxiters=2000000,
+    PopulationSize=25,
+    maxiters=100000,
 )
+
 ```
 The results are stored in ```results_ODE_fit``` with the same format of the previous examples.
 
@@ -230,8 +230,8 @@ sensitivity_test = one_well_morris_sensitivity(
     pt_avg=3, # numebr of the point to generate intial condition
     smoothing=true, # the smoothing is done or not?
     type_of_smoothing="rolling_avg",
-    PopulationSize=300,
-    maxiters=2000000,
+    PopulationSize=50,
+    maxiters=100000,
     abstol=0.00001,
 )
 
@@ -243,7 +243,7 @@ The user can use the model selection function to use AIC (or AICc) to identify t
 We start defining the list of the models and the upper and lower bounds of the parameters of each one:
 
 ```julia
-# Model candidates and their parameter bounds
+# Models candidates and their parameter bounds
 list_of_models = ["aHPM", "piecewise_damped_logistic", "triple_piecewise", "baranyi_roberts"]
 
 ub_piece_wise_logistic =[ 0.06 , 2.0 , 500.0 , 10.0 ,  0.001    ]
@@ -278,9 +278,8 @@ results_ms = ODE_Model_selection(
     smoothing=true, # the smoothing is done or not?
     type_of_smoothing="rolling_avg",
     type_of_loss="L2", # type of used loss
-    display_plot_best_model=true, # results of the best fit to be plotted
-    PopulationSize=300,
-    maxiters=2000000,
+    PopulationSize=15,
+    maxiters=100000,
     abstol=0.00001,
     correction_AIC=false,)
 ```
@@ -416,12 +415,10 @@ res = selection_ODE_fixed_intervals(
     smoothing=true,
     type_of_smoothing="rolling_avg",
     pt_avg=3,
-    display_plots=true,
     path_to_plot="NA", # where save plots
     pt_smooth_derivative=0,
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.0000000001,
+    PopulationSize=25,
+    maxiters=100000,
     correction_AIC=false)
 ```
 Finally we can run a cpd algorithm and perfom the fitting:
@@ -444,11 +441,10 @@ segmentation_ODE(
     type_of_curve="original",
     pt_avg=3, # number of the point to generate intial condition
     smoothing=true, # the smoothing is done or not?
-    display_plot=true, # do plots or no
     win_size=10, #  
     pt_smooth_derivative=0,
-    PopulationSize=300,
-    maxiters=2000000,
+    PopulationSize=25,
+    maxiters=100000,
     abstol=0.00001,
     type_of_smoothing="rolling_average",
     thr_lowess=0.05,
