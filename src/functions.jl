@@ -3,6 +3,7 @@ using Missings
 using Statistics
 using Interpolations
 using DataFrames
+using SciMLBase
 #######################################################################
 
 include("ODE_models.jl");
@@ -728,6 +729,100 @@ function reading_annotation(path_to_annotation::Any)
 
     return names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded
 end
+
+
+
+
+function options_OptimizationProblem(opt;
+    lb_ = nothing,
+    ub_ = nothing,
+    maxiters::Union{Number, Nothing} = nothing,
+    maxtime::Union{Number, Nothing} = nothing,
+    abstol::Union{Number, Nothing} = nothing,
+    constrains = nothing,
+    reltol::Union{Number, Nothing} = nothing,
+    maxpop::Union{Number, Nothing} = nothing,
+    )
+
+
+
+
+    #cache_interface =  SciMLBase.supports_opt_cache_interface(::opt)
+    #  bounds = SciMLBase.allowsbounds(::opt)
+    #constrains = SciMLBase.allowsconstraints(::opt)
+
+    solve_args = (;)
+
+
+    if lb_ !== nothing && ub_ !== nothing
+        solve_args = (; solve_args..., lb = lb_, ub = ub_)
+    end
+
+    if !isnothing(maxiters)
+        solve_args = (; solve_args..., maxiter = maxiters)
+    end
+
+    if !isnothing(reltol)
+        solve_args = (; solve_args..., pgtol = reltol)
+    end
+
+    if !isnothing(abstol)
+        solve_args = (; solve_args..., abstol = abstol)
+    end
+
+
+    if !isnothing(reltol)
+        solve_args = (; solve_args..., PopulationSize = maxpop)
+    end
+
+
+
+
+    return solve_args
+
+
+
+end
+
+function option_OptimizationFunction(opt,
+          constrains)
+
+
+
+
+    gradient = SciMLBase.requiresgradient(::opt)
+
+
+
+    
+    Opt_args = ()
+
+
+    if gradient == true
+        Opt_args = (AutoFiniteDiff())
+    end
+
+    if !isnothing(constrains)
+        solve_args = (; solve_args..., cons = constrains)
+    end
+
+    return Opt_args
+
+
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
 
 export reading_annotation
 export specific_gr_evaluation
