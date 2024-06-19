@@ -1,7 +1,17 @@
-using OptimizationBBO
 using Distributions
 using StatsBase
-
+using Optimization
+using OptimizationOptimJL
+using OptimizationMOI
+using OptimizationNLopt
+using OptimizationCMAEvolutionStrategy
+using OptimizationBBO
+using OptimizationEvolutionary
+using OptimizationGCMAES
+using OptimizationOptimisers
+using OptimizationMultistartOptimization
+using OptimizationPRIMA
+using OptimizationPolyalgorithms
 #######################################################################
 """
 
@@ -330,7 +340,6 @@ function fitting_one_well_ODE_constrained(
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}; # upper bound param
     param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
@@ -341,10 +350,11 @@ function fitting_one_well_ODE_constrained(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
+    optmizer =  NLopt.LN_PRAXIS(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
 )
     if multiple_scattering_correction == true
 
@@ -378,16 +388,16 @@ function fitting_one_well_ODE_constrained(
 
     ## defining loss function
     loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
-    optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
-    optprob_const =
-        Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
-    res = Optimization.solve(
-        optprob_const,
-        optmizer,
-        PopulationSize=PopulationSize,
-        maxiters=maxiters,
-        abstol=abstol,
+
+    res = KimchiSolve(loss_function,
+    u0,
+    param;
+   opt = optmizer,
+    auto_diff_method=auto_diff_method,
+    cons=cons,
+    opt_params... ,
     )
+
 
     #revalution of solution for plot an loss evaluation
     remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
@@ -407,9 +417,7 @@ function fitting_one_well_ODE_constrained(
     max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
     res_temp = res.u
     loss_value = res.objective
-
-    res_param =
-        vectorize_df_results(name_well, model, res_temp, max_th_gr, max_em_gr, loss_value)
+    res_param =  vectorize_df_results(name_well, model, res_temp, max_th_gr, max_em_gr, loss_value)
 
 
         Kimchi_res_one_well = ("ODE",res_param,sol_fin,remade_solution.t)
@@ -495,7 +503,6 @@ function fitting_one_well_custom_ODE(
     ub_param::Vector{Float64}, # upper bound param
     n_equation::Int; # number ode in the system
     param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=0,
@@ -505,11 +512,13 @@ function fitting_one_well_custom_ODE(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
     type_of_smoothing="lowess",
+    optmizer=  NLopt.LN_PRAXIS(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
+
 )
     if multiple_scattering_correction == true
 
@@ -540,16 +549,14 @@ function fitting_one_well_custom_ODE(
 
     loss_function =
         select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
-    optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
-    optprob_const =
-        Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
-    res = Optimization.solve(
-        optprob_const,
+
+    res = KimchiSolve(loss_function,
+        u0,
+        param;
         optmizer,
-        PopulationSize=PopulationSize,
-        maxiters=maxiters,
-        abstol=abstol,
-    )
+        auto_diff_method=auto_diff_method,
+        cons=cons,
+        opt_params...)
 
     #revalution of solution for plot an loss evaluation
     remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
@@ -658,7 +665,6 @@ function ODE_Model_selection(
     models_list::Vector{String}, # ode model to use
     lb_param_array::Any, # lower bound param
     ub_param_array::Any; # upper bound param
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=3, # number of the point to generate intial condition
     beta_penality=2.0, # penality for AIC evaluation
@@ -672,10 +678,12 @@ function ODE_Model_selection(
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     verbose=false,
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-    correction_AIC=true,)
+    correction_AIC=true,
+    optmizer=  NLopt.LN_PRAXIS(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
+     )
     if multiple_scattering_correction == true
 
         data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
@@ -732,23 +740,14 @@ function ODE_Model_selection(
             tsteps,
             blank_array,
         )
-        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
 
-        # solving optimization problem
-        optprob_const = Optimization.OptimizationProblem(
-            optf,
-            temp_start_param,
-            u0,
-            lb=temp_param_lb,
-            ub=temp_param_ub,
-        )
-        res = Optimization.solve(
-            optprob_const,
-            optmizer,
-            PopulationSize=PopulationSize,
-            maxiters=maxiters,
-            abstol=abstol,
-        )
+        res = KimchiSolve(loss_function,
+        u0,
+        param;
+        optmizer,
+        auto_diff_method=auto_diff_method,
+        cons=cons,
+        opt_params...)
 
         #revalution of solution for plot an loss evaluation
         remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
@@ -919,7 +918,6 @@ function one_well_morris_sensitivity(
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}; # upper bound param
     N_step_morris=7,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
@@ -931,9 +929,10 @@ function one_well_morris_sensitivity(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
+    optmizer=  NLopt.LN_PRAXIS(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
 )
 
     # inizializing the results of sensitivity
@@ -971,21 +970,21 @@ function one_well_morris_sensitivity(
     ODE_prob = model_selector(model, u0, tspan)
     loss_function =
         select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
-    optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
-    param_combination =
+
+        param_combination =
         generation_of_combination_of_IC_morris(lb_param, ub_param, N_step_morris)
 
     for i = 1:size(param_combination)[2]
+
         param = param_combination[:, i]
-        optprob_const =
-            Optimization.OptimizationProblem(optf, param, u0, lb=lb_param, ub=ub_param)
-        res = Optimization.solve(
-            optprob_const,
-            optmizer,
-            PopulationSize=PopulationSize,
-            maxiters=maxiters,
-            abstol=abstol,
-        )
+
+        res = KimchiSolve(loss_function,
+        u0,
+        param;
+        optmizer,
+        auto_diff_method=auto_diff_method,
+        cons=cons,
+        opt_params...)
 
         #revalution of solution for plot an loss evaluation
         remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
@@ -1112,7 +1111,6 @@ function selection_ODE_fixed_intervals(
     list_ub_param::Any, # upper bound param
     intervals_changepoints::Any;
     type_of_loss="L2", # type of used loss
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     smoothing=false,
     type_of_smoothing="lowess",
@@ -1123,10 +1121,11 @@ function selection_ODE_fixed_intervals(
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     beta_smoothing_ms=2.0, #  parameter of the AIC penality
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.0000000001,
-    correction_AIC=true)
+    correction_AIC=true,
+    optmizer=  NLopt.LN_PRAXIS(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...)
 
     if multiple_scattering_correction == true
         data_testing = correction_OD_multiple_scattering(data_testing, calibration_OD_curve; method=method_multiple_scattering_correction)
@@ -1185,10 +1184,11 @@ function selection_ODE_fixed_intervals(
             method_multiple_scattering_correction="interpolation",
             calibration_OD_curve="NA", #  the path to calibration curve to fix the data
             verbose=false,
-            PopulationSize=PopulationSize,
-            maxiters=maxiters,
-            abstol=abstol,
-            correction_AIC=correction_AIC)
+            correction_AIC=correction_AIC,
+            auto_diff_method=auto_diff_method,
+            cons=cons,
+            opt_params...
+            )
 
         # selection of te model
         model = model_selection_results[9]
@@ -1368,7 +1368,6 @@ function segmentation_ODE(
     n_max_change_points::Int;
     detect_number_cpd=true,
     fixed_cpd=false,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
     integrator=Tsit5(), # selection of sciml integrator
     type_of_loss="L2", # type of used loss
     type_of_detection="slinding_win",
@@ -1385,12 +1384,13 @@ function segmentation_ODE(
     save_all_model=false,
     method_peaks_detection="peaks_prominence",
     n_bins=40,
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
-    correction_AIC=true)
+    correction_AIC=true,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
+    )
 
     # fitting single models
     change_point_list = Vector{Vector{Any}}()
@@ -1417,12 +1417,12 @@ function segmentation_ODE(
             method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
             verbose=false,
-            PopulationSize=PopulationSize,
-            maxiters=maxiters,
-            abstol=abstol,
             type_of_smoothing=type_of_smoothing,
             thr_lowess=thr_lowess,
-            correction_AIC=correction_AIC)
+            correction_AIC=correction_AIC,
+            auto_diff_method=auto_diff_method,
+            cons=cons,
+            opt_params...)
 
         if save_all_model == true
             mkpath(path_to_results)
@@ -1558,6 +1558,9 @@ function segmentation_ODE(
                 beta_smoothing_ms=penality_parameter, #  parameter of the AIC penality
                 type_of_smoothing=type_of_smoothing,
                 thr_lowess=thr_lowess,
+                auto_diff_method=auto_diff_method,
+                cons=cons,
+                opt_params...
             )
 
             # composing piecewise penality

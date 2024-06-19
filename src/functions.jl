@@ -3,7 +3,6 @@ using Missings
 using Statistics
 using Interpolations
 using DataFrames
-using SciMLBase
 #######################################################################
 
 include("ODE_models.jl");
@@ -208,7 +207,7 @@ function analyze_segment(label_exp, name_well, data, segment_number, pt_smoothin
 
         max_specific_gr = maximum(specific_gr)
         min_specific_gr = minimum(specific_gr)
-  
+
 
         t_of_max = specific_gr_times[argmax(max_specific_gr)]
         index_of_max_od = findfirst(data[1, :] .> t_of_max)
@@ -731,106 +730,50 @@ function reading_annotation(path_to_annotation::Any)
 end
 
 
+function KimchiSolve(loss_function,
+    u0,
+    p;
+    opt = NLopt.LN_PRAXIS(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...)
 
-function option_OptimizationFunction(opt
+    # generation of optimization fuction
 
-    )
-        gradient = SciMLBase.requiresgradient(:opt)
-    
-    
-        if gradient == true
-    
-            optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
-    
-    
-        else
-    
-            optf = Optimization.OptimizationFunction((x, p) -> loss_function(x),AutoFiniteDiff())
-    
-        end
-        return optf
-end
-    
+    if isnothing(auto_diff_method) == true && isnothing(cons) == true
+
+        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
+
+    elseif isnothing(auto_diff_method) == false && isnothing(cons) == true
+
+        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), auto_diff_method)
 
 
+    elseif isnothing(auto_diff_method) == true && isnothing(cons) == false
+
+        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), cons=cons)
 
 
-
-function options_OptimizationProblem2(opt;
-    lb = nothing,
-    ub = nothing,
-    lcons = nothing,
-    ucons = nothing,
-    sense = nothing,
-    maxiters::Union{Number, Nothing} = nothing,
-    maxtime::Union{Number, Nothing} = nothing,
-    abstol::Union{Number, Nothing} = nothing,
-    constrains = nothing,
-    reltol::Union{Number, Nothing} = nothing,
-    maxpop::Union{Number, Nothing} = nothing,
-    )
+    else
+        isnothing(auto_diff_method) == false && isnothing(cons) == false
 
 
+        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), auto_diff_method, cons=cons)
 
 
-    #cache_interface =  SciMLBase.supports_opt_cache_interface(::opt)
-    #  bounds = SciMLBase.allowsbounds(::opt)
-    #constrains = SciMLBase.allowsconstraints(::opt)
-
-    solve_args = (;)
-
-
-    if lb !== nothing && ub !== nothing
-        solve_args = (; solve_args..., lb = lb, ub = ub)
-    end
-
-    if lcons  !== nothing && ucons  !== nothing
-        solve_args = (; solve_args..., lcons  = lcons , ucons  = ucons )
-    end
-
-    if sense   !== nothing
-        solve_args = (; solve_args..., sense   = sense  )
-    end
-
-    if !isnothing(maxiters)
-        solve_args = (; solve_args..., maxiter = maxiters)
-    end
-
-    if !isnothing(reltol)
-        solve_args = (; solve_args..., pgtol = reltol)
-    end
-
-    if !isnothing(abstol)
-        solve_args = (; solve_args..., abstol = abstol)
     end
 
 
-    if !isnothing(maxpop)
-        solve_args = (; solve_args..., PopulationSize = maxpop)
-    end
+    prob = OptimizationProblem(optf, p, u0; opt_params...)
 
+    sol = Optimization.solve(prob, opt)
 
-
-
-    if solve_args == (;)
-        solve_args = nothing
-    end   
-
-
-
-    return solve_args
-
-
-
+    return sol
 end
 
 
 
 
-
-
-export option_OptimizationFunction
-export options_OptimizationProblem
 export reading_annotation
 export specific_gr_evaluation
 export stochastic_sim
@@ -839,3 +782,4 @@ export initialize_df_results
 export initialize_df_results_ode_custom
 export expand_res
 export expand_res_seg
+export KimchiSolve
