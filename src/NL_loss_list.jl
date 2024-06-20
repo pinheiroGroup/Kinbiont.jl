@@ -118,4 +118,4 @@ export NL_RE_fixed_CI
 export NL_L2_fixed_CI
 export NL_RE_fixed_end
 export NL_L2_fixed_end
-export select_loss_export_NL
+export select_loss_function_NL

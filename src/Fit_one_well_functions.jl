@@ -1,17 +1,8 @@
 using Distributions
 using StatsBase
 using Optimization
-using OptimizationOptimJL
-using OptimizationMOI
 using OptimizationNLopt
-using OptimizationCMAEvolutionStrategy
-using OptimizationBBO
-using OptimizationEvolutionary
-using OptimizationGCMAES
-using OptimizationOptimisers
 using OptimizationMultistartOptimization
-using OptimizationPRIMA
-using OptimizationPolyalgorithms
 #######################################################################
 """
 
@@ -256,7 +247,7 @@ function fitting_one_well_Log_Lin(
     end
 
 
-    Kimchi_res_one_well = ("Log-lin", results_lin_log_fit,missing,missing)
+    Kimchi_res_one_well = ("Log-lin", results_lin_log_fit, missing, missing)
 
     return Kimchi_res_one_well
 end
@@ -337,9 +328,7 @@ function fitting_one_well_ODE_constrained(
     name_well::String, # name of the well
     label_exp::String, #label of the experiment
     model::String, # ode model to use
-    lb_param::Vector{Float64}, # lower bound param
-    ub_param::Vector{Float64}; # upper bound param
-    param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
+    param;
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
@@ -351,7 +340,9 @@ function fitting_one_well_ODE_constrained(
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     thr_lowess=0.05,
-    optmizer =  NLopt.LN_PRAXIS(),
+    multistart=false,
+    n_restart=50,
+    optmizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -390,12 +381,14 @@ function fitting_one_well_ODE_constrained(
     loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
 
     res = KimchiSolve(loss_function,
-    u0,
-    param;
-   opt = optmizer,
-    auto_diff_method=auto_diff_method,
-    cons=cons,
-    opt_params... ,
+        u0,
+        param;
+        opt=optmizer,
+        auto_diff_method=auto_diff_method,
+        multistart=multistart,
+        n_restart=n_restart,
+        cons=cons,
+        opt_params...,
     )
 
 
@@ -415,12 +408,11 @@ function fitting_one_well_ODE_constrained(
 
     # max empirical gr
     max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
+
     res_temp = res.u
     loss_value = res.objective
-    res_param =  vectorize_df_results(name_well, model, res_temp, max_th_gr, max_em_gr, loss_value)
-
-
-        Kimchi_res_one_well = ("ODE",res_param,sol_fin,remade_solution.t)
+    res_param = vectorize_df_results(name_well, model, res_temp, max_th_gr, max_em_gr, loss_value)
+    Kimchi_res_one_well = ("ODE", res_param, sol_fin, remade_solution.t)
 
     return Kimchi_res_one_well
 end
@@ -499,10 +491,8 @@ function fitting_one_well_custom_ODE(
     name_well::String, # name of the well
     label_exp::String, #label of the experiment
     model::Any, # ode model to use
-    lb_param::Vector{Float64}, # lower bound param
-    ub_param::Vector{Float64}, # upper bound param
+    param,# initial guess param
     n_equation::Int; # number ode in the system
-    param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=0,
@@ -514,12 +504,13 @@ function fitting_one_well_custom_ODE(
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     thr_lowess=0.05,
     type_of_smoothing="lowess",
-    optmizer=  NLopt.LN_PRAXIS(),
+    multistart=false,
+    n_restart=50,
+    optmizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
-
-)
+    )
     if multiple_scattering_correction == true
 
         data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
@@ -553,10 +544,13 @@ function fitting_one_well_custom_ODE(
     res = KimchiSolve(loss_function,
         u0,
         param;
-        optmizer,
+        opt=optmizer,
         auto_diff_method=auto_diff_method,
+        multistart=multistart,
+        n_restart=n_restart,
         cons=cons,
-        opt_params...)
+        opt_params...,
+    )
 
     #revalution of solution for plot an loss evaluation
     remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
@@ -578,10 +572,10 @@ function fitting_one_well_custom_ODE(
     res_param =
         [string(name_well), "custom_model", res_temp, max_th_gr, max_em_gr, loss_value]
 
-        Kimchi_res_one_well = ("custom_ODE",res_param,missing,missing)
-     
+    Kimchi_res_one_well = ("custom_ODE", res_param, data_th[2, :], data_th[1, :])
 
-    return res_param
+
+    return Kimchi_res_one_well
 end
 
 #######################################################################
@@ -663,8 +657,9 @@ function ODE_Model_selection(
     name_well::String, # name of the well
     label_exp::String, #label of the experiment
     models_list::Vector{String}, # ode model to use
-    lb_param_array::Any, # lower bound param
-    ub_param_array::Any; # upper bound param
+    param_array::Any;
+    lb_param_array::Any=nothing, # lower bound param
+    ub_param_array::Any=nothing, # upper bound param
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=3, # number of the point to generate intial condition
     beta_penality=2.0, # penality for AIC evaluation
@@ -679,11 +674,15 @@ function ODE_Model_selection(
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     verbose=false,
     correction_AIC=true,
-    optmizer=  NLopt.LN_PRAXIS(),
+    multistart=false,
+    n_restart=50,
+    optmizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
-     )
+)
+
+
     if multiple_scattering_correction == true
 
         data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
@@ -721,9 +720,10 @@ function ODE_Model_selection(
         # inizialization of some parameters
 
         temp_model = models_list[mm]
-        temp_param_lb = lb_param_array[mm]
-        temp_param_ub = ub_param_array[mm]
-        temp_start_param = temp_param_lb .+ (temp_param_ub .- temp_param_lb) ./ 2
+
+        temp_start_param = param_array[mm]
+
+   
 
         # generating IC
         # setting initial conditions
@@ -741,13 +741,41 @@ function ODE_Model_selection(
             blank_array,
         )
 
-        res = KimchiSolve(loss_function,
-        u0,
-        param;
-        optmizer,
-        auto_diff_method=auto_diff_method,
-        cons=cons,
-        opt_params...)
+
+        if !isnothing(lb_param_array)
+            temp_param_lb = lb_param_array[mm]
+            temp_param_ub = ub_param_array[mm]
+
+            opt_params = (opt_params...,
+                lb=temp_param_lb,
+                ub=temp_param_ub,
+                )
+
+            res = KimchiSolve(loss_function,
+                u0,
+                temp_start_param;
+                opt=optmizer,
+                auto_diff_method=auto_diff_method,
+                multistart=multistart,
+                n_restart=n_restart,
+                cons=cons,
+                opt_params...)
+
+        else
+
+            res = KimchiSolve(loss_function,
+                u0,
+                temp_start_param;
+                opt=optmizer,
+                auto_diff_method=auto_diff_method,
+                multistart=multistart,
+                n_restart=n_restart,
+                cons=cons,
+                opt_params...)
+
+        end
+
+
 
         #revalution of solution for plot an loss evaluation
         remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
@@ -820,16 +848,16 @@ function ODE_Model_selection(
     data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
 
     Kimchi_res_model_selection = ("ODE_model_selection",
-                                df_res_optimization,
-                                sol_fin,
-                                sol_time[index_not_zero],
-                                rss_array,
-                                minimum(rss_array[2,2:end]),
-                                param_min,
-                                min_AIC,
-                                model,
-                                param_out_full
-                                )
+        df_res_optimization,
+        sol_fin,
+        sol_time[index_not_zero],
+        rss_array,
+        minimum(rss_array[2, 2:end]),
+        param_min,
+        min_AIC,
+        model,
+        param_out_full
+    )
 
 
 
@@ -929,9 +957,12 @@ function one_well_morris_sensitivity(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    optmizer=  NLopt.LN_PRAXIS(),
+    optmizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
+    thr_lowess = 0.05,
+    multistart=false,
+    n_restart=50,
     opt_params...
 )
 
@@ -971,20 +1002,25 @@ function one_well_morris_sensitivity(
     loss_function =
         select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
 
-        param_combination =
+    param_combination =
         generation_of_combination_of_IC_morris(lb_param, ub_param, N_step_morris)
 
     for i = 1:size(param_combination)[2]
 
         param = param_combination[:, i]
-
+        opt_params = (opt_params...,
+        lb=lb_param,
+        ub=ub_param,
+        )
         res = KimchiSolve(loss_function,
-        u0,
-        param;
-        optmizer,
-        auto_diff_method=auto_diff_method,
-        cons=cons,
-        opt_params...)
+            u0,
+            param;
+            opt=optmizer,
+            auto_diff_method=auto_diff_method,
+            multistart=multistart,
+            n_restart=n_restart,
+            cons=cons,
+            opt_params...)
 
         #revalution of solution for plot an loss evaluation
         remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
@@ -1025,7 +1061,7 @@ function one_well_morris_sensitivity(
         )
     end
 
-    Kimchi_res_sensitivity = ("ODE_Morris_sensitivity",results_sensitivity,param_combination)
+    Kimchi_res_sensitivity = ("ODE_Morris_sensitivity", results_sensitivity, param_combination)
 
     return Kimchi_res_sensitivity
 end
@@ -1107,9 +1143,10 @@ function selection_ODE_fixed_intervals(
     name_well::String, # name of the well
     label_exp::String, #label of the experiment
     list_of_models::Vector{String}, # ode models to use
-    list_lb_param::Any, # lower bound param
-    list_ub_param::Any, # upper bound param
+    param_array,
     intervals_changepoints::Any;
+    lb_param_array::Any=nothing, # lower bound param
+    ub_param_array::Any=nothing, # upper bound param
     type_of_loss="L2", # type of used loss
     integrator=Tsit5(), # selection of sciml integrator
     smoothing=false,
@@ -1122,7 +1159,9 @@ function selection_ODE_fixed_intervals(
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     beta_smoothing_ms=2.0, #  parameter of the AIC penality
     correction_AIC=true,
-    optmizer=  NLopt.LN_PRAXIS(),
+    optmizer=NLopt.LN_BOBYQA(),
+    multistart=false,
+    n_restart=50,
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...)
@@ -1170,8 +1209,9 @@ function selection_ODE_fixed_intervals(
             name_well, # name of the well
             label_exp, #label of the experiment
             list_of_models, # ode model to use
-            list_lb_param, # lower bound param
-            list_ub_param; # upper bound param
+            param_array;
+            ub_param_array=ub_param_array, # lower bound param
+            lb_param_array=lb_param_array, # upper bound param
             optmizer=optmizer, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
@@ -1185,10 +1225,12 @@ function selection_ODE_fixed_intervals(
             calibration_OD_curve="NA", #  the path to calibration curve to fix the data
             verbose=false,
             correction_AIC=correction_AIC,
+            multistart=multistart,
+            n_restart=n_restart,
             auto_diff_method=auto_diff_method,
             cons=cons,
             opt_params...
-            )
+        )
 
         # selection of te model
         model = model_selection_results[9]
@@ -1199,9 +1241,9 @@ function selection_ODE_fixed_intervals(
         #temp_res_win = push!(temp_res_win,model)
         u0 = generating_IC(data_temp, model, smoothing, pt_avg)
 
-    
+
         time_sol = model_selection_results[4]
-        sol_fin =  model_selection_results[3]
+        sol_fin = model_selection_results[3]
 
 
         time_bonduary = time_sol[end]
@@ -1363,9 +1405,10 @@ function segmentation_ODE(
     name_well::String, # name of the well
     label_exp::String, #label of the experiment
     list_of_models::Vector{String}, # ode model to use
-    list_lb_param::Any, # lower bound param
-    list_ub_param::Any, # upper bound param
+    param_array::Any, #  param
     n_max_change_points::Int;
+    lb_param_array::Any=nothing, # lower bound param
+    ub_param_array::Any=nothing, # upper bound param
     detect_number_cpd=true,
     fixed_cpd=false,
     integrator=Tsit5(), # selection of sciml integrator
@@ -1387,10 +1430,13 @@ function segmentation_ODE(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     correction_AIC=true,
+    optmizer=NLopt.LN_BOBYQA(),
+    multistart=false,
+    n_restart=50,
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
-    )
+)
 
     # fitting single models
     change_point_list = Vector{Vector{Any}}()
@@ -1403,8 +1449,9 @@ function segmentation_ODE(
             name_well, # name of the well
             label_exp, #label of the experiment
             list_of_models, # ode model to use
-            list_lb_param, # lower bound param
-            list_ub_param; # upper bound param
+            param_array;
+            lb_param_array=lb_param_array, # lower bound param
+            ub_param_array=ub_param_array, # upper bound param
             optmizer=optmizer, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
@@ -1543,9 +1590,10 @@ function segmentation_ODE(
                 name_well, # name of the well
                 label_exp, #label of the experiment
                 list_of_models, # ode models to use
-                list_lb_param, # lower bound param
-                list_ub_param, # upper bound param
+                param_array, # lower bound param
                 cpd_temp;
+                ub_param_array=ub_param_array, # upper bound param
+                lb_param_array=lb_param_array, # lower bound param
                 type_of_loss=type_of_loss, # type of used loss
                 optmizer=optmizer, # selection of optimization method
                 integrator=integrator, # selection of sciml integrator
@@ -1558,6 +1606,8 @@ function segmentation_ODE(
                 beta_smoothing_ms=penality_parameter, #  parameter of the AIC penality
                 type_of_smoothing=type_of_smoothing,
                 thr_lowess=thr_lowess,
+                multistart=multistart,
+                n_restart=n_restart,
                 auto_diff_method=auto_diff_method,
                 cons=cons,
                 opt_params...
@@ -1618,7 +1668,7 @@ function segmentation_ODE(
 
 
 
-    Kimchi_res_segmentation_ODE = ("ODE_segmentation",top_model,sol_to_plot,time_points_to_plot,top_cps  ,score_of_the_models)
+    Kimchi_res_segmentation_ODE = ("ODE_segmentation", top_model, sol_to_plot, time_points_to_plot, top_cps, score_of_the_models)
     return Kimchi_res_segmentation_ODE
 end
 
@@ -1715,9 +1765,9 @@ function segment_gr_analysis(
 
     end
 
-  
 
-    Kimchi_res_one_well = ("segment_analysis",res,missing,missing)
+
+    Kimchi_res_one_well = ("segment_analysis", res, missing, missing)
 
 
 

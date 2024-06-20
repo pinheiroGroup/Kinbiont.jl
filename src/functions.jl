@@ -95,18 +95,13 @@ end
 
 
 function initialize_df_results(model::String)
-
-
     param_names = models[model].params
-
     return param_names
 end
 
 
 function guess_param(lb_param::Vector{Float64}, ub_param::Vector{Float64})
-
     param = lb_param .+ (ub_param - lb_param) ./ 2
-
     return param
 end
 
@@ -733,8 +728,10 @@ end
 function KimchiSolve(loss_function,
     u0,
     p;
-    opt = NLopt.LN_PRAXIS(),
+    opt,
     auto_diff_method=nothing,
+    multistart=false,
+    n_restart=50,
     cons=nothing,
     opt_params...)
 
@@ -766,13 +763,72 @@ function KimchiSolve(loss_function,
 
     prob = OptimizationProblem(optf, p, u0; opt_params...)
 
-    sol = Optimization.solve(prob, opt)
+
+    if multistart == true
+
+        sol = solve(prob, MultistartOptimization.TikTak(n_restart), opt)
+        
+    else
+
+        sol = solve(prob, opt)
+
+    end
 
     return sol
 end
 
 
+function KimchiSolve_NL(loss_function,
+    u0,
+    data;
+    opt,
+    auto_diff_method=nothing,
+    multistart=false,
+    n_restart=50,
+    cons=nothing,
+    opt_params...)
 
+    # generation of optimization fuction
+
+    if isnothing(auto_diff_method) == true && isnothing(cons) == true
+
+        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
+
+    elseif isnothing(auto_diff_method) == false && isnothing(cons) == true
+
+        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), auto_diff_method)
+
+
+    elseif isnothing(auto_diff_method) == true && isnothing(cons) == false
+
+        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), cons=cons)
+
+
+    else
+        isnothing(auto_diff_method) == false && isnothing(cons) == false
+
+
+        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), auto_diff_method, cons=cons)
+
+
+    end
+
+
+    prob = OptimizationProblem(optf, u0, data; opt_params...)
+
+
+    if multistart == true
+
+        sol = solve(prob, MultistartOptimization.TikTak(n_restart), opt)
+        
+    else
+
+        sol = solve(prob, opt)
+
+    end
+
+    return sol
+end
 
 export reading_annotation
 export specific_gr_evaluation
@@ -783,3 +839,4 @@ export initialize_df_results_ode_custom
 export expand_res
 export expand_res_seg
 export KimchiSolve
+export generating_IC

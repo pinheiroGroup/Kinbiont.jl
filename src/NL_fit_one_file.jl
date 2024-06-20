@@ -27,9 +27,6 @@
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
     penality_CI=8.0,
     size_bootstrap=0.7,
@@ -66,9 +63,6 @@ This function performs NL model selection of one NL model for a full csv file
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
 -  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
-- ` PopulationSize =100`: Size of the population of the optimization
-- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
 -  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
@@ -87,14 +81,13 @@ function fit_NL_model_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
     model::Any, # string of the used model
-    lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
-    ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
+    u0;
+    lb_param::Vector{Float64}=nothing,# array of the array of the lower bound of the parameters
+    ub_param::Vector{Float64}=nothing, # array of the array of the upper bound of the parameters
     path_to_annotation::Any = missing,# path to the annotation of the wells
-    u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    method_of_fitting="MCMC",
+    method_of_fitting="NA",
     nrep=100,
     errors_estimation=false,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     path_to_results="NA", # path where save results
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
@@ -110,14 +103,17 @@ function fit_NL_model_file(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
     penality_CI=8.0,
     size_bootstrap=0.7,
     blank_value = 0.0,
     blank_array = [0.0],
+    optmizer=NLopt.LN_BOBYQA(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
 )
 
 
@@ -229,10 +225,10 @@ function fit_NL_model_file(
                 string(well_name), # name of the well
                 label_exp, #label of the experiment
                 model, # ode model to use
-                lb_param, # lower bound param
-                ub_param; # upper bound param
+                u0;
+                lb_param=lb_param, # lower bound param
+                ub_param=ub_param, # upper bound param
                 nrep=nrep,
-                u0=u0,# initial guess param
                 optmizer=optmizer,
                 size_bootstrap=size_bootstrap,
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
@@ -243,13 +239,16 @@ function fit_NL_model_file(
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
                 method_multiple_scattering_correction=method_multiple_scattering_correction,
                 calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
-                PopulationSize=PopulationSize,
-                maxiters=maxiters,
-                abstol=abstol,
                 thr_lowess=thr_lowess,
                 write_res=write_res,
                 penality_CI=penality_CI,
-                path_to_results = path_to_results)
+                path_to_results = path_to_results,
+                auto_diff_method=auto_diff_method,
+                multistart=multistart,
+                n_restart=n_restart,
+                cons=cons,
+                 opt_params...
+                )
 
             temp_mean = temp_results_1[7]
             temp_mean = vcat("mean",temp_mean)
@@ -283,73 +282,58 @@ function fit_NL_model_file(
                 ub_param; # upper bound param
                 nrep=nrep,
                 optmizer=optmizer,
-                pt_avg=pt_avg, # numebr of the point to generate intial condition
+                pt_avg=pt_avg, # number of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
                 type_of_smoothing=type_of_smoothing,
-                type_of_loss=loss_type, # type of used loss
+                type_of_loss=type_of_loss, # type of used loss
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
                 method_multiple_scattering_correction=method_multiple_scattering_correction,
                 calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
-                PopulationSize=PopulationSize,
-                maxiters=maxiters,
-                abstol=abstol,
                 thr_lowess=thr_lowess,
                 write_res=write_res,
-                penality_CI=penality_CI)
+                penality_CI=penality_CI,
+                auto_diff_method=auto_diff_method,
+                multistart=multistart,
+                n_restart=n_restart,
+                cons=cons,
+                opt_params...
+            )
 
-        elseif method_of_fitting == "MCMC"
-
-
-            temp_results_1 = fit_NL_model_MCMC_intialization(data, # dataset first row times second row OD
-                string(well_name), # name of the well
-                label_exp, #label of the experiment
-                model, # ode model to use
-                lb_param, # lower bound param
-                ub_param; # upper bound param
-                nrep=nrep,
-                optmizer=optmizer,
-                pt_avg=pt_avg, # numebr of the point to generate intial condition
-                pt_smooth_derivative=pt_smooth_derivative,
-                smoothing=smoothing, # the smoothing is done or not?
-                type_of_smoothing=type_of_smoothing,
-                type_of_loss=loss_type, # type of used loss
-                multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-                method_multiple_scattering_correction=method_multiple_scattering_correction,
-                calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
-                PopulationSize=PopulationSize,
-                maxiters=maxiters,
-                abstol=abstol,
-                thr_lowess=thr_lowess,
-                penality_CI=penality_CI)
+ 
 
 
         else
 
 
 
-            temp_results_1 = fit_NL_model(data, # dataset first row times second row OD
-                string(well_name), # name of the well
-                label_exp, #label of the experiment
-                model, # ode model to use
-                lb_param, # lower bound param
-                ub_param; # upper bound param
-                u0=u0,# initial guess param
-                optmizer=optmizer,
-                pt_avg=pt_avg, # numebr of the point to generate intial condition
-                pt_smooth_derivative=pt_smooth_derivative,
-                smoothing=smoothing, # the smoothing is done or not?
-                type_of_smoothing=type_of_smoothing,
-                type_of_loss=loss_type, # type of used loss
-                multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
-                method_multiple_scattering_correction=method_multiple_scattering_correction,
-                calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
-                PopulationSize=PopulationSize,
-                maxiters=maxiters,
-                abstol=abstol,
-                thr_lowess=thr_lowess,
-                penality_CI=penality_CI
-            )
+            temp_results_1 = fit_NL_model_bootstrap(data, # dataset first row times second row OD
+            name_well, # name of the well
+            label_exp, #label of the experiment
+            model_to_test, # ode model to use
+            u0;
+            lb_param=temp_param_lb, # lower bound param
+            ub_param=temp_param_ub, # upper bound param
+            nrep=nrep,
+            optmizer=optmizer,
+            size_bootstrap=size_bootstrap,
+            pt_avg=pt_avg, # number of the point to generate intial condition
+            pt_smooth_derivative=pt_smooth_derivative,
+            smoothing=smoothing, # the smoothing is done or not?
+            type_of_smoothing=type_of_smoothing,
+            type_of_loss=type_of_loss, # type of used loss
+            multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
+            method_multiple_scattering_correction=method_multiple_scattering_correction,
+            calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
+            thr_lowess=thr_lowess,
+            write_res=write_res,
+            penality_CI=penality_CI,
+            auto_diff_method=auto_diff_method,
+            multistart=multistart,
+            n_restart=n_restart,
+            cons=cons,
+             opt_params...
+        )
 
 
 
@@ -379,8 +363,7 @@ function fit_NL_model_file(
                 string(well_name), # name of the well
                 label_exp, #label of the experiment
                 model, # ode model to use
-                lb_param, # lower bound param
-                ub_param,
+                u0,
                 blank_array; # upper bound param
                 nrep=nrep,
                 u0=best_param,# initial guess param
@@ -393,11 +376,13 @@ function fit_NL_model_file(
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
                 method_multiple_scattering_correction=method_multiple_scattering_correction,
                 calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
-                PopulationSize=PopulationSize,
-                maxiters=maxiters,
-                abstol=abstol,
                 thr_lowess=thr_lowess,
-                penality_CI=penality_CI
+                penality_CI=penality_CI,
+                multistart=multistart,
+                n_restart=n_restart,
+                auto_diff_method=auto_diff_method,
+                cons=cons,
+                opt_params...
             )
 
 
@@ -481,9 +466,6 @@ end
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", 
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
     beta_param=2.0,
     penality_CI=8.0,
@@ -520,9 +502,6 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 -  `thr_lowess=0.05`: Float64 keyword argument of lowess smoothing
-- ` PopulationSize =100`: Size of the population of the optimization
-- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 - `penality_CI=8.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
 -  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
@@ -544,13 +523,12 @@ function fit_NL_model_selection_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
     list_model_function::Any, # ode model to use
-    list_lb_param::Vector{Float64}, # lower bound param
-    list_ub_param::Vector{Float64}; # upper bound param
+    list_u0;# initial guess param
+    lb_param_array::Any = nothing, # lower bound param
+    ub_param_array::Any = nothing, # upper bound param
     path_to_annotation::Any = missing,# path to the annotation of the wells
-    method_of_fitting="MCMC",
+    method_of_fitting="NA",
     nrep=100,
-    list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     path_to_results="NA", # path where save results
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
@@ -566,9 +544,6 @@ function fit_NL_model_selection_file(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
     beta_param=2.0,
     penality_CI=8.0,
@@ -576,6 +551,12 @@ function fit_NL_model_selection_file(
     correction_AIC=true,
     blank_value = 0.0,
     blank_array = [0.0],
+    optmizer=NLopt.LN_BOBYQA(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
 )
 
 
@@ -583,7 +564,7 @@ function fit_NL_model_selection_file(
         mkpath(path_to_results)
     end
 
-    parameter_of_optimization = initialize_res_ms(list_ub_param)
+    parameter_of_optimization = initialize_res_ms(list_u0)
     names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
     # reading files
@@ -667,12 +648,11 @@ function fit_NL_model_selection_file(
             string(well_name), # name of the well
             label_exp, #label of the experiment
             list_model_function, # ode model to use
-            list_lb_param, # lower bound param
-            list_ub_param; # upper bound param
+            list_u0;
+            lb_param_array=lb_param_array, # lower bound param
+            ub_param_array=ub_param_array, # upper bound param
             method_of_fitting=method_of_fitting,
             nrep=nrep,
-            list_u0=list_u0,# initial guess param
-            optmizer=optmizer,
             size_bootstrap=size_bootstrap,
             pt_avg=pt_avg, # numebr of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
@@ -682,14 +662,17 @@ function fit_NL_model_selection_file(
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
             method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
-            PopulationSize=PopulationSize,
-            maxiters=maxiters,
-            abstol=abstol,
             thr_lowess=thr_lowess,
             write_res=false,
             beta_param=beta_param,
             penality_CI=penality_CI,
-            correction_AIC=correction_AIC)
+            correction_AIC=correction_AIC,
+            optmizer=optmizer,
+            auto_diff_method=auto_diff_method,
+            multistart=multistart,
+            n_restart=n_restart,
+            cons=cons,
+            opt_params...)
 
 
 
@@ -756,9 +739,6 @@ end
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     size_bootstrap=0.7,
     thr_lowess=0.05,
     detect_number_cpd=true,
@@ -801,9 +781,7 @@ This function performs NL model selection  on a segmented time series, it uses A
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 -  `thr_lowess=0.05`: Float64 keyword argument of lowess smoothing
-- ` PopulationSize =100`: Size of the population of the optimization
-- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
+
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
 -  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
@@ -829,14 +807,13 @@ function fit_NL_segmentation_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
     list_model_function::Any, # ode model to use
-    list_lb_param::Vector{Vector{Float64}}, # lower bound param
-    list_ub_param::Vector{Vector{Float64}}, # upper bound param
+    list_u0,# initial guess param
     n_change_points::Int;
+    list_lb_param::Vector{Vector{Float64}}=nothing, # lower bound param
+    list_ub_param::Vector{Vector{Float64}}=nothing, # upper bound param
     path_to_annotation::Any = missing,# path to the annotation of the wells
-    method_of_fitting="MCMC",
+    method_of_fitting="NA",
     nrep=100,
-    list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     path_to_results="NA", # path where save results
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
@@ -852,9 +829,6 @@ function fit_NL_segmentation_file(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     size_bootstrap=0.7,
     thr_lowess=0.05,
     detect_number_cpd=true,
@@ -868,6 +842,12 @@ function fit_NL_segmentation_file(
     correction_AIC=true,
     blank_value = 0.0,
     blank_array = [0.0],
+    optmizer=NLopt.LN_BOBYQA(),
+    auto_diff_method=nothing,
+    multistart=false,
+    n_restart=50,
+    cons=nothing,
+    opt_params...
 )
 
 
@@ -963,12 +943,11 @@ function fit_NL_segmentation_file(
             string(well_name), # name of the well
             label_exp, #label of the experiment
             list_model_function, # ode models to use
-            list_lb_param, # lower bound param
-            list_ub_param, # upper bound param
+            list_u0,
             n_change_points;
-            list_u0=list_u0,# initial guess param
+            lb_param_array=lb_param_array, # lower bound param
+            ub_param_array=ub_param_array, # upper bound param
             type_of_loss=loss_type, # type of used loss
-            optmizer=optmizer, # selection of optimization method
             method_of_fitting=method_of_fitting, # selection of sciml integrator
             type_of_detection=type_of_detection,
             type_of_curve=type_of_curve,
@@ -984,14 +963,18 @@ function fit_NL_segmentation_file(
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
             beta_smoothing_ms=beta_smoothing_ms, #  parameter of the AIC penality
             n_bins=n_bins,
-            PopulationSize=PopulationSize,
-            maxiters=maxiters,
-            abstol=abstol,
             detect_number_cpd=detect_number_cpd,
             fixed_cpd=fixed_cpd,
             penality_CI=penality_CI,
             size_bootstrap=size_bootstrap,
-            correction_AIC=correction_AIC
+            correction_AIC=correction_AIC,
+            optmizer=optmizer,
+            multistart=multistart,
+            n_restart=n_restart,
+            auto_diff_method=auto_diff_method,
+            cons=cons,
+            opt_params...
+            
         )
 
 

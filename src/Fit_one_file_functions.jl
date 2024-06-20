@@ -227,7 +227,7 @@ function fit_one_file_Log_Lin(
         )
 
     end
-    Kimchi_res_one_file = ("Log-Lin",results_Log_Lin)
+    Kimchi_res_one_file = ("Log-Lin", results_Log_Lin)
 
 
     return Kimchi_res_one_file
@@ -318,10 +318,8 @@ function fit_file_ODE(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
     model::String, # string of the used model
-    lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
-    ub_param::Vector{Float64}; # array of the array of the upper bound of the parameters
+    param=nothing;
     path_to_annotation::Any=missing,# path to the annotation of the wells
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
     loss_type="RE", # string of the type of the used loss
@@ -338,12 +336,15 @@ function fit_file_ODE(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
     blank_value=0.0,
     blank_array=[0.0],
+    multistart=false,
+    n_restart=50,
+    optmizer=NLopt.LN_BOBYQA(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
 )
 
 
@@ -447,10 +448,7 @@ function fit_file_ODE(
             string(well_name), # name of the well
             label_exp, #label of the experiment
             model, # ode model to use 
-            lb_param, # lower bound param
-            ub_param; # upper bound param
-            param=lb_param .+ (ub_param .- lb_param) ./ 2,# initial guess param
-            optmizer=optmizer, # selection of optimization method 
+            param; # upper bound param
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # numebr of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
@@ -460,11 +458,14 @@ function fit_file_ODE(
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
             method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
-            PopulationSize=PopulationSize,
-            maxiters=maxiters,
-            abstol=abstol,
             thr_lowess=thr_lowess,
             type_of_smoothing=type_of_smoothing,
+            multistart=multistart,
+            n_restart=n_restart,
+            optmizer=optmizer,
+            auto_diff_method=auto_diff_method,
+            cons=cons,
+            opt_params...
         )
 
 
@@ -487,7 +488,7 @@ function fit_file_ODE(
 
 
     end
-    Kimchi_res_one_file = ("ODE",parameter_of_optimization)
+    Kimchi_res_one_file = ("ODE", parameter_of_optimization)
 
 
     return Kimchi_res_one_file
@@ -583,11 +584,9 @@ function fit_file_custom_ODE(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
     model::Any, # string of the used model
-    lb_param::Vector{Float64},# array of the array of the lower bound of the parameters
-    ub_param::Vector{Float64}, # array of the array of the upper bound of the parameters
+    param::Vector{Float64},# array of the array of the lower bound of the parameters
     n_equation::Int;
     path_to_annotation::Any=missing,# path to the annotation of the wells
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
     loss_type="RE", # string of the type of the used loss
@@ -604,12 +603,15 @@ function fit_file_custom_ODE(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
     blank_value=0.0,
     blank_array=[0.0],
+    multistart=false,
+    n_restart=50,
+    optmizer=NLopt.LN_BOBYQA(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
 )
 
 
@@ -704,10 +706,8 @@ function fit_file_custom_ODE(
             string(well_name), # name of the well
             label_exp, #label of the experiment
             model, # ode model to use 
-            lb_param, # lower bound param
-            ub_param, # upper bound param
+            param, # lower bound param
             n_equation; # number ode in the system
-            optmizer=optmizer, # selection of optimization method 
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
@@ -717,11 +717,14 @@ function fit_file_custom_ODE(
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
             method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
-            PopulationSize=PopulationSize,
-            maxiters=maxiters,
-            abstol=abstol,
-            thr_lowess=thr_lowess,
             type_of_smoothing=type_of_smoothing,
+            thr_lowess=0.05,
+            multistart=multistart,
+            n_restart=n_restart,
+            optmizer=optmizer,
+            auto_diff_method=auto_diff_method,
+            cons=cons,
+            opt_params...
         )
 
         well_results = reduce(vcat, temp_results_1[2])
@@ -745,8 +748,8 @@ function fit_file_custom_ODE(
 
 
     end
-    
-    Kimchi_res_one_file = ("ODE",parameter_of_optimization)
+
+    Kimchi_res_one_file = ("ODE", parameter_of_optimization)
 
 
     return Kimchi_res_one_file
@@ -843,10 +846,10 @@ function ODE_model_selection_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
     models_list::Vector{String}, # ode model to use 
-    lb_param_array::Any, # lower bound param
-    ub_param_array::Any; # upper bound param
+    param_array::Any;
+    lb_param_array::Any=nothing, # lower bound param
+    ub_param_array::Any=nothing, # upper bound param
     path_to_annotation::Any=missing,# path to the annotation of the wells
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
     loss_type="L2", # string of the type of the used loss
@@ -864,13 +867,16 @@ function ODE_model_selection_file(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
     correction_AIC=true,
     blank_value=0.0,
     blank_array=[0.0],
+    multistart=false,
+    n_restart=50,
+    optmizer=NLopt.LN_BOBYQA(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
 )
 
 
@@ -878,7 +884,7 @@ function ODE_model_selection_file(
         mkpath(path_to_results)
     end
 
-    parameter_of_optimization = initialize_res_ms(ub_param_array)
+    parameter_of_optimization = initialize_res_ms(param_array)
 
 
 
@@ -969,9 +975,9 @@ function ODE_model_selection_file(
             string(well_name), # name of the well
             label_exp, #label of the experiment
             models_list, # ode model to use 
-            lb_param_array, # lower bound param
-            ub_param_array; # upper bound param
-            optmizer=optmizer, # selection of optimization method 
+            param_array;
+            lb_param_array=lb_param_array, # lower bound param
+            ub_param_array=ub_param_array, # upper bound param
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
             beta_penality=beta_penality, # penality for AIC evaluation
@@ -985,15 +991,18 @@ function ODE_model_selection_file(
             method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
             verbose=verbose,
-            PopulationSize=PopulationSize,
-            maxiters=maxiters,
-            abstol=abstol,
-            correction_AIC=correction_AIC
+            correction_AIC=correction_AIC,
+            multistart=multistart,
+            n_restart=n_restart,
+            optmizer=optmizer,
+            auto_diff_method=auto_diff_method,
+            cons=cons,
+            opt_params...
         )
 
         vectorized_temp_results = expand_res(
             temp_results_1[end],
-            lb_param_array,
+            param_array,
             string(well_name),
             label_exp
         )
@@ -1016,9 +1025,9 @@ function ODE_model_selection_file(
 
 
     end
-    
 
-    Kimchi_res_one_file = ("ODE_model_selection",parameter_of_optimization)
+
+    Kimchi_res_one_file = ("ODE_model_selection", parameter_of_optimization)
 
     return Kimchi_res_one_file
 
@@ -1139,13 +1148,13 @@ function segmentation_ODE_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
     list_of_models::Vector{String}, # ode model to use 
-    lb_param_array::Any, # lower bound param
-    ub_param_array::Any,# upper bound param
+    param_array::Any, #  param
     n_max_change_points::Int;
+    lb_param_array::Any=nothing, # lower bound param
+    ub_param_array::Any=nothing, # upper bound param
     path_to_annotation::Any=missing,# path to the annotation of the wells
     detect_number_cpd=true,
     fixed_cpd=false,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
     integrator=Tsit5(), # selection of sciml integrator
     type_of_loss="L2", # type of used loss 
     type_of_detection="sliding_win",
@@ -1167,15 +1176,18 @@ function segmentation_ODE_file(
     save_all_model=false,
     method_peaks_detection="peaks_prominence",
     n_bins=40,
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     verbose=false,
     correction_AIC=true,
     blank_value=0.0,
     blank_array=[0.0],
+    optmizer=NLopt.LN_BOBYQA(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
 )
 
 
@@ -1185,7 +1197,7 @@ function segmentation_ODE_file(
         mkpath(path_to_results)
     end
 
-    parameter_of_optimization = initialize_res_ms(ub_param_array, number_of_segment=n_max_change_points + 1)
+    parameter_of_optimization = initialize_res_ms(param, number_of_segment=n_max_change_points + 1)
 
 
     names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
@@ -1269,12 +1281,12 @@ function segmentation_ODE_file(
             string(well_name), # name of the well
             label_exp, #label of the experiment
             list_of_models, # ode model to use
-            lb_param_array, # lower bound param
-            ub_param_array, # upper bound param
+            param_array,
             n_max_change_points;
+            lb_param_array=lb_param_array, # lower bound param
+            ub_param_array=ub_param_array, # upper bound param
             detect_number_cpd=detect_number_cpd,
             fixed_cpd=fixed_cpd,
-            optmizer=optmizer, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
             type_of_loss=type_of_loss, # type of used loss
             type_of_detection=type_of_detection,
@@ -1291,18 +1303,21 @@ function segmentation_ODE_file(
             save_all_model=save_all_model,
             method_peaks_detection=method_peaks_detection,
             n_bins=n_bins,
-            PopulationSize=PopulationSize,
-            maxiters=maxiters,
-            abstol=abstol,
             type_of_smoothing=type_of_smoothing,
             thr_lowess=thr_lowess,
             correction_AIC=correction_AIC,
+            optmizer=optmizer,
+            multistart=multistart,
+            n_restart=n_restart,
+            auto_diff_method=auto_diff_method,
+            cons=cons,
+            opt_params...
         )
         vector_AIC = hcat(vector_AIC, temp_results_1[end])
 
         vectorized_temp_results = expand_res_seg(
             temp_results_1[2],
-            lb_param_array,
+            param_array,
             string(well_name),
             label_exp;
             number_of_segment=length(temp_results_1[2])
@@ -1333,7 +1348,7 @@ function segmentation_ODE_file(
 
     end
 
-    Kimchi_res_segmentation_ODE_file = ("ODE_segmentation",parameter_of_optimization,vector_AIC)
+    Kimchi_res_segmentation_ODE_file = ("ODE_segmentation", parameter_of_optimization, vector_AIC)
 
 
     return Kimchi_res_segmentation_ODE_file
@@ -1457,7 +1472,7 @@ function segment_gr_analysis_file(
             method=correct_negative,
             thr_negative=thr_negative,)
 
-            
+
         data = Matrix(transpose(hcat(data[1, :], data[2, :])))
 
         # inference
@@ -1499,7 +1514,7 @@ function segment_gr_analysis_file(
     end
 
 
-    Kimchi_res_one_file = ("segment_analysis",results)
+    Kimchi_res_one_file = ("segment_analysis", results)
 
 
     return Kimchi_res_one_file

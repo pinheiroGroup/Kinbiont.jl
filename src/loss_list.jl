@@ -226,4 +226,4 @@ export loss_L2_log
 export loss_RE
 export loss_RE_log
 export loss_L2_std_blank
-export select_loss_export
+export select_loss_function
