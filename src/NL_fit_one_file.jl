@@ -990,7 +990,7 @@ function fit_NL_segmentation_file(
 
         results_to_bind = expand_res(
             temp_results_1[2],
-            list_lb_param,
+            list_u0,
             string(well_name),
             label_exp;
             number_of_segment=length(temp_results_1[2]))

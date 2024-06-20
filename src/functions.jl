@@ -840,3 +840,4 @@ export expand_res
 export expand_res_seg
 export KimchiSolve
 export generating_IC
+export KimchiSolve_NL
