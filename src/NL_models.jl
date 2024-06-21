@@ -30,14 +30,14 @@ end
 
 function NL_model_logistic(p, times)
 
-    u = p[1] ./ (1 .+ ( (p1[1]./p[2]) .-1 ) exp.(.-p[3] .*times ))
+    u = p[1] ./ (1 .+ ( (p1[1]./p[2]) .-1 ) .* exp.( .- p[3] .* times ) )
 
     return u
 
 end
 
 
-function guess_NL_logistic(data)
+function guess_NL_model_logistic(data)
 
     param_guess = [maximum(data[2,:])[1] ,
                   data[2,1],
@@ -58,7 +58,7 @@ function NL_model_Gompertz(p, times)
 end
 
 
-function guess_NL_Gompertz(data)
+function guess_NL_model_Gompertz(data)
 
     param_guess = [maximum(data[2,:])[1] ,
                  maximum(deriv_evaluation(data))[1] ,
@@ -77,7 +77,7 @@ function NL_model_Bertalanffy(p, times)
 end
 
 
-function guess_NL_Bertalanffy(data)
+function guess_NL_model_Bertalanffy(data)
 
     param_guess = [data[2,1],
                     maximum(data[2,:])[1],
@@ -124,7 +124,7 @@ function NL_model_Morgan(p, times)
 
 end
 
-function NL_model_Morgan(data)
+function  guess_NL_model_Morgan(data)
 
     param_guess = [maximum(data[2,:])[1],
                     1.0,
@@ -149,7 +149,7 @@ function NL_model_Weibull(p, times)
     return u
 
 end
-function NL_model_Weibull(data)
+function guess_NL_model_Weibull(data)
 
     param_guess = [maximum(data[2,:])[1],
                     data[2,1],
