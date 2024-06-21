@@ -1162,7 +1162,7 @@ function segmentation_ODE_file(
     do_blank_subtraction="avg_blank",
     correct_negative="remove",
     thr_negative=0.01,
-    pt_avg=1, # number of the point to generate intial condition
+    pt_avg=3, # number of the point to generate intial condition
     smoothing=true, # the smoothing is done or not?
     path_to_results="NA",
     win_size=7, # numebr of the point to generate intial condition
@@ -1197,7 +1197,7 @@ function segmentation_ODE_file(
         mkpath(path_to_results)
     end
 
-    parameter_of_optimization = initialize_res_ms(param, number_of_segment=n_max_change_points + 1)
+    parameter_of_optimization = initialize_res_ms(param_array, number_of_segment=n_max_change_points + 1)
 
 
     names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)

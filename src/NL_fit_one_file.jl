@@ -810,8 +810,8 @@ function fit_NL_segmentation_file(
     list_model_function::Any, # ode model to use
     list_u0,# initial guess param
     n_change_points::Int;
-    list_lb_param::Vector{Vector{Float64}}=nothing, # lower bound param
-    list_ub_param::Vector{Vector{Float64}}=nothing, # upper bound param
+    lb_param_array::Vector{Vector{Float64}}=nothing, # lower bound param
+    ub_param_array::Vector{Vector{Float64}}=nothing, # upper bound param
     path_to_annotation::Any = missing,# path to the annotation of the wells
     method_of_fitting="NA",
     nrep=100,
@@ -856,7 +856,7 @@ function fit_NL_segmentation_file(
         mkpath(path_to_results)
     end
 
-    parameter_of_optimization = initialize_res_ms(list_ub_param, number_of_segment=n_change_points)
+    parameter_of_optimization = initialize_res_ms(list_u0, number_of_segment=n_change_points)
     names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
 
