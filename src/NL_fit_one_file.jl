@@ -1,3 +1,4 @@
+using OptimizationMultistartOptimization
 
 """
     fit_NL_model_file(
@@ -11,7 +12,7 @@
     method_of_fitting="MCMC",
     nrep=100,
     errors_estimation=false,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     path_to_results="NA", 
     loss_type="RE", 
     smoothing=false,
@@ -49,7 +50,7 @@ This function performs NL model selection of one NL model for a full csv file
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optimizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -108,7 +109,7 @@ function fit_NL_model_file(
     size_bootstrap=0.7,
     blank_value = 0.0,
     blank_array = [0.0],
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -229,7 +230,7 @@ function fit_NL_model_file(
                 lb_param=lb_param, # lower bound param
                 ub_param=ub_param, # upper bound param
                 nrep=nrep,
-                optmizer=optmizer,
+                optimizer=optimizer,
                 size_bootstrap=size_bootstrap,
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
@@ -281,7 +282,7 @@ function fit_NL_model_file(
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 nrep=nrep,
-                optmizer=optmizer,
+                optimizer=optimizer,
                 pt_avg=pt_avg, # number of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -315,7 +316,7 @@ function fit_NL_model_file(
             lb_param=temp_param_lb, # lower bound param
             ub_param=temp_param_ub, # upper bound param
             nrep=nrep,
-            optmizer=optmizer,
+            optimizer=optimizer,
             size_bootstrap=size_bootstrap,
             pt_avg=pt_avg, # number of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
@@ -367,7 +368,7 @@ function fit_NL_model_file(
                 blank_array; # upper bound param
                 nrep=nrep,
                 u0=best_param,# initial guess param
-                optmizer=optmizer,
+                optimizer=optimizer,
                 pt_avg=pt_avg, # numebr of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -450,7 +451,7 @@ end
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     path_to_results="NA", 
     loss_type="RE",
     smoothing=false, 
@@ -492,7 +493,7 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optimizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -551,7 +552,7 @@ function fit_NL_model_selection_file(
     correction_AIC=true,
     blank_value = 0.0,
     blank_array = [0.0],
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -667,12 +668,12 @@ function fit_NL_model_selection_file(
             beta_param=beta_param,
             penality_CI=penality_CI,
             correction_AIC=correction_AIC,
-            optmizer=optmizer,
+            optimizer=optimizer,
             auto_diff_method=auto_diff_method,
             multistart=multistart,
             n_restart=n_restart,
             cons=cons,
-            opt_params...)
+            opt_params)
 
 
 
@@ -723,7 +724,7 @@ end
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     path_to_results="NA",
     loss_type="RE", 
     smoothing=false, 
@@ -771,7 +772,7 @@ This function performs NL model selection  on a segmented time series, it uses A
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optimizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -842,7 +843,7 @@ function fit_NL_segmentation_file(
     correction_AIC=true,
     blank_value = 0.0,
     blank_array = [0.0],
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     multistart=false,
     n_restart=50,
@@ -968,7 +969,7 @@ function fit_NL_segmentation_file(
             penality_CI=penality_CI,
             size_bootstrap=size_bootstrap,
             correction_AIC=correction_AIC,
-            optmizer=optmizer,
+            optimizer=optimizer,
             multistart=multistart,
             n_restart=n_restart,
             auto_diff_method=auto_diff_method,

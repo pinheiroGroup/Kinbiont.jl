@@ -248,7 +248,7 @@ end
     lb_param::Vector{Float64},
     ub_param::Vector{Float64};
     path_to_annotation::Any = missing,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(),
     path_to_results="NA",
     loss_type="RE", 
@@ -283,7 +283,7 @@ This function fits a ODE model to a csv file. The function assumes that the firs
 # Key Arguments:
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -341,7 +341,7 @@ function fit_file_ODE(
     blank_array=[0.0],
     multistart=false,
     n_restart=50,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -462,7 +462,7 @@ function fit_file_ODE(
             type_of_smoothing=type_of_smoothing,
             multistart=multistart,
             n_restart=n_restart,
-            optmizer=optmizer,
+            optimizer=optimizer,
             auto_diff_method=auto_diff_method,
             cons=cons,
             opt_params...
@@ -508,7 +508,7 @@ end
     ub_param::Vector{Float64},
     n_equation::Int;
     path_to_annotation::Any = missing,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(),
     path_to_results="NA",
     loss_type="RE",
@@ -548,7 +548,7 @@ This function is designed for fitting an ordinary differential equation (ODE) mo
 
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -608,7 +608,7 @@ function fit_file_custom_ODE(
     blank_array=[0.0],
     multistart=false,
     n_restart=50,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -721,7 +721,7 @@ function fit_file_custom_ODE(
             thr_lowess=0.05,
             multistart=multistart,
             n_restart=n_restart,
-            optmizer=optmizer,
+            optimizer=optimizer,
             auto_diff_method=auto_diff_method,
             cons=cons,
             opt_params...
@@ -768,7 +768,7 @@ end
     lb_param_array::Any, 
     ub_param_array::Any; 
     path_to_annotation::Any = missing,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     path_to_results="NA",
     loss_type="L2", 
@@ -809,7 +809,7 @@ This function performs model selection  of ODE for a full csv file.
 # Key Arguments:
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -873,7 +873,7 @@ function ODE_model_selection_file(
     blank_array=[0.0],
     multistart=false,
     n_restart=50,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -994,7 +994,7 @@ function ODE_model_selection_file(
             correction_AIC=correction_AIC,
             multistart=multistart,
             n_restart=n_restart,
-            optmizer=optmizer,
+            optimizer=optimizer,
             auto_diff_method=auto_diff_method,
             cons=cons,
             opt_params...
@@ -1050,7 +1050,7 @@ end
     path_to_annotation::Any = missing,
     detect_number_cpd=true,
     fixed_cpd=false,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     type_of_loss="L2", 
     type_of_detection="sliding_win",
@@ -1099,7 +1099,7 @@ This function performs model selection for ordinary differential equation (ODE) 
 # Key Arguments:
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optmizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -1182,7 +1182,7 @@ function segmentation_ODE_file(
     correction_AIC=true,
     blank_value=0.0,
     blank_array=[0.0],
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -1306,7 +1306,7 @@ function segmentation_ODE_file(
             type_of_smoothing=type_of_smoothing,
             thr_lowess=thr_lowess,
             correction_AIC=correction_AIC,
-            optmizer=optmizer,
+            optimizer=optimizer,
             multistart=multistart,
             n_restart=n_restart,
             auto_diff_method=auto_diff_method,

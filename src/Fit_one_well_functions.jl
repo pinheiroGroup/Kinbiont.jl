@@ -262,7 +262,7 @@ end
     lb_param::Vector{Float64},
     ub_param::Vector{Float64},
     param=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     pt_avg=1, 
     pt_smooth_derivative=7,
@@ -294,7 +294,7 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
@@ -342,7 +342,7 @@ function fitting_one_well_ODE_constrained(
     thr_lowess=0.05,
     multistart=false,
     n_restart=50,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -383,7 +383,7 @@ function fitting_one_well_ODE_constrained(
     res = KimchiSolve(loss_function,
         u0,
         param;
-        opt=optmizer,
+        opt=optimizer,
         auto_diff_method=auto_diff_method,
         multistart=multistart,
         n_restart=n_restart,
@@ -429,7 +429,7 @@ end
     ub_param::Vector{Float64},
     n_equation::Int,
     param=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     pt_avg=1, 
     pt_smooth_derivative=0,
@@ -462,7 +462,7 @@ This function is designed to fit a user-defined ordinary differential equation (
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
@@ -506,7 +506,7 @@ function fitting_one_well_custom_ODE(
     type_of_smoothing="lowess",
     multistart=false,
     n_restart=50,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -544,7 +544,7 @@ function fitting_one_well_custom_ODE(
     res = KimchiSolve(loss_function,
         u0,
         param;
-        opt=optmizer,
+        opt=optimizer,
         auto_diff_method=auto_diff_method,
         multistart=multistart,
         n_restart=n_restart,
@@ -589,7 +589,7 @@ end
     models_list::Vector{String}, 
     lb_param_array::Any, 
     ub_param_array::Any,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     pt_avg=1,
     beta_penality=2.0,
@@ -623,7 +623,7 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of the specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -676,12 +676,12 @@ function ODE_Model_selection(
     correction_AIC=true,
     multistart=false,
     n_restart=50,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
 )
-
+    opt_param_temp = copy(opt_params)
 
     if multiple_scattering_correction == true
 
@@ -746,7 +746,7 @@ function ODE_Model_selection(
             temp_param_lb = lb_param_array[mm]
             temp_param_ub = ub_param_array[mm]
 
-            opt_params = (opt_params...,
+            opt_param_temp = (opt_params...,
                 lb=temp_param_lb,
                 ub=temp_param_ub,
                 )
@@ -754,19 +754,19 @@ function ODE_Model_selection(
             res = KimchiSolve(loss_function,
                 u0,
                 temp_start_param;
-                opt=optmizer,
+                opt=optimizer,
                 auto_diff_method=auto_diff_method,
                 multistart=multistart,
                 n_restart=n_restart,
                 cons=cons,
-                opt_params...)
+                opt_param_temp...)
 
         else
 
             res = KimchiSolve(loss_function,
                 u0,
                 temp_start_param;
-                opt=optmizer,
+                opt=optimizer,
                 auto_diff_method=auto_diff_method,
                 multistart=multistart,
                 n_restart=n_restart,
@@ -878,7 +878,7 @@ end
     lb_param::Vector{Float64}, 
     ub_param::Vector{Float64},
     N_step_morris=7,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(),
     pt_avg=1, 
     pt_smooth_derivative=7,
@@ -912,7 +912,7 @@ This function performs the Morris sensitivity analysis, which assesses the sensi
 - `N_step_morris=7`: Number of steps for the Morris sensitivity analysis.
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -957,7 +957,7 @@ function one_well_morris_sensitivity(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     cons=nothing,
     thr_lowess = 0.05,
@@ -1015,7 +1015,7 @@ function one_well_morris_sensitivity(
         res = KimchiSolve(loss_function,
             u0,
             param;
-            opt=optmizer,
+            opt=optimizer,
             auto_diff_method=auto_diff_method,
             multistart=multistart,
             n_restart=n_restart,
@@ -1078,7 +1078,7 @@ end
     list_ub_param::Any, 
     intervals_changepoints::Any;
     type_of_loss="L2", 
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     smoothing=false,
     type_of_smoothing="lowess",
@@ -1113,7 +1113,7 @@ This function fits an ODE model at each segment of the time-series data. Change 
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
@@ -1159,7 +1159,7 @@ function selection_ODE_fixed_intervals(
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     beta_smoothing_ms=2.0, #  parameter of the AIC penality
     correction_AIC=true,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -1212,7 +1212,7 @@ function selection_ODE_fixed_intervals(
             param_array;
             ub_param_array=ub_param_array, # lower bound param
             lb_param_array=lb_param_array, # upper bound param
-            optmizer=optmizer, # selection of optimization method
+            optimizer=optimizer, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
             beta_penality=beta_smoothing_ms, # penality for AIC evaluation
@@ -1322,7 +1322,7 @@ end
     n_max_change_points::Int;
     detect_number_cpd=true,
     fixed_cpd=false,
-    optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     integrator=Tsit5(),
     type_of_loss="L2",
     type_of_detection="slinding_win",
@@ -1363,7 +1363,7 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 # Key Arguments:
 
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
-- `optmizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
+- `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -1430,7 +1430,7 @@ function segmentation_ODE(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     correction_AIC=true,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -1452,7 +1452,7 @@ function segmentation_ODE(
             param_array;
             lb_param_array=lb_param_array, # lower bound param
             ub_param_array=ub_param_array, # upper bound param
-            optmizer=optmizer, # selection of optimization method
+            optimizer=optimizer, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
             beta_penality=penality_parameter, # penality for AIC evaluation
@@ -1595,7 +1595,7 @@ function segmentation_ODE(
                 ub_param_array=ub_param_array, # upper bound param
                 lb_param_array=lb_param_array, # lower bound param
                 type_of_loss=type_of_loss, # type of used loss
-                optmizer=optmizer, # selection of optimization method
+                optimizer=optimizer, # selection of optimization method
                 integrator=integrator, # selection of sciml integrator
                 smoothing=smoothing,
                 pt_avg=pt_avg,

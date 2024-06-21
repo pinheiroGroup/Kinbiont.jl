@@ -10,7 +10,7 @@
     lb_param::Vector{Float64}, 
     ub_param::Vector{Float64}, 
     u0=lb_param .+ (ub_param .- lb_param)./ 2,
-    optmizer=  NLopt.LN_BOBYQA(),    
+    optimizer=  NLopt.LN_BOBYQA(),    
     pt_avg=1, 
     pt_smooth_derivative=7,
     smoothing=false, 
@@ -41,7 +41,7 @@ This function fits a nonlinear function to the time series input data of a singl
 # Key Arguments:
 
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
-- `optmizer=  NLopt.LN_BOBYQA()`: Optimizer from optimizationBBO.
+- `optimizer=  NLopt.LN_BOBYQA()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
@@ -82,7 +82,7 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     thr_lowess=0.05,
     penality_CI=3.0,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -128,7 +128,7 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     sol = KimchiSolve_NL(loss_function,
         u0,
         data;
-        opt = optmizer,
+        opt = optimizer,
         auto_diff_method=auto_diff_method,
         multistart = multistart,
         n_restart=n_restart,
@@ -181,7 +181,7 @@ end
     ub_param::Vector{Float64};
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizer=  NLopt.LN_BOBYQA(),
+    optimizer=  NLopt.LN_BOBYQA(),
     pt_avg=1, 
     pt_smooth_derivative=7,
     smoothing=false, 
@@ -214,7 +214,7 @@ This function performs the Morris sensitivity analysis for the non-linear fit op
 # Key Arguments:
 - `nrep=100`.  Number of steps for the Morris sensitivity analysis.
 - `param=lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}. Initial guess for the model parameters.
-- `optmizer=  NLopt.LN_BOBYQA()`: Optimizer from optimizationBBO.
+- `optimizer=  NLopt.LN_BOBYQA()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
@@ -262,7 +262,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
     thr_lowess=0.05,
     write_res=false,
     penality_CI=3.0,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -323,7 +323,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
         sol = KimchiSolve_NL(loss_function,
             u0,
             data;
-            opt = optmizer,
+            opt = optimizer,
             auto_diff_method=auto_diff_method,
             cons=cons,
             opt_params...)
@@ -392,7 +392,7 @@ fit_NL_model_bootstrap(
     ub_param::Vector{Float64};
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optmizer=  NLopt.LN_BOBYQA(),
+    optimizer=  NLopt.LN_BOBYQA(),
     pt_avg=1, 
     size_bootstrap=0.7,
     pt_smooth_derivative=7,
@@ -423,7 +423,7 @@ This function performs NL fitting. It perform nrep iterations of Bootstrap to ev
 -  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizer =     NLopt.LN_BOBYQA()` optimizer from optimizationBBO.
+- `optimizer =     NLopt.LN_BOBYQA()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -470,7 +470,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     write_res=false,
     penality_CI=3.0,
     path_to_results="NA",
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -539,7 +539,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
         sol = KimchiSolve_NL(loss_function,
             u0,
             data_to_fit;
-           opt =  optmizer,
+           opt =  optimizer,
             auto_diff_method=auto_diff_method,
             cons=cons,
             opt_params...)
@@ -611,7 +611,7 @@ end
     blank_array::Vector{Float64}; 
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-optmizer=  NLopt.LN_BOBYQA(),    pt_avg=1, 
+optimizer=  NLopt.LN_BOBYQA(),    pt_avg=1, 
     pt_smooth_derivative=7,
     smoothing=false,
     type_of_smoothing="rolling_avg",
@@ -641,7 +641,7 @@ This function performs NL fitting. It perform nrep iterations to estimate the po
 # Key Arguments:
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizer =     NLopt.LN_BOBYQA()` optimizer from optimizationBBO.
+- `optimizer =     NLopt.LN_BOBYQA()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -687,7 +687,7 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
     thr_lowess=0.05,
     write_res=false,
     penality_CI=3.0,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -755,7 +755,7 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
         sol = KimchiSolve_NL(loss_function,
             u0,
             data;
-           opt = optmizer,
+           opt = optimizer,
             auto_diff_method=auto_diff_method,
             multistart=multistart,
             n_restart=n_restart,
@@ -835,7 +835,7 @@ end
     method_of_fitting="MCMC",
     nrep=100,
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,
-optmizer=  NLopt.LN_BOBYQA(),    size_bootstrap=0.7,
+optimizer=  NLopt.LN_BOBYQA(),    size_bootstrap=0.7,
     pt_avg=1,
     pt_smooth_derivative=7,
     smoothing=false, 
@@ -869,7 +869,7 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizer =     NLopt.LN_BOBYQA()` optimizer from optimizationBBO.
+- `optimizer =     NLopt.LN_BOBYQA()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -920,7 +920,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     beta_param=2.0,
     penality_CI=8.0,
     correction_AIC=false,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     auto_diff_method=nothing,
     multistart=false,
     n_restart=50,
@@ -932,6 +932,8 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     top_model = Vector{Any}
     top_fitted_sol = Vector{Any}
     top_loss = 10^20
+    opt_param_temp = copy(opt_params)
+
     for mm in 1:eachindex(list_model_function)[end]
 
         model_to_test = list_model_function[mm]
@@ -940,7 +942,8 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
             temp_param_lb = lb_param_array[mm]
             temp_param_ub = ub_param_array[mm]
 
-            opt_params = (opt_params...,
+
+            opt_param_temp = (opt_params...,
                 lb=temp_param_lb,
                 ub=temp_param_ub,
                 )
@@ -960,7 +963,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 lb_param=temp_param_lb, # lower bound param
                 ub_param=temp_param_ub, # upper bound param
                 nrep=nrep,
-                optmizer=optmizer,
+                optimizer=optimizer,
                 size_bootstrap=size_bootstrap,
                 pt_avg=pt_avg, # number of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
@@ -977,7 +980,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 multistart=multistart,
                 n_restart=n_restart,
                 cons=cons,
-                 opt_params...
+                opt_param_temp...
             )
 
             n_param = length(u0)
@@ -1011,7 +1014,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 temp_param_lb, # lower bound param
                 temp_param_ub; # upper bound param
                 nrep=nrep,
-                optmizer=optmizer,
+                optimizer=optimizer,
                 pt_avg=pt_avg, # number of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -1027,7 +1030,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 multistart=multistart,
                 n_restart=n_restart,
                 cons=cons,
-                opt_params...
+                opt_param_temp...
             )
 
             n_param = length(temp_param_lb)
@@ -1063,7 +1066,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 label_exp, #label of the experiment
                 model_to_test, # ode model to use
                 u0;
-                optmizer=optmizer,
+                optimizer=optimizer,
                 pt_avg=pt_avg, # number of the point to generate intial condition
                 pt_smooth_derivative=pt_smooth_derivative,
                 smoothing=smoothing, # the smoothing is done or not?
@@ -1078,7 +1081,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
                 multistart=multistart,
                 n_restart=n_restart,
                 cons=cons,
-                opt_params...
+                opt_param_temp...
             )
 
 
@@ -1125,7 +1128,7 @@ end
     intervals_changepoints::Any;
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,
     type_of_loss="L2", 
-    optmizer=  NLopt.LN_BOBYQA(), 
+    optimizer=  NLopt.LN_BOBYQA(), 
     method_of_fitting="MCMC",
     smoothing=false,
     size_bootstrap=0.7,
@@ -1163,7 +1166,7 @@ end
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizer =     NLopt.LN_BOBYQA()` optimizer from optimizationBBO.
+- `optimizer =     NLopt.LN_BOBYQA()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -1215,7 +1218,7 @@ function selection_NL_fixed_interval(
     beta_smoothing_ms=2.0, #  parameter of the AIC penality
     penality_CI=8.0,
     correction_AIC=true,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -1311,7 +1314,7 @@ function selection_NL_fixed_interval(
             beta_param=beta_smoothing_ms,
             penality_CI=penality_CI,
             correction_AIC=correction_AIC,
-            optmizer=optmizer,
+            optimizer=optimizer,
             auto_diff_method=auto_diff_method,
             multistart=multistart,
             n_restart=n_restart,
@@ -1365,7 +1368,7 @@ end
     n_change_points::Int;
     list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,
     type_of_loss="L2_fixed_CI", 
-optmizer=  NLopt.LN_BOBYQA(),    method_of_fitting="MCMC", 
+optimizer=  NLopt.LN_BOBYQA(),    method_of_fitting="MCMC", 
     type_of_detection="sliding_win",
     type_of_curve="original",
     smoothing=false,
@@ -1408,7 +1411,7 @@ This function performs model selection for NL models while segmenting the time s
 - `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
 - `nrep=100`. Number of MCMC steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `optmizer =     NLopt.LN_BOBYQA()` optimizer from optimizationBBO.
+- `optimizer =     NLopt.LN_BOBYQA()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
@@ -1466,7 +1469,7 @@ function selection_NL_max_change_points(
     penality_CI=8.0,
     size_bootstrap=0.7,
     correction_AIC=true,
-    optmizer=NLopt.LN_BOBYQA(),
+    optimizer=NLopt.LN_BOBYQA(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -1564,7 +1567,7 @@ function selection_NL_max_change_points(
             lb_param_array =lb_param_array, # lower bound param
             ub_param_array =ub_param_array, # upper bound param
             type_of_loss=type_of_loss, # type of used loss
-            optmizer=optmizer, # selection of optimization method
+            optimizer=optimizer, # selection of optimization method
             method_of_fitting=method_of_fitting, # selection of sciml integrator
             smoothing=smoothing,
             type_of_smoothing=type_of_smoothing,

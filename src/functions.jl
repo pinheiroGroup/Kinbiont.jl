@@ -3,6 +3,8 @@ using Missings
 using Statistics
 using Interpolations
 using DataFrames
+using OptimizationMultistartOptimization
+using SciMLBase
 #######################################################################
 
 include("ODE_models.jl");
@@ -792,36 +794,36 @@ function KimchiSolve_NL(loss_function,
 
     if isnothing(auto_diff_method) == true && isnothing(cons) == true
 
-        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x))
+        optf = Optimization.OptimizationFunction( loss_function)
 
     elseif isnothing(auto_diff_method) == false && isnothing(cons) == true
 
-        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), auto_diff_method)
+        optf = Optimization.OptimizationFunction( loss_function, auto_diff_method)
 
 
     elseif isnothing(auto_diff_method) == true && isnothing(cons) == false
 
-        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), cons=cons)
+        optf = Optimization.OptimizationFunction(loss_function, cons=cons)
 
 
     else
         isnothing(auto_diff_method) == false && isnothing(cons) == false
 
 
-        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), auto_diff_method, cons=cons)
+        optf = Optimization.OptimizationFunction(loss_function, auto_diff_method, cons=cons)
 
 
     end
 
 
-    prob = OptimizationProblem(optf, u0, data; opt_params...)
-
 
     if multistart == true
+        prob = OptimizationProblem(optf, u0 ; opt_params...)
 
         sol = solve(prob, MultistartOptimization.TikTak(n_restart), opt)
         
     else
+        prob = OptimizationProblem(optf, u0; opt_params...)
 
         sol = solve(prob, opt)
 
