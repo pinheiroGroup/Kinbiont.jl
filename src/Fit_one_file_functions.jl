@@ -774,7 +774,7 @@ end
     loss_type="L2", 
     smoothing=false,
     type_of_smoothing="lowess",
-    beta_penality=2.0, 
+    beta_smoothing_ms=2.0, 
     verbose=false,
     write_res=false,
     pt_avg=1,
@@ -835,7 +835,7 @@ This function performs model selection  of ODE for a full csv file.
 -  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 
 # Output:
 
@@ -855,7 +855,7 @@ function ODE_model_selection_file(
     loss_type="L2", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
     type_of_smoothing="lowess",
-    beta_penality=2.0, # penality for AIC evaluation
+    beta_smoothing_ms=2.0, # penality for AIC evaluation
     verbose=false, # 1 true verbose
     write_res=false, # write results
     pt_avg=1, # number of points to do smoothing average
@@ -980,7 +980,7 @@ function ODE_model_selection_file(
             ub_param_array=ub_param_array, # upper bound param
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
-            beta_penality=beta_penality, # penality for AIC evaluation
+            beta_smoothing_ms=beta_smoothing_ms, # penality for AIC evaluation
             smoothing=smoothing, # the smoothing is done or not?
             type_of_smoothing=type_of_smoothing,
             thr_lowess=thr_lowess,
@@ -1063,7 +1063,7 @@ end
     path_to_results="NA",
     win_size=7,
     pt_smooth_derivative=0,
-    penality_parameter=2.0,
+    beta_smoothing_ms=2.0,
     avg_replicate=false,
     multiple_scattering_correction="false",
     method_multiple_scattering_correction="interpolation",
@@ -1125,7 +1125,7 @@ This function performs model selection for ordinary differential equation (ODE) 
 -  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 - 'type_of_detection="slinding_win"': String, algorithm of cpd to use. Options '"slinding_win"' use a slinding window approach, '"lsdd"' uses least square density difference (LSDD) from ChangePointDetection.jl 
 - 'type_of_curve="original"': String, on which curve is performed the change point detection algorithm. If '"original"' it use the original time series. With '"deriv"' it use the specific growth rate time series to perform the cdp.
 - `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
@@ -1136,7 +1136,7 @@ This function performs model selection for ordinary differential equation (ODE) 
 -  'path_to_results="NA"':String, where to save the results.
 -  'save_all_model=false': Bool, if true all the tested model are saved.
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 
 
 
@@ -1167,7 +1167,7 @@ function segmentation_ODE_file(
     path_to_results="NA",
     win_size=7, # numebr of the point to generate intial condition
     pt_smooth_derivative=0,
-    penality_parameter=2.0,
+    beta_smoothing_ms=2.0,
     avg_replicate=false,
     multiple_scattering_correction="false", # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
@@ -1296,7 +1296,7 @@ function segmentation_ODE_file(
             path_to_results=path_to_results,
             win_size=win_size, # numebr of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
-            penality_parameter=penality_parameter,
+            beta_smoothing_ms=beta_smoothing_ms,
             multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
             method_multiple_scattering_correction=method_multiple_scattering_correction,
             calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data

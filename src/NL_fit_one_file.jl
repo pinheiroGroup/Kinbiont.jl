@@ -66,7 +66,7 @@ This function performs NL model selection of one NL model for a full csv file
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 -  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run. Used only if method is "Bootstrap"
 - `write_res=false`: Bool, write the results in path_to_results folder.
 - `path_to_results= "NA"`:String, path to the folder where save the results.
@@ -468,7 +468,7 @@ end
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", 
     thr_lowess=0.05,
-    beta_param=2.0,
+    beta_smoothing_ms=2.0,
     penality_CI=8.0,
     size_bootstrap=0.7,
     correction_AIC=true,
@@ -505,7 +505,7 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 -  `thr_lowess=0.05`: Float64 keyword argument of lowess smoothing
 - `penality_CI=8.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 -  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run. Used only if method is "Bootstrap"
 - `write_res=false`: Bool, write the results in path_to_results folder.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
@@ -546,7 +546,7 @@ function fit_NL_model_selection_file(
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     thr_lowess=0.05,
-    beta_param=2.0,
+    beta_smoothing_ms=2.0,
     penality_CI=8.0,
     size_bootstrap=0.7,
     correction_AIC=true,
@@ -665,7 +665,7 @@ function fit_NL_model_selection_file(
             calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
             thr_lowess=thr_lowess,
             write_res=false,
-            beta_param=beta_param,
+            beta_smoothing_ms=beta_smoothing_ms,
             penality_CI=penality_CI,
             correction_AIC=correction_AIC,
             optimizer=optimizer,
@@ -785,7 +785,7 @@ This function performs NL model selection  on a segmented time series, it uses A
 
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 -  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run. Used only if method is "Bootstrap"
 - `write_res=false`: Bool, write the results in path_to_results folder.
 - `path_to_results= "NA"`:String, path to the folder where save the results.
@@ -939,7 +939,7 @@ function fit_NL_segmentation_file(
         # defining time steps of the inference
 
 
-        temp_results_1 = selection_NL_max_change_points(
+        temp_results_1 = segmentation_NL(
             data, # dataset first row times second row OD
             string(well_name), # name of the well
             label_exp, #label of the experiment

@@ -142,14 +142,14 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
 
     data_th = transpose(hcat(data[1, index_not_zero], sol_fin))
 
-    max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
 
     # max empirical gr
     if length(data[2, :]) > pt_smooth_derivative + 2
         max_em_gr = missing
-
+        max_th_gr =missing
     else
         max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
+        max_th_gr = maximum(specific_gr_evaluation(Matrix(data_th), pt_smooth_derivative))
 
     end
     loss_value = sol.objective
@@ -850,7 +850,7 @@ optimizer=  NLopt.LN_BOBYQA(),    size_bootstrap=0.7,
     abstol=0.00001,
     thr_lowess=0.05,
     write_res=false,
-    beta_param=2.0,
+    beta_smoothing_ms=2.0,
     penality_CI=8.0,
     correction_AIC=false,
     )
@@ -886,7 +886,7 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 -  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run. Used only if method is "Bootstrap"
 
 # Output (if `results_NL_fit =NL_model_selection(...)`:
@@ -918,7 +918,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
     thr_lowess=0.05,
     write_res=false,
-    beta_param=2.0,
+    beta_smoothing_ms=2.0,
     penality_CI=8.0,
     correction_AIC=false,
     optimizer=NLopt.LN_BOBYQA(),
@@ -988,7 +988,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
             )
 
             n_param = length(u0)
-            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[2][end], correction=correction_AIC)
+            temp_AIC = AICc_evaluation2(n_param, beta_smoothing_ms, data[2, :], temp_res[2][end], correction=correction_AIC)
 
             temp = [model_to_test, temp_res[end], temp_AIC]
             score_res = hcat(score_res, temp_AIC)
@@ -1039,7 +1039,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(temp_param_lb)
 
-            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[2][end], correction=correction_AIC)
+            temp_AIC = AICc_evaluation2(n_param, beta_smoothing_ms, data[2, :], temp_res[2][end], correction=correction_AIC)
 
             score_res = hcat(score_res, temp_AIC)
 
@@ -1091,7 +1091,7 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
             n_param = length(u0)
 
-            temp_AIC = AICc_evaluation2(n_param, beta_param, data[2, :], temp_res[2][end], correction=correction_AIC)
+            temp_AIC = AICc_evaluation2(n_param, beta_smoothing_ms, data[2, :], temp_res[2][end], correction=correction_AIC)
 
             score_res = hcat(score_res, temp_AIC)
             if mm == 1
@@ -1186,7 +1186,7 @@ end
 - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 -  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run. Used only if method is "Bootstrap"
 
 # Output (if `results_NL_fit =selection_NL_fixed_interval(...)`:
@@ -1315,7 +1315,7 @@ function selection_NL_fixed_interval(
             calibration_OD_curve=calibration_OD_curve,  #  the path to calibration curve to fix the data
             thr_lowess=thr_lowess,
             write_res=false,
-            beta_param=beta_smoothing_ms,
+            beta_smoothing_ms=beta_smoothing_ms,
             penality_CI=penality_CI,
             correction_AIC=correction_AIC,
             optimizer=optimizer,
@@ -1362,7 +1362,7 @@ function selection_NL_fixed_interval(
 end
 
 """
-    selection_NL_max_change_points(
+    segmentation_NL(
     data_testing::Matrix{Float64},
     name_well::String, 
     label_exp::String,
@@ -1431,7 +1431,7 @@ This function performs model selection for NL models while segmenting the time s
 - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
--  `beta_param=2.0` penality  parameters for AIC (or AICc) evaluation.
+-  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 -  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run. Used only if method is "Bootstrap"
 
 # Output (if `results_NL_fit =selection_NL_fixed_interval(...)`:
@@ -1442,7 +1442,7 @@ This function performs model selection for NL models while segmenting the time s
 -`results_NL_fit[4]`: the time of the numerical best solution
 
 """
-function selection_NL_max_change_points(
+function segmentation_NL(
     data_testing::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
     label_exp::String, #label of the experiment
@@ -1637,4 +1637,4 @@ export fit_NL_model_bootstrap
 export NL_error_blanks
 export NL_model_selection
 export selection_NL_fixed_interval
-export selection_NL_max_change_points
+export segmentation_NL

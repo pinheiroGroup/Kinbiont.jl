@@ -592,7 +592,7 @@ end
     optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     pt_avg=1,
-    beta_penality=2.0,
+    beta_smoothing_ms=2.0,
     smoothing=false,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
@@ -638,7 +638,7 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 - `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
 - `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
 - `correction_AIC=true`: Bool. Options: "true" to perform the AIC finite samples correction or "false" not to.
-- `beta_penality=2.0`: Penality parameters for the evaluation of AIC (or AICc).
+- `beta_smoothing_ms=2.0`: Penality parameters for the evaluation of AIC (or AICc).
 
 
 
@@ -662,7 +662,7 @@ function ODE_Model_selection(
     ub_param_array::Any=nothing, # upper bound param
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=3, # number of the point to generate intial condition
-    beta_penality=2.0, # penality for AIC evaluation
+    beta_smoothing_ms=2.0, # penality for AIC evaluation
     smoothing=false, # the smoothing is done or not?
     type_of_smoothing="rolling_avg",
     thr_lowess=0.05,
@@ -785,8 +785,8 @@ function ODE_Model_selection(
 
         param_number = length(temp_start_param)
 
-        #  AICc = AICc_evaluation(param_number, beta_penality, data[2, :], sol_fin, correction=correction_AIC)
-        AICc = AICc_evaluation2(param_number, beta_penality, data[2, :], res.objective, correction=correction_AIC)
+        #  AICc = AICc_evaluation(param_number, beta_smoothing_ms, data[2, :], sol_fin, correction=correction_AIC)
+        AICc = AICc_evaluation2(param_number, beta_smoothing_ms, data[2, :], res.objective, correction=correction_AIC)
 
         #max_theoretical gr
         sol_fin, index_not_zero = remove_negative_value(sol_fin)
@@ -797,16 +797,15 @@ function ODE_Model_selection(
 
         # max empirical gr
         max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
-        res_temp = res.u
-        loss_value = res.objective
+
 
         res_param = vectorize_df_results(
             name_well,
             temp_model,
-            res_temp,
+            res.u,
             max_th_gr,
             max_em_gr,
-            loss_value,
+            res.objective,
         )
 
 
@@ -1127,7 +1126,7 @@ This function fits an ODE model at each segment of the time-series data. Change 
 - `PopulationSize=100`: Size of the population of the optimization (Xx).
 - `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
 - `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
-- `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+- `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 
 # Output (if `res =selection_ODE_fixed_intervals(...)`:
 
@@ -1215,7 +1214,7 @@ function selection_ODE_fixed_intervals(
             optimizer=optimizer, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
-            beta_penality=beta_smoothing_ms, # penality for AIC evaluation
+            beta_smoothing_ms=beta_smoothing_ms, # penality for AIC evaluation
             smoothing=smoothing, # the smoothing is done or not?
             type_of_loss=type_of_loss, # type of used loss
             blank_array=zeros(100), # data of all blanks
@@ -1332,7 +1331,7 @@ end
     path_to_results="NA",
     win_size=14, 
     pt_smooth_derivative=7,
-    penality_parameter=2.0,
+    beta_smoothing_ms=2.0,
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  
@@ -1377,7 +1376,7 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 - `PopulationSize=100`: Size of the population of the optimization (Xx).
 - `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
 - `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
-- `beta_penality=2.0` penality  parameters for AIC (or AICc) evaluation.
+- `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 - 'type_of_detection="slinding_win"': String. Change point detection method of choice. Options `"slinding_win"` (uses a slinding window approach), `"lsdd"` (uses least square density difference (LSDD) from ChangePointDetection.jl). 
 - 'type_of_curve="original"': String. Defines the input curve for the change point detection. Options `"original"` for the original time series, and `"deriv"` for performing change point detection on the specific growth rate time series.
 - `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
@@ -1420,7 +1419,7 @@ function segmentation_ODE(
     path_to_results="NA",
     win_size=14, #  
     pt_smooth_derivative=7,
-    penality_parameter=2.0,
+    beta_smoothing_ms=2.0,
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
@@ -1455,7 +1454,7 @@ function segmentation_ODE(
             optimizer=optimizer, # selection of optimization method
             integrator=integrator, # selection of sciml integrator
             pt_avg=pt_avg, # number of the point to generate intial condition
-            beta_penality=penality_parameter, # penality for AIC evaluation
+            beta_smoothing_ms=beta_smoothing_ms, # penality for AIC evaluation
             smoothing=smoothing, # the smoothing is done or not?
             type_of_loss=type_of_loss, # type of used loss
             blank_array=zeros(100), # data of all blanks
@@ -1481,7 +1480,7 @@ function segmentation_ODE(
                     name_well,
                     "_seg_0.csv",
                 ),
-                Tables.table(res[5]),
+                Tables.table(res[8]),
             )
             CSV.write(
                 string(
@@ -1491,17 +1490,18 @@ function segmentation_ODE(
                     name_well,
                     "_seg_0.csv",
                 ),
-                Tables.table(Vector(res[2])),
+                Tables.table(Vector(res[end])),
             )
 
         end
         top_cps = [0.0]
-        top_model = res[5]
-        score_of_the_models = res[3]
+        top_model = res[9]
+        score_of_the_models = res[8]
         change_point_list = [0.0]
         change_point_to_plot = [0.0, 0.0, 0.0]
         time_points_to_plot = copy(data_testing[1, :])
-        sol_to_plot = copy(reduce(vcat, res[7])[2:2:end])
+        sol_to_plot = copy(reduce(vcat, res[3])[2:2:end])
+
     else
 
         top_model = "NO"
@@ -1603,7 +1603,7 @@ function segmentation_ODE(
                 multiple_scattering_correction=multiple_scattering_correction, # if true uses the given calibration curve to fix the data
                 method_multiple_scattering_correction=method_multiple_scattering_correction,
                 calibration_OD_curve=calibration_OD_curve, #  the path to calibration curve to fix the data
-                beta_smoothing_ms=penality_parameter, #  parameter of the AIC penality
+                beta_smoothing_ms=beta_smoothing_ms, #  parameter of the AIC penality
                 type_of_smoothing=type_of_smoothing,
                 thr_lowess=thr_lowess,
                 multistart=multistart,
@@ -1624,7 +1624,7 @@ function segmentation_ODE(
             n_param = n_param + length(cpd_temp)
 
 
-            new_penality = AICc_evaluation2(n_param, penality_parameter, data_testing[2, :], direct_search_results[end], correction=correction_AIC)
+            new_penality = AICc_evaluation2(n_param, beta_smoothing_ms, data_testing[2, :], direct_search_results[end], correction=correction_AIC)
 
 
             if new_penality <= score_of_the_models

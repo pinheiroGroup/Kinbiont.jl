@@ -615,7 +615,7 @@ function initialize_df_results_ode_custom(list_of_model_parameters::Any)
 end
 
 
-function AICc_evaluation(n_param, beta_penality, data, data_th; correction=true)
+function AICc_evaluation(n_param, beta_smoothing_ms, data, data_th; correction=true)
     n_data = length(data)
 
 
@@ -628,11 +628,11 @@ function AICc_evaluation(n_param, beta_penality, data, data_th; correction=true)
             println(RSS)
             println(log(RSS / n_data))
             if correction == true
-                correction_value = beta_penality * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
+                correction_value = beta_smoothing_ms * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
             else
                 correction_value = 0.0
             end
-            AIC = +beta_penality * n_param + n_data * log(RSS / n_data)
+            AIC = +beta_smoothing_ms * n_param + n_data * log(RSS / n_data)
             AICc = AIC + correction_value
         else
             AICc = 10^9
@@ -652,7 +652,7 @@ end
 
 
 
-function AICc_evaluation2(n_param, beta_penality, data, loss; correction=true)
+function AICc_evaluation2(n_param, beta_smoothing_ms, data, loss; correction=true)
 
     n_data = length(data)
     if n_data > n_param - 2
@@ -660,11 +660,11 @@ function AICc_evaluation2(n_param, beta_penality, data, loss; correction=true)
         RSS = loss
 
         if correction == true
-            correction_value = beta_penality * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
+            correction_value = beta_smoothing_ms * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
         else
             correction_value = 0.0
         end
-        AIC = +beta_penality * n_param + n_data * log(RSS)
+        AIC = +beta_smoothing_ms * n_param + n_data * log(RSS)
         AICc = AIC + correction_value
     else
         AICc = 10^9
