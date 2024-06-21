@@ -102,12 +102,24 @@ function initialize_df_results(model::String)
 end
 
 
-function guess_param(lb_param::Vector{Float64}, ub_param::Vector{Float64})
-    param = lb_param .+ (ub_param - lb_param) ./ 2
-    return param
+function guess_param_NL( model, data, param_guess , lb_param::Vector{Float64}, ub_param::Vector{Float64})
+
+   if isnothing(param_guess)
+
+      param_guess =a
+   
+   end
+   
+
+    return param_guess
 end
 
 
+function guess_param_ODE(model,data, param_guess, lb_param::Vector{Float64}, ub_param::Vector{Float64})
+
+    param = lb_param .+ (ub_param - lb_param) ./ 2
+    return param
+end
 
 
 

@@ -15,7 +15,7 @@ using Optimization
     threshold_of_exp=0.9,
     do_blank_subtraction="avg_blank",
     avg_replicate=false, 
-    correct_negative="thr_correction", 
+    correct_negative="remove", 
     thr_negative=0.01, 
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
@@ -50,10 +50,10 @@ This function fits a logarithmic-linear model to a csv file. The function assume
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 -  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
--  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+-  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as average value of the blank.
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as array of the blanks values.
--  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
+-  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
 -  `thr_negative=0.01`: FLoat: used only if `correct_negative == "thr_correction"` the data under this threshold will be changed to this value.
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 - `start_exp_win_thr=0.05` minimum value (of OD) to consider the start of exp window
@@ -77,7 +77,7 @@ function fit_one_file_Log_Lin(
     threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
     avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01, # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
@@ -260,7 +260,7 @@ end
     pt_smooth_derivative=7, 
     do_blank_subtraction="avg_blank", 
     avg_replicate=false,
-    correct_negative="thr_correction",
+    correct_negative="remove",
     thr_negative=0.01,  
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
@@ -303,10 +303,10 @@ This function fits a ODE model to a csv file. The function assumes that the firs
 - `PopulationSize =100`: Size of the population of the optimization
 - `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
 - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
--  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+-  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as average value of the blank.
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as array of the blanks values.
--  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+-  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 
 
@@ -318,7 +318,7 @@ function fit_file_ODE(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
     model::String, # string of the used model
-    param=nothing;
+    param;
     path_to_annotation::Any=missing,# path to the annotation of the wells
     integrator=Tsit5(), # selection of sciml integrator
     path_to_results="NA", # path where save results
@@ -331,7 +331,7 @@ function fit_file_ODE(
     pt_smooth_derivative=7, # number of points to do ssmooth_derivative
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
     avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
@@ -520,7 +520,7 @@ end
     pt_smooth_derivative=7,
     do_blank_subtraction="avg_blank",
     avg_replicate=false,
-    correct_negative="thr_correction", 
+    correct_negative="remove", 
     thr_negative=0.01,  
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
@@ -568,10 +568,10 @@ This function is designed for fitting an ordinary differential equation (ODE) mo
 - `PopulationSize =100`: Size of the population of the optimization
 - `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
 - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
--  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+-  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
--  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+-  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 
 
@@ -598,7 +598,7 @@ function fit_file_custom_ODE(
     pt_smooth_derivative=7, # number of points to do ssmooth_derivative
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
     avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
@@ -781,7 +781,7 @@ end
     pt_smooth_derivative=7, 
     do_blank_subtraction="avg_blank", 
     avg_replicate=false,
-    correct_negative="thr_correction", 
+    correct_negative="remove", 
     thr_negative=0.01,  
     multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
@@ -829,10 +829,10 @@ This function performs model selection  of ODE for a full csv file.
 - `PopulationSize =100`: Size of the population of the optimization
 - `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
 - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
--  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+-  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
--  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+-  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
 -  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
@@ -862,7 +862,7 @@ function ODE_model_selection_file(
     pt_smooth_derivative=7, # number of points to do ssmooth_derivative
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
     avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
@@ -1056,7 +1056,7 @@ end
     type_of_detection="sliding_win",
     type_of_curve="original",
     do_blank_subtraction="avg_blank",
-    correct_negative="thr_correction",
+    correct_negative="remove",
     thr_negative=0.01,
     pt_avg=1,
     smoothing=true, 
@@ -1119,10 +1119,10 @@ This function performs model selection for ordinary differential equation (ODE) 
 - `PopulationSize =100`: Size of the population of the optimization
 - `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
 - `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
--  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+-  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
--  `correct_negative="thr_correction"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+-  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
 -  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
@@ -1160,7 +1160,7 @@ function segmentation_ODE_file(
     type_of_detection="sliding_win",
     type_of_curve="original",
     do_blank_subtraction="avg_blank",
-    correct_negative="thr_correction",
+    correct_negative="remove",
     thr_negative=0.01,
     pt_avg=1, # number of the point to generate intial condition
     smoothing=true, # the smoothing is done or not?
@@ -1523,6 +1523,7 @@ end
 
 export fit_one_file_Log_Lin
 export segment_gr_analysis_file
+export fit_file_ODE
 export fit_file_custom_ODE
 export ODE_model_selection_file
 export segmentation_ODE_file
