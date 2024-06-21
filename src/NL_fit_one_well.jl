@@ -250,7 +250,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
     model_function::Any, # ode model to use
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}; # upper bound param
-    nrep=100,
+    nrep=9,
     pt_avg=1, # number of the point to generate intial condition
     pt_smooth_derivative=7,
     smoothing=false, # the smoothing is done or not?
@@ -456,6 +456,8 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     label_exp::String, #label of the experiment
     model_function::Any, # ode model to use
     u0;# initial guess param
+    lb_param=nothing,
+    ub_param=nothing,
     nrep=100,
     size_bootstrap=0.7,
     pt_avg=1, # number of the point to generate intial condition
@@ -517,7 +519,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
         max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
 
     end
-    fin_param = initialize_df_results_ode_custom(lb_param)
+    fin_param = initialize_df_results_ode_custom(u0)
 
 
     for i = 1:nrep
@@ -589,10 +591,9 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     new_param_fin = fin_param[:, (index_loss.+1)]
     mean_param = [mean(new_param_fin[i, 2:end]) for i in 3:axes(new_param_fin)[1][end]]
     sd_param = [std(new_param_fin[i, 2:end]) for i in 3:axes(new_param_fin)[1][end]]
-    CI_param_low = [quantile(new_param_fin[i, 2:end], 0.1) for i in 3:axes(new_param_fin)[1][end]]
-    CI_param_up = [quantile(new_param_fin[i, 2:end], 0.9) for i in 3:axes(new_param_fin)[1][end]]
 
-    Kimchi_res_bootstrap_NL = ("NL_bootstrap", best_res_param, best_fitted_model, data[1, :], fin_param, new_param_fin, mean_param, sd_param, CI_param_low, CI_param_up)
+
+    Kimchi_res_bootstrap_NL = ("NL_bootstrap", best_res_param, best_fitted_model, data[1, :], fin_param, new_param_fin, mean_param, sd_param)
 
 
     return Kimchi_res_bootstrap_NL
@@ -736,7 +737,7 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
         max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
 
     end
-    fin_param = initialize_df_results_ode_custom(lb_param)
+    fin_param = initialize_df_results_ode_custom(u0)
 
 
     for i = 1:nrep
@@ -933,6 +934,9 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
     top_fitted_sol = Vector{Any}
     top_loss = 10^20
     opt_param_temp = copy(opt_params)
+    temp_param_ub = nothing
+    temp_param_lb = nothing
+
 
     for mm in 1:eachindex(list_model_function)[end]
 

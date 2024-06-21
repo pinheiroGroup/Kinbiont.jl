@@ -13,8 +13,7 @@ struct Kimchi_res_bootstrap_NL
     new_param_fin::Any
     mean_param::Any
     sd_param::Any
-    CI_param_low::Any
-    CI_param_up::Any
+
 
 end
 struct Kimchi_res_one_file
