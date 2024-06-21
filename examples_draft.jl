@@ -1,11 +1,12 @@
-
 using Kimchi
 using DifferentialEquations
 using CSV
 using Distributions
 using Plots
 using StatsBase
-
+using OptimizationBBO
+using Optimization
+using OptimizationOptimJL
 
 # Simulating data with an ODE
 model = "triple_piecewise_adjusted_logistic"
@@ -65,10 +66,10 @@ lb_ahpm = P_GUESS./4
     model,
     P_GUESS;
 )
-
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
 Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
 
-# Performing ODE fitting WITHOUT BOUNDS AND RESTART 
+# Performing ODE fitting WITH BOUNDS AND RESTART 
 
 @time results_ODE_fit = fitting_one_well_ODE_constrained(
     data_OD, 
@@ -82,7 +83,27 @@ Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. U
 
 )
 
-Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit with restart " nothing],color=:blue,markersize =2 ,size = (300,300))
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
+
+
+# Performing ODE fitting WITH BOUNDS 
+
+@time results_ODE_fit = fitting_one_well_ODE_constrained(
+    data_OD, 
+    "test",
+    "test_ODE",
+    model,
+    P_GUESS;
+    optimizer =BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    lb = lb_ahpm,
+   ub = ub_ahpm
+
+)
+
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
 
 
 
@@ -106,8 +127,9 @@ param_guess = [0.01,2.0]
     1; # number ode in the system
   )
 
-Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit custom " nothing],color=:blue,markersize =2 ,size = (300,300))
-
+  Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+  Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+  
 # Performing custom ODE fitting with restart
 
 @time results_ODE_fit = fitting_one_well_custom_ODE(
@@ -121,8 +143,9 @@ Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. U
    lb = custom_lb,
    ub = custom_ub    )
 
-Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit custom restart " nothing],markersize =2 ,size = (300,300))
-
+   Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+   Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+   
 # Number of steps for Morris sensitivity analysis
 n_step_sensitivity = 2
 P_GUESS = [0.01, 0.001, 1.00, 1]
@@ -191,6 +214,9 @@ results_ms = ODE_Model_selection(
     list_guess;
 )
 
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(results_ms[4],results_ms[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
 # Performing model selection with box and multistart
 results_ms = ODE_Model_selection(
     data_OD,
@@ -202,12 +228,16 @@ results_ms = ODE_Model_selection(
     lb_param_array = list_lb,
     ub_param_array = list_ub  
 )
+
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(results_ms[4],results_ms[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
 # testing NL fitting
 
 nl_model = ["NL_Richards"]
 p_guess = [[1.0,1.0,0.01,300.0]]
 lb_nl =[[0.01,0.01,0.000001,00.01]]
-ub_nl =[p_guess.*3]
+ub_nl =p_guess.*3
 
 
 
@@ -220,23 +250,92 @@ nl_model, #  model to use
 p_guess;
 )
 
-Plots.plot!(nl_fit[4],nl_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit custom restart " nothing],markersize =2 ,size = (300,300))
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(nl_fit[4],nl_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
 
-# single fit with restart
+# single fit with box
 @time nl_fit =  NL_model_selection(data_OD, # dataset first row times second row OD
 "test", 
 "test_model_selection",
 nl_model, #  model to use
 p_guess;
+optimizer =BBO_adaptive_de_rand_1_bin_radiuslimited(),
+#multistart = true,
+lb_param_array =lb_nl,
+ub_param_array = ub_nl
+
+)
+
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(nl_fit[4],nl_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+# single fit with box and multistart
+@time nl_fit =  NL_model_selection(data_OD, # dataset first row times second row OD
+"test", 
+"test_model_selection",
+nl_model, #  model to use
+p_guess;
+#optimizer =BBO_adaptive_de_rand_1_bin_radiuslimited(),
 multistart = true,
 lb_param_array =lb_nl,
 ub_param_array = ub_nl
 
 )
 
-Plots.plot!(nl_fit[4],nl_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit custom restart " nothing],markersize =2 ,size = (300,300))
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(nl_fit[4],nl_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
+# single fit with box  gradient
+@time nl_fit =  NL_model_selection(data_OD, # dataset first row times second row OD
+"test", 
+"test_model_selection",
+nl_model, #  model to use
+p_guess;
+#multistart = true,
+optimizer= BFGS(), 
+auto_diff_method = Optimization.AutoFiniteDiff()
+
+)
+
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(nl_fit[4],nl_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
+
+
+# single fit with box  gradient
+@time nl_fit =  NL_model_selection(data_OD, # dataset first row times second row OD
+"test", 
+"test_model_selection",
+nl_model, #  model to use
+p_guess;
+#multistart = true,
+optimizer= BFGS(), 
+auto_diff_method = Optimization.AutoFiniteDiff()
+
+)
+
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(nl_fit[4],nl_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
+
 
 # Bootstrap
+# single fit with box  gradient
+@time nl_fit =  NL_model_selection(data_OD, # dataset first row times second row OD
+"test", 
+"test_model_selection",
+nl_model, #  model to use
+p_guess;
+#multistart = true,
+method ="Bootstrap",
+multistart = true,
+lb_param_array =lb_nl,
+ub_param_array = ub_nl
+)
+
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(nl_fit[4],nl_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
+
 
 # sensitivity_test
 
