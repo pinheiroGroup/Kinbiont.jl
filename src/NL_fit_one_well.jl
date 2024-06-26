@@ -155,11 +155,10 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     loss_value = sol.objective
 
 
-    res_param = [[name_well, model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
+    res_param = [[label_exp,name_well,model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
 
 
     res_param = reduce(vcat, reduce(vcat, res_param))
-
 
     Kimchi_res_one_well = ("NL", res_param, fitted_model, data[1, :])
 
@@ -325,6 +324,8 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
             data;
             opt = optimizer,
             auto_diff_method=auto_diff_method,
+            multistart = multistart,
+            n_restart=n_restart,
             cons=cons,
             opt_params...)
         # evaluate the fitted  model
@@ -342,7 +343,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
         loss_value = sol.objective
 
 
-        res_param = [[name_well, model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
+        res_param = [[label_exp,name_well, model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
         res_param = reduce(vcat, reduce(vcat, res_param))
 
 
@@ -544,6 +545,8 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
            opt =  optimizer,
             auto_diff_method=auto_diff_method,
             cons=cons,
+            multistart = multistart,
+            n_restart=n_restart,
             opt_params...)
         # evaluate the fitted  model
         fitted_model = model_function(sol, data_to_fit[1, :])
@@ -561,7 +564,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
         loss_value = sol.objective
 
 
-        res_param = [[name_well, model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
+        res_param = [[label_exp,name_well, model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
         res_param = reduce(vcat, reduce(vcat, res_param))
 
 
@@ -778,7 +781,7 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
         loss_value = sol.objective
 
 
-        res_param = [[name_well, model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
+        res_param = [[label_res,name_well, model_string], [sol[1:end]], [max_th_gr, max_em_gr, loss_value]]
         res_param = reduce(vcat, reduce(vcat, res_param))
 
 

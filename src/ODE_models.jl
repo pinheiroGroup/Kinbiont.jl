@@ -235,152 +235,152 @@ models_list = [
   JModel(
     "HPM_3_inhibition",
     HPM_3_inhibition,
-    ["model", "well", "gr", "exit_lag_rate", "inactivation_rate", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "exit_lag_rate", "inactivation_rate", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "HPM_3_death",
     HPM_3_death,
-    ["model", "well", "gr", "exit_lag_rate", "inactivation_rate", "death_rate", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "exit_lag_rate", "inactivation_rate", "death_rate", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "aHPM_3_death_resistance",
     aHPM_3_death_resistance,
-    ["model", "well", "gr", "exit_lag_rate", "inactivation_rate", "death_rate", "n_res", "shape", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "exit_lag_rate", "inactivation_rate", "death_rate", "n_res", "shape", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "HPM",
     ODEs_McKellar,
-    ["model", "well", "gr", "exit_lag_rate", "N_max", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "exit_lag_rate", "N_max", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "HPM_exp",
     ODEs_HPM_exp,
-    ["model", "well", "gr", "exit_lag_rate", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "exit_lag_rate", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "HPM_inhibition",
     ODEs_HPM_inhibition,
-    ["model", "well", "gr", "inhibition_rate", "gr_inhibition", "N_max", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "inhibition_rate", "gr_inhibition", "N_max", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "aHPM_inhibition",
     ODEs_aHPM_inhibition,
-    ["model", "well", "gr", "inhibition_rate", "gr_inhibition", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "inhibition_rate", "gr_inhibition", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "ODEs_HPM_SR",
     ODEs_HPM_SR,
-    ["model", "well", "gr", "gr_phage", "scale", "death_rate", "resistance_rate", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "gr_phage", "scale", "death_rate", "resistance_rate", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "aHPM",
     ODEs_adjusted_McKellar,
-    ["model", "well", "gr", "exit_lag_rate", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "exit_lag_rate", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "Diauxic_replicator_1",
     ODE_Diauxic_replicator_1,
-    ["model", "well", "gr", "N_max", "lag", "arbitrary_const", "linear_const", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "lag", "arbitrary_const", "linear_const", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "Diauxic_replicator_2",
     ODE_Diauxic_replicator_2,
-    ["model", "well", "gr", "N_max", "lag", "arbitrary_const", "linear_const", "growth_stationary", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "lag", "arbitrary_const", "linear_const", "growth_stationary", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "Diauxic_piecewise_adjusted_logistic",
     ODE_Diauxic_piecewise_adjusted_logistic,
-    ["model", "well", "gr_1", "N_max", "shape_1", "lag", "linear_const", "t_shift", "gr_2", "N_max_2", "shape_2", "end_second_lag", "lag_2_gr", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr_1", "N_max", "shape_1", "lag", "linear_const", "t_shift", "gr_2", "N_max_2", "shape_2", "end_second_lag", "lag_2_gr", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "exponential",
     ODE_exponential,
-    ["model", "well", "gr", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "piecewise_adjusted_logistic",
     ODE_piecewise_adjusted_logistic,
-    ["model", "well", "gr", "N_max", "lag", "shape", "linear_const", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "lag", "shape", "linear_const", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "triple_piecewise_adjusted_logistic",
     ODE_triple_piecewise_adjusted_logistic,
-    ["model", "well", "gr", "N_max", "lag", "shape", "linear_const", "t_stationary", "linear_lag", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "lag", "shape", "linear_const", "t_stationary", "linear_lag", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "triple_piecewise",
     ODE_triple_piecewise,
-    ["model", "well", "gr", "gr_2", "gr_3", "lag", "t_stationary", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "gr_2", "gr_3", "lag", "t_stationary", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "triple_piecewise_sub_linear",
     ODE_triple_piecewise_sub_linear,
-    ["model", "well", "gr", "gr_2", "gr_3", "lag", "t_stationary", "N_max", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "gr_2", "gr_3", "lag", "t_stationary", "N_max", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "gbsm_piecewise",
     ODE_gbsm_piecewise,
-    ["model", "well", "gr", "a_1", "b_1", "c", "a_2", "b_2", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "a_1", "b_1", "c", "a_2", "b_2", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "ODE_four_piecewise",
     ODE_four_piecewise,
-    ["model", "well", "gr", "gr_2", "gr_3", "gr_4", "lag", "t_decay_gr", "t_stationary", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "gr_2", "gr_3", "gr_4", "lag", "t_decay_gr", "t_stationary", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "hyper_gompertz",
     hyper_gompertz,
-    ["model", "well", "gr", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "hyper_logistic",
     hyper_logistic,
-    ["model", "well", "doubling_time", "gr", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "doubling_time", "gr", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "bertalanffy_richards",
     bertalanffy_richards,
-    ["model", "well", "gr", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "ode_von_bertalanffy",
     ODE_von_bertalanffy,
-    ["model", "well", "alpha", "beta", "a", "b", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "alpha", "beta", "a", "b", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "triple_piecewise_bertalanffy_richards",
     ODE_triple_piecewise_bertalanffy_richards,
-    ["model", "well", "gr", "gr_lag", "t_lag", "t_stationary", "gr_stat", "shape", "N_max", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "gr_lag", "t_lag", "t_stationary", "gr_stat", "shape", "N_max", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "logistic",
     logistic,
-    ["model", "well", "gr", "N_max", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "alogistic",
     alogistic,
-    ["model", "well", "gr", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "shape", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "gompertz",
     gompertz,
-    ["model", "well", "gr", "N_max", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "baranyi_richards",
     baranyi_richards,
-    ["model", "well", "gr", "N_max", "lag_time", "shape", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "lag_time", "shape", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "baranyi_exp",
     baranyi_exp,
-    ["model", "well", "gr", "lag_time", "shape", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "lag_time", "shape", "th_max_gr", "emp_max_gr", "loss"]
   ),
   JModel(
     "baranyi_roberts",
     baranyi_roberts,
-    ["model", "well", "gr", "N_max", "lag_time", "shape_1", "shape_2", "th_max_gr", "emp_max_gr", "loss"]
+    ["label_exp", "well", "model", "gr", "N_max", "lag_time", "shape_1", "shape_2", "th_max_gr", "emp_max_gr", "loss"]
   )
 ]
 

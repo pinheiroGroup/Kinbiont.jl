@@ -23,7 +23,7 @@ using OptimizationMultistartOptimization
     pt_smooth_derivative=7, 
     do_blank_subtraction="avg_blank", 
     avg_replicate=false, 
-    correct_negative="thr_correction",
+    correct_negative="remove",
     thr_negative=0.01,  
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
@@ -99,7 +99,7 @@ function fit_NL_model_file(
     pt_smooth_derivative=7, # number of points to do ssmooth_derivative
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
     avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
@@ -352,8 +352,9 @@ function fit_NL_model_file(
             println("the results are:")
             println(temp_results_1[2])
         end
+        temp_array =  temp_results_1[2]
 
-        parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[2])
+        parameter_of_optimization = hcat(parameter_of_optimization, temp_array)
 
         if errors_estimation == true && method_of_fitting != "Bootstrap"
 
@@ -462,7 +463,7 @@ end
     pt_smooth_derivative=7, 
     do_blank_subtraction="avg_blank", 
     avg_replicate=false, 
-    correct_negative="thr_correction", 
+    correct_negative="remove", 
     thr_negative=0.01,  
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
@@ -540,7 +541,7 @@ function fit_NL_model_selection_file(
     pt_smooth_derivative=7, # number of points to do ssmooth_derivative
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
     avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
@@ -686,7 +687,6 @@ function fit_NL_model_selection_file(
             println("the results are:")
             println(temp_results_1[2])
         end
-
         parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[2])
 
     end
@@ -735,7 +735,7 @@ end
     pt_smooth_derivative=7, 
     do_blank_subtraction="avg_blank", 
     avg_replicate=false,
-    correct_negative="thr_correction", 
+    correct_negative="remove", 
     thr_negative=0.01,  
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
@@ -825,7 +825,7 @@ function fit_NL_segmentation_file(
     pt_smooth_derivative=7, # number of points to do ssmooth_derivative
     do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
     avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="thr_correction", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
+    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
     thr_negative=0.01,  # used only if correct_negative == "thr_correction"
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",

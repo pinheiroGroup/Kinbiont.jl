@@ -411,7 +411,7 @@ function fitting_one_well_ODE_constrained(
 
     res_temp = res.u
     loss_value = res.objective
-    res_param = vectorize_df_results(name_well, model, res_temp, max_th_gr, max_em_gr, loss_value)
+    res_param = vectorize_df_results(label_exp,name_well, model, res_temp, max_th_gr, max_em_gr, loss_value)
     Kimchi_res_one_well = ("ODE", res_param, sol_fin, remade_solution.t)
 
     return Kimchi_res_one_well
@@ -800,6 +800,7 @@ function ODE_Model_selection(
 
 
         res_param = vectorize_df_results(
+            label_exp,
             name_well,
             temp_model,
             res.u,
@@ -1038,6 +1039,7 @@ function one_well_morris_sensitivity(
         max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
         res_temp = res.u
         res_param = vectorize_df_results(
+            label_exp,
             name_well,
             model,
             res_temp,

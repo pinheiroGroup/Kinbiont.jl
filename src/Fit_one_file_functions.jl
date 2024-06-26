@@ -884,7 +884,7 @@ function ODE_model_selection_file(
         mkpath(path_to_results)
     end
 
-    parameter_of_optimization = initialize_res_ms(param_array)
+    parameter_of_optimization = initialize_res_ms(label_of_exp,param_array)
 
 
 
@@ -1197,7 +1197,7 @@ function segmentation_ODE_file(
         mkpath(path_to_results)
     end
 
-    parameter_of_optimization = initialize_res_ms(param_array, number_of_segment=n_max_change_points + 1)
+    parameter_of_optimization = initialize_res_ms( number_of_segment=n_max_change_points + 1)
 
 
     names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
