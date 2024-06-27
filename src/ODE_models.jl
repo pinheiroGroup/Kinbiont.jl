@@ -384,7 +384,7 @@ models_list = [
   )
 ]
 
-models = Dict(model.name => model for model in models_list)
+ODE_models = Dict(ODE_model.name => ODE_model for ODE_model in Kimchi.models_list)
 
 export HPM_3_inhibition
 export HPM_3_death

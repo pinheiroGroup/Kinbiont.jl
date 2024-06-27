@@ -109,8 +109,8 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     # TO DO MODEL SELECTOR
     if typeof(model_function) == String
 
-        model_string = NL_models[model_function].name
-        model_function = NL_models[model_string].func
+        model_string = Kimchi.NL_models[model_function].name
+        model_function = Kimchi.NL_models[model_string].func
 
 
     else
@@ -311,6 +311,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
 
     end
     fin_param = initialize_df_results_ode_custom(lb_param)
+
     param_combination =
         generation_of_combination_of_IC_morris(lb_param, ub_param, nrep)
 
@@ -520,6 +521,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
         max_em_gr = maximum(specific_gr_evaluation(data, pt_smooth_derivative))
 
     end
+
     fin_param = initialize_df_results_ode_custom(u0)
 
 

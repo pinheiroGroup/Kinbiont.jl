@@ -211,7 +211,7 @@ NL_models_list = [
 
 ]
 
-NL_models = Dict(model.name => model for model in NL_models_list)
+NL_models = Dict(NL_model.name => NL_model for NL_model in Kimchi.NL_models_list)
 
 export NL_model_exp
 export NL_model_logistic

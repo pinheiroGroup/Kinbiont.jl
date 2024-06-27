@@ -674,7 +674,7 @@ function fit_NL_model_selection_file(
             multistart=multistart,
             n_restart=n_restart,
             cons=cons,
-            opt_params)
+            opt_params...)
 
 
 
@@ -703,7 +703,7 @@ function fit_NL_model_selection_file(
     end
     Kimchi_res_one_file = ("NL_model_selection",parameter_of_optimization)
 
-    return parameter_of_optimization
+    return Kimchi_res_one_file
 
 
 
