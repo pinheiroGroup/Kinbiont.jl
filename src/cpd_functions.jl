@@ -187,7 +187,7 @@ function peaks_detection(
         index_prominence = peakproms(index_of_peaks[1], data[2, :])[1]
 
         if length(array_prominence) < n_max
-            println("Warning: the max number of peaks is too much")
+            @warn "The max number of peaks is too much"
             top_prominence = sort(array_prominence)
         else
             top_prominence = sort(array_prominence)[((end-n_max)+1):end]
@@ -209,18 +209,18 @@ function peaks_detection(
             lenght_cpd_list = length.(selected_change_point_list)
 
             if n_max > maximum(lenght_cpd_list)
-                println(
-                    "Warning: this number of peaks is to much selecting the max number detected",
-                )
+               
+                    @warn    "This number of peaks is to much selecting the max number detected"
+                
                 selected_change_point_index = selected_change_point_list[end]
             else
                 selected_change_point_index =
                     selected_change_point_list[maximum(findlast(lenght_cpd_list .<= n_max))]
 
                 if length(selected_change_point_index) != n_max
-                    println(
-                        "Warning: this number of peaks is not detected changing to nearest one smaller",
-                    )
+                    
+                    @warn    "This number of peaks is not detected changing to nearest one smaller"
+                    
                 end
             end
         end

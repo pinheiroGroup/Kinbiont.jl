@@ -1,7 +1,7 @@
 using Distributions
 using StatsBase
 using Optimization
-using OptimizationNLopt
+using OptimizationBBO
 using OptimizationMultistartOptimization
 #######################################################################
 """
@@ -342,7 +342,7 @@ function fitting_one_well_ODE_constrained(
     thr_lowess=0.05,
     multistart=false,
     n_restart=50,
-    optimizer=NLopt.LN_BOBYQA(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -506,7 +506,7 @@ function fitting_one_well_custom_ODE(
     type_of_smoothing="lowess",
     multistart=false,
     n_restart=50,
-    optimizer=NLopt.LN_BOBYQA(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -676,7 +676,7 @@ function ODE_Model_selection(
     correction_AIC=true,
     multistart=false,
     n_restart=50,
-    optimizer=NLopt.LN_BOBYQA(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -829,7 +829,7 @@ function ODE_Model_selection(
     # param of the best model
     param_min = df_res_optimization[index_minimal_AIC_model-1]
     param_out_full = copy(param_min)
-    param_min = param_min[3:(end-3)]
+    param_min = param_min[4:(end-3)]
 
     tsteps = data[1, :]
     tspan = (data[1, 1], data[1, end])
@@ -957,7 +957,7 @@ function one_well_morris_sensitivity(
     multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  #  the path to calibration curve to fix the data
-    optimizer=NLopt.LN_BOBYQA(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     auto_diff_method=nothing,
     cons=nothing,
     thr_lowess = 0.05,
@@ -1160,7 +1160,7 @@ function selection_ODE_fixed_intervals(
     calibration_OD_curve="NA", #  the path to calibration curve to fix the data
     beta_smoothing_ms=2.0, #  parameter of the AIC penality
     correction_AIC=true,
-    optimizer=NLopt.LN_BOBYQA(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
@@ -1264,6 +1264,7 @@ function selection_ODE_fixed_intervals(
                 maximum(specific_gr_evaluation(data_th, pt_smooth_derivative))
             temp_res_win = vcat(temp_res_win, th_max_gr_of_segment)
             temp_res_win = vcat(temp_res_win, emp_max_gr_of_segment)
+
         elseif length(data_temp[1, :]) <= 3
 
             emp_max_gr_of_segment = missing
@@ -1281,8 +1282,8 @@ function selection_ODE_fixed_intervals(
         end
         temp_res_win = vcat(model, temp_res_win)
         temp_res_win = vcat(temp_res_win, model_selection_results[6])
-        temp_res_win = vcat(label_exp, temp_res_win)
         temp_res_win = vcat(name_well, temp_res_win)
+        temp_res_win = vcat(label_exp, temp_res_win)
 
 
 
@@ -1431,7 +1432,7 @@ function segmentation_ODE(
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     correction_AIC=true,
-    optimizer=NLopt.LN_BOBYQA(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,

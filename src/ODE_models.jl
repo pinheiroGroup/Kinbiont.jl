@@ -219,7 +219,7 @@ end
 
 # Baranyi-Richards model from Baranyi, Roberts, and   McClure. "A non-autonomous differential equation to model bacterial growth" 1993
 function baranyi_richards(du, u, param, t)
-  du[1] = param[1] * (1 - (u[1] / param[2])) * (t^param[4]) / ((param[3])^(param[4]) + t^(param[4])) * u[1]
+  du[1] =   u[1] * param[1] * (1 - (u[1] / param[2]) ) *  ( NaNMath.pow(t, param[4])  / ( NaNMath.pow(param[3],param[4]) +  NaNMath.pow(t,param[4]))  )
 end
 
 function baranyi_exp(du, u, param, t)
@@ -228,7 +228,7 @@ end
 
 #  Baranyi-Roberts model from: Baranyi and Roberts. "A dynamic approach to predicting bacterial growth in food" 1994
 function baranyi_roberts(du, u, param, t)
-  du[1] = param[1] * (1 - NaNMath.pow(u[1] / max(param[2], u[1] + 0.00001), param[5])) * (NaNMath.pow(t, param[4]) / (NaNMath.pow(param[3], param[4]) + NaNMath.pow(t, param[4]))) * u[1]
+  du[1] = u[1] * param[1] * (1 - NaNMath.pow( u[1] / param[2] , param[5])  ) * (NaNMath.pow(t, param[4]) / (NaNMath.pow(param[3], param[4]) + NaNMath.pow(t, param[4]))) 
 end
 
 models_list = [

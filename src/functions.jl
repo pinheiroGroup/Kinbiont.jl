@@ -122,9 +122,9 @@ function initialize_res_ms(
         matrix_result[1] = "label_exp"
         matrix_result[2] = "well"
         matrix_result[3] = "model"
-        matrix_result[(end-3)] = "loss"
-        matrix_result[(end-2)] = "th_gr"
-        matrix_result[(end-1)] = "em_gr"
+        matrix_result[(end-3)] = "th_gr"
+        matrix_result[(end-2)] = "em_gr"
+        matrix_result[(end-1)] = "loss"
         matrix_result[end] = "segment"
 
         for i = 4:(4+nmax_param-1)
@@ -141,12 +141,12 @@ function initialize_res_ms(
         # inizialization of the matrix as full of missing
         matrix_result = missings(Any, nrow)
         # generation of the names of the rows
-        matrix_result[1] = "well"
-        matrix_result[2] = "label_exp"
+        matrix_result[1] = "label_exp"
+        matrix_result[2] = "well"
         matrix_result[3] = "model"
-        matrix_result[(end-2)] = "loss"
-        matrix_result[(end-1)] = "th_gr"
-        matrix_result[(end)] = "em_gr"
+        matrix_result[(end-2)] = "th_gr"
+        matrix_result[(end-1)] = "em_gr"
+        matrix_result[(end)] = "loss"
 
         for i = 4:(4+nmax_param-1)
             matrix_result[i] = string("param_", i - 3)
@@ -820,6 +820,9 @@ function KimchiSolve(loss_function,
     end
 
 
+    opt_params = check_bounds_opt(opt,p,opt_params...)
+
+
     prob = OptimizationProblem(optf, p, u0; opt_params...)
 
 
@@ -873,6 +876,7 @@ function KimchiSolve_NL(loss_function,
     end
 
 
+    opt_params = check_bounds_opt(opt,u0,opt_params...)
 
     if multistart == true
         prob = OptimizationProblem(optf, u0 ; opt_params...)
@@ -887,6 +891,32 @@ function KimchiSolve_NL(loss_function,
     end
 
     return sol
+end
+
+
+
+function check_bounds_opt(opt,p_guess,
+    opt_params...)
+
+    if SciMLBase.requiresbounds(opt)
+
+
+        if  !(:lb  in keys(opt_params)) && !(:ub  in keys(opt_params) )
+
+            @warn "The used optimization method requires box bounds, Kimchi.jl will use upper bounds that are 10 times the guess
+             and lower bound that are 10 times lower the guess.
+             This choice can be suboptimal. Note that the Kimchi.jl default optimizer requires box bounds to guaranteed a Real N(t) and positive parameters.
+             To avoid to specify the bounds use you can use an optimizer that do not require it, e.g., `optimizer = NOMADOpt()`. 
+             Note that numerical instabilities may occur.
+             "
+            opt_params = (opt_params..., lb= p_guess ./10 , ub = p_guess .*10 )
+
+        end
+    
+    end
+    
+    return opt_params
+
 end
 
 export reading_annotation

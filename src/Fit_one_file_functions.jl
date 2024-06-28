@@ -341,7 +341,7 @@ function fit_file_ODE(
     blank_array=[0.0],
     multistart=false,
     n_restart=50,
-    optimizer=NLopt.LN_BOBYQA(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -608,7 +608,7 @@ function fit_file_custom_ODE(
     blank_array=[0.0],
     multistart=false,
     n_restart=50,
-    optimizer=NLopt.LN_BOBYQA(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -873,7 +873,7 @@ function ODE_model_selection_file(
     blank_array=[0.0],
     multistart=false,
     n_restart=50,
-    optimizer=NLopt.LN_BOBYQA(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     auto_diff_method=nothing,
     cons=nothing,
     opt_params...
@@ -1182,7 +1182,7 @@ function segmentation_ODE_file(
     correction_AIC=true,
     blank_value=0.0,
     blank_array=[0.0],
-    optimizer=NLopt.LN_BOBYQA(),
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     multistart=false,
     n_restart=50,
     auto_diff_method=nothing,
