@@ -227,10 +227,10 @@ function fit_one_file_Log_Lin(
         )
 
     end
-    Kimchi_res_one_file = ("Log-Lin", results_Log_Lin)
+    Kimchi_res_Log_Lin = ("Log-Lin", results_Log_Lin)
 
 
-    return Kimchi_res_one_file
+    return Kimchi_res_Log_Lin
 
 
 
@@ -354,7 +354,8 @@ function fit_file_ODE(
 
     parameter_of_optimization = initialize_df_results(model)
 
-
+    fits = ()
+    data_to_save = ()
 
     names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
@@ -475,6 +476,10 @@ function fit_file_ODE(
         end
 
         parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[2])
+        fits = (fits...,temp_results_1[3] )
+        data_to_save = (data_to_save...,data)
+    
+
 
     end
 
@@ -488,7 +493,7 @@ function fit_file_ODE(
 
 
     end
-    Kimchi_res_one_file = ("ODE", parameter_of_optimization)
+    Kimchi_res_one_file = ("ODE", parameter_of_optimization,fits,data_to_save)
 
 
     return Kimchi_res_one_file
@@ -620,6 +625,8 @@ function fit_file_custom_ODE(
     end
 
     parameter_of_optimization = initialize_df_results_ode_custom(ub_param)
+    fits = ()
+    data_to_save = ()
 
     names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
@@ -735,7 +742,8 @@ function fit_file_custom_ODE(
         end
 
         parameter_of_optimization = hcat(parameter_of_optimization, well_results)
-
+        fits = (fits...,temp_results_1[3] )
+        data_to_save = (data_to_save...,data)
     end
 
 
@@ -749,7 +757,7 @@ function fit_file_custom_ODE(
 
     end
 
-    Kimchi_res_one_file = ("ODE", parameter_of_optimization)
+    Kimchi_res_one_file = ("ODE", parameter_of_optimization,fits,data_to_save)
 
 
     return Kimchi_res_one_file
@@ -884,7 +892,9 @@ function ODE_model_selection_file(
         mkpath(path_to_results)
     end
 
-    parameter_of_optimization = initialize_res_ms(label_of_exp,param_array)
+    parameter_of_optimization = initialize_res_ms(param_array)
+    fits = ()
+    data_to_save = ()
 
 
 
@@ -1012,7 +1022,8 @@ function ODE_model_selection_file(
         end
 
         parameter_of_optimization = hcat(parameter_of_optimization, vectorized_temp_results)
-
+        fits = (fits...,temp_results_1[3] )
+        data_to_save = (data_to_save...,data)
     end
 
 
@@ -1027,7 +1038,7 @@ function ODE_model_selection_file(
     end
 
 
-    Kimchi_res_one_file = ("ODE_model_selection", parameter_of_optimization)
+    Kimchi_res_one_file = ("ODE_model_selection", parameter_of_optimization,fits,data_to_save)
 
     return Kimchi_res_one_file
 
@@ -1197,8 +1208,10 @@ function segmentation_ODE_file(
         mkpath(path_to_results)
     end
 
-    parameter_of_optimization = initialize_res_ms( number_of_segment=n_max_change_points + 1)
-
+    parameter_of_optimization = initialize_res_ms(param_array, number_of_segment=n_max_change_points + 1)
+    fits = ()
+    data_to_save = ()
+    cps = (["cps"])
 
     names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
@@ -1328,8 +1341,10 @@ function segmentation_ODE_file(
         end
 
         parameter_of_optimization = hcat(parameter_of_optimization, vectorized_temp_results)
-
-    end
+        fits = (fits...,temp_results_1[3] )
+        data_to_save = (data_to_save...,data)
+        cps = (cps...,temp_results_1[5])
+        end
 
 
     if write_res == true
@@ -1348,10 +1363,10 @@ function segmentation_ODE_file(
 
     end
 
-    Kimchi_res_segmentation_ODE_file = ("ODE_segmentation", parameter_of_optimization, vector_AIC)
+    Kimchi_res_one_file_segmentation = ("ODE_segmentation", parameter_of_optimization, fits, data_to_save, cps, vector_AIC)
 
 
-    return Kimchi_res_segmentation_ODE_file
+    return Kimchi_res_one_file_segmentation
 
 end
 
@@ -1514,10 +1529,10 @@ function segment_gr_analysis_file(
     end
 
 
-    Kimchi_res_one_file = ("segment_analysis", results)
+    Kimchi_res_Log_Lin = ("segment_analysis", results)
 
 
-    return Kimchi_res_one_file
+    return Kimchi_res_Log_Lin
 end
 
 

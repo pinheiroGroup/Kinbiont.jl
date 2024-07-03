@@ -16,11 +16,28 @@ struct Kimchi_res_bootstrap_NL
 
 
 end
-struct Kimchi_res_one_file
+
+struct Kimchi_res_Log_Lin
     method::String
     params::Matrix{Any}
 end
 
+struct Kimchi_res_one_file
+    method::String
+    params::Matrix{Any}
+    fits::Tuple{Any}
+    data::Tuple{Any}
+end
+
+struct Kimchi_res_one_file_segmentation
+    method::String
+    params::Matrix{Any}
+    fits::Tuple{Any}
+    data::Tuple{Any}
+    cp::Tuple{Any}
+    vector_AIC::Any
+
+end
 
 
 struct Kimchi_res_model_selection
@@ -81,8 +98,3 @@ end
 
 
 
-struct Kimchi_res_segmentation_ODE_file
-    method::String
-    params::Matrix{Any}
-    vector_AIC::Any
-end

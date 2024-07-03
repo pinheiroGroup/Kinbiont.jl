@@ -122,6 +122,8 @@ function fit_NL_model_file(
         mkpath(path_to_results)
     end
 
+    fits= ()
+    data_to_save = ()
     parameter_of_optimization = initialize_df_results_ode_custom(lb_param)
     errors_of_optimization = initialize_df_results_ode_custom(lb_param)
   
@@ -412,7 +414,8 @@ function fit_NL_model_file(
 
 
         end
-
+        fits = (fits...,temp_results_1[3] )
+        data_to_save = (data_to_save...,data)
 
     end
 
@@ -427,7 +430,7 @@ function fit_NL_model_file(
 
     end
 
-    Kimchi_res_one_file = (temp_results_1[1],parameter_of_optimization)
+    Kimchi_res_one_file = ("NL",parameter_of_optimization,fits,data_to_save)
 
 
     return Kimchi_res_one_file, errors_of_optimization
@@ -569,6 +572,9 @@ function fit_NL_model_selection_file(
     parameter_of_optimization = initialize_res_ms(list_u0)
     names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
+    fits= ()
+    data_to_save = ()
+    
     # reading files
     dfs_data = CSV.File(path_to_data)
 
@@ -688,7 +694,8 @@ function fit_NL_model_selection_file(
             println(temp_results_1[2])
         end
         parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[2])
-
+        fits = (fits...,temp_results_1[3] )
+        data_to_save = (data_to_save...,data)
     end
 
 
@@ -701,7 +708,7 @@ function fit_NL_model_selection_file(
 
 
     end
-    Kimchi_res_one_file = ("NL_model_selection",parameter_of_optimization)
+    Kimchi_res_one_file = ("NL_model_selection",parameter_of_optimization,fits,data_to_save)
 
     return Kimchi_res_one_file
 
@@ -858,7 +865,9 @@ function fit_NL_segmentation_file(
 
     parameter_of_optimization = initialize_res_ms(list_u0, number_of_segment=n_change_points)
     names_of_annotated_df,properties_of_annotation,list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
-
+    fits= ()
+    data_to_save = ()
+    cps = ()
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -998,6 +1007,10 @@ function fit_NL_segmentation_file(
 
         parameter_of_optimization = hcat(parameter_of_optimization, results_to_bind)
 
+        fits = (fits...,temp_results_1[3] )
+        data_to_save = (data_to_save...,data)
+        cps = (cps...,temp_results_1[5])
+
     end
 
 
@@ -1011,7 +1024,7 @@ function fit_NL_segmentation_file(
 
     end
 
-    Kimchi_res_one_file = ("NL_segmentation",parameter_of_optimization)
+    Kimchi_res_one_file = ("NL_segmentation", parameter_of_optimization,fits,data_to_save)
 
     return Kimchi_res_one_file
 

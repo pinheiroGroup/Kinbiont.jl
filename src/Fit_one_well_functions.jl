@@ -1620,7 +1620,7 @@ function segmentation_ODE(
 
             n_param =
                 sum([
-                    length(direct_search_results[1][kk][3:(end-4)]) for
+                    length(direct_search_results[1][kk][4:(end-3)]) for
                     kk = 1:length(direct_search_results[1])
                 ])
 

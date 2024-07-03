@@ -303,7 +303,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
         select_loss_function_NL(type_of_loss, data, penality_CI, model_function)
 
 
-    if length(data[2, :]) > pt_smooth_derivative + 2
+    if length(data[2, :]) < pt_smooth_derivative + 2
         max_em_gr = missing
 
     else
@@ -1600,7 +1600,7 @@ function segmentation_NL(
 
 
         n_param_full_model = sum([
-            length(res_this_combination[1][kk][3:(end-4)]) for
+            length(res_this_combination[1][kk][4:(end-3)]) for
             kk = 1:length(res_this_combination[1])
         ])
 

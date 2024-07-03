@@ -229,7 +229,7 @@ function expand_res(
         temp_output[(end-1)] = param_res[(end-2)]
         temp_output[(end)] = param_res[(end)-1]
 
-        for i = 3:(3+n_param)
+        for i = 4:(4+n_param)
             temp_output[i] = param_res[i-1]
         end
         fin_output = copy(temp_output)
@@ -635,7 +635,7 @@ function initialize_df_results_NL(model_string,list_of_model_parameters::Any)
 
         for i in 4:(4+nmax_param-1)
 
-            matrix_result[i] = string("param_", i - 2)
+            matrix_result[i] = string("param_", i - 3)
         end
         
         
@@ -666,7 +666,7 @@ function initialize_df_results_ode_custom(list_of_model_parameters::Any)
 
     for i in 4:(4+nmax_param-1)
 
-        matrix_result[i] = string("param_", i - 2)
+        matrix_result[i] = string("param_", i -3)
     end
     return matrix_result
 end
@@ -904,7 +904,7 @@ function check_bounds_opt(opt,p_guess,
         if  !(:lb  in keys(opt_params)) && !(:ub  in keys(opt_params) )
 
             @warn "The used optimization method requires box bounds, Kimchi.jl will use upper bounds that are 10 times the guess
-             and lower bound that are 10 times lower the guess.
+             and lower bounds that are 10 times lower the guess.
              This choice can be suboptimal. Note that the Kimchi.jl default optimizer requires box bounds to guaranteed a Real N(t) and positive parameters.
              To avoid to specify the bounds use you can use an optimizer that do not require it, e.g., `optimizer = NOMADOpt()`. 
              Note that numerical instabilities may occur.
