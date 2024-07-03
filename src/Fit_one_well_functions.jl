@@ -379,7 +379,6 @@ function fitting_one_well_ODE_constrained(
 
     ## defining loss function
     loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
-
     res = KimchiSolve(loss_function,
         u0,
         param;
@@ -388,7 +387,7 @@ function fitting_one_well_ODE_constrained(
         multistart=multistart,
         n_restart=n_restart,
         cons=cons,
-        opt_params...,
+        opt_params...
     )
 
 
@@ -549,7 +548,7 @@ function fitting_one_well_custom_ODE(
         multistart=multistart,
         n_restart=n_restart,
         cons=cons,
-        opt_params...,
+        opt_params...
     )
 
     #revalution of solution for plot an loss evaluation

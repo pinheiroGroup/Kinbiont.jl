@@ -169,15 +169,17 @@ function expand_res_seg(
         n_param = length(param_res) -6
         nmax_param = maximum(length.(list_of_model_parameters))
         temp_output = missings(Any, nmax_param + 6)
+
         temp_output[1] = label_exp
         temp_output[2] = names_of_the_well
         temp_output[3] = param_res[3]
-        temp_output[(end-2)] = param_res[(end)]
-        temp_output[(end-1)] = param_res[(end-2)]
-        temp_output[(end)] = param_res[(end)-1]
+        
+        temp_output[(end-2)] = param_res[(end-2)]
+        temp_output[(end-1)] = param_res[(end-1)]
+        temp_output[(end)] = param_res[(end)]
 
-        for i = 4:(4+n_param)
-            temp_output[i] = param_res[i-1]
+        for i =  4:(4+n_param-1)
+            temp_output[i] = param_res[i]
         end
         fin_output = copy(temp_output)
     elseif number_of_segment > 0
@@ -219,18 +221,18 @@ function expand_res(
     label_exp::String;
     number_of_segment=0,)
     if number_of_segment == 0
-        n_param = length(param_res) - 5
+        n_param = length(param_res) - 6
         nmax_param = maximum(length.(list_of_model_parameters))
         temp_output = missings(Any, nmax_param + 6)
         temp_output[1] = param_res[1]
         temp_output[2] = param_res[2]
         temp_output[3] = param_res[3]
-        temp_output[(end-2)] = param_res[(end)]
-        temp_output[(end-1)] = param_res[(end-2)]
-        temp_output[(end)] = param_res[(end)-1]
+        temp_output[(end-2)] = param_res[(end-2)]
+        temp_output[(end-1)] = param_res[(end-1)]
+        temp_output[(end)] = param_res[(end)]
 
-        for i = 4:(4+n_param)
-            temp_output[i] = param_res[i-1]
+        for i = 4:(4+n_param-1)
+            temp_output[i] = param_res[i]
         end
         fin_output = copy(temp_output)
     elseif number_of_segment > 0
@@ -238,7 +240,7 @@ function expand_res(
         fin_output = Matrix{Any}
 
         for s = 1:number_of_segment
-            n_param = length(param_res[s]) - 5
+            n_param = length(param_res[s]) - 6
             temp_output = missings(Any, nmax_param + 7)
             temp_output[1] = param_res[s][1]
             temp_output[2] = param_res[s][2]
@@ -249,7 +251,7 @@ function expand_res(
             temp_output[(end)] = param_res[s][(end)]
 
             for i = 4:(4+n_param-1)
-                temp_output[i] = param_res[s][i-2]
+                temp_output[i] = param_res[s][i]
             end
 
             if s == 1
@@ -897,8 +899,12 @@ end
 
 function check_bounds_opt(opt,p_guess,
     opt_params...)
-
+ 
     if SciMLBase.requiresbounds(opt)
+
+        opt_params = Dict(opt_params)
+
+
 
 
         if  !(:lb  in keys(opt_params)) && !(:ub  in keys(opt_params) )
