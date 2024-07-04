@@ -1211,7 +1211,7 @@ function segmentation_ODE_file(
     parameter_of_optimization = initialize_res_ms(param_array, number_of_segment=n_max_change_points + 1)
     fits = ()
     data_to_save = ()
-    cps = (["cps"])
+    cps = ()
 
     names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
 
@@ -1341,7 +1341,9 @@ function segmentation_ODE_file(
         end
 
         parameter_of_optimization = hcat(parameter_of_optimization, vectorized_temp_results)
-        fits = (fits...,temp_results_1[3] )
+        seg_fit = hcat(temp_results_1[4],temp_results_1[3])
+
+        fits = (fits...,seg_fit )
         data_to_save = (data_to_save...,data)
         cps = (cps...,temp_results_1[5])
         end

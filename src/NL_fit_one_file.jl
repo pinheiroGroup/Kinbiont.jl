@@ -1006,8 +1006,8 @@ function fit_NL_segmentation_file(
             number_of_segment=length(temp_results_1[2]))
 
         parameter_of_optimization = hcat(parameter_of_optimization, results_to_bind)
-
-        fits = (fits...,temp_results_1[3] )
+        seg_fit = hcat(temp_results_1[4],temp_results_1[3])
+        fits = (fits...,seg_fit )
         data_to_save = (data_to_save...,data)
         cps = (cps...,temp_results_1[5])
 
