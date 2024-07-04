@@ -89,6 +89,9 @@ function fit_one_file_Log_Lin(
     blank_array=[0.0],)
 
 
+    fits= ()
+    data_to_save = ()
+    confidence_bands = ()
 
 
 
@@ -214,7 +217,9 @@ function fit_one_file_Log_Lin(
             println("the results are:")
             println(temp_results_1[2])
         end
-
+        fits= (fits...,temp_results_1[3])
+        data_to_save = (data_to_save...,temp_results_1[4] )
+        confidence_bands = (confidence_bands...,temp_results_1[5] )
         results_Log_Lin = hcat(results_Log_Lin, temp_results_1[2])
 
     end
@@ -227,10 +232,10 @@ function fit_one_file_Log_Lin(
         )
 
     end
-    Kimchi_res_Log_Lin = ("Log-Lin", results_Log_Lin)
+    Kimchi_res_Log_Lin_files = ("Log-Lin", results_Log_Lin,fits,data_to_save,confidence_bands)
 
 
-    return Kimchi_res_Log_Lin
+    return Kimchi_res_Log_Lin_files
 
 
 

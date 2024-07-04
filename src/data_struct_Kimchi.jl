@@ -1,3 +1,11 @@
+struct Kimchi_res_one_well_log_lin
+    method::String
+    params::Vector{Any}
+    fit::Any
+    times::Any
+    confidence_band::Any
+end
+
 struct Kimchi_res_one_well
     method::String
     params::Vector{Any}
@@ -17,9 +25,12 @@ struct Kimchi_res_bootstrap_NL
 
 end
 
-struct Kimchi_res_Log_Lin
+struct Kimchi_res_Log_Lin_files
     method::String
     params::Matrix{Any}
+    fits::Tuple{Any}
+    data::Tuple{Any}
+    confidence_bands::Tuple{Any}
 end
 
 struct Kimchi_res_one_file
