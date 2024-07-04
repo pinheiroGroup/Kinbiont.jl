@@ -1536,10 +1536,10 @@ function segment_gr_analysis_file(
     end
 
 
-    Kimchi_res_Log_Lin = ("segment_analysis", results)
+    Kimchi_res_segment_analysis = ("segment_analysis", results)
 
 
-    return Kimchi_res_Log_Lin
+    return Kimchi_res_segment_analysis
 end
 
 
