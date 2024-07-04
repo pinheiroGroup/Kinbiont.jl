@@ -174,11 +174,11 @@ function fitting_one_well_Log_Lin(
         index_of_t_end = convert(Int, index_of_max + floor(pt_min_size_of_win / 2))
 
         if index_of_t_start < 1
-            index_of_t_start = 2
+            index_of_t_start =1 
         end
 
         if index_of_t_end > length(data_smooted[1, :])
-            index_of_t_end = length(data_smooted[1, :]) - 1
+            index_of_t_end = length(data_smooted[1, :]) 
         end
     end
 
@@ -194,7 +194,7 @@ function fitting_one_well_Log_Lin(
 
         sigma_a = sigma_b = r = zeros(N)
         Theoretical_fitting = coeff_1 .+ data_to_fit_times .* coeff_2
-
+        
         Cantrell_errors = sqrt(sum((data_to_fit_values - coeff_2 * data_to_fit_times .- coeff_1) .^ 2) / (N - 2))  # goodness of fit
         sigma_b = sqrt(1 / sum((data_to_fit_times .- mean_x) .^ 2))
         sigma_a = Cantrell_errors * sqrt(1 / N + mean_x^2 * sigma_b^2)
@@ -1784,3 +1784,4 @@ export ODE_Model_selection
 export one_well_morris_sensitivity
 export selection_ODE_fixed_intervals
 export segmentation_ODE
+export segment_gr_analysis
