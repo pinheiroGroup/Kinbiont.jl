@@ -390,8 +390,8 @@ function analyze_segment(label_exp, name_well, data, segment_number, pt_smoothin
         od_of_max = data[2, index_of_max_od]
 
         derivative = deriv_evaluation(data)
-        min_deriv = maximum(derivative)
-        max_deriv = minimum(derivative)
+        min_deriv = minimum(derivative)
+        max_deriv = maximum(derivative)
 
 
 
