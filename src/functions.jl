@@ -396,9 +396,9 @@ function analyze_segment(label_exp, name_well, data, segment_number, pt_smoothin
 
 
 
-        res_deriv = [label_exp, name_well, max_specific_gr, min_specific_gr, t_of_max, od_of_max, max_deriv, min_deriv, data[1, end], data[2, end], segment_number]
+        res_deriv = [label_exp, name_well, max_specific_gr, min_specific_gr, t_of_max, od_of_max, max_deriv, min_deriv, data[1, end], data[2, end]-data[2, 1], segment_number]
     else
-        res_deriv = [label_exp, name_well, missing, missing, missing, missing, missing, missing, data[1, end], data[2, end], segment_number]
+        res_deriv = [label_exp, name_well, missing, missing, missing, missing, missing, missing, data[1, end], data[2, end]-data[2, 1], segment_number]
         specific_gr = [missing]
         specific_gr_times = [missing]
         derivative = [missing]

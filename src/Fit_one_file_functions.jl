@@ -1417,7 +1417,7 @@ function segment_gr_analysis_file(
 
 
     # TEMPORARY results df
-    results = ["label_exp", "name_well", "max_gr", "min_gr", "t_of_max", "od_of_max", "max_deriv", "min_deriv", "end_time", "end_N", "segment_number"]
+    results = ["label_exp", "name_well", "max_gr", "min_gr", "t_of_max", "od_of_max", "max_deriv", "min_deriv", "end_time", "delta_N", "segment_number"]
 
     if write_res == true
         mkpath(path_to_results)
