@@ -1,3 +1,6 @@
+
+using SpecialFunctions
+
 struct NL_Model
     name::String
     func::Function
@@ -10,6 +13,32 @@ end
 # exponential
 
 
+function heaviside(t)
+    0.5 .* (sign.(t) .+ 1)
+end
+function heaviside_n(t)
+    .- 0.5 .* (sign.(t) .- 1)
+end
+
+function NL_piecewise_logistic2(p, times)
+
+
+    u =    (heaviside_n.( times .- p[1])) .* p[2]   .+  heaviside.( times .- p[1]) .* p[3] ./ (1.0 .+ ( (p[3]./p[2]) .-1.0 ) .* exp.( .- p[4] .* (times .- p[1] ) ) )
+
+return u
+
+end
+
+
+
+function NL_piecewise_logistic(p, times)
+
+
+    u =    (heaviside_n.( times .- p[1])) .* p[2].* exp.(p[5] .* times)   .+  heaviside.( times .- p[1]) .* p[3] ./ (1.0 .+ ( (p[3]./(p[2].*exp.(p[5].*(p[1])))    ) .-1.0 ) .* exp.( .- p[4] .* (times .- p[1] ) ) )
+
+return u
+
+end
 function NL_model_exp(p, times)
 
     u = p[1] .* exp.(p[2] .* times)
@@ -30,7 +59,7 @@ end
 
 function NL_model_logistic(p, times)
 
-    u = p[1] ./ (1 .+ ( (p1[1]./p[2]) .-1 ) .* exp.( .- p[3] .* times ) )
+    u = p[1] ./ (1 .+ ( (p[1]./p[2]) .-1 ) .* exp.( .- p[3] .* times ) )
 
     return u
 
@@ -167,6 +196,12 @@ end
 
 NL_models_list = [
     NL_Model(
+        "NL_piecewise_logistic",
+        NL_piecewise_logistic,
+        guess_NL_model_exp,
+        ["model", "well", "t_lag", "N_lag", "N_max","growth_rate","linear_rate","th_max_gr", "emp_max_gr", "loss"]
+    ),
+    NL_Model(
         "NL_exponential",
         NL_model_exp,
         guess_NL_model_exp,
@@ -220,3 +255,4 @@ export NL_model_Bertalanffy
 export NL_model_Richards
 export NL_model_Morgan
 export NL_model_Weibull
+export NL_piecewise_logistic
