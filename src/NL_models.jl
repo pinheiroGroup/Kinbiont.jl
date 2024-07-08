@@ -20,7 +20,7 @@ function heaviside_n(t)
     .- 0.5 .* (sign.(t) .- 1)
 end
 
-function NL_piecewise_logistic2(p, times)
+function NL_piecewise_linear_logistic(p, times)
 
 
     u =    (heaviside_n.( times .- p[1])) .* p[2]   .+  heaviside.( times .- p[1]) .* p[3] ./ (1.0 .+ ( (p[3]./p[2]) .-1.0 ) .* exp.( .- p[4] .* (times .- p[1] ) ) )
@@ -31,7 +31,7 @@ end
 
 
 
-function NL_piecewise_logistic(p, times)
+function NL_piecewise_exp_logistic(p, times)
 
 
     u =    (heaviside_n.( times .- p[1])) .* p[2].* exp.(p[5] .* times)   .+  heaviside.( times .- p[1]) .* p[3] ./ (1.0 .+ ( (p[3]./(p[2].*exp.(p[5].*(p[1])))    ) .-1.0 ) .* exp.( .- p[4] .* (times .- p[1] ) ) )
@@ -196,8 +196,14 @@ end
 
 NL_models_list = [
     NL_Model(
-        "NL_piecewise_logistic",
-        NL_piecewise_logistic,
+        "NL_piecewise_lin_logistic",
+        NL_piecewise_linear_logistic,
+        guess_NL_model_exp,
+        ["model", "well", "t_lag", "N_lag", "N_max","growth_rate","th_max_gr", "emp_max_gr", "loss"]
+    ),
+    NL_Model(
+        "NL_piecewise_exp_logistic",
+        NL_piecewise_exp_logistic,
         guess_NL_model_exp,
         ["model", "well", "t_lag", "N_lag", "N_max","growth_rate","linear_rate","th_max_gr", "emp_max_gr", "loss"]
     ),
@@ -255,4 +261,5 @@ export NL_model_Bertalanffy
 export NL_model_Richards
 export NL_model_Morgan
 export NL_model_Weibull
-export NL_piecewise_logistic
+export NL_piecewise_linear_logistic
+export NL_piecewise_exp_logistic
