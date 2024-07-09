@@ -415,6 +415,10 @@ function fit_NL_model_file(
 
         end
         fits = (fits...,temp_results_1[3] )
+        if multiple_scattering_correction == true
+
+            data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
+        end
         data_to_save = (data_to_save...,data)
 
     end
@@ -695,6 +699,10 @@ function fit_NL_model_selection_file(
         end
         parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[2])
         fits = (fits...,temp_results_1[3] )
+        if multiple_scattering_correction == true
+
+            data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
+        end
         data_to_save = (data_to_save...,data)
     end
 
@@ -1008,6 +1016,10 @@ function fit_NL_segmentation_file(
         parameter_of_optimization = hcat(parameter_of_optimization, results_to_bind)
         seg_fit = hcat(temp_results_1[4],temp_results_1[3])
         fits = (fits...,seg_fit )
+        if multiple_scattering_correction == true
+
+            data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
+        end
         data_to_save = (data_to_save...,data)
         cps = (cps...,temp_results_1[5])
 

@@ -6,6 +6,8 @@ using DelimitedFiles
 using BetaML
 using DecisionTree
 using MLJDecisionTreeInterface
+using DecisionTree
+using AbstractTrees
 
 
 """
@@ -73,6 +75,7 @@ function downstream_decision_tree_regression(jmaki_results::Matrix{Any}, # outpu
 max_depth = convert(Int, max_depth)
 
 
+  feature_names = string.(feature_matrix[1,2:end])
 
   names_of_the_wells_res = jmaki_results[2, 1:end]
   names_of_the_wells_annotation = feature_matrix[1:end, 1]
@@ -141,10 +144,27 @@ max_depth = convert(Int, max_depth)
   imp_1 = impurity_importance(model)
   imp_2 = split_importance(model)
   #imp_3 = permutation_importance(model)
+
+  wt = DecisionTree.wrap(model, (featurenames = feature_names,))
+
+  leaves = collect(AbstractTrees.Leaves(wt))
+  wt = DecisionTree.wrap(model, (featurenames = feature_names,))
+  leaves_values = ["values","cluster"]
+  values = Any
+  
+  for i in eachindex(leaves)
+      values = leaves[i].leaf.values
+      index_leaf = zeros(length(values))
+      index_leaf .= i
+      temp = hcat(index_leaf,values)
+      leaves_values = hcat(leaves_values,transpose(temp))
+   
+  end
+
   if verbose == true
     tree_out = DecisionTree.print_tree(model, max_depth)
   end
-    return model, imp_1, imp_2, r2 
+    return model, imp_1, imp_2, r2 , leaves_values
 end
 
 

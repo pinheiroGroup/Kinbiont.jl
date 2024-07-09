@@ -482,6 +482,12 @@ function fit_file_ODE(
 
         parameter_of_optimization = hcat(parameter_of_optimization, temp_results_1[2])
         fits = (fits...,temp_results_1[3] )
+
+        if multiple_scattering_correction == true
+
+            data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
+        end
+
         data_to_save = (data_to_save...,data)
     
 
@@ -748,6 +754,10 @@ function fit_file_custom_ODE(
 
         parameter_of_optimization = hcat(parameter_of_optimization, well_results)
         fits = (fits...,temp_results_1[3] )
+        if multiple_scattering_correction == true
+
+            data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
+        end
         data_to_save = (data_to_save...,data)
     end
 
@@ -1028,6 +1038,10 @@ function ODE_model_selection_file(
 
         parameter_of_optimization = hcat(parameter_of_optimization, vectorized_temp_results)
         fits = (fits...,temp_results_1[3] )
+        if multiple_scattering_correction == true
+
+            data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
+        end
         data_to_save = (data_to_save...,data)
     end
 
@@ -1349,6 +1363,10 @@ function segmentation_ODE_file(
         seg_fit = hcat(temp_results_1[4],temp_results_1[3])
 
         fits = (fits...,seg_fit )
+        if multiple_scattering_correction == true
+
+            data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
+        end
         data_to_save = (data_to_save...,data)
         cps = (cps...,temp_results_1[5])
         end
