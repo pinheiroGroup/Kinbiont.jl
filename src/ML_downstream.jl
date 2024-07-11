@@ -72,7 +72,7 @@ function downstream_decision_tree_regression(jmaki_results::Matrix{Any}, # outpu
   do_cross_validation = false,
   n_folds_cv = 3,
 )
-max_depth = convert(Int, max_depth)
+ max_depth = convert(Int, max_depth)
 
 
   feature_names = string.(feature_matrix[1,2:end])
@@ -85,31 +85,18 @@ max_depth = convert(Int, max_depth)
   index_res = Int
   index_annotation = Int
 
+  index_res =  findfirst.(isequal.(wells_to_use), (names_of_the_wells_res,))
+  index_annotation =findfirst.(isequal.(wells_to_use), (names_of_the_wells_res,))
 
 
-
-  for i in wells_to_use
-    if i == wells_to_use[1]
-      index_res = findfirst(names_of_the_wells_res .== i)
-      index_annotation = findfirst(names_of_the_wells_annotation .== i)
-
-    else
-
-      index_res = hcat(index_res, findfirst(names_of_the_wells_res .== i))
-      index_annotation = hcat(index_annotation, findfirst(names_of_the_wells_annotation .== i))
-
-    end
-
-
-  end
 
   # order results and annotation by well in the same order
 
-  index_res[1, :] = index_res[1, :] 
+  #index_res[1, :] = index_res[1, :] 
   
-  output = convert.(Float64, jmaki_results[row_to_learn, index_res[1, :]])
+  output = convert.(Float64, jmaki_results[row_to_learn, index_res])
 
-  predictors = convert.(Float64, feature_matrix[index_annotation[1, :], 2:end])
+  predictors = convert.(Float64, feature_matrix[index_annotation, 2:end])
 
 
 
@@ -218,34 +205,20 @@ function downstream_symbolic_regression(jmaki_results,
 
 
 
-  for i in wells_to_use
-    if i == wells_to_use[1]
-      index_res = findfirst(names_of_the_wells_res .== i)
-      index_annotation = findfirst(names_of_the_wells_annotation .== i)
 
-    else
-
-      index_res = hcat(index_res, findfirst(names_of_the_wells_res .== i))
-      index_annotation = hcat(index_annotation, findfirst(names_of_the_wells_annotation .== i))
-
-    end
+  index_res =  findfirst.(isequal.(wells_to_use), (names_of_the_wells_res,))
+  index_annotation =findfirst.(isequal.(wells_to_use), (names_of_the_wells_res,))
 
 
-  end
 
   # order results and annotation by well in the same order
 
-  index_res[1, :] = index_res[1, :] 
-
-
-
-
-
+  #index_res[1, :] = index_res[1, :] 
+  
+  output = convert.(Float64, jmaki_results[row_to_learn, index_res])
 
   
-  output = convert.(Float64, jmaki_results[row_to_learn,  index_res[1, :]])
-
-  predictors =Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation[1, :], 2:end])))
+  predictors =Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation, 2:end])))
   
   hall_of_fame = SymbolicRegression.equation_search(predictors,output,options =options)
 
