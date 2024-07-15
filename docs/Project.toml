@@ -1,3 +1,4 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Kimchi = "3b7c519f-be5e-4159-a208-6486ce96bb37"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
