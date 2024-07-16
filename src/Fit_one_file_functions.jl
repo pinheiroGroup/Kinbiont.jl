@@ -1152,7 +1152,7 @@ This function performs model selection for ordinary differential equation (ODE) 
 -  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
--  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
+-  `correct_negative="remove"`: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
 -  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
@@ -1419,6 +1419,7 @@ function segment_gr_analysis_file(
     thr_lowess=0.05, # keyword argument of lowees smoothing
     type_of_detection="slinding_win",
     type_of_curve="original",
+    do_blank_subtraction="avg_blank",
     win_size=14, #  
     n_bins=40,
     path_to_results="NA",# path where save results
@@ -1428,7 +1429,7 @@ function segment_gr_analysis_file(
     blank_array=[0.0],
     correct_negative="remove",
     thr_negative=0.01,
-    verbose=true,)
+    verbose=false,)
 
 
 
@@ -1441,7 +1442,8 @@ function segment_gr_analysis_file(
         mkpath(path_to_results)
     end
     names_of_annotated_df, properties_of_annotation, list_of_blank, list_of_discarded = reading_annotation(path_to_annotation)
-
+    cp_list = ()
+    data_to_save = ()
 
     # reading files
     dfs_data = CSV.File(path_to_data)
@@ -1541,23 +1543,25 @@ function segment_gr_analysis_file(
         end
 
         results = hcat(results, temp_results_1[2])
+        cp_list = (cp_list...,temp_results_1[3])
+        data_to_save = (data_to_save...,temp_results_1[4])
 
     end
 
     if write_res == true
 
         CSV.write(
-            string(path_to_results, label_exp, "_results.csv"),
+            string(path_to_results,results, label_exp, "_results.csv"),
             Tables.table(Matrix(results)),
         )
 
     end
 
 
-    Kimchi_res_segment_analysis = ("segment_analysis", results)
+    Kimchi_res_one_file = ("segment_analysis", results, cp_list, data_to_save)
 
 
-    return Kimchi_res_segment_analysis
+    return Kimchi_res_one_file
 end
 
 

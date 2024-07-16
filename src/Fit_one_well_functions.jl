@@ -1769,7 +1769,7 @@ function segment_gr_analysis(
 
 
 
-    Kimchi_res_one_well = ("segment_analysis", res, missing, missing)
+    Kimchi_res_one_well = ("segment_analysis", res, interval_changepoints, data)
 
 
 
