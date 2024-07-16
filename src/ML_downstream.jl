@@ -85,8 +85,8 @@ function downstream_decision_tree_regression(jmaki_results::Matrix{Any}, # outpu
   index_res = Int
   index_annotation = Int
 
-  index_res =  findfirst.(isequal.(wells_to_use), (names_of_the_wells_res,))
-  index_annotation =findfirst.(isequal.(wells_to_use), (names_of_the_wells_res,))
+  index_res =  findfirst.(isequal.(names_of_the_wells_res), (wells_to_use,))
+  index_annotation =findfirst.(isequal.(names_of_the_wells_annotation), (wells_to_use,))
 
 
 
@@ -206,8 +206,8 @@ function downstream_symbolic_regression(jmaki_results,
 
 
 
-  index_res =  findfirst.(isequal.(wells_to_use), (names_of_the_wells_res,))
-  index_annotation =findfirst.(isequal.(wells_to_use), (names_of_the_wells_res,))
+  index_res =  findfirst.(isequal.(names_of_the_wells_res), (wells_to_use,))
+  index_annotation =findfirst.(isequal.(names_of_the_wells_annotation), (wells_to_use,))
 
 
 
@@ -218,7 +218,7 @@ function downstream_symbolic_regression(jmaki_results,
   output = convert.(Float64, jmaki_results[row_to_learn, index_res])
 
   
-  predictors =Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation, 2:end])))
+  predictors =Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation,2])))
   
   hall_of_fame = SymbolicRegression.equation_search(predictors,output,options =options)
 
