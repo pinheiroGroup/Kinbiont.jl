@@ -109,7 +109,3 @@ end
 
 
 
-struct Kimchi_res_segment_analysis
-    method::String
-    params::Matrix{Any}
-end
