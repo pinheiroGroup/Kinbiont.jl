@@ -169,9 +169,8 @@ end
 
 
 
-
 """
-    fit_NL_model_with_sensitivity(
+fit_NL_model_with_sensitivity(
     data::Matrix{Float64}, 
     name_well::String,
     label_exp::String, 
@@ -237,11 +236,12 @@ This function performs the Morris sensitivity analysis for the non-linear fit op
 `["name of model", "well", "param_1", "param_2", .., "param_n", "maximum specific gr using ode", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
  where `"param_1", "param_2", .., "param_n"` are the parameters of the optimal selected model fit as in the documentation. 
 
- - `results_NL_fit[2]`: Optimal fit parameters. 
+- `results_NL_fit[2]`: Optimal fit parameters. 
 
- - `results_NL_fit[3]`: the results of the fit for any combination tested. (What does this mean?)
+- `results_NL_fit[3]`: the results of the fit for any combination tested. (What does this mean?)
 
- - `results_NL_fit[4]`: the results of the fit for any combination tested. (????)
+- `results_NL_fit[4]`: the results of the fit for any combination tested. (????)
+
 """
 function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
@@ -1637,7 +1637,6 @@ end
 
 export fit_NL_model
 export fit_NL_model_with_sensitivity
-export fit_NL_model_MCMC_intialization
 export fit_NL_model_bootstrap
 export NL_error_blanks
 export NL_model_selection

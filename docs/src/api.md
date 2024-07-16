@@ -59,26 +59,23 @@ Kimchi.one_well_morris_sensitivity
 
 ### NL Fitting
 
-[`Kimchi.fit_NL_model`](@ref)
-
 ```@docs
 Kimchi.fit_NL_model
 ```
-[`Kimchi.fit_NL_model_with_sensitivity`](@ref)
+[`Kimchi.fit_NL_model`](@ref)
+
 
 ```@docs
 Kimchi.fit_NL_model_with_sensitivity
 ```
-[`Kimchi.fit_NL_model_MCMC_intialization`](@ref)
+[`Kimchi.fit_NL_model_with_sensitivity`](@ref)
 
-```@docs
-Kimchi.fit_NL_model_MCMC_intialization
-```
-[`Kimchi.fit_NL_model_bootstrap`](@ref)
 
 ```@docs
 Kimchi.fit_NL_model_bootstrap
 ```
+[`Kimchi.fit_NL_model_bootstrap`](@ref)
+
 [`Kimchi.NL_error_blanks`](@ref)
 
 ```@docs
@@ -112,17 +109,10 @@ Kimchi.segmentation_ODE
 ```@docs
 Kimchi.selection_NL_fixed_interval
 ```
-[`Kimchi.selection_NL_max_change_points`](@ref)
+[`Kimchi.segmentation_NL`](@ref)
 
 ```@docs
-Kimchi.selection_NL_max_change_points
-```
-
-## Plot a file
-[`Kimchi.plot_data`](@ref)
-
-```@docs
-Kimchi.plot_data
+Kimchi.segmentation_NL
 ```
 
 ## Fitting one a .csv file
