@@ -1379,8 +1379,8 @@ function segmentation_ODE_file(
             string(
                 path_to_results,
                 label_exp,
-                "_parameters_model_cpd_nseg_",
-                n_max_change_points + 1,
+                "_parameters_model_cpd_ncp_",
+                n_max_change_points,
                 ".csv",
             ),
             Tables.table(Matrix(parameter_of_optimization)),

@@ -1500,8 +1500,8 @@ function segmentation_ODE(
         score_of_the_models = res[8]
         change_point_list = [0.0]
         change_point_to_plot = [0.0, 0.0, 0.0]
-        time_points_to_plot = copy(data_testing[1, :])
-        sol_to_plot = copy(reduce(vcat, res[3])[2:2:end])
+        time_points_to_plot = res[4]
+        sol_to_plot = res[3]
 
     else
 
