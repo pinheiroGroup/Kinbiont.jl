@@ -1347,6 +1347,7 @@ function segmentation_ODE_file(
         )
         vector_AIC = hcat(vector_AIC, temp_results_1[end])
 
+
         vectorized_temp_results = expand_res_seg(
             temp_results_1[2],
             param_array,

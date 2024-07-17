@@ -1443,7 +1443,6 @@ function segmentation_ODE(
     change_point_list = Vector{Vector{Any}}()
 
 
-
     if n_max_change_points == 0 || detect_number_cpd == true
         res = ODE_Model_selection(
             data_testing, # dataset first row times second row OD
@@ -1497,7 +1496,7 @@ function segmentation_ODE(
 
         end
         top_cps = [0.0]
-        top_model = res[9]
+        top_model = res[2]
         score_of_the_models = res[8]
         change_point_list = [0.0]
         change_point_to_plot = [0.0, 0.0, 0.0]
@@ -1506,7 +1505,7 @@ function segmentation_ODE(
 
     else
 
-        top_model = "NO"
+        top_model =[ "NO"]
         score_of_the_models = 10^9
         change_point_list = [0.0]
         change_point_to_plot = [0.0, 0.0, 0.0]
