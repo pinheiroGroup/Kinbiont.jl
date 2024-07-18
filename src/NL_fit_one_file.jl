@@ -710,7 +710,7 @@ function fit_NL_model_selection_file(
     if write_res == true
 
         CSV.write(
-            string(path_to_results, label_exp, "_parameters_", model, ".csv"),
+            string(path_to_results, label_exp, "_parameters_nl.csv"),
             Tables.table(Matrix(parameter_of_optimization)),
         )
 
