@@ -60,7 +60,14 @@ This function fits a logarithmic-linear model to a csv file. The function assume
 
 # Output:
 
-- a matrix with the following contents in each row : `[label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
+- - a matrix with the following contents in each row : `[label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
+
+
+# Output:
+
+- a data struct containing:
+1. method string
+2. a matrix with the following contents in each row : `[label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
 
 """
 function fit_one_file_Log_Lin(
@@ -247,48 +254,48 @@ end
 
 """
     fit_file_ODE(
-    label_exp::String, 
-    path_to_data::String, 
-    model::String,
-    lb_param::Vector{Float64},
-    ub_param::Vector{Float64};
-    path_to_annotation::Any = missing,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
-    integrator=Tsit5(),
-    path_to_results="NA",
+    label_exp::String,
+    path_to_data::String,
+    model::String, 
+    param;
+    path_to_annotation::Any=missing,
+    integrator=Tsit5(), 
+    path_to_results="NA", 
     loss_type="RE", 
-    smoothing=false,
+    smoothing=false, 
     type_of_smoothing="lowess",
     verbose=false, 
-    write_res=false, 
+    write_res=false,
     pt_avg=1, 
     pt_smooth_derivative=7, 
     do_blank_subtraction="avg_blank", 
     avg_replicate=false,
     correct_negative="remove",
-    thr_negative=0.01,  
+    thr_negative=0.01, 
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA", 
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
-    blank_value = 0.0,
-    blank_array = [0.0],)
+    blank_value=0.0,
+    blank_array=[0.0],
+    multistart=false,
+    n_restart=50,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
+    )
 
 This function fits a ODE model to a csv file. The function assumes that the first column is the time, see the documentation for example of the data format. It evaluate the specific growht rate, the with a statistical threshold it individuates a exponetial window and perform a-log lin fitting
 # Arguments:
 - `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see documentation.
 - `label_exp::String`: The label of the experiment.
 -  `model::String`:String of the ODE to be fitted. See the documentation for the complete list.
-- `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
-- `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
+- `param`:Vector{Float64}, Initial guess for the model parameters.
+
 
 # Key Arguments:
-- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimization.jl.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -305,19 +312,26 @@ This function fits a ODE model to a csv file. The function assumes that the firs
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-- `PopulationSize =100`: Size of the population of the optimization
-- `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 -  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as average value of the blank.
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as array of the blanks values.
 -  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
+
 
 
 # Output:
 
-- an matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation.
+- a data struct containing:
+1. method string
+2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+3. the fittings
+4. the preprocessed data
 """
 function fit_file_ODE(
     label_exp::String, #label of the experiment
@@ -515,38 +529,39 @@ function fit_file_ODE(
 end
 
 """
-
-    fit_file_custom_ODE(
-    label_exp::String, 
-    path_to_data::String,
+    function fit_file_custom_ODE(
+    label_exp::String,
+    path_to_data::String, 
     model::Any, 
-    lb_param::Vector{Float64},
-    ub_param::Vector{Float64},
+    param::Vector{Float64},
     n_equation::Int;
-    path_to_annotation::Any = missing,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    path_to_annotation::Any=missing,
     integrator=Tsit5(),
-    path_to_results="NA",
-    loss_type="RE",
-    smoothing=false,
+    path_to_results="NA", 
+    loss_type="RE"
+    smoothing=false, 
     type_of_smoothing="lowess",
-    verbose=false, 
-    write_res=false,
-    pt_avg=1,
+    verbose=false,
+    write_res=false, 
+    pt_avg=1, 
     pt_smooth_derivative=7,
     do_blank_subtraction="avg_blank",
     avg_replicate=false,
     correct_negative="remove", 
-    thr_negative=0.01,  
+    thr_negative=0.01, 
     multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA", 
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
+    calibration_OD_curve="NA",  
     thr_lowess=0.05,
-    blank_value = 0.0,
-    blank_array = [0.0],)
+    blank_value=0.0,
+    blank_array=[0.0],
+    multistart=false,
+    n_restart=50,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
+    )
 
 This function is designed for fitting an ordinary differential equation (ODE) model to a dataset in a csv file. . It utilizes a customizable ODE model, see documentation on how declare the model
 
@@ -556,15 +571,13 @@ This function is designed for fitting an ordinary differential equation (ODE) mo
 - `label_exp::String`: The label of the experiment.
 -  `path_to_data::String`: Path to csv file containing the data
 -  `model::Any`: Function of the ODE to be fitted. See the documentation for examples.
-- `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
-- `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
+- `param`:Vector{Float64}, Initial guess for the model parameters.
 - `n_equation::Int`:  number ode in the system
 
 # Key Arguments:
 
-- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimization.jl.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -581,20 +594,27 @@ This function is designed for fitting an ordinary differential equation (ODE) mo
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-- `PopulationSize =100`: Size of the population of the optimization
-- `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 -  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
 -  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
+
+
 
 
 # Output:
 
-- a matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
-
+- a data struct containing:
+1. method string
+2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+3. the fittings
+4. the preprocessed data
 """
 function fit_file_custom_ODE(
     label_exp::String, #label of the experiment
@@ -788,34 +808,37 @@ end
     label_exp::String, 
     path_to_data::String, 
     models_list::Vector{String}, 
-    lb_param_array::Any, 
-    ub_param_array::Any; 
-    path_to_annotation::Any = missing,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    param_array::Any;
+    lb_param_array::Any=nothing, 
+    ub_param_array::Any=nothing, 
+    path_to_annotation::Any=missing,
     integrator=Tsit5(), 
-    path_to_results="NA",
+    path_to_results="NA", 
     loss_type="L2", 
-    smoothing=false,
     type_of_smoothing="lowess",
-    beta_smoothing_ms=2.0, 
-    verbose=false,
-    write_res=false,
-    pt_avg=1,
-    pt_smooth_derivative=7, 
+    beta_smoothing_ms=2.0,
+    verbose=false, 
+    write_res=false, 
+    pt_avg=1, 
+    pt_smooth_derivative=7,
     do_blank_subtraction="avg_blank", 
     avg_replicate=false,
-    correct_negative="remove", 
+    correct_negative="remove",
     thr_negative=0.01,  
-    multiple_scattering_correction=false,
+    multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     thr_lowess=0.05,
     correction_AIC=true,
-    blank_value = 0.0,
-    blank_array = [0.0],)
+    blank_value=0.0,
+    blank_array=[0.0],
+    multistart=false,
+    n_restart=50,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
+    )
 
 This function performs model selection  of ODE for a full csv file.
 
@@ -825,14 +848,15 @@ This function performs model selection  of ODE for a full csv file.
 -  `path_to_data::String`: Path to csv file containing the data    
 -  `models_list::Vector{String}`: list of ODE model used
 - `models_list::Vector{String}`: A vector of ODE models to evaluate.
-- `lb_param_array::Any`: Lower bounds for the parameters (compatible with the models).
-- `ub_param_array::Any`: Upper bounds
+- `param_array`:Vector{Float64}, Initial guess for the models parameters.
+
 
 
 # Key Arguments:
-- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
-- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+
+- `lb_param_array::Any`: Lower bounds for the parameters (compatible with the models).
+- `ub_param_array::Any`: Upper bounds- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
+- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimization.jl.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -849,9 +873,6 @@ This function performs model selection  of ODE for a full csv file.
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-- `PopulationSize =100`: Size of the population of the optimization
-- `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 -  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
@@ -859,11 +880,22 @@ This function performs model selection  of ODE for a full csv file.
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
 -  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
+
+
+
 
 # Output:
 
-- an matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
-
+- a data struct containing:
+1. method string
+2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+3. the fittings
+4. the preprocessed data
 """
 function ODE_model_selection_file(
     label_exp::String, #label of the experiment
@@ -1071,16 +1103,16 @@ end
 
 """
     segmentation_ODE_file(
-    label_exp::String, 
+    label_exp::String,
     path_to_data::String, 
-    list_of_models::Vector{String},  
-    lb_param_array::Any, 
-    ub_param_array::Any,
+    list_of_models::Vector{String}, 
+    param_array::Any, 
     n_max_change_points::Int;
-    path_to_annotation::Any = missing,
+    lb_param_array::Any=nothing, 
+    ub_param_array::Any=nothing, 
+    path_to_annotation::Any=missing,
     detect_number_cpd=true,
     fixed_cpd=false,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(), 
     type_of_loss="L2", 
     type_of_detection="sliding_win",
@@ -1088,29 +1120,33 @@ end
     do_blank_subtraction="avg_blank",
     correct_negative="remove",
     thr_negative=0.01,
-    pt_avg=1,
+    pt_avg=3, 
     smoothing=true, 
     path_to_results="NA",
-    win_size=7,
+    win_size=7, 
     pt_smooth_derivative=0,
     beta_smoothing_ms=2.0,
     avg_replicate=false,
-    multiple_scattering_correction="false",
+    multiple_scattering_correction="false", 
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",  
     write_res=false,
     save_all_model=false,
     method_peaks_detection="peaks_prominence",
     n_bins=40,
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     verbose=false,
     correction_AIC=true,
-    blank_value = 0.0,
-    blank_array = [0.0],)
+    blank_value=0.0,
+    blank_array=[0.0],
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
+    )
 
 This function performs model selection for ordinary differential equation (ODE) models while segmenting the time series in various part using change points detection algorithm, for a full csv file.
 
@@ -1120,16 +1156,16 @@ This function performs model selection for ordinary differential equation (ODE) 
 - `label_exp::String`: The label of the experiment.
 -  `path_to_data::String`: Path to csv file containing the data
 - `list_of_models::Vector{String}`: A vector of ODE models to evaluate.
-- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
-- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
+- `param_array`, Initial guess for the models parameters.
 -  `n_max_change_points::Int`: Number of change point used, the results will have different number of cp depending on the values of key argument 'type_of_detection' and 'fixed_cpd'
 
 
 
 # Key Arguments:
-- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
+- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
 - `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
-- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
+- `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimization.jl.
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
 - `path_to_annotation::Any = missing`: The path to the .csv of annotation .
@@ -1146,9 +1182,6 @@ This function performs model selection for ordinary differential equation (ODE) 
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-- `PopulationSize =100`: Size of the population of the optimization
-- `maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 -  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as average value of the blank.
 - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `blank_subtraction != "NO "`. It is used as array of the blanks values.
@@ -1167,12 +1200,24 @@ This function performs model selection for ordinary differential equation (ODE) 
 -  'save_all_model=false': Bool, if true all the tested model are saved.
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
 -  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
+
 
 
 
 # Output:
 
-- an matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)" "segment number"]` where ' "param_1","param_2",..,"param_n" ' .
+- a data struct containing:
+1. method string
+2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+3. the fittings
+4. the preprocessed data
+5. the change points time for each well
+6. the AIC (or AICc) score fore each well
 """
 function segmentation_ODE_file(
     label_exp::String, #label of the experiment
@@ -1403,9 +1448,83 @@ end
 
 
 
+"""
+
+    segment_gr_analysis_file(
+    path_to_data, # dataset first row times second row OD
+    label_exp::String; #label of the experiment
+    path_to_annotation=missing,
+    n_max_change_points=0,
+    type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
+    pt_avg=7, # number of the point for rolling avg not used in the other cases
+    pt_smoothing_derivative=7, # number of poits to smooth the derivative
+    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
+    thr_lowess=0.05, # keyword argument of lowees smoothing
+    type_of_detection="slinding_win",
+    type_of_curve="original",
+    do_blank_subtraction="avg_blank",
+    win_size=14, #  
+    n_bins=40,
+    path_to_results="NA",# path where save results
+    write_res=false, # write results
+    avg_replicate=false,
+    blank_value=0.0,
+    blank_array=[0.0],
+    correct_negative="remove",
+    thr_negative=0.01,
+    verbose=false,
+    )
+
+This function analyze the the change point for a csv file and for each segment return min and max growht rate, min and max derivative, the delta OD of a segment and the times of changepoints. 
 
 
 
+
+    # Arguments:
+
+    - `label_exp::String`: The label of the experiment.
+    -  `path_to_data::String`: Path to csv file containing the data    - `label_exp::String`: The label of the experiment.
+    
+    # Key Arguments:
+    -  `n_max_change_points::Int`: Number of change point used, the results will have different number of cp depending on the values of key argument 'type_of_detection' and 'fixed_cpd'
+    -  'win_size=14': Int, size of the windows used by the cdo algorithms
+    - 'type_of_detection="slinding_win"': String, algorithm of cpd to use. Options '"slinding_win"' use a slinding window approach, '"lsdd"' uses least square density difference (LSDD) from ChangePointDetection.jl 
+    - 'type_of_curve="original"': String, on which curve is performed the change point detection algorithm. If '"original"' it use the original time series. With '"deriv"' it use the specific growth rate time series to perform the cdp.
+    - `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
+    -  `path_to_annotation::Any = missing`: The path to the .csv of annotation .
+    -   `write_res=false`: Bool, write the results in path_to_results folder.
+    -  ` path_to_results= "NA"`:String, path to the folder where save the results.
+    - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
+    -  `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
+    - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
+    - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+    - `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
+    - `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
+    - `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
+    - `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
+    - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+    - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+    - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+    -  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
+    -  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+    - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as average value of the blank.
+    - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as array of the blanks values.
+    -  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
+    -  `thr_negative=0.01`: FLoat: used only if `correct_negative == "thr_correction"` the data under this threshold will be changed to this value.
+    - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+    - `start_exp_win_thr=0.05` minimum value (of OD) to consider the start of exp window
+    
+    # Output:
+    
+
+    - a data struct containing:
+    1. method string
+    2. a matrix with the following contents in each row : `[label_exp, name_well, max_specific_gr, min_specific_gr, t_of_max, od_of_max, max_deriv, min_deriv, start OD of segment, delta OD, segment_number]`
+    3. List of change points for each well
+    4. preprocessed data
+"""
 function segment_gr_analysis_file(
     path_to_data, # dataset first row times second row OD
     label_exp::String; #label of the experiment
