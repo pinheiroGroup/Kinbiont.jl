@@ -529,7 +529,7 @@ function fit_file_ODE(
 end
 
 """
-    function fit_file_custom_ODE(
+    fit_file_custom_ODE(
     label_exp::String,
     path_to_data::String, 
     model::Any, 

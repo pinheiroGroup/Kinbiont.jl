@@ -3,37 +3,43 @@ using OptimizationMultistartOptimization
 """
     fit_NL_model_file(
     label_exp::String,
-    path_to_data::String, 
+    path_to_data::String,
     model::Any,
-    lb_param::Vector{Float64},
-    ub_param::Vector{Float64};
-    path_to_annotation::Any = missing,
-    u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    method_of_fitting="MCMC",
+    u0;
+    lb_param::Vector{Float64}=nothing,
+    ub_param::Vector{Float64}=nothing,
+    path_to_annotation::Any=missing,
+    method_of_fitting="NA",
     nrep=100,
     errors_estimation=false,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
-    path_to_results="NA", 
-    loss_type="RE", 
+    path_to_results="NA",
+    loss_type="RE",
     smoothing=false,
     type_of_smoothing="lowess",
-    verbose=false, 
-    write_res=false, 
-    pt_avg=1, 
-    pt_smooth_derivative=7, 
-    do_blank_subtraction="avg_blank", 
-    avg_replicate=false, 
+    verbose=false,
+    write_res=false,
+    pt_avg=1,
+    pt_smooth_derivative=7,
+    do_blank_subtraction="avg_blank",
+    avg_replicate=false,
     correct_negative="remove",
-    thr_negative=0.01,  
-    multiple_scattering_correction=false, 
+    thr_negative=0.01,
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",
     thr_lowess=0.05,
     penality_CI=8.0,
     size_bootstrap=0.7,
-    blank_value = 0.0,
-    blank_array = [0.0],
+    blank_value=0.0,
+    blank_array=[0.0],
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
     )
+
 
 
 
@@ -43,17 +49,17 @@ This function performs NL model selection of one NL model for a full csv file
 - `label_exp::String`,  label of the experiment.
 - `path_to_data::String`. path to the csv data frame. See documentation for formatting it.
 -  `model::Any`:  functions or strings (for harcoded NL model) of the NL models
--  `lb_param::Any`:Array of Lower bounds for the parameters (compatible with the models).
--  `ub_param::Any`:Array of Upper bounds for the parameters (compatible with the models).
+- `u0` Initial guess for the model parameters.
 
 # Key Arguments:
-- `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
-- `nrep=100`. Number of MCMC steps.
-- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+-  `lb_param::Any`:Array of Lower bounds for the parameters (compatible with the models).
+-  `ub_param::Any`:Array of Upper bounds for the parameters (compatible with the models).
 - `optimizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
 - `smoothing=false`: Whether to apply smoothing to the data or not.
+- `nrep=10`. Number of Morris steps/or bootstrap . Used only if method_of_fitting =  "Bootstrap" or "Morris_sensitivity"
+- `method_of_fitting="Normal"`: String, how perform the NL fit. Options "Bootstrap","Normal", and "Morris_sensitivity"
 - `type_of_loss:="RE" `: Type of loss function to be used. (options= "RE", "L2", "L2_derivative" and "blank_weighted_L2").
 - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
@@ -71,12 +77,23 @@ This function performs NL model selection of one NL model for a full csv file
 - `write_res=false`: Bool, write the results in path_to_results folder.
 - `path_to_results= "NA"`:String, path to the folder where save the results.
 -  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
-# Output (if `results_NL_fit =fit_NL_model_file(...)`:
+
+# Outputs:
 
 
-- a matrix with the following contents for each row : `[ "label of exp", "well", "param_1","param_2",..,"param_n","maximum specific gr using model","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
 
+
+- a data struct containing:
+1. method string
+2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+3. the fittings
+4. the preprocessed data
 """
 function fit_NL_model_file(
     label_exp::String, #label of the experiment
@@ -86,8 +103,8 @@ function fit_NL_model_file(
     lb_param::Vector{Float64}=nothing,# array of the array of the lower bound of the parameters
     ub_param::Vector{Float64}=nothing, # array of the array of the upper bound of the parameters
     path_to_annotation::Any = missing,# path to the annotation of the wells
-    method_of_fitting="NA",
-    nrep=100,
+    method_of_fitting="Normal",
+    nrep=10,
     errors_estimation=false,
     path_to_results="NA", # path where save results
     loss_type="RE", # string of the type of the used loss
@@ -449,32 +466,31 @@ end
 
 
 """
-    function fit_NL_model_selection_file(
-    label_exp::String, 
-    path_to_data::String, 
+    fit_NL_model_selection_file(
+    label_exp::String,
+    path_to_data::String,
     list_model_function::Any,
-    list_lb_param::Vector{Float64}, 
-    list_ub_param::Vector{Float64}; 
+    list_u0;
+    lb_param_array::Any = nothing,
+    ub_param_array::Any = nothing,
     path_to_annotation::Any = missing,
-    method_of_fitting="MCMC",
-    nrep=100,
-    list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
-    path_to_results="NA", 
+    method_of_fitting="Normal",
+    nrep=10,
+    path_to_results="NA",
     loss_type="RE",
-    smoothing=false, 
+    smoothing=false,
     type_of_smoothing="lowess",
-    verbose=false, 
+    verbose=false,
     write_res=false,
     pt_avg=1,
-    pt_smooth_derivative=7, 
-    do_blank_subtraction="avg_blank", 
-    avg_replicate=false, 
-    correct_negative="remove", 
-    thr_negative=0.01,  
-    multiple_scattering_correction=false, 
+    pt_smooth_derivative=7,
+    do_blank_subtraction="avg_blank",
+    avg_replicate=false,
+    correct_negative="remove",
+    thr_negative=0.01,
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA", 
+    calibration_OD_curve="NA",
     thr_lowess=0.05,
     beta_smoothing_ms=2.0,
     penality_CI=8.0,
@@ -482,7 +498,14 @@ end
     correction_AIC=true,
     blank_value = 0.0,
     blank_array = [0.0],
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
     )
+
 
 
 
@@ -494,13 +517,12 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 - `label_exp::String`,  label of the experiment.
 - `path_to_data::String`. path to the csv data frame. See documentation for formatting it.
 -  `list_model_function::Any`: Array containing functions or strings of the NL models
--  `list_lb_param::Any`:Array of Lower bounds for the parameters (compatible with the models).
--  `list_ub_param::Any`:Array of Upper bounds for the parameters (compatible with the models).
+- `list_u0`:Vector{Float64}, Initial guess for the model parameters.
 
 # Key Arguments:
-- `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
-- `nrep=100`. Number of MCMC steps.
-- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+-  `list_lb_param::Any`:Array of Lower bounds for the parameters (compatible with the models).
+-  `list_ub_param::Any`:Array of Upper bounds for the parameters (compatible with the models).
+- `method_of_fitting="Normal"`: String, how perform the NL fit. Options "Bootstrap","Normal", and "Morris_sensitivity"
 - `optimizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
@@ -521,12 +543,21 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 -  `correct_negative="thr_correction"`: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed..
 - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
 - `path_to_results= "NA"`:String, path to the folder where save the results.
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
-# Output (if `results_NL_fit =NL_model_selection(...)`:
+# Output:
 
 
-- a matrix with the following contents for each row : `[ "label of exp", "well", "param_1","param_2",..,"param_n","maximum specific gr using model","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' .
 
+- a data struct containing:
+1. method string
+2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+3. the fittings
+4. the preprocessed data
 """
 function fit_NL_model_selection_file(
     label_exp::String, #label of the experiment
@@ -536,8 +567,8 @@ function fit_NL_model_selection_file(
     lb_param_array::Any = nothing, # lower bound param
     ub_param_array::Any = nothing, # upper bound param
     path_to_annotation::Any = missing,# path to the annotation of the wells
-    method_of_fitting="NA",
-    nrep=100,
+    method_of_fitting="Normal",
+    nrep=10,
     path_to_results="NA", # path where save results
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
@@ -729,32 +760,31 @@ end
 
 """
     fit_NL_segmentation_file(
-    label_exp::String, 
-    path_to_data::String, 
+    label_exp::String,
+    path_to_data::String,
     list_model_function::Any,
-    list_lb_param::Vector{Vector{Float64}}, 
-    list_ub_param::Vector{Vector{Float64}}, 
+    list_u0,
     n_change_points::Int;
+    lb_param_array::Vector{Vector{Float64}}=nothing,
+    ub_param_array::Vector{Vector{Float64}}=nothing,
     path_to_annotation::Any = missing,
-    method_of_fitting="MCMC",
-    nrep=100,
-    list_u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
+    method_of_fitting="NA",
+    nrep=10,
     path_to_results="NA",
-    loss_type="RE", 
-    smoothing=false, 
+    loss_type="RE",
+    smoothing=false,
     type_of_smoothing="lowess",
-    verbose=false, 
+    verbose=false,
     write_res=false,
-    pt_avg=1, 
-    pt_smooth_derivative=7, 
-    do_blank_subtraction="avg_blank", 
+    pt_avg=1,
+    pt_smooth_derivative=7,
+    do_blank_subtraction="avg_blank",
     avg_replicate=false,
-    correct_negative="remove", 
-    thr_negative=0.01,  
-    multiple_scattering_correction=false, 
+    correct_negative="remove",
+    thr_negative=0.01,
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  
+    calibration_OD_curve="NA",
     size_bootstrap=0.7,
     thr_lowess=0.05,
     detect_number_cpd=true,
@@ -768,7 +798,13 @@ end
     correction_AIC=true,
     blank_value = 0.0,
     blank_array = [0.0],
-    )
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    auto_diff_method=nothing,
+    multistart=false,
+    n_restart=50,
+    cons=nothing,
+    opt_params...
+   )
 
 
 
@@ -779,14 +815,13 @@ This function performs NL model selection  on a segmented time series, it uses A
 - `label_exp::String`,  label of the experiment./
 - `path_to_data::String`. path to the csv data frame. See documentation for formatting it.
 -  `list_model_function::Any`: Array containing functions or strings of the NL models
--  `list_lb_param::Any`:Array of Lower bounds for the parameters (compatible with the models).
--  `list_ub_param::Any`:Array of Upper bounds for the parameters (compatible with the models).
+-  `list_u0::Any`:Initial guess for the models parameters.
 -  `n_max_change_points::Int`: Number of change point used, the results will have different number of cp depending on the values of key argument 'type_of_detection' and 'fixed_cpd'
 
 # Key Arguments:
-- `method_of_fitting="MCMC"`: String, how perform the NL fit. Options "MCMC","Bootstrap","Normal", and "Morris_sensitivity"
-- `nrep=100`. Number of MCMC steps.
-- `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
+-  `lb_param_array::Any`:Array of Lower bounds for the parameters (compatible with the models).
+-  `ub_param_array::Any`:Array of Upper bounds for the parameters (compatible with the models).
+- `method_of_fitting="Normal"`: String, how perform the NL fit. Options "Bootstrap","Normal", and "Morris_sensitivity"
 - `optimizer =   BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
 - `pt_avg=7`: Number of points to generate the initial condition or do the rolling avg smoothing.
@@ -797,7 +832,6 @@ This function performs NL model selection  on a segmented time series, it uses A
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 -  `thr_lowess=0.05`: Float64 keyword argument of lowess smoothing
-
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
 -  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
@@ -812,12 +846,21 @@ This function performs NL model selection  on a segmented time series, it uses A
 - 'fixed_cpd=false': Bool If  true it returns the fitting using top n_change_points.
 -  `correct_negative="thr_correction"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
 -  'win_size=14': Int, size of the windows used by the cdp algorithms
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
-# Output (if `results_NL_fit =fit_NL_segmentation_file(...)`:
+# Output:
 
-
-- an matrix with the following contents for each row : `[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using model","maximum specific gr using data", "objective function value (i.e. loss of the solution)" "segment number"]` where ' "param_1","param_2",..,"param_n" ' .
-
+- a data struct containing:
+1. method string
+2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+3. the fittings
+4. the preprocessed data
+5. the change points time for each well
+6. the AIC (or AICc) score fore each well
 """
 function fit_NL_segmentation_file(
     label_exp::String, #label of the experiment
@@ -829,7 +872,7 @@ function fit_NL_segmentation_file(
     ub_param_array::Vector{Vector{Float64}}=nothing, # upper bound param
     path_to_annotation::Any = missing,# path to the annotation of the wells
     method_of_fitting="NA",
-    nrep=100,
+    nrep=10,
     path_to_results="NA", # path where save results
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
