@@ -490,8 +490,7 @@ This function is designed to fit a user-defined ordinary differential equation (
 - data struct containing:
 
 1. a string with the method name
-2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
-where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as in the documentation.
+2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`, where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as in the documentation.
 3.  The numerical solution of the fitted ODE.
 4. The time coordinates (Xx) of the fitted ODE. 
 

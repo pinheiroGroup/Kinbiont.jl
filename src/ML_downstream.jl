@@ -1,6 +1,3 @@
-using SymbolicRegression
-using MLJ
-using Zygote
 using DecisionTree
 using MLJDecisionTreeInterface
 using DecisionTree
@@ -24,18 +21,12 @@ using AbstractTrees
     do_cross_validation = false,
     n_folds_cv = 3,
     )
-
-
 Function that 
-
 # Arguments:
-
 - `kimchi_results::Matrix{Any}`: The matrix of results of fitting one file with Kimchi. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
 - `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the kimchi_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of kimchi_results. 
 - `row_to_learn::Int`: which row of the matrix `kimchi_results` will be the target of the ML inference.
-
 # Key Arguments:
-
 - `max_depth = -1`, Int, maximum depth of the decision tree ( -1, no maximum)
 - `verbose = true`
 - `pruning_purity = 1.0`
@@ -48,9 +39,7 @@ Function that
 - `seed = 3`: the random seed
 - `do_cross_validation = false`:Bool, do or not the n-fold cross validation
 - `n_folds_cv = 3`: Int,   n-fold of the cross validation
-
 # Output:
-
 """
 function downstream_decision_tree_regression(kimchi_results::Matrix{Any}, # output of kimchi results
   feature_matrix::Matrix{Any},
@@ -90,7 +79,7 @@ function downstream_decision_tree_regression(kimchi_results::Matrix{Any}, # outp
   # order results and annotation by well in the same order
 
   #index_res[1, :] = index_res[1, :] 
-  
+
   output = convert.(Float64, kimchi_results[row_to_learn, index_res])
 
   predictors = convert.(Float64, feature_matrix[index_annotation, 2:end])
@@ -135,14 +124,14 @@ function downstream_decision_tree_regression(kimchi_results::Matrix{Any}, # outp
   wt = DecisionTree.wrap(model, (featurenames = feature_names,))
   leaves_values = ["values","cluster"]
   values = Any
-  
+
   for i in eachindex(leaves)
       values = leaves[i].leaf.values
       index_leaf = zeros(length(values))
       index_leaf .= i
       temp = hcat(index_leaf,values)
       leaves_values = hcat(leaves_values,transpose(temp))
-   
+
   end
 
   if verbose == true
@@ -161,25 +150,19 @@ end
     row_to_learn;
     options = SymbolicRegression.Options(),
     )
-
-
 Function that evalauates 
-
 # Arguments:
 - `kimchi_results::Matrix{Any}`: The matrix of results of fitting one file with Kimchi. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
 - `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the kimchi_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of kimchi_results. 
 - `row_to_learn::Int`: which row of the matrix `kimchi_results` will be the target of the ML inference.
 # Key Arguments:
-
 -  'options = SymbolicRegression.Options()' the option class of the symbolic regression class, see example and https://astroautomata.com/SymbolicRegression.jl/stable/api/#SymbolicRegression.CoreModule.OptionsStructModule.Options for details.
-
 # Outputs:
 if `res =  downstream_symbolic_regression()`:
 -`trees`: the trees representing the hall of fames results
 -`res_output`: a matrix containing the hall_of_fame  of the inference, where first column is the Complexity score, second column MSE and third column the equation Equation
 -`predictions`: For each equation we return the predicted value for each sample (in this matrix equations are columns and rows are the samples)
 -`index_annotation`: Index on how to order the rows of features matrix to match the columns of kimchi results
-
 """
 function downstream_symbolic_regression2(kimchi_results,
   feature_matrix,
@@ -214,10 +197,10 @@ function downstream_symbolic_regression2(kimchi_results,
   # order results and annotation by well in the same order
 
   #index_res[1, :] = index_res[1, :] 
-  
+
   output = convert.(Float64, kimchi_results[row_to_learn, index_res])
 
-  
+
   predictors = Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation,2])))
   predictors = reshape(predictors, length(predictors), 1)
 
@@ -257,7 +240,7 @@ function downstream_symbolic_regression2(kimchi_results,
       complexity = compute_complexity(member, options)
       loss = member.loss
       string = string_tree(member.tree, options)
-  
+
       res_output = hcat(res_output,[complexity,loss,string])
   end
 
@@ -273,6 +256,27 @@ end
 
 
 
+"""
+    downstream_symbolic_regression(
+    kimchi_results,
+    feature_matrix,
+    row_to_learn;
+    options = SymbolicRegression.Options(),
+    )
+Function that evalauates 
+# Arguments:
+- `kimchi_results::Matrix{Any}`: The matrix of results of fitting one file with Kimchi. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
+- `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the kimchi_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of kimchi_results. 
+- `row_to_learn::Int`: which row of the matrix `kimchi_results` will be the target of the ML inference.
+# Key Arguments:
+-  'options = SymbolicRegression.Options()' the option class of the symbolic regression class, see example and https://astroautomata.com/SymbolicRegression.jl/stable/api/#SymbolicRegression.CoreModule.OptionsStructModule.Options for details.
+# Outputs:
+if `res =  downstream_symbolic_regression()`:
+-`trees`: the trees representing the hall of fames results
+-`res_output`: a matrix containing the hall_of_fame  of the inference, where first column is the Complexity score, second column MSE and third column the equation Equation
+-`predictions`: For each equation we return the predicted value for each sample (in this matrix equations are columns and rows are the samples)
+-`index_annotation`: Index on how to order the rows of features matrix to match the columns of kimchi results
+"""
 function downstream_symbolic_regression(kimchi_results,
   feature_matrix,
   row_to_learn;
@@ -304,12 +308,12 @@ function downstream_symbolic_regression(kimchi_results,
   # order results and annotation by well in the same order
 
   #index_res[1, :] = index_res[1, :] 
-  
+
   output = convert.(Float64, kimchi_results[row_to_learn, index_res])
 
-  
+
   predictors =Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation,2])))
-  
+
   #hall_of_fame = SymbolicRegression.equation_search(predictors,output,options =options)
   hall_of_fame = SymbolicRegression.equation_search(predictors,output)
 
@@ -343,7 +347,7 @@ function downstream_symbolic_regression(kimchi_results,
       complexity = compute_complexity(member, options)
       loss = member.loss
       string = string_tree(member.tree, options)
-  
+
       res_output = hcat(res_output,[complexity,loss,string])
   end
 
@@ -365,5 +369,3 @@ end
 
 export downstream_decision_tree_regression
 export downstream_symbolic_regression
-
-export downstream_symbolic_regression2

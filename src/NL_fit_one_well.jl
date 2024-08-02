@@ -3,28 +3,29 @@
 
 """
     fit_NL_model(
-    data::Matrix{Float64}, 
+    data::Matrix{Float64},
     name_well::String,
-    label_exp::String, 
-    model_function::Any, 
-    lb_param::Vector{Float64}, 
-    ub_param::Vector{Float64}, 
-    u0=lb_param .+ (ub_param .- lb_param)./ 2,
-    optimizer=  BBO_adaptive_de_rand_1_bin_radiuslimited(),    
-    pt_avg=1, 
+    label_exp::String,
+    model_function::Any,
+    u0;
+    pt_avg=1,
     pt_smooth_derivative=7,
-    smoothing=false, 
+    smoothing=false,
     type_of_smoothing="rolling_avg",
-    type_of_loss="RE", 
-    multiple_scattering_correction=false, 
+    type_of_loss="RE",
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
+    calibration_OD_curve="NA",
     thr_lowess=0.05,
-    penality_CI=3.0
+    penality_CI=3.0,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
     )
+
 
 
 This function fits a nonlinear function to the time series input data of a single well. Method (Xx).
@@ -51,21 +52,22 @@ This function fits a nonlinear function to the time series input data of a singl
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
-- `PopulationSize=100`: Size of the population of the optimization (Xx)
-- `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
 - `penality_CI=2.0`: Float64. Used only in segementation to enforce the continuity at the boundary between segments. (We should delete this line!)
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
 
 
-# Output (if `results_NL_fit =fit_NL_model(...)`):
+# Output 
 
-- `results_NL_fit[1]`. An array with the following contents: 
+- data struct containing:
 
-`["name of model", "well", "param_1", "param_2",.., "param_n", "maximum specific gr using ode", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`, 
-where `"param_1","param_2",..,"param_n"` are the parameters of the selected model as in the documentation.
-
-- `results_NL_fit[2]`. The numerical solution of the fitted ODE. (What is the thing with ODE int he output of the NL function?)
+1. a string with the method name
+2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`, where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as in the documentation.
+3.  The numerical solution of the fitted ODE.
+4. The time coordinates (Xx) of the fitted ODE. 
 """
 function fit_NL_model(data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well

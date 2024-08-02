@@ -34,7 +34,7 @@ end
     pt_smoothing_derivative::Int)
 
 
-Function that evalauates specific gr evaluation with slinding window log-lin fitting
+Function that evaluates specific gr evaluation with slinding window log-lin fitting
 
 # Arguments:
 
