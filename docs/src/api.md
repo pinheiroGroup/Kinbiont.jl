@@ -23,7 +23,12 @@ Kimchi.correction_OD_multiple_scattering
 ```@docs
 Kimchi.fitting_one_well_Log_Lin
 ```
+### Analysis of segments
+[`Kimchi.segment_gr_analysis`](@ref)
 
+```@docs
+Kimchi.segment_gr_analysis
+```
 ### ODE fitting
 #### Fitting a harcoded model
 
@@ -59,28 +64,23 @@ Kimchi.one_well_morris_sensitivity
 
 ### NL Fitting
 
+[`Kimchi.fit_NL_model`](@ref)
+
 ```@docs
 Kimchi.fit_NL_model
 ```
-[`Kimchi.fit_NL_model`](@ref)
-
+[`Kimchi.fit_NL_model_with_sensitivity`](@ref)
 
 ```@docs
 Kimchi.fit_NL_model_with_sensitivity
 ```
-[`Kimchi.fit_NL_model_with_sensitivity`](@ref)
 
+[`Kimchi.fit_NL_model_bootstrap`](@ref)
 
 ```@docs
 Kimchi.fit_NL_model_bootstrap
 ```
-[`Kimchi.fit_NL_model_bootstrap`](@ref)
 
-[`Kimchi.NL_error_blanks`](@ref)
-
-```@docs
-Kimchi.NL_error_blanks
-```
 #### NL Model selection
 [`Kimchi.NL_model_selection`](@ref)
 
@@ -115,6 +115,7 @@ Kimchi.selection_NL_fixed_interval
 Kimchi.segmentation_NL
 ```
 
+
 ## Fitting one a .csv file
 
 ### Log-Lin fitting
@@ -123,6 +124,15 @@ Kimchi.segmentation_NL
 ```@docs
 Kimchi.fit_one_file_Log_Lin
 ```
+
+### Analysis of segments
+[`Kimchi.segment_gr_analysis_file`](@ref)
+
+```@docs
+Kimchi.segment_gr_analysis_file
+```
+
+
 ### ODE fitting
 
 [`Kimchi.fit_file_ODE`](@ref)
@@ -164,6 +174,20 @@ Kimchi.fit_NL_segmentation_file
 ```@docs
 Kimchi.segmentation_ODE_file
 ```
+
+## ML downstrema analyses
+
+[`Kimchi.downstream_decision_tree_regression`](@ref)
+
+```@docs
+Kimchi.downstream_decision_tree_regression
+```
+[`Kimchi.downstream_symbolic_regression`](@ref)
+
+```@docs
+Kimchi.downstream_symbolic_regression
+```
+
 ## Simulations 
 ### ODE simulations
 [`Kimchi.ODE_sim`](@ref)
