@@ -53,6 +53,7 @@ This function fits a nonlinear function to the time series input data of a singl
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
 - `penality_CI=2.0`: Float64. Used only in segementation to enforce the continuity at the boundary between segments. (We should delete this line!)
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
 - `cons=nothing`. Equation constrains for optimization.
 - `multistart=false`: use or not multistart optimization.
 - `n_restart=50`: number of restart. Used if `multistart = true`.
@@ -65,9 +66,9 @@ This function fits a nonlinear function to the time series input data of a singl
 - data struct containing:
 
 1. a string with the method name
-2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`, where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as in the documentation.
-3.  The numerical solution of the fitted ODE.
-4. The time coordinates (Xx) of the fitted ODE. 
+2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using NL", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`, where `"param_1", "param_2", .., "param_n"` are the NL model fit parameters as in the documentation.
+3.  The numerical solution of the fitted NL.
+4. The time coordinates  of the fitted NL. 
 """
 function fit_NL_model(data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
@@ -174,29 +175,32 @@ end
 
 """
     fit_NL_model_with_sensitivity(
-    data::Matrix{Float64}, 
+    data::Matrix{Float64},
     name_well::String,
-    label_exp::String, 
-    model_function::Any, 
-    lb_param::Vector{Float64}, 
+    label_exp::String,
+    model_function::Any,
+    lb_param::Vector{Float64},
     ub_param::Vector{Float64};
-    nrep=100,
-    u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optimizer=  BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    pt_avg=1, 
+    nrep=9,
+    pt_avg=1,
     pt_smooth_derivative=7,
-    smoothing=false, 
+    smoothing=false,
     type_of_smoothing="rolling_avg",
-    type_of_loss="RE", 
-    multiple_scattering_correction=false, 
+    type_of_loss="RE",
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
+    calibration_OD_curve="NA",
     thr_lowess=0.05,
+    write_res=false,
     penality_CI=3.0,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
     )
+
 
 
 This function performs the Morris sensitivity analysis for the non-linear fit optimization, which assesses the sensitivity of the fit parameters to variations of the initial guess (suitable for quality checks of nonlinear model fits. See https://docs.sciml.ai/GlobalSensitivity/stable/methods/morris/). 
@@ -227,23 +231,29 @@ This function performs the Morris sensitivity analysis for the non-linear fit op
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
-- `PopulationSize=100`: Size of the population of the optimization (Xx).
-- `maxiters=2000000`: Stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol=0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
 - `penality_CI=2.0`: Float64. Used only in segementation to enforce the continuity at the boundary between segments. (We should delete this line!)
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
 
-# Output (if `results_NL_fit =fit_NL_model_with_sensitivity(...)`):
 
-- `results_NL_fit[1]`. Nn array with the following contents: 
-`["name of model", "well", "param_1", "param_2", .., "param_n", "maximum specific gr using ode", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
- where `"param_1", "param_2", .., "param_n"` are the parameters of the optimal selected model fit as in the documentation. 
+# Output 
 
- - `results_NL_fit[2]`: Optimal fit parameters. 
+- data struct containing:
 
- - `results_NL_fit[3]`: the results of the fit for any combination tested. (What does this mean?)
+1. a string with the method name
+2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using NL", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`, where `"param_1", "param_2", .., "param_n"` are the NL model fit parameters as in the documentation.
+3.  The numerical solution of the fitted NL.
+4.  The time coordinates the fitted NL.
+5.  All the parameters final.
+6.  All the parameters final.
+7.  Mean parameters in of the boostrap.
+8. SD parameters in of the boostrap
 
- - `results_NL_fit[4]`: the results of the fit for any combination tested. (????)
+
 """
 function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
@@ -387,31 +397,36 @@ end
 
 
 """
-fit_NL_model_bootstrap(
-    data::Matrix{Float64}, 
+    function fit_NL_model_bootstrap(
+    data::Matrix{Float64},
     name_well::String,
-    label_exp::String, 
-    model_function::Any, 
-    lb_param::Vector{Float64}, 
-    ub_param::Vector{Float64};
+    label_exp::String,
+    model_function::Any,
+    u0;
+    lb_param=nothing,
+    ub_param=nothing,
     nrep=100,
-    u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optimizer=  BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    pt_avg=1, 
     size_bootstrap=0.7,
+    pt_avg=1,
     pt_smooth_derivative=7,
-    smoothing=false, 
+    smoothing=false,
     type_of_smoothing="rolling_avg",
-    type_of_loss="RE", 
-    multiple_scattering_correction=false, 
+    type_of_loss="RE",
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
+    calibration_OD_curve="NA",
     thr_lowess=0.05,
+    write_res=false,
     penality_CI=3.0,
+    path_to_results="NA",
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
     )
+
 
 
 This function performs NL fitting. It perform nrep iterations of Bootstrap to evaluate the confidence intervals and  avoid bad initializations.
@@ -425,7 +440,7 @@ This function performs NL fitting. It perform nrep iterations of Bootstrap to ev
 
 # Key Arguments:
 -  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run
-- `nrep=100`. Number of MCMC steps.
+- `nrep=100`. Number of Bootstrap steps.
 - `param= lb_param .+ (ub_param.-lb_param)./2`:Vector{Float64}, Initial guess for the model parameters.
 - `optimizer =     BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: "NO" , "rolling avg" rolling average of the data, and "lowess".
@@ -438,21 +453,25 @@ This function performs NL fitting. It perform nrep iterations of Bootstrap to ev
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 -  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
-- ` PopulationSize =100`: Size of the population of the optimization
-- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
-# Output (if `results_NL_fit =fit_NL_model_bootstrap(...)`:
+# Output 
 
-- `results_NL_fit[1]` an array with the following contents: `["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected model as in the documentation. This for the fit with less loss.
-- `results_NL_fit[2]`: the array of the best fit 
-- `results_NL_fit[3]`:parameters 
--`results_NL_fit[4]`: parameters
--`results_NL_fit[5]`: mean best parameters
--`results_NL_fit[6]`: std best parameters
--`results_NL_fit[7]`:CI lower bound
--`results_NL_fit[8]`:CI upper bound
+- data struct containing:
+
+1. a string with the method name
+2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using NL", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`, where `"param_1", "param_2", .., "param_n"` are the NL model fit parameters as in the documentation.
+3.  The numerical solution of the fitted NL.
+4.  The time coordinates the fitted NL.
+5.  All the parameters final.
+6.  All the parameters final.
+7.  Mean parameters in of the boostrap.
+8. SD parameters in of the boostrap
 
 """
 function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times second row OD
@@ -619,7 +638,7 @@ end
     blank_array::Vector{Float64}; 
     nrep=100,
     u0=lb_param .+ (ub_param .- lb_param) ./ 2,
-optimizer=  BBO_adaptive_de_rand_1_bin_radiuslimited(),    pt_avg=1, 
+    optimizer=  BBO_adaptive_de_rand_1_bin_radiuslimited(),    pt_avg=1, 
     pt_smooth_derivative=7,
     smoothing=false,
     type_of_smoothing="rolling_avg",
@@ -660,10 +679,12 @@ This function performs NL fitting. It perform nrep iterations to estimate the po
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 -  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
-- ` PopulationSize =100`: Size of the population of the optimization
-- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
 # Output (if `results_NL_fit =NL_error_blanks(...)`:
 
@@ -834,33 +855,38 @@ end
 
 
 """
-    NL_model_selection(data::Matrix{Float64}, 
+    NL_model_selection(
+    data::Matrix{Float64},
     name_well::String,
-    label_exp::String, 
-    list_model_function::Any, 
-    list_lb_param::Any, 
-    list_ub_param::Any; 
-    method_of_fitting="MCMC",
+    label_exp::String,
+    list_model_function::Any,
+    list_u0;
+    lb_param_array::Any = nothing,
+    ub_param_array::Any = nothing,
+    method_of_fitting="NA",
     nrep=100,
-    list_u0=list_lb_param .+ (list_ub_param .- list_lb_param) ./ 2,
-optimizer=  BBO_adaptive_de_rand_1_bin_radiuslimited(),    size_bootstrap=0.7,
+    size_bootstrap=0.7,
     pt_avg=1,
     pt_smooth_derivative=7,
-    smoothing=false, 
+    smoothing=false,
     type_of_smoothing="rolling_avg",
-    type_of_loss="RE", 
-    multiple_scattering_correction=false, 
+    type_of_loss="RE",
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
+    calibration_OD_curve="NA",
     thr_lowess=0.05,
     write_res=false,
     beta_smoothing_ms=2.0,
     penality_CI=8.0,
     correction_AIC=false,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    auto_diff_method=nothing,
+    multistart=false,
+    n_restart=50,
+    cons=nothing,
+    opt_params...
     )
+
 
 
 
@@ -888,21 +914,19 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
 - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
 -  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing
-- ` PopulationSize =100`: Size of the population of the optimization
-- ` maxiters=2000000`: stop criterion, the optimization is stopped when the number of iterations is bigger than `maxiters`
-- `abstol = 0.00001`: stop criterion, the optimization is stopped when the loss is lesser than `abstol`
 - `penality_CI=2.0`, used only in segementation to force the optimization to respect continuty on bonduar
 -  `correction_AIC=true`: Bool, do finite samples correction of AIC.
 -  `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 -  `size_bootstrap=0.7`: Float, the fraction of data used each Bootstrap run. Used only if method is "Bootstrap"
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
 # Output (if `results_NL_fit =NL_model_selection(...)`:
 
-- `results_NL_fit[1]` an array with the following contents: `["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected model as in the documentation. This for the fit with less loss.
-- `results_NL_fit[2]`: an array with the following contents: `["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected model as in the documentation. This for the fit with less loss.
-- `results_NL_fit[3]`: the array of best fit 
--`results_NL_fit[4]`: scores of the models
--`results_NL_fit[5]`: the loss of the best loss
+
 
 """
 function NL_model_selection(data::Matrix{Float64}, # dataset first row times second row OD
