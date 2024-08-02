@@ -60,7 +60,7 @@ This function fits a logarithmic-linear model to a csv file. The function assume
 
 # Output:
 
-- - a matrix with the following contents in each row : `[label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
+-  a matrix with the following contents in each row : `≈
 
 
 # Output:
@@ -1479,51 +1479,46 @@ end
 
 This function analyze the the change point for a csv file and for each segment return min and max growht rate, min and max derivative, the delta OD of a segment and the times of changepoints. 
 
+# Arguments:
+- `label_exp::String`: The label of the experiment.
+-  `path_to_data::String`: Path to csv file containing the data    - `label_exp::String`: The label of the experiment.
 
+# Key Arguments:
+-  `n_max_change_points::Int`: Number of change point used, the results will have different number of cp depending on the values of key argument 'type_of_detection' and 'fixed_cpd'
+-  'win_size=14': Int, size of the windows used by the cdo algorithms
+- 'type_of_detection="slinding_win"': String, algorithm of cpd to use. Options '"slinding_win"' use a slinding window approach, '"lsdd"' uses least square density difference (LSDD) from ChangePointDetection.jl 
+- 'type_of_curve="original"': String, on which curve is performed the change point detection algorithm. If '"original"' it use the original time series. With '"deriv"' it use the specific growth rate time series to perform the cdp.
+- `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
+-  `path_to_annotation::Any = missing`: The path to the .csv of annotation .
+-   `write_res=false`: Bool, write the results in path_to_results folder.
+-  ` path_to_results= "NA"`:String, path to the folder where save the results.
+- `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
+-  `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
+- `pt_avg=7`:Int, The number of points to do rolling average smoothing.
+- `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
+- `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
+- `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
+- `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
+- `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
+- `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
+- `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
+-  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
+-  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
+- `blank_value = 0.0`: used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as average value of the blank.
+- `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as array of the blanks values.
+-  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
+-  `thr_negative=0.01`: FLoat: used only if `correct_negative == "thr_correction"` the data under this threshold will be changed to this value.
+- `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
+- `start_exp_win_thr=0.05` minimum value (of OD) to consider the start of exp window
 
+# Output:
 
-    # Arguments:
-
-    - `label_exp::String`: The label of the experiment.
-    -  `path_to_data::String`: Path to csv file containing the data    - `label_exp::String`: The label of the experiment.
-    
-    # Key Arguments:
-    -  `n_max_change_points::Int`: Number of change point used, the results will have different number of cp depending on the values of key argument 'type_of_detection' and 'fixed_cpd'
-    -  'win_size=14': Int, size of the windows used by the cdo algorithms
-    - 'type_of_detection="slinding_win"': String, algorithm of cpd to use. Options '"slinding_win"' use a slinding window approach, '"lsdd"' uses least square density difference (LSDD) from ChangePointDetection.jl 
-    - 'type_of_curve="original"': String, on which curve is performed the change point detection algorithm. If '"original"' it use the original time series. With '"deriv"' it use the specific growth rate time series to perform the cdp.
-    - `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
-    -  `path_to_annotation::Any = missing`: The path to the .csv of annotation .
-    -   `write_res=false`: Bool, write the results in path_to_results folder.
-    -  ` path_to_results= "NA"`:String, path to the folder where save the results.
-    - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
-    -  `type_of_smoothing="rolling_avg"`: String, How to smooth the data, options: `"NO"` , `"rolling avg"` rolling average of the data, and `"lowess"`.
-    - `pt_avg=7`:Int, The number of points to do rolling average smoothing.
-    - `pt_smoothing_derivative=7`:Int,  Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
-    - `pt_min_size_of_win=7`:Int, The minimum size of the exponential windows in the number of smoothed points.
-    - `type_of_win="maximum"`:String, How the exponential phase window is selected ("maximum" or "global_thr").
-    - `threshold_of_exp=0.9`:Float, The threshold of the growth rate in quantile to define the exponential windows, a value between 0 and 1.
-    - `multiple_scattering_correction=false`:Bool, Whether or not correct the data qith a calibration curve.
-    - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
-    - `multiple_scattering_correction=false`: Bool, if true uses the given calibration curve to correct the data for muliple scattering.
-    - `method_multiple_scattering_correction="interpolation"`: String, How perform the inference of multiple scattering curve, options: "interpolation" or   "exp_fit" it uses an exponential fit from "Direct optical density determination of bacterial cultures in microplates for high-throughput screening applications"
-    -  `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-    -  `correct_negative="remove"`: # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values.
-    - `blank_value = 0.0`: used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as average value of the blank.
-    - `blank_array = [0.0]`:used only if `path_to_annotation = missing`and `do_blank_subtraction != "NO "`. It is used as array of the blanks values.
-    -  `correct_negative="remove"`  ;: String, How to treat negative values after blank subtraction. If `"thr_correction"` it put a thr on the minimum value of the data with blank subracted, if `"blank_correction"` uses blank distribution to impute negative values, if `"remove"` the values are just removed.
-    -  `thr_negative=0.01`: FLoat: used only if `correct_negative == "thr_correction"` the data under this threshold will be changed to this value.
-    - `do_blank_subtraction="NO"`: String, how perform the blank subtration, options "NO","avg_subtraction" (subtration of average value of blanks) and "time_avg" (subtration of  time average value of blanks).  
-    - `start_exp_win_thr=0.05` minimum value (of OD) to consider the start of exp window
-    
-    # Output:
-    
-
-    - a data struct containing:
-    1. method string
-    2. a matrix with the following contents in each row : `[label_exp, name_well, max_specific_gr, min_specific_gr, t_of_max, od_of_max, max_deriv, min_deriv, start OD of segment, delta OD, segment_number]`
-    3. List of change points for each well
-    4. preprocessed data
+- a data struct containing:
+1. method string
+2. a matrix with the following contents in each row : `[label_exp, name_well, max_specific_gr, min_specific_gr, t_of_max, od_of_max, max_deriv, min_deriv, start OD of segment, delta OD, segment_number]`
+3. List of change points for each well
+4. preprocessed data
 """
 function segment_gr_analysis_file(
     path_to_data, # dataset first row times second row OD

@@ -20,6 +20,7 @@ using OptimizationMultistartOptimization
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA", 
     thr_lowess=0.05 
+    start_exp_win_thr=0.05, 
     ) 
    
     
@@ -43,14 +44,17 @@ threshold to define an exponetial window where the log-linear fit is performed.
 - `calibration_OD_curve="NA"`: String. The path to the calibration curve (a .csv file). Used only if `multiple_scattering_correction=true`.
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64 keyword argument of lowees smoothing.
-- `start_exp_win_thr=0.05` minimum value (of OD) to consider the start of exp window
+- `start_exp_win_thr=0.05` minimum value (of OD or amy y axis) to consider the start of exp window
 
 # Output: 
 
-- `Matrix{Float64}`. An array with the following contents:
+- a data struct containing:
 
-  `results_lin_log_fit = [label_exp, name_well, start of exp win, end of exp win, start of exp win, Maximum specific GR, specific GR, 2 sigma  CI of GR, doubling time,doubling time - 2 sigma, doubling time + 2 sigma, intercept log-lin fitting, 2 sigma intercept, R^2]`
-
+1. A string describing used methodsmethod
+2.  the array of the parameters  `[label_exp, name_well, start of exp win,  end of exp win,  start of exp win, Maximum specific GR ,specific GR,  2 sigma  CI of GR, doubling time,doubling time - 2 sigma ,doubling time + 2 sigma  , intercept log-lin fitting, 2 sigma intercept ,R^2]`
+3. the exponetial fit in the exp window (its reported the log)
+4. thetimes point  in the exp window 
+5. confidence bands of log lin fitting
 """
 function fitting_one_well_Log_Lin(
     data::Matrix{Float64}, # dataset first row times second row OD
@@ -256,28 +260,29 @@ end
 """
     fitting_one_well_ODE_constrained(
     data::Matrix{Float64},
-    name_well::String, 
-    label_exp::String, 
-    model::String, 
-    lb_param::Vector{Float64},
-    ub_param::Vector{Float64},
-    param=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
-    integrator=Tsit5(), 
-    pt_avg=1, 
+    name_well::String,
+    label_exp::String,
+    model::String,
+    param;
+    integrator=Tsit5(),
+    pt_avg=1,
     pt_smooth_derivative=7,
     smoothing=false,
     type_of_smoothing="rolling_avg",
     type_of_loss="RE",
-    blank_array=zeros(100), 
+    blank_array=zeros(100),
     multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-    thr_lowess=0.05
+    calibration_OD_curve="NA",
+    thr_lowess=0.05,
+    multistart=false,
+    n_restart=50,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
     )
+
 
 This function uses an ordinary differential equation (ODE) model to fit the data of a on a single well. It estimates the model parameters within specified lower and upper bounds.
 
@@ -287,12 +292,11 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 - `model::String`: ODE model of choice.
 - `name_well::String`: Name of the well.
 - `label_exp::String`: Label of the experiment.
-- `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
-- `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
+- `param`: Vector{Float64}. Used as the default initial guess for the model parameters.
 
 # Key Arguments:
 
-- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -306,21 +310,23 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 - `calibration_OD_curve="NA"`: String. The path to the calibration curve (a .csv file). Used only if `multiple_scattering_correction=true`.
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
-- `PopulationSize=100`: Size of the population of the optimization (Xx)
-- `maxiters=2000000`: Stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol=0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
 
-# Output (if `results_ODE_fit=fitting_one_well_ODE_constrained(...)`):
+# Output 
 
-- `results_ODE_fit[1]`. An array with the following contents: 
+- data struct containing:
 
-  `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
+1. a string with the method name
+2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
 where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as in the documentation.
+3.  The numerical solution of the fitted ODE.
+4. The time coordinates (Xx) of the fitted ODE. 
 
-- `results_ODE_fit[2]`. The time coordinates (Xx) of the fitted ODE. 
-
-- `results_ODE_fit[3]`. The numerical solution of the fitted ODE.
 
 """
 function fitting_one_well_ODE_constrained(
@@ -421,29 +427,30 @@ end
 """
     fitting_one_well_custom_ODE(
     data::Matrix{Float64},
-    name_well::String, 
-    label_exp::String, 
-    model::Any, 
-    lb_param::Vector{Float64},
-    ub_param::Vector{Float64},
-    n_equation::Int,
-    param=lb_param .+ (ub_param .- lb_param) ./ 2,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
-    integrator=Tsit5(), 
-    pt_avg=1, 
+    name_well::String,
+    label_exp::String,
+    model::Any,
+    param,
+    n_equation::Int;
+    integrator=Tsit5(),
+    pt_avg=1,
     pt_smooth_derivative=0,
-    smoothing=false, 
+    smoothing=false,
     type_of_loss="RE",
-    blank_array=zeros(100), 
-    multiple_scattering_correction=false, 
+    blank_array=zeros(100),
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
+    calibration_OD_curve="NA",
     thr_lowess=0.05,
-    type_of_smoothing="lowess"
+    type_of_smoothing="lowess",
+    multistart=false,
+    n_restart=50,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
     )
+
 
 This function is designed to fit a user-defined ordinary differential equation (ODE) model to time-series data of a single well.
 
@@ -453,13 +460,11 @@ This function is designed to fit a user-defined ordinary differential equation (
 - `model::Any`: Function of the ODE model to be fitted. See the documentation for examples.
 - `name_well::String`: Name of the well.
 - `label_exp::String`: Label of the experiment.
-- `lb_param::Vector{Float64}`: Lower bounds of the model parameters.
-- `ub_param::Vector{Float64}`: Upper bounds of the model parameters.
+- `param`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `n_equation::Int`: Number of ODEs in the model.
 
 # Key Arguments:
 
-- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -473,16 +478,22 @@ This function is designed to fit a user-defined ordinary differential equation (
 - `calibration_OD_curve="NA"`: String. The path to the calibration curve (a .csv file). Used only if `multiple_scattering_correction=true`.
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
-- `PopulationSize=100`: Size of the population of the optimization (Xx)
-- `maxiters=2000000`: Stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol=0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
 
-# Output (if `results_ODE_fit =fitting_one_well_custom_ODE(...)`):
-- `results_ODE_fit[1]`. An array with the following contents: 
+# Output 
 
-  `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
+- data struct containing:
+
+1. a string with the method name
+2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
 where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as in the documentation.
+3.  The numerical solution of the fitted ODE.
+4. The time coordinates (Xx) of the fitted ODE. 
 
 """
 function fitting_one_well_custom_ODE(
@@ -584,29 +595,33 @@ end
     ODE_Model_selection(
     data::Matrix{Float64},
     name_well::String,
-    label_exp::String, 
-    models_list::Vector{String}, 
-    lb_param_array::Any, 
-    ub_param_array::Any,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
-    integrator=Tsit5(), 
-    pt_avg=1,
+    label_exp::String,
+    models_list::Vector{String},
+    param_array::Any;
+    lb_param_array::Any=nothing,
+    ub_param_array::Any=nothing,
+    integrator=Tsit5(),
+    pt_avg=3,
     beta_smoothing_ms=2.0,
     smoothing=false,
-    type_of_smoothing="lowess",
+    type_of_smoothing="rolling_avg",
     thr_lowess=0.05,
     type_of_loss="L2",
     blank_array=zeros(100),
     pt_smooth_derivative=7,
-    multiple_scattering_correction=false, 
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA", 
+    calibration_OD_curve="NA",
     verbose=false,
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-    correction_AIC=true
+    correction_AIC=true,
+    multistart=false,
+    n_restart=50,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
     )
+
 
 Automatic model selection for multiple ODE model fits in the time series of a single well. The best-fitting model is chosen on the basis of the Akaike Information Criterion (AIC) or corrected AIC (AICc).
 
@@ -615,12 +630,13 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 - `name_well::String`: Name of the well.
 - `label_exp::String`: Label of the experiment.
 - `models_list::Vector{String}`: A vector of ODE models to evaluate.
-- `lb_param_array::Any`: Lower bounds for the parameters (compatible with the models).
-- `ub_param_array::Any`: Upper bounds for the parameters (compatible with the models).
+- `param_array`: Vector{Float64}. Used as the default initial guess for the models parameters.
+
 
 # Key Arguments:
 
-- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `lb_param_array::Any`: Lower bounds for the parameters (compatible with the models).
+- `ub_param_array::Any`: Upper bounds for the parameters (compatible with the models).
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -633,23 +649,28 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
-- `PopulationSize=100`: Size of the population of the optimization (Xx).
-- `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
 - `correction_AIC=true`: Bool. Options: "true" to perform the AIC finite samples correction or "false" not to.
 - `beta_smoothing_ms=2.0`: Penality parameters for the evaluation of AIC (or AICc).
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
 
 
-# Output (if `Model_selection =ODE_Model_selection(...)`):
-
-- `Model_selection[1]`: Matrix containing the loss and the AIC score for each model.
-- `Model_selection[2]`: Tuple containing all the fitted models.
-- `Model_selection[3]`: The best model's AIC score.
-- `Model_selection[4]`: The best model's loss value. 
-- `Model_selection[5]`: The best model's parameters. 
-- `Model_selection[6]`: The best model's name. 
-- `Model_selection[7]`: The fitted ODE numerical value. 
+# Output:
+- a datastruct with the following fields 
+1. a string describing the method used to fit
+2. The matric containing the parameters of the best model
+3. Numerical array of the fit
+4. Times coordinate of the fit
+5. The statistic for each model fitted
+6. The score of the best model
+7. the parameter of the best model
+8. The minumimum value of AIC or AICc
+9. The string of the model
+10. All the parameters
 """
 function ODE_Model_selection(
     data::Matrix{Float64}, # dataset first row times second row OD
@@ -871,28 +892,32 @@ end
 """
     one_well_morris_sensitivity(
     data::Matrix{Float64},
-    name_well::String, 
-    label_exp::String, 
+    name_well::String,
+    label_exp::String,
     model::String,
-    lb_param::Vector{Float64}, 
-    ub_param::Vector{Float64},
+    lb_param::Vector{Float64},
+    ub_param::Vector{Float64};
     N_step_morris=7,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
     integrator=Tsit5(),
-    pt_avg=1, 
+    pt_avg=1,
     pt_smooth_derivative=7,
     write_res=false,
-    smoothing=false, 
-    type_of_smoothing="lowess",
-    type_of_loss="RE", 
-    blank_array=zeros(100), 
-    multiple_scattering_correction=false, 
+    smoothing=false,
+    type_of_smoothing="rolling_avg",
+    type_of_loss="RE",
+    blank_array=zeros(100),
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA", 
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001
+    calibration_OD_curve="NA",
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    auto_diff_method=nothing,
+    cons=nothing,
+    thr_lowess=0.05,
+    multistart=false,
+    n_restart=50,
+    opt_params...
     )
+
 
 This function performs the Morris sensitivity analysis, which assesses the sensitivity of the fit parameters to variations of the initial guess (suitable for quality checks of nonlinear model fits. See https://docs.sciml.ai/GlobalSensitivity/stable/methods/morris/). 
 
@@ -922,20 +947,18 @@ This function performs the Morris sensitivity analysis, which assesses the sensi
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
-- `PopulationSize=100`: Size of the population of the optimization (Xx).
-- `maxiters=2000000`: Stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol=0.00001`: Stop criterion, the optimization stops when the loss is smaller than `abstol`.
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
 
-# Output (if `results_ODE_morris_sensitivity =one_well_morris_sensitivity(...)`):
-
-- `results_ODE_morris_sensitivity[1]`. A matrix with the optimzation parameters' initial guess in each column; same parameter order as in this [table](#ODE_list).
-- `results_ODE_morris_sensitivity[2]`. A matrix with the following contents for each column: 
-
-`["name of model", "well", "param_1", "param_2",.., "param_n", "maximum specific gr using ode", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
-
-where  `"param_1","param_2",..,"param_n"` are the parameters of the selected ODE as in this [table](#ODE_list). It can be saved into a .csv if `write_res=true`.
-
+# Output 
+- data struct with the following fields
+1. a string for the method
+2. the results of the fit for any startin parameters
+3. Inital guess of each run
 """
 function one_well_morris_sensitivity(
     data::Matrix{Float64}, # dataset first row times second row OD
@@ -1070,48 +1093,51 @@ end
 
 """
     selection_ODE_fixed_intervals(
-    data_testing::Matrix{Float64}, 
-    name_well::String, 
-    label_exp::String, 
-    list_of_models::Vector{String}, 
-    list_lb_param::Any, 
-    list_ub_param::Any, 
+    data::Matrix{Float64},
+    name_well::String,
+    label_exp::String,
+    list_of_models::Vector{String},
+    param_array,
     intervals_changepoints::Any;
-    type_of_loss="L2", 
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(), 
-    integrator=Tsit5(), 
+    lb_param_array::Any=nothing,
+    ub_param_array::Any=nothing,
+    type_of_loss="L2",
+    integrator=Tsit5(),
     smoothing=false,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
     pt_avg=1,
-    pt_smooth_derivative=7,
-    multiple_scattering_correction=false, 
+    pt_smooth_derivative=0,
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA", 
-    beta_smoothing_ms=2.0, 
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.0000000001,
-    correction_AIC=true
-    )
+    calibration_OD_curve="NA",
+    beta_smoothing_ms=2.0,
+    correction_AIC=true,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
+)
+
     
 
 This function fits an ODE model at each segment of the time-series data. Change points are supplied by the user. 
 
 # Arguments:
 
-- `data_testing::Matrix{Float64}`:  The growth curve data. Time values are in the first row and the fit observable (e.g., OD) is in the second row, see documentation.
+- `data::Matrix{Float64}`:  The growth curve data. Time values are in the first row and the fit observable (e.g., OD) is in the second row, see documentation.
 - `name_well::String`: Name of the well.
 - `label_exp::String`: Label of the experiment.
 - `list_of_models::Vector{String}`: List of the ODE models of choice.
-- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
-- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
+- `param_array`: Vector{Float64}. Used as the default initial guess for the models parameters.
 - `intervals_changepoints::Any`: Array containing the list of change points, e.g., [0.0 10.0 30.0]. 
 
 
 # Key Arguments:
-
-- `param=lb_param .+ (ub_param.-lb_param)./2`: Vector{Float64}. Used as the default initial guess for the model parameters.
+- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
+- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -1124,10 +1150,12 @@ This function fits an ODE model at each segment of the time-series data. Change 
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
-- `PopulationSize=100`: Size of the population of the optimization (Xx).
-- `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
 - `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
 # Output (if `res =selection_ODE_fixed_intervals(...)`:
 
@@ -1314,55 +1342,60 @@ end
 
 """
     segmentation_ODE(
-    data_testing::Matrix{Float64}, 
-    name_well::String, 
-    label_exp::String, 
-    list_of_models::Vector{String}, 
-    list_lb_param::Any,
-    list_ub_param::Any,
+    data_testing::Matrix{Float64},
+    name_well::String,
+    label_exp::String,
+    list_of_models::Vector{String},
+    param_array::Any,
     n_max_change_points::Int;
+    lb_param_array::Any=nothing,
+    ub_param_array::Any=nothing,
     detect_number_cpd=true,
     fixed_cpd=false,
-    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
     integrator=Tsit5(),
     type_of_loss="L2",
     type_of_detection="slinding_win",
     type_of_curve="original",
-    pt_avg=1, 
-    smoothing=true, 
+    pt_avg=1,
+    smoothing=true,
     path_to_results="NA",
-    win_size=14, 
+    win_size=14,
     pt_smooth_derivative=7,
     beta_smoothing_ms=2.0,
-    multiple_scattering_correction=false, 
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA",  
+    calibration_OD_curve="NA",
     save_all_model=false,
     method_peaks_detection="peaks_prominence",
     n_bins=40,
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
-    correction_AIC=true)
+    correction_AIC=true,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
+    )
+
 
 This function performs model selection for ordinary differential equation (ODE) models in different segments of the input growth time series data. 
 Segmentation is performed with a change points detection algorithm (see (Xx).)
 
 # Arguments:
 
-- `data_testing::Matrix{Float64}`:  The growth curve data. Time values are in the first row and the fit observable (e.g., OD) is in the second row, see documentation.
-- `name_well::String`: Name of the well.
+- `data_testing::Matrix{Float64}`: The growth curve data. Time values are in the first row and the fit observable (e.g., OD) is in the second row, see documentation.
+- `name_well::String`: Name of the well. 
 - `label_exp::String`: Label of the experiment.
 - `list_of_models::Vector{String}`: List of the ODE models of choice.
-- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
-- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
+- `param_array`: Initial guess for the models parameters.
 - `n_max_change_points::Int`: Number of change points of choice, user defined. The results will have different a number of change points depending on the values of the key argument 'type_of_detection' and 'fixed_cpd'.
-
 
 # Key Arguments:
 
+- `list_lb_param::Any`: Lower bounds for the parameters (compatible with the models).
+- `list_ub_param::Any`: Upper bounds for the parameters (compatible with the models).
 - `integrator=Tsit5()`: sciML integrator. Use 'KenCarp4(autodiff=true)' to fit piecewise models.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
@@ -1375,9 +1408,6 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
 - `method_multiple_scattering_correction="interpolation"`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
 - `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
-- `PopulationSize=100`: Size of the population of the optimization (Xx).
-- `maxiters=2000000`: stop criterion, the optimization stops when the number of iterations is bigger than `maxiters`.
-- `abstol=0.00001`: stop criterion, the optimization stops when the loss is smaller than `abstol`.
 - `beta_smoothing_ms=2.0` penality  parameters for AIC (or AICc) evaluation.
 - 'type_of_detection="slinding_win"': String. Change point detection method of choice. Options `"slinding_win"` (uses a slinding window approach), `"lsdd"` (uses least square density difference (LSDD) from ChangePointDetection.jl). 
 - 'type_of_curve="original"': String. Defines the input curve for the change point detection. Options `"original"` for the original time series, and `"deriv"` for performing change point detection on the specific growth rate time series.
@@ -1387,19 +1417,24 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 - 'fixed_cpd=false': Bool. Options: true to return the fit using top n_change_points. False not to.
 - 'win_size=14': Int. Size of the window used by the cpd algorithms.
 - 'path_to_results="NA"':String. Path to save the results. 
-- 'save_all_model=false': Bool. Options: true to save all tested models. False not to.
-
-JMAKi uses n_change_points but tests different combinations of the n_change_points+2 top change points if 'detect_number_cpd=false' and 'fixed_cpd=false'.
-
-
-# Output (if `Model_selection =ODE_Model_selection(...)`:
-
-- `res[1]`. Parameters of each segment.
-- `res[2]`. Interval of each ODE segment.
-- `res[3]`. Time of the fitted solution.
-- `res[4]`. Numerical value of the fitted solution.
+- 'save_all_model=false': Bool. if true to save all tested models. 
+- `auto_diff_method=nothing`: method of differenzation, to be specified if required by the optimizer.
+- `cons=nothing`. Equation constrains for optimization.
+- `multistart=false`: use or not multistart optimization.
+- `n_restart=50`: number of restart. Used if `multistart = true`.
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
 
 
+
+
+# Output
+- a data struct with the following fields:
+1. String for the method
+2. the matrix of the parameters for each ODE segment
+3. The numerical fit
+4. The time coordinates for the fit
+5. The change points intervals
+6. The AICc (or AIC) of the final model
 """
 function segmentation_ODE(
     data_testing::Matrix{Float64}, # dataset x times y OD/fluorescence
@@ -1673,7 +1708,55 @@ function segmentation_ODE(
     return Kimchi_res_segmentation_ODE
 end
 
+"""
+    segment_gr_analysis(
+    data::Matrix{Float64},
+    name_well::String,
+    label_exp::String;
+    n_max_change_points=0,
+    type_of_smoothing="rolling_avg",
+    pt_avg=7,
+    pt_smoothing_derivative=7,
+    multiple_scattering_correction=false,
+    method_multiple_scattering_correction="interpolation",
+    calibration_OD_curve="NA",
+    thr_lowess=0.05,
+    type_of_detection="slinding_win",
+    type_of_curve="original",
+    win_size=14,
+    n_bins=40,
+    method_peaks_detection="peaks_prominence"
+    )
 
+This function uses a cdp algorthim to divide the time frame and for each segment evaluate  min and max growht rate, min and max derivative, the delta OD of a segment and the times of changepoints. 
+
+
+# Arguments:
+- `data:`: The matrix with the data
+- `name_well`:The string name of the data under study
+- `label_exp::String`: The label of the experiment.
+
+# Key Arguments:
+- `n_max_change_points::Int`: Number of change points of choice, 
+- `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
+- `pt_avg=7`: Int. Size of the rolling average window smoothing. 
+- `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
+- `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
+- `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
+- 'type_of_detection="slinding_win"': String. Change point detection method of choice. Options `"slinding_win"` (uses a slinding window approach), `"lsdd"` (uses least square density difference (LSDD) from ChangePointDetection.jl). 
+- 'type_of_curve="original"': String. Defines the input curve for the change point detection. Options `"original"` for the original time series, and `"deriv"` for performing change point detection on the specific growth rate time series.
+- `method_peaks_detection="peaks_prominence"`: How the peak detection is performed on the dissimilarity curve.  `"peaks_prominence"` orders the peaks by prominence. `thr_scan` uses a threshold to choose the peaks
+- `n_bins=40`: Int. Used if `method_peaks_detection="thr_scan"`. Number of bins used to generate the threshold that has n_change_points peaks.
+- 'win_size=14': Int. Size of the window used by the cpd algorithms.
+
+
+# Output:
+- data struct with the following fields
+1. string describing the method used
+2. array with the parameters
+3. The change points intervals
+4. The preprocessed data
+"""
 function segment_gr_analysis(
     data::Matrix{Float64}, # dataset first row times second row OD
     name_well::String, # name of the well
