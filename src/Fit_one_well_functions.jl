@@ -251,9 +251,9 @@ function fitting_one_well_Log_Lin(
     end
 
 
-    Kimchi_res_one_well_log_lin = ("Log-lin", results_lin_log_fit, hcat(data_to_fit_times, data_to_fit_values), data_smooted, confidence_band)
+    KinBiont_res_one_well_log_lin = ("Log-lin", results_lin_log_fit, hcat(data_to_fit_times, data_to_fit_values), data_smooted, confidence_band)
 
-    return Kimchi_res_one_well_log_lin
+    return KinBiont_res_one_well_log_lin
 end
 
 
@@ -385,7 +385,7 @@ function fitting_one_well_ODE_constrained(
 
     ## defining loss function
     loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
-    res = KimchiSolve(loss_function,
+    res = KinBiontSolve(loss_function,
         u0,
         param;
         opt=optimizer,
@@ -417,9 +417,9 @@ function fitting_one_well_ODE_constrained(
     res_temp = res.u
     loss_value = res.objective
     res_param = vectorize_df_results(label_exp,name_well, model, res_temp, max_th_gr, max_em_gr, loss_value)
-    Kimchi_res_one_well = ("ODE", res_param, sol_fin, remade_solution.t)
+    KinBiont_res_one_well = ("ODE", res_param, sol_fin, remade_solution.t)
 
-    return Kimchi_res_one_well
+    return KinBiont_res_one_well
 end
 
 #######################################################################
@@ -550,7 +550,7 @@ function fitting_one_well_custom_ODE(
     loss_function =
         select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
 
-    res = KimchiSolve(loss_function,
+    res = KinBiontSolve(loss_function,
         u0,
         param;
         opt=optimizer,
@@ -581,10 +581,10 @@ function fitting_one_well_custom_ODE(
     res_param =
         [string(name_well), "custom_model", res_temp, max_th_gr, max_em_gr, loss_value]
 
-    Kimchi_res_one_well = ("custom_ODE", res_param, data_th[2, :], data_th[1, :])
+    KinBiont_res_one_well = ("custom_ODE", res_param, data_th[2, :], data_th[1, :])
 
 
-    return Kimchi_res_one_well
+    return KinBiont_res_one_well
 end
 
 #######################################################################
@@ -770,7 +770,7 @@ function ODE_Model_selection(
                 ub=temp_param_ub,
                 )
 
-            res = KimchiSolve(loss_function,
+            res = KinBiontSolve(loss_function,
                 u0,
                 temp_start_param;
                 opt=optimizer,
@@ -782,7 +782,7 @@ function ODE_Model_selection(
 
         else
 
-            res = KimchiSolve(loss_function,
+            res = KinBiontSolve(loss_function,
                 u0,
                 temp_start_param;
                 opt=optimizer,
@@ -866,7 +866,7 @@ function ODE_Model_selection(
 
     data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
 
-    Kimchi_res_model_selection = ("ODE_model_selection",
+    KinBiont_res_model_selection = ("ODE_model_selection",
         df_res_optimization,
         sol_fin,
         sol_time[index_not_zero],
@@ -880,7 +880,7 @@ function ODE_Model_selection(
 
 
 
-    return Kimchi_res_model_selection
+    return KinBiont_res_model_selection
 
 end
 
@@ -1033,7 +1033,7 @@ function one_well_morris_sensitivity(
         lb=lb_param,
         ub=ub_param,
         )
-        res = KimchiSolve(loss_function,
+        res = KinBiontSolve(loss_function,
             u0,
             param;
             opt=optimizer,
@@ -1083,9 +1083,9 @@ function one_well_morris_sensitivity(
         )
     end
 
-    Kimchi_res_sensitivity = ("ODE_Morris_sensitivity", results_sensitivity, param_combination)
+    KinBiont_res_sensitivity = ("ODE_Morris_sensitivity", results_sensitivity, param_combination)
 
-    return Kimchi_res_sensitivity
+    return KinBiont_res_sensitivity
 end
 
 
@@ -1703,8 +1703,8 @@ function segmentation_ODE(
 
 
 
-    Kimchi_res_segmentation_ODE = ("ODE_segmentation", top_model, sol_to_plot, time_points_to_plot, top_cps, score_of_the_models)
-    return Kimchi_res_segmentation_ODE
+    KinBiont_res_segmentation_ODE = ("ODE_segmentation", top_model, sol_to_plot, time_points_to_plot, top_cps, score_of_the_models)
+    return KinBiont_res_segmentation_ODE
 end
 
 """
@@ -1850,11 +1850,11 @@ function segment_gr_analysis(
 
 
 
-    Kimchi_res_one_well = ("segment_analysis", res, interval_changepoints, data)
+    KinBiont_res_one_well = ("segment_analysis", res, interval_changepoints, data)
 
 
 
-    return Kimchi_res_one_well
+    return KinBiont_res_one_well
 end
 
 

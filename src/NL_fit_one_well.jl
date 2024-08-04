@@ -112,8 +112,8 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
     # TO DO MODEL SELECTOR
     if typeof(model_function) == String
 
-        model_string = Kimchi.NL_models[model_function].name
-        model_function = Kimchi.NL_models[model_string].func
+        model_string = KinBiont.NL_models[model_function].name
+        model_function = KinBiont.NL_models[model_string].func
 
 
     else
@@ -128,7 +128,7 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
 
 
     # Solve the optimization problem
-    sol = KimchiSolve_NL(loss_function,
+    sol = KinBiontSolve_NL(loss_function,
         u0,
         data;
         opt = optimizer,
@@ -163,10 +163,10 @@ function fit_NL_model(data::Matrix{Float64}, # dataset first row times second ro
 
     res_param = reduce(vcat, reduce(vcat, res_param))
 
-    Kimchi_res_one_well = ("NL", res_param, fitted_model, data[1, :])
+    KinBiont_res_one_well = ("NL", res_param, fitted_model, data[1, :])
 
 
-    return Kimchi_res_one_well
+    return KinBiont_res_one_well
 end
 
 
@@ -332,7 +332,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
 
 
 
-        sol = KimchiSolve_NL(loss_function,
+        sol = KinBiontSolve_NL(loss_function,
             u0,
             data;
             opt = optimizer,
@@ -387,9 +387,9 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
     end
 
 
-    Kimchi_res_sensitivity_NL = ("NL_sensitivity", best_res_param, best_fitted_model, data[1, :], Matrix(param_combination))
+    KinBiont_res_sensitivity_NL = ("NL_sensitivity", best_res_param, best_fitted_model, data[1, :], Matrix(param_combination))
 
-    return Kimchi_res_sensitivity_NL
+    return KinBiont_res_sensitivity_NL
 end
 
 
@@ -562,7 +562,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
         loss_function =
             select_loss_function_NL(type_of_loss, data_to_fit, penality_CI, model_function)
 
-        sol = KimchiSolve_NL(loss_function,
+        sol = KinBiontSolve_NL(loss_function,
             u0,
             data_to_fit;
            opt =  optimizer,
@@ -619,10 +619,10 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     sd_param = [std(new_param_fin[i, 2:end]) for i in 3:axes(new_param_fin)[1][end]]
 
 
-    Kimchi_res_bootstrap_NL = ("NL_bootstrap", best_res_param, best_fitted_model, data[1, :], fin_param, new_param_fin, mean_param, sd_param)
+    KinBiont_res_bootstrap_NL = ("NL_bootstrap", best_res_param, best_fitted_model, data[1, :], fin_param, new_param_fin, mean_param, sd_param)
 
 
-    return Kimchi_res_bootstrap_NL
+    return KinBiont_res_bootstrap_NL
 end
 
 
@@ -781,7 +781,7 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
         loss_function =
             select_loss_function_NL(type_of_loss, data, penality_CI, model_function)
 
-        sol = KimchiSolve_NL(loss_function,
+        sol = KinBiontSolve_NL(loss_function,
             u0,
             data;
            opt = optimizer,
@@ -1148,8 +1148,8 @@ function NL_model_selection(data::Matrix{Float64}, # dataset first row times sec
 
 
     end
-    Kimchi_res_NL_model_selection = ("NL_model_selection", top_model, top_fitted_sol, data[1, :], score_res, top_loss)
-    return Kimchi_res_NL_model_selection
+    KinBiont_res_NL_model_selection = ("NL_model_selection", top_model, top_fitted_sol, data[1, :], score_res, top_loss)
+    return KinBiont_res_NL_model_selection
 end
 
 """
@@ -1655,10 +1655,10 @@ function segmentation_NL(
         end
 
     end
-    Kimchi_res_segmentation_NL = ("NL_segmentation", top_param, top_fit, top_time, sort(top_intervals))
+    KinBiont_res_segmentation_NL = ("NL_segmentation", top_param, top_fit, top_time, sort(top_intervals))
 
 
-    return Kimchi_res_segmentation_NL
+    return KinBiont_res_segmentation_NL
 end
 
 export fit_NL_model

@@ -451,10 +451,10 @@ function fit_NL_model_file(
 
     end
 
-    Kimchi_res_one_file = ("NL",parameter_of_optimization,fits,data_to_save)
+    KinBiont_res_one_file = ("NL",parameter_of_optimization,fits,data_to_save)
 
 
-    return Kimchi_res_one_file, errors_of_optimization
+    return KinBiont_res_one_file, errors_of_optimization
 
 
 
@@ -747,9 +747,9 @@ function fit_NL_model_selection_file(
 
 
     end
-    Kimchi_res_one_file = ("NL_model_selection",parameter_of_optimization,fits,data_to_save)
+    KinBiont_res_one_file = ("NL_model_selection",parameter_of_optimization,fits,data_to_save)
 
-    return Kimchi_res_one_file
+    return KinBiont_res_one_file
 
 
 
@@ -1079,9 +1079,9 @@ function fit_NL_segmentation_file(
 
     end
 
-    Kimchi_res_one_file = ("NL_segmentation", parameter_of_optimization,fits,data_to_save)
+    KinBiont_res_one_file = ("NL_segmentation", parameter_of_optimization,fits,data_to_save)
 
-    return Kimchi_res_one_file
+    return KinBiont_res_one_file
 
 
 

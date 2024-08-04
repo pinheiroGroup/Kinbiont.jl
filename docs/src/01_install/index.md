@@ -17,7 +17,7 @@ Next, the user need to copy the project folder in the chosen working directory.
 4. Type the command 
 > activate .
 
-5. To activate the Kimchi project, type
+5. To activate the KinBiont project, type
 > instantiate
 
 6. at the start of the code or notebook (where you are going to do analyses) you should write 
@@ -49,7 +49,7 @@ using DelimitedFiles
 using BetaML
 using DecisionTree
 using MLJDecisionTreeInterface
-include("your_path_to_Kimchi_main_folder/src/functions.jl")
+include("your_path_to_KinBiont_main_folder/src/functions.jl")
 
 
 ```

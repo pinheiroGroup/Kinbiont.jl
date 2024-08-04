@@ -1,7 +1,7 @@
-using Documenter, Kimchi
+using Documenter, KinBiont
 
-makedocs(sitename="Kimchi Documentation",
-        modules = [Kimchi],
+makedocs(sitename="KinBiont Documentation",
+        modules = [KinBiont],
         checkdocs=:none,
         format = Documenter.HTML(
             assets = ["assets/favicon.ico"]

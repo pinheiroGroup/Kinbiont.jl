@@ -1,4 +1,4 @@
-using Kimchi
+using KinBiont
 using DifferentialEquations
 using CSV
 using Distributions

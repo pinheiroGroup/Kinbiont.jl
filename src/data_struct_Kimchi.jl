@@ -1,4 +1,4 @@
-struct Kimchi_res_one_well_log_lin
+struct KinBiont_res_one_well_log_lin
     method::String
     params::Vector{Any}
     fit::Any
@@ -6,13 +6,13 @@ struct Kimchi_res_one_well_log_lin
     confidence_band::Any
 end
 
-struct Kimchi_res_one_well
+struct KinBiont_res_one_well
     method::String
     params::Vector{Any}
     fit::Any
     times::Any
 end
-struct Kimchi_res_bootstrap_NL
+struct KinBiont_res_bootstrap_NL
     method::String
     params::Matrix{Any}
     fit::Any
@@ -25,7 +25,7 @@ struct Kimchi_res_bootstrap_NL
 
 end
 
-struct Kimchi_res_Log_Lin_files
+struct KinBiont_res_Log_Lin_files
     method::String
     params::Matrix{Any}
     fits::Tuple{Any}
@@ -33,14 +33,14 @@ struct Kimchi_res_Log_Lin_files
     confidence_bands::Tuple{Any}
 end
 
-struct Kimchi_res_one_file
+struct KinBiont_res_one_file
     method::String
     params::Matrix{Any}
     fits::Tuple{Any}
     data::Tuple{Any}
 end
 
-struct Kimchi_res_one_file_segmentation
+struct KinBiont_res_one_file_segmentation
     method::String
     params::Matrix{Any}
     fits::Tuple{Any}
@@ -51,7 +51,7 @@ struct Kimchi_res_one_file_segmentation
 end
 
 
-struct Kimchi_res_model_selection
+struct KinBiont_res_model_selection
     method::String
     params::Vector{Any}
     fit::Vector{Float64}
@@ -65,7 +65,7 @@ struct Kimchi_res_model_selection
 end
 
 
-struct Kimchi_res_NL_model_selection
+struct KinBiont_res_NL_model_selection
     method::String
     params::Vector{Any}
     fit::Vector{Float64}
@@ -74,7 +74,7 @@ struct Kimchi_res_NL_model_selection
     top_loss::Any
 end
 
-struct Kimchi_res_sensitivity_NL
+struct KinBiont_res_sensitivity_NL
     method::String
     params::Matrix{Any}
     fit::Any
@@ -83,13 +83,13 @@ struct Kimchi_res_sensitivity_NL
 
 end
 
-struct Kimchi_res_sensitivity
+struct KinBiont_res_sensitivity
     method::String
     params::Matrix{Any}
     combinations::Matrix{Any}
 end
 
-struct Kimchi_res_segmentation_ODE
+struct KinBiont_res_segmentation_ODE
     method::String
     params::Matrix{Any}
     fit::Array{Float64} 
@@ -99,7 +99,7 @@ struct Kimchi_res_segmentation_ODE
 end
 
 
-struct Kimchi_res_segmentation_NL
+struct KinBiont_res_segmentation_NL
     method::String
     params::Matrix{Any}
     fit::Array{Float64} 

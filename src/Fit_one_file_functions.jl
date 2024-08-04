@@ -239,10 +239,10 @@ function fit_one_file_Log_Lin(
         )
 
     end
-    Kimchi_res_Log_Lin_files = ("Log-Lin", results_Log_Lin,fits,data_to_save,confidence_bands)
+    KinBiont_res_Log_Lin_files = ("Log-Lin", results_Log_Lin,fits,data_to_save,confidence_bands)
 
 
-    return Kimchi_res_Log_Lin_files
+    return KinBiont_res_Log_Lin_files
 
 
 
@@ -518,10 +518,10 @@ function fit_file_ODE(
 
 
     end
-    Kimchi_res_one_file = ("ODE", parameter_of_optimization,fits,data_to_save)
+    KinBiont_res_one_file = ("ODE", parameter_of_optimization,fits,data_to_save)
 
 
-    return Kimchi_res_one_file
+    return KinBiont_res_one_file
 
 
 
@@ -792,10 +792,10 @@ function fit_file_custom_ODE(
 
     end
 
-    Kimchi_res_one_file = ("ODE", parameter_of_optimization,fits,data_to_save)
+    KinBiont_res_one_file = ("ODE", parameter_of_optimization,fits,data_to_save)
 
 
-    return Kimchi_res_one_file
+    return KinBiont_res_one_file
 
 
 
@@ -1089,9 +1089,9 @@ function ODE_model_selection_file(
     end
 
 
-    Kimchi_res_one_file = ("ODE_model_selection", parameter_of_optimization,fits,data_to_save)
+    KinBiont_res_one_file = ("ODE_model_selection", parameter_of_optimization,fits,data_to_save)
 
-    return Kimchi_res_one_file
+    return KinBiont_res_one_file
 
 
 end
@@ -1434,10 +1434,10 @@ function segmentation_ODE_file(
 
     end
 
-    Kimchi_res_one_file_segmentation = ("ODE_segmentation", parameter_of_optimization, fits, data_to_save, cps, vector_AIC)
+    KinBiont_res_one_file_segmentation = ("ODE_segmentation", parameter_of_optimization, fits, data_to_save, cps, vector_AIC)
 
 
-    return Kimchi_res_one_file_segmentation
+    return KinBiont_res_one_file_segmentation
 
 end
 
@@ -1673,10 +1673,10 @@ function segment_gr_analysis_file(
     end
 
 
-    Kimchi_res_one_file = ("segment_analysis", results, cp_list, data_to_save)
+    KinBiont_res_one_file = ("segment_analysis", results, cp_list, data_to_save)
 
 
-    return Kimchi_res_one_file
+    return KinBiont_res_one_file
 end
 
 
