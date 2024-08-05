@@ -302,7 +302,7 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
-- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative"  and "blank_weighted_L2".
 - `blank_array=zeros(100)`: Data of all blanks in single array.
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
@@ -325,7 +325,7 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`,
 where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as in the documentation.
 3.  The numerical solution of the fitted ODE.
-4. The time coordinates (Xx) of the fitted ODE. 
+4. The time coordinates  of the fitted ODE. 
 
 
 """
@@ -470,7 +470,7 @@ This function is designed to fit a user-defined ordinary differential equation (
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
-- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" and "blank_weighted_L2" .
 - `blank_array=zeros(100)`: Data of all blanks in single array.
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
@@ -492,7 +492,7 @@ This function is designed to fit a user-defined ordinary differential equation (
 1. a string with the method name
 2. an array containing `["name of model", "well", "param_1", "param_2",..,"param_n", "maximum specific gr using ODE", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`, where `"param_1", "param_2", .., "param_n"` are the ODE model fit parameters as in the documentation.
 3.  The numerical solution of the fitted ODE.
-4. The time coordinates (Xx) of the fitted ODE. 
+4. The time coordinates of the fitted ODE. 
 
 """
 function fitting_one_well_custom_ODE(
@@ -642,7 +642,7 @@ Automatic model selection for multiple ODE model fits in the time series of a si
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of the specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
-- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" and "blank_weighted_L2".
 - `blank_array=zeros(100)`: Data of all blanks in single array.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
@@ -940,7 +940,7 @@ This function performs the Morris sensitivity analysis, which assesses the sensi
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`: Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
-- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative"  and "blank_weighted_L2".
 - `blank_array=zeros(100)`: Data of all blanks in a single array.
 - `calibration_OD_curve="NA"`: String. The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 
@@ -1142,7 +1142,7 @@ This function fits an ODE model at each segment of the time-series data. Change 
 - `type_of_smoothing="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
-- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" and "blank_weighted_L2".
 - `blank_array=zeros(100)`: Data of all blanks in single array.
 - `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
@@ -1380,7 +1380,7 @@ end
 
 
 This function performs model selection for ordinary differential equation (ODE) models in different segments of the input growth time series data. 
-Segmentation is performed with a change points detection algorithm (see (Xx).)
+Segmentation is performed with a change points detection algorithm (see Selective review of offline change point detection methods, Truong et al 2020.)
 
 # Arguments:
 
@@ -1401,7 +1401,7 @@ Segmentation is performed with a change points detection algorithm (see (Xx).)
 - `pt_avg=7`: Int. Size of the rolling average window smoothing. 
 - `pt_smoothing_derivative=7`:Int. Number of points for evaluation of specific growth rate. If <2 it uses interpolation algorithm otherwise a sliding window approach.
 - `smoothing=false`: Bool. Options: "true" to smooth the data, or "false" not to.
-- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative" (Xx) and "blank_weighted_L2" (Xx).
+- `type_of_loss:="RE" `: Type of loss function to be used. Options = "RE" (relative error), "L2" (L2 norm), "L2_derivative"  and "blank_weighted_L2".
 - `blank_array=zeros(100)`: Data of all blanks in single array.
 - `calibration_OD_curve="NA"`: String, The path where the .csv calibration data are located, used only if `multiple_scattering_correction=true`.
 - `multiple_scattering_correction=false`: Bool. Options: "true" to perform the multiple scattering correction (requires a callibration curve) or "false" not to. 

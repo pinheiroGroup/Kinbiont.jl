@@ -91,7 +91,7 @@ This function performs NL model selection of one NL model for a full csv file
 
 - a data struct containing:
 1. method string
-2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using NL","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
 3. the fittings
 4. the preprocessed data
 """
@@ -244,7 +244,7 @@ function fit_NL_model_file(
             temp_results_1 = fit_NL_model_bootstrap(data, # dataset first row times second row OD
                 string(well_name), # name of the well
                 label_exp, #label of the experiment
-                model, # ode model to use
+                model, #  model to use
                 u0;
                 lb_param=lb_param, # lower bound param
                 ub_param=ub_param, # upper bound param
@@ -297,7 +297,7 @@ function fit_NL_model_file(
             temp_results_1 = fit_NL_model_with_sensitivity(data, # dataset first row times second row OD
                 string(well_name), # name of the well
                 label_exp, #label of the experiment
-                model, # ode model to use
+                model, #  model to use
                 lb_param, # lower bound param
                 ub_param; # upper bound param
                 nrep=nrep,
@@ -330,7 +330,7 @@ function fit_NL_model_file(
             temp_results_1 = fit_NL_model_bootstrap(data, # dataset first row times second row OD
             name_well, # name of the well
             label_exp, #label of the experiment
-            model_to_test, # ode model to use
+            model_to_test, #  model to use
             u0;
             lb_param=temp_param_lb, # lower bound param
             ub_param=temp_param_ub, # upper bound param
@@ -383,7 +383,7 @@ function fit_NL_model_file(
             temp_errors_of_optimization = NL_error_blanks(data, # dataset first row times second row OD
                 string(well_name), # name of the well
                 label_exp, #label of the experiment
-                model, # ode model to use
+                model, #  model to use
                 u0,
                 blank_array; # upper bound param
                 nrep=nrep,
@@ -555,14 +555,14 @@ This function performs NL model selection of an array of NL models, it uses AIC 
 
 - a data struct containing:
 1. method string
-2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using NL","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
 3. the fittings
 4. the preprocessed data
 """
 function fit_NL_model_selection_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
-    list_model_function::Any, # ode model to use
+    list_model_function::Any, #  model to use
     list_u0;# initial guess param
     lb_param_array::Any = nothing, # lower bound param
     ub_param_array::Any = nothing, # upper bound param
@@ -690,7 +690,7 @@ function fit_NL_model_selection_file(
         temp_results_1 = NL_model_selection(data, # dataset first row times second row OD
             string(well_name), # name of the well
             label_exp, #label of the experiment
-            list_model_function, # ode model to use
+            list_model_function, #  model to use
             list_u0;
             lb_param_array=lb_param_array, # lower bound param
             ub_param_array=ub_param_array, # upper bound param
@@ -856,7 +856,7 @@ This function performs NL model selection  on a segmented time series, it uses A
 
 - a data struct containing:
 1. method string
-2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using NL","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
 3. the fittings
 4. the preprocessed data
 5. the change points time for each well
@@ -865,7 +865,7 @@ This function performs NL model selection  on a segmented time series, it uses A
 function fit_NL_segmentation_file(
     label_exp::String, #label of the experiment
     path_to_data::String, # path to the folder to analyze
-    list_model_function::Any, # ode model to use
+    list_model_function::Any, #  model to use
     list_u0,# initial guess param
     n_change_points::Int;
     lb_param_array::Vector{Vector{Float64}}=nothing, # lower bound param
