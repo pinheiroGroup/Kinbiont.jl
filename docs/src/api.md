@@ -175,7 +175,7 @@ KinBiont.fit_NL_segmentation_file
 KinBiont.segmentation_ODE_file
 ```
 
-## ML downstrema analyses
+## ML downstrema analysis
 
 [`KinBiont.downstream_decision_tree_regression`](@ref)
 

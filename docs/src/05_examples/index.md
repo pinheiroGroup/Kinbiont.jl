@@ -429,7 +429,6 @@ Then we generate the list of models that will be used and their parameters's low
 
 ```julia
 # Initializing all the models for selection
-# Initializing all the models for selection
 ub_exp = [0.1]
 lb_exp = [-0.01]
 p1_guess = lb_exp .+(ub_exp.-lb_exp)/.2
@@ -524,70 +523,6 @@ The user can specify any parameter of the optimizer, for the bound in this case 
 
 ```
 
-Alternately, the user can  opt to a Bootstrap approach (```method_of_fitting ="Bootstrap"```): 
-
-
-
-```julia
- NL_model_selection(data_OD, # dataset first row times second row OD
-  "test", # name of the well
-    "test NL fit", #label of the experiment
-    list_models_f, #  model to use
-    list_lb, # lower bound param
-    list_ub; # upper bound param
-    method_of_fitting="Bootstrap",
-    nrep = 100,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    pt_avg=3, # numebr of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    type_of_smoothing="rolling_avg",
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-    size_bootstrap=0.7,
-)
-
-```
-If one wants to specify a custom NL function,he should start declaring the function:
-
-```julia
-function NL_model_exp(p, times)
-    model = p[1] .* exp.(times .* p[2])
-    return model
-end
-
-
-nl_ub =  [2.0001 , 10.00000001]
-nl_lb =  [0.0001 , 0.00000001 ]
-
-
-list_models_f = [NL_model_exp]
-list_lb =[nl_lb]
-list_ub = [nl_ub]
-```
-
-after this you can just supply this variables to the previous function, e.g.:
-
-```julia
- NL_model_selection(data_OD, # dataset first row times second row OD
-  "test", # name of the well
-    "test NL fit", #label of the experiment
-    list_models_f, #  model to use
-    list_lb, # lower bound param
-    list_ub; # upper bound param
-    method_of_fitting="single_fit",
-    list_u0=list_lb .+ (list_ub .- list_lb) ./ 2,# initial guess param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    pt_avg=3, # numebr of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    type_of_smoothing="rolling_avg",
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-)
-```
 
 
 ### NL Sensitivity Analysis
@@ -596,23 +531,23 @@ As for the ODE model, also for the NL fit it is possible to perform a sensitivit
 
 
 ```julia
- NL_model_selection(data_OD, # dataset first row times second row OD
-    "test", # name of the well
-    "test NL fit", #label of the experiment
-    list_models_f, #  model to use
-    list_lb, # lower bound param
-    list_ub; # upper bound param
-    method_of_fitting="Morris_sensitivity",
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    pt_avg=3, # numebr of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    type_of_smoothing="rolling_avg",
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-    nrep =20,
+@time nl_fit =  NL_model_selection(data_OD, # dataset first row times second row OD
+"test", 
+"test_model_selection",
+nl_model, #  model to use
+p_guess;
+nrep =3,
+method_of_fitting ="Morris_sensitivity",
+multistart = true,
+lb_param_array = lb_nl,
+ub_param_array = ub_nl
 )
+
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(nl_fit[4],nl_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
+
+
 ```
 
 
@@ -623,43 +558,39 @@ To perform model selection we just specify an array with the list of all the use
 
 nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
 nl_lb_1 =  [0.0001 , 0.00000001, 0.00 ]
+p1_guess = nl_lb_1 .+ (nl_ub_1.-nl_lb_1)./2
 
 nl_ub_2 =  [2.0001 , 10.00000001, 5.00,5.0]
 nl_lb_2 =  [0.0001 , 0.00000001, 0.00,0.0 ]
+p2_guess = nl_lb_2 .+ (nl_ub_2.-nl_lb_2)./2
 
 nl_ub_3 =  [2.0001 , 10.00000001]
 nl_lb_3 =  [0.0001 , 0.00000001]
+p3_guess = nl_lb_3 .+ (nl_ub_3.-nl_lb_3)./2
 
 nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
 nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
+p4_guess = nl_lb_4 .+ (nl_ub_4.-nl_lb_4)./2
 
 list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_Gompertz"]
 list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
 list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
+list_guess = [p1_guess,p2_guess,p3_guess,  p4_guess]
 
 ```
-and the we perform the fit, tuning the AIC parameter (```beta_param```) :
+and the we perform the fit:
 ```julia
 
- NL_model_selection(data_OD, # dataset first row times second row OD
-  "test", # name of the well
-    "test NL fit", #label of the experiment
-    list_models_f, #  model to use
-    list_lb, # lower bound param
-    list_ub; # upper bound param
-    method_of_fitting="MCMC",
-    nrep = 100,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    pt_avg=3, # numebr of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    type_of_smoothing="rolling_avg",
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-    beta_param=2.0,
-    correction_AIC =false,
+results_ms = ODE_Model_selection(
+    data_OD,
+    "test", 
+    "test_model_selection",
+    list_models_f,
+    list_guess;
+    lb_param_array = list_lb,
+    ub_param_array = list_ub  
 )
+
 ```
 
 ### NL segmentation
@@ -671,21 +602,23 @@ we specify the list of used models and parameters bounds:
 
 ```julia
 
-nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
-nl_lb_1 =  [0.0001 , 0.00000001, 0.00 ]
+ub_1 = [0.3 , 0.1]
+lb_1 = [0.01 , -0.01]
+p1_guess = lb_1 .+(ub_1.-lb_1)/.2
 
-nl_ub_2 =  [2.0001 , 10.00000001, 5.00,5.0]
-nl_lb_2 =  [0.0001 , 0.00000001, 0.00,0.0 ]
+ub_2 = [1.9, 0.1,500.0]
+lb_2 = [0.0001,0.001 ,0.001]
+p2_guess = lb_2 .+(ub_2.-lb_2)/.2
 
-nl_ub_3 =  [2.0001 , 10.00000001]
-nl_lb_3 =  [0.0001 , 0.00000001]
+ub_3 = [0.1, 1.1, 500.0]
+lb_3 = [0.0001, 0.000001, 0.001]
+p3_guess = lb_3 .+(ub_3.-lb_3)/.2
 
-nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
-nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
 
-list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_Gompertz"]
-list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
-list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
+list_of_models_nl = ["NL_exponential",  "NL_logistic","NL_Gompertz"]
+list_ub_param = [ub_1,ub_2, ub_3]
+list_lb_param = [lb_1, lb_2,lb_3]
+list_guess = [p1_guess, p2_guess, p3_guess]
 
 ```
 
@@ -696,27 +629,15 @@ As before we specify the intervals of the segment and we proceed to fit:
 ```julia
 cdp_list = [100.0, 200.0]
 
-selection_NL_fixed_interval(
-    data_OD, # dataset first row times second row OD
-   "test ", # name of the well
-    "test NL segmentation" , #label of the experiment
-    list_models_f, # ode models to use
-    list_lb, # lower bound param
-    list_ub, # upper bound param
+@time seg_fitting = selection_NL_fixed_interval(
+   data_OD, # dataset first row times second row OD
+    "test", # name of the well
+    "", #label of the experiment
+    list_of_models_nl, # ode models to use
+    list_guess,
     cdp_list;
-    type_of_loss="L2", # type of used loss
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    method_of_fitting="MCMC", # selection of sciml integrator
-    nrep=100,
-    display_plots=true,
-    beta_smoothing_ms=2.0, #  parameter of the AIC penality
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.000000001,
-    penality_CI=8.0,
-    correction_AIC=true,
+    pt_smooth_derivative = 3
 )
-
 ```
 Another option could be to  run a cpd algorithm and perfom the fitting:
 
@@ -726,27 +647,19 @@ Another option could be to  run a cpd algorithm and perfom the fitting:
 ```julia
 n_change_points = 2
 
-selection_NL_max_change_points(
-    data_OD, # dataset first row times second row OD
-   "test ", # name of the well
-    "test NL segmentation" , #label of the experiment
-    list_models_f, # ode models to use
-    list_lb, # lower bound param
-    list_ub, # upper bound param
-    n_change_points;
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    method_of_fitting="MCMC", # selection of sciml integrator
-    nrep=100,
-    display_plots=true,
-    win_size=7, # numebr of the point to generate intial condition
-    pt_smooth_derivative=0,
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.000000001,
-    detect_number_cpd=false,
-    fixed_cpd=true,
-    penality_CI=8.0,
+@time seg_fitting = segmentation_NL(
+   data_OD, # dataset first row times second row OD
+    "test", # name of the well
+    "", #label of the experiment
+    list_of_models_nl, # ode models to use
+    list_guess,
+    2;
+    detect_number_cpd=true,
+    fixed_cpd=false,
+    beta_smoothing_ms=2.0, #  parameter of the AIC penality
+    correction_AIC=true,
 )
+
 
 ```
 ## Fitting a .csv file
@@ -762,21 +675,6 @@ path_to_annotation ="your_path_to_annotation/annotation.csv"
 In the following examples we assume that these two variables have a value.
 
 
-### Plot one file
-
-It is possible to plot or display the plot of an experiment with the following:
-```julia
-
- plot_data(
-   "test", #label of the experiment
-    path_to_data; # path to the folder to analyze
-    path_to_annotation = path_to_annotation,# path to the annotation of the wells
-    display_plots=true,# display plots in julia or noy
-    save_plot = false,
-    overlay_plots=true, # true a single plot for all dataset false one plot per well
-    do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    )
-```
 
 ### Log-Lin fitting
 
