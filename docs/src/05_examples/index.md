@@ -679,22 +679,15 @@ In the following examples we assume that these two variables have a value.
 ### Log-Lin fitting
 
 If the paths are provided to ```fit_one_file_Log_Lin```, the user will obtain a matrix containing the results for each well:
+
 ```julia
-fit_one_file_Log_Lin(
-   "test", #label of the experiment
+fit_log_lin = fit_one_file_Log_Lin(
+    " ", #label of the experiment
     path_to_data; # path to the folder to analyze
-    path_to_annotation = path_to_annotation,# path to the annotation of the wells
-    display_plots=true,# display plots in julia or not
-    do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=true, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    blank_value = 0.0,
-    blank_array = [0.0],)
+    path_to_annotation=path_to_annotation,# path to the annotation of the wells
+  )
 ```
 
-
-Note that if the user wants to subtract blank but their are non in the file with the data the to optional arguments can be used    ```blank_value``` for one value of blanks,
-  ```blank_array``` for an array of  blanks
 
 
 ### ODE fitting
@@ -715,97 +708,58 @@ We proceed fitting with the ```fit_file_ODE```  function:
 
 ```julia
 
- fit_file_ODE(
+
+model = "baranyi_richards"
+
+lb_param = [0.001,0.1,0.0,0.01]
+ub_param =[0.1,5.0 ,1000.0,5.01]
+param_guess =[0.01,1.0 ,500.0,1.01]
+
+fit_od = fit_file_ODE(
     "test", #label of the experiment
     path_to_data, # path to the folder to analyze
     model, # string of the used model
-    lb_ahpm,# array of the array of the lower bound of the parameters
-    ub_ahpm; # array of the array of the upper bound of the parameters
-    path_to_annotation = path_to_annotation,# path to the annotation of the wells
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator=Tsit5(), # selection of sciml integrator
-    display_plots=true,# display plots in julia or not
-    do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    correct_negative="removr", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
+    param_guess;
+    path_to_annotation=path_to_annotation,# path to the annotation of the wells
+    lb = lb_param, 
+    ub =ub_param,
 )
-```
-The user can fit a custom model by declaring the function in advance
 
-```julia
-# Custom ODE function
-function ODE_custom(du, u, param, t)
-    du[1] = u[1] * (1 - u[1]) * param[2] + param[1] * u[1]
-end
-
-
-# Bounds for the custom ODE parameters
-custom_ub = [1.2, 1.1]
-custom_lb = [0.0001, 0.00000001]
-```
-
-Then, we can call the function ```fit_file_custom_ODE```:
-
-```julia
-
- fit_file_custom_ODE(
-    "test", #label of the experiment
-    path_to_data, # path to the folder to analyze
-    ODE_custom, #  used model
-    custom_lb,# array of the array of the lower bound of the parameters
-    custom_ub, # array of the array of the upper bound of the parameters
-    1;
-   path_to_annotation = path_to_annotation,# path to the annotation of the wells
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator=Tsit5(), # selection of sciml integrator
-    display_plots=true,# display plots in julia or not
-    do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    correct_negative="removr", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-)
 ```
 It is also possible to perform the model selection on an entire file. First we declare the lis of models
 
 ```julia
-ub_exp = [0.1]
-lb_exp = [-0.01]
-ub_logistic = [0.9, 5.0]
-lb_logistic = [0.0001, 0.001]
-ub_hpm = [0.1, 20.0, 50.001]
-lb_hpm = [0.0001, 0.000001, 0.001]
-ub_hpm_exp = [0.1, 20.0]
-lb_hpm_exp = [0.0001, 0.0000001]
+model_1 = "baranyi_richards"
 
-list_of_models = ["exponential", "HPM", "HPM_exp", "logistic"]
-list_ub_param = [ub_exp, ub_hpm, ub_hpm_exp, ub_logistic]
-list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
+lb_param_1 = [0.001,    0.1 , 0.0   , 0.01]
+ub_param_1 = [0.1  ,    5.0 , 1000.0, 5.01]
+param_guess_1 =[0.01,1.0 ,500.0,1.01]
+
+
+model_2 = "aHPM"
+
+lb_param_2 = [0.001,0.0001,0.01,0.01]
+ub_param_2 =[0.1,0.1 ,2.0,5.01]
+param_guess_2 =[0.01,0.01 ,1.0,1.01]
+
+list_of_models = [model_1,  model_2]
+list_ub_param = [ub_param_1,ub_param_2]
+list_lb_param = [lb_param_1, lb_param_2]
+list_guess = [param_guess_1, param_guess_2]
+
 ```
 After, we run the function ```ODE_model_selection_file```:
 
 ```julia
 
- ODE_model_selection_file(
-    "test", 
+@time ms_file = ODE_model_selection_file(
+    "test", #label of the experiment
     path_to_data, # path to the folder to analyze
     list_of_models, # ode model to use 
-    list_lb_param::Any, # lower bound param
-    list_ub_param::Any; # upper bound param
-    path_to_annotation = path_to_annotation,# path to the annotation of the wells
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator=Tsit5(), # selection of sciml integrator
-    display_plot_best_model=true, # one wants the results of the best fit to be plotted
-    save_plot_best_model=false,
-    beta_penality=2.0, # penality for AIC evaluation
-    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-    thr_lowess=0.05,
-    correction_AIC=false,
+    list_guess;
+    lb_param_array=list_lb_param, # lower bound param
+    ub_param_array=list_ub_param, # upper bound param
+    path_to_annotation=path_to_annotation,# path to the annotation of the wells
 )
 ```
 
@@ -818,92 +772,49 @@ As usual the user should declare the model and the bounds
 
 
 ```julia
-nl_lb = [0.0001 , 0.00000001, 0.00,0.0 ]
-nl_ub = [2.0001 , 10.00000001, 5.00,5.0]
-model_nl = "NL_Richards"
+nl_model = ["NL_Richards"]
+p_guess = [[1.0,1.0,0.01,300.0]]
+lb_nl =[[0.01,0.01,0.000001,00.01]]
+ub_nl =p_guess.*50
 
 ```
-
-Alternatively, as in the single kinetics case, the model can also be a function, e.g.,:
-
+and then fit:
 ```julia
-function model_nl(p, times)
-    model = p[1] .* exp.(times .* p[2])
-    return model
-end
-
-
-nl_ub =  [2.0001 , 10.00000001]
-nl_lb =  [0.0001 , 0.00000001 ]
-
-```
-
-Then, we proceed fitting, note that is possible to call any of the previous ```method_of_fitting```
-
-```julia
-
-fit_NL_model_file(
-    "test", #label of the experiment
-    path_to_data, # path to the folder to analyze
-    model_nl, # string of the used model
-    nl_lb,# array of the array of the lower bound of the parameters
-    nl_ub; # array of the array of the upper bound of the parameters
+@time fit_nl = fit_NL_model_selection_file(
+    "TEST", #label of the experiment
+    path_to_data    , # path to the folder to analyze
+    nl_model, # ode model to use
+    p_guess;# initial guess param
+    lb_param_array =lb_nl, # lower bound param
+    ub_param_array = ub_nl, # upper bound param
     path_to_annotation = path_to_annotation,# path to the annotation of the wells
-    method_of_fitting="MCMC",
-    nrep=50,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    display_plots=true,# display plots in julia or not
-    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
 )
+
 ```
 The user can perform a NL model selection. To do that we should start declaring the list of models and upper/lower bounds:
 
 
 ```julia
 
-nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
-nl_lb_1 =  [0.0001 , 0.00000001, 0.00 ]
 
-nl_ub_2 =  [2.0001 , 10.00000001, 5.00,5.0]
-nl_lb_2 =  [0.0001 , 0.00000001, 0.00,0.0 ]
-
-nl_ub_3 =  [2.0001 , 10.00000001]
-nl_lb_3 =  [0.0001 , 0.00000001]
-
-nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
-nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
-
-list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_Gompertz"]
-list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
-list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
+nl_model = ["NL_Richards","NL_Bertalanffy"]
+p_guess = [[1.0,1.0,0.01,300.0],[0.08,1.0,0.01,1.0]]
+lb_nl =[[0.01,0.01,0.000001,00.01],[0.00,0.01,0.001,00.01]]
+ub_nl =p_guess.*50
 
 ```
 and the we can call the NL model selection function:
 
 ```julia
- fit_NL_model_selection_file(
-    "test", #label of the experiment
-    path_to_data, # path to the folder to analyze
-    list_models_f, # ode model to use
-    list_lb, # lower bound param
-   list_ub; # upper bound param
+@time fit_nl = fit_NL_model_selection_file(
+    "TEST", #label of the experiment
+    path_to_data    , # path to the folder to analyze
+    nl_model, # ode model to use
+    p_guess;# initial guess param
+    lb_param_array =lb_nl, # lower bound param
+    ub_param_array = ub_nl, # upper bound param
     path_to_annotation = path_to_annotation,# path to the annotation of the wells
-    method_of_fitting="MCMC",
-    nrep=100,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    display_plots=true,# display plots in julia or not
-    do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01,  # used only if correct_negative == "thr_correction"
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-    thr_lowess=0.05,
-    beta_param=2.0,
-    correction_AIC=false,
+  
 )
 ```
 
@@ -913,48 +824,44 @@ It is possible to apply the ODE segmentation to the an entire .csv file. Note th
 
 First we declare the models and upper/lower bounds:
 ```julia
-# Initializing all the models for selection
-ub_exp = [0.1]
-lb_exp = [-0.01]
-ub_logistic = [0.9, 5.0]
-lb_logistic = [0.0001, 0.001]
-ub_hpm = [0.1, 20.0, 50.001]
-lb_hpm = [0.0001, 0.000001, 0.001]
-ub_hpm_exp = [0.1, 20.0]
-lb_hpm_exp = [0.0001, 0.0000001]
+model_1 = "baranyi_richards"
 
-list_of_models = ["exponential", "HPM", "HPM_exp", "logistic"]
-list_ub_param = [ub_exp, ub_hpm, ub_hpm_exp, ub_logistic]
-list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
+lb_param_1 = [0.001,    0.1 , 0.0   , 0.01]
+ub_param_1 = [0.1  ,    5.0 , 1000.0, 5.01]
+param_guess_1 =[0.01,1.0 ,500.0,1.01]
+
+
+model_2 = "aHPM"
+
+lb_param_2 = [0.001,0.0001,0.01,0.01]
+ub_param_2 =[0.1,0.1 ,2.0,5.01]
+param_guess_2 =[0.01,0.01 ,1.0,1.01]
+
+list_of_models = [model_1,  model_2]
+list_ub_param = [ub_param_1,ub_param_2]
+list_lb_param = [lb_param_1, lb_param_2]
+list_guess = [param_guess_1, param_guess_2]
 
 ```
 
 Finally, we perform the fit:
 ```julia
 
- segmentation_ODE_file(
-    "test seg ODE",
+@time ms_file =  segmentation_ODE_file(
+    " ", #label of the experiment
     path_to_data, # path to the folder to analyze
     list_of_models, # ode model to use 
-    lb_param_array, # lower bound param
-    ub_param_array,# upper bound param
-    n_max_change_point;
-    path_to_annotation = path_to_annotation,# path to the annotation of the wells
+    list_guess, #  param
+    1;
+    path_to_annotation=path_to_annotation,# path to the annotation of the wells
     detect_number_cpd=false,
     fixed_cpd=true,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    integrator=Tsit5(), # selection of sciml integrator
-    correct_negative="remove",
-    thr_negative=0.01,
-    smoothing=false, # the smoothing is done or not?
-    display_plots=true, # do plots or no
-    win_size=8, 
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
-    pt_avgh = 3,
-    type_of_smoothing="rolling_avg",
-    )
+    type_of_curve="deriv",
+    win_size=7, # numebr of the point to generate intial condition
+     maxiters =5,
+    lb_param_array=list_lb_param, # lower bound param
+    ub_param_array=list_ub_param, # upper bound param
+)
 ```
 
 ### NL segmentation
@@ -965,52 +872,25 @@ We start declaring models and upper/lower bounds:
 
 ```julia
 
-nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
-nl_lb_1 =  [0.0001 , 0.00000001, 0.00 ]
-
-nl_ub_2 =  [2.0001 , 10.00000001, 5.00,5.0]
-nl_lb_2 =  [0.0001 , 0.00000001, 0.00,0.0 ]
-
-nl_ub_3 =  [2.0001 , 10.00000001]
-nl_lb_3 =  [0.0001 , 0.00000001]
-
-nl_ub_4 =  [2.0001 , 10.00000001, 500.00]
-nl_lb_4 =  [0.0001 , 0.00000001, 0.00 ]
-
-list_models_f = ["NL_Gompertz","NL_Bertalanffy","NL_exponential","NL_Gompertz"]
-list_lb =[nl_lb_1,nl_lb_2,nl_lb_3,nl_lb_4]
-list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
-
+nl_model = ["NL_Richards","NL_Bertalanffy"]
+p_guess = [[1.0,1.0,0.01,300.0],[0.08,1.0,0.01,1.0]]
+lb_nl =[[0.01,0.01,0.000001,00.01],[0.00,0.01,0.001,00.01]]
+ub_nl =p_guess.*50
 n_change_points =2
 ```
 
 Then, we call the function to perform the fit:
 ```julia
 
-fit_NL_segmentation_file(
+ms_segmentation = fit_NL_segmentation_file(
     "test", #label of the experiment
     path_to_data, # path to the folder to analyze
-    list_models_f, # ode model to use
-    list_lb, # lower bound param
-    list_ub, # upper bound param
-    n_change_points;
-    detect_number_cpd=false,
-    fixed_cpd=true,
+    nl_model, # ode model to use
+    p_guess,# initial guess param
+    1;
+    lb_param_array=lb_nl, # lower bound param
+    ub_param_array=ub_nl, # upper bound param
     path_to_annotation = path_to_annotation,# path to the annotation of the wells
-    method_of_fitting="MCMC",
-    nrep=50,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method 
-    loss_type="RE", # string of the type of the used loss
-    display_plots=true,# display plots in julia or not
-    do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    PopulationSize=200,
-    maxiters=2000000,
-    abstol=0.00001,
-    penality_CI=8.0,
-    beta_smoothing_ms=2.0,
-    win_size=7, # number of the point of cpd sliding win
-    correction_AIC=false,
 )
 ```
 

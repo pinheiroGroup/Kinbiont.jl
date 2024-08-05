@@ -1,5 +1,5 @@
 # [Data formatting and outputs](@id data)
-## [Data and annotation formatting](@id data)
+## Data and annotation formatting
 
 KinBiont can operate directly on data files or inside the julia notebook.
 When are in a julia notebook the  format of single time series that want to be analyzed is a 2 x n_time_points Matrix of FLoat64, e.g.,
@@ -61,6 +61,9 @@ Raw_Microplate_OD,Real_Spectrophotometer_OD
 
 
 See the folders  XXXXX for examples. 
+
+## Data and annotation formatting for downstream ML
+
 
 ## Outputs of KinBiont
 
