@@ -896,7 +896,7 @@ ms_segmentation = fit_NL_segmentation_file(
 
 ## Downstream ML anlyses
 
-# Symbolic regression
+### Symbolic regression
 
 This example demonstrates how to use the `KinBiont` and `SymbolicRegression` packages to analyze kinetics data.
 
@@ -1042,7 +1042,7 @@ plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_r
 
 ```
 
-# Decision Tree Regression Analysis
+### Decision Tree Regression Analysis
 
 
 
