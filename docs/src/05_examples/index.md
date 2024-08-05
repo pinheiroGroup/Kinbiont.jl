@@ -91,7 +91,7 @@ Furthermore, to address potential external influences, a correction for multiple
 
 # Multiple scattering correction (optional, comment out if not needed)
 data_ODsmooth = correction_OD_multiple_scattering(data_ODsmooth, "/your_path/calibration_curve.csv")
-
+using Plots
 # Plotting scatterplot of preprocessed data
 Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Pre-processed data" nothing], markersize=2, color=:blue, size=(300, 300))
 ```
@@ -129,49 +129,112 @@ res_log_lin = fitting_one_well_Log_Lin(
     pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
 )
 ```
- The results are stored in the ```res_log_lin``` variable. 
+ The results are stored in the ```res_log_lin```  data struct. 
 
 
 ###    Fitting ODE Models
 
-Before fitting, the model and upper and lower bounds for the ODE parameters are defined 
+Before fitting, the model, the initial guess of parameters for the optimization and upper and lower bounds for the ODE parameters are defined 
 ```julia
 
 
 model ="aHPM"
-# Upper bounds of the parameters of the ODE
-ub_ahpm = [1.2, 1.1, 2.0, 20]
 
-# Lower bounds of the parameters of the ODE
-lb_ahpm = [0.0001, 0.00000001, 0.00, 0]
+P_GUESS = [0.01, 0.001, 1.00, 1]
+ub_ahpm = P_GUESS.*4
+lb_ahpm = P_GUESS./4
 ```
-The actual fitting is accomplished through the ```fitting_one_well_ODE_constrained``` function. 
+The actual fitting is accomplished through the ```fitting_one_well_ODE_constrained``` function.  In this case wed do not use the lb and ub they will be generated automatically.
 ```julia
 # Performing ODE fitting
-results_ODE_fit = fitting_one_well_ODE_constrained(
+ results_ODE_fit = fitting_one_well_ODE_constrained(
     data_OD, 
     "test",
     "test_ODE",
     model,
-    lb_ahpm,
-    ub_ahpm;
-    smoothing=true, # the smoothing is done or not?
-    pt_avg=3, # number of the points to do rolling avg
-    PopulationSize=20,
-    maxiters=50000,
-    abstol=0.001
-
+    P_GUESS;
 )
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
 
 ```
 The results are stored in  the second entry of ```results_ODE_fit``` with the following format. 
+
+To add lower and upper bounds one should use the ```the opt_params...```,  in addition we put also ```multistart = true```:
 ```julia
- results_ODE_fit = ["name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]
+# Performing ODE fitting
+
+@time results_ODE_fit = fitting_one_well_ODE_constrained(
+    data_OD, 
+    "test",
+    "test_ODE",
+    model,
+    P_GUESS;
+   lb = lb_ahpm,
+   ub = ub_ahpm
+)
+
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
+
 ```
 
-where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE.
+To change the optimization method one should call the desired library from Optimization.jl and use the keyword argument ```optimizer``` and if required by the selected optimizer it necessary to specify the differentiation methods, e.g.:
 
 
+- using Broyden–Fletcher–Goldfarb–Shanno algorithm
+```julia
+using Optimization
+
+@time results_ODE_fit = fitting_one_well_ODE_constrained(
+    data_OD, 
+    "test",
+    "test_ODE",
+    model,
+    P_GUESS;
+   lb = lb_ahpm,
+   ub = ub_ahpm,
+    multistart = true,
+   optimizer=BFGS(), 
+)
+```
+
+- using PRAXIS algorithm, with Tik-Tak restart (from Benchmarking global optimizers, Arnoud et al 2019)
+
+```julia
+using OptimizationNLopt
+
+@time results_ODE_fit = fitting_one_well_ODE_constrained(
+    data_OD, 
+    "test",
+    "test_ODE",
+    model,
+    P_GUESS;
+   lb = lb_ahpm,
+   ub = ub_ahpm,
+   optimizer= BFGS(), 
+)
+```
+
+- Changing the number of iterations and absolute tolerance:
+
+```julia
+
+@time results_ODE_fit = fitting_one_well_ODE_constrained(
+    data_OD, 
+    "test",
+    "test_ODE",
+    model,
+    P_GUESS;
+   lb = lb_ahpm,
+   ub = ub_ahpm,
+   optimizer= BFGS(), 
+   abstol = 0.0001,
+   maxiters= 20000,
+)
+```
 ###   Custom ODE Fitting
 
 Using the custom ODE fitting, users can fit any ordinary differential equation. First it is necessary to define the differential equation. This is done by declaring a new function, e.g.:
@@ -194,24 +257,18 @@ Finally, we perform the fit:
 ```julia
 
 # Performing custom ODE fitting
-results_ODE_fit = fitting_one_well_custom_ODE(
+@time results_ODE_fit = fitting_one_well_custom_ODE(
     data_OD, # dataset first row times second row OD
    "test", # name of the well
     "test custom ode", #label of the experiment
    ODE_custom, # ode model to use
-    custom_lb, # lower bound param
-    custom_ub, # upper bound param
+   param_guess,
     1; # number ode in the system
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=Tsit5(), # selection of sciml integrator
-    pt_avg=3, # numebr of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    PopulationSize=25,
-    maxiters=100000,
-)
+  )
+
 
 ```
-The results are stored in ```results_ODE_fit``` with the same format of the previous examples.
+The results are stored in ```results_ODE_fit``` .
 
 ###   ODE Sensitivity Analysis
 
@@ -220,20 +277,20 @@ The sensitivity analysis is performed with the ```one_well_morris_sensitivity```
 ```julia
 # Number of steps for Morris sensitivity analysis
 n_step_sensitivity = 5
-
+P_GUESS = [0.01, 0.001, 1.00, 1]
+ub_ahpm = P_GUESS.*5
+lb_ahpm = P_GUESS./5
 # Performing Morris sensitivity analysis
-sensitivity_test = one_well_morris_sensitivity(
-    data_OD, "test", "test_sensitivity", "dHPM", lb_dhpm, ub_dhpm,
+@time sensitivity_test = one_well_morris_sensitivity(
+    data_OD, 
+    "test",
+     "test_sensitivity",
+      "aHPM", 
+      lb_ahpm,
+       ub_ahpm,
     N_step_morris=n_step_sensitivity ;
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=Tsit5(), # selection of sciml integrator
-    pt_avg=3, # numebr of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    type_of_smoothing="rolling_avg",
-    PopulationSize=50,
-    maxiters=100000,
-    abstol=0.00001,
 )
+
 
 ```
 In this case the user will obtain the results of the fit for each of the Morris step and a matrix containg the coordinate of the hyperspace of the starting guess assicioted to each fit.
@@ -244,45 +301,39 @@ We start defining the list of the models and the upper and lower bounds of the p
 
 ```julia
 # Models candidates and their parameter bounds
-list_of_models = ["aHPM", "piecewise_damped_logistic", "triple_piecewise", "baranyi_roberts"]
+list_of_models = ["aHPM",   "baranyi_roberts"]
+ub_1 =[ 0.1 , 0.1 , 0.1 , 5.001    ]
+lb_1 =[ 0.0001 , 0.001,0.0  , 0.001 ]
+p1_guess = lb_1 .+ (ub_1.-lb_1)./2
 
-ub_piece_wise_logistic =[ 0.06 , 2.0 , 500.0 , 10.0 ,  0.001    ]
-lb_piece_wise_logistic =[ 0.0001 , 0.001,0.0  , 0.001 ,  - 0.001  ]
-ub_baranyi_roberts =[ 0.06 , 2.0 , 500.0 , 10.0,  10   ]
-lb_baranyi_roberts =[ 0.0001 , 0.001, 0.0 ,  0.01 , 0  ]
-ub_triple_exp =[ 1.2 , 0.001 ,  0.2 , 500.0  , 2000   ]
-lb_triple_exp =[ 0.0001 , -0.001, 0.0  , 00.0 ,  200.0   ]
-ub_ahpm =[ 1.2 , 1.1 , 2.0  ,20  ]
-lb_ahpm =[ 0.0001 , 0.00000001, 0.00 ,0 ]
+ub_2 =[ 1.2 , 5.1 , 500.0  ,5.0,5.0  ]
+lb_2 =[ 0.0001 , 0.1, 0.00 ,0.2,0.2 ]
+p2_guess = lb_2 .+ (ub_2.-lb_2)./2
 
-list_ub = [ub_ahpm, ub_piece_wise_logistic, ub_triple_exp, ub_baranyi_roberts]
-list_lb = [lb_ahpm, lb_piece_wise_logistic, lb_triple_exp, lb_baranyi_roberts]
+
 ```
 
 
 The model selection process is runned with the ```ODE_Model_selection``` function. 
 
 ```julia
-# Performing model selection
 results_ms = ODE_Model_selection(
     data_OD,
     "test", 
     "test_model_selection",
     list_of_models,
-    list_lb,
-    list_ub;
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=KenCarp4(autodiff=true), # selection of sciml integrator
-    pt_avg=3, # number of the point to generate intial condition
-    beta_penality=2.0, # penality for AIC evaluation
-    smoothing=true, # the smoothing is done or not?
-    type_of_smoothing="rolling_avg",
-    type_of_loss="L2", # type of used loss
-    PopulationSize=15,
-    maxiters=100000,
-    abstol=0.00001,
-    correction_AIC=false,)
+    list_guess;
+    multistart = true,
+    lb_param_array = list_lb,
+    ub_param_array = list_ub  
+)
+
+Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
+Plots.plot!(results_ms[4],results_ms[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
+
+
 ```
+
 
 
 The results of the model selection process are stored in the ```results_ms``` variable.
@@ -294,8 +345,7 @@ First of all we generate a synthetic daset composed by more than one model  (ski
 
 
 ```julia
-
-# first segment ODE
+#First segment ODE
 
 model = "logistic"
 n_start =[0.1]
@@ -362,9 +412,8 @@ sol_sim =vcat(sol_1,sol_2)
 sol_sim =vcat(sol_sim,sol_3)
 
 
-Plots.scatter(sol_sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],  color=:blue, size = (300,300))
+Plots.scatter(times_sim,sol_sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],  color=:blue, size = (300,300))
 
-Plots.scatter(sol_sim[40:60], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],  color=:blue, size = (300,300))
 
 
 data_OD = Matrix(transpose(hcat(times_sim,sol_sim)))
@@ -374,140 +423,101 @@ noise_uniform = rand(Uniform(-0.01, 0.01), length(sol_sim))
 data_OD = Matrix(transpose(hcat(times_sim, sol_sim)))
 data_OD[2, :] = data_OD[2, :] .+ noise_uniform
 
-# Plotting the noisy dataset
-Plots.scatter(data_OD[1, :], data_OD[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, markersize=2, size=(300, 300))
 
 ```
 Then we generate the list of models that will be used and their parameters's lower/upper bounds:
+
 ```julia
+# Initializing all the models for selection
 # Initializing all the models for selection
 ub_exp = [0.1]
 lb_exp = [-0.01]
+p1_guess = lb_exp .+(ub_exp.-lb_exp)/.2
+
 ub_logistic = [0.9, 5.0]
 lb_logistic = [0.0001, 0.001]
+p2_guess = lb_logistic .+(ub_logistic.-lb_logistic)/.2
+
 ub_hpm = [0.1, 20.0, 50.001]
 lb_hpm = [0.0001, 0.000001, 0.001]
-ub_hpm_exp = [0.1, 20.0]
-lb_hpm_exp = [0.0001, 0.0000001]
+p3_guess = lb_hpm .+(ub_hpm.-lb_hpm)/.2
 
-list_of_models = ["exponential", "HPM", "HPM_exp", "logistic"]
-list_ub_param = [ub_exp, ub_hpm, ub_hpm_exp, ub_logistic]
-list_lb_param = [lb_exp, lb_hpm, lb_hpm_exp, lb_logistic]
+
+list_of_models = ["exponential",  "logistic","HPM"]
+list_ub_param = [ub_exp,ub_logistic, ub_hpm]
+list_lb_param = [lb_exp, lb_logistic,lb_hpm]
+list_guess = [p1_guess, p2_guess, p3_guess]
 
 ```
 
 First, we fit giving to KinBiont the list of change points:
 
 ```julia
-cdp_list = [100.0, 200.0]
-
-res = selection_ODE_fixed_intervals(
+@time seg_fitting = selection_ODE_fixed_intervals(
    data_OD, # dataset first row times second row OD
     "test", # name of the well
-    "test segmentation ODE", #label of the experiment
+    "", #label of the experiment
     list_of_models, # ode models to use
-    list_lb_param, # lower bound param
-    list_ub_param, # upper bound param
+    list_guess,
     cdp_list;
-    type_of_loss="L2", # type of used loss
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=Tsit5(), # selection of sciml integrator
-    smoothing=true,
-    type_of_smoothing="rolling_avg",
-    pt_avg=3,
-    path_to_plot="NA", # where save plots
-    pt_smooth_derivative=0,
-    PopulationSize=25,
-    maxiters=100000,
-    correction_AIC=false)
+)
+Plots.scatter(data_OD[1, :], data_OD[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, markersize=2, size=(300, 300))
+Plots.plot!(seg_fitting[3], seg_fitting[4], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing], color=:red, markersize=2, size=(300, 300))
+
 ```
-Finally we can run a cpd algorithm and perfom the fitting:
+In alternative, if the change points are not known we can run a cpd algorithm and perfom the fitting with :
+
+
 ```julia
 n_change_points =2
-segmentation_ODE(
-    data_OD, # dataset first row times second row OD
+@time seg_fitting = segmentation_ODE(
+   data_OD, # dataset first row times second row OD
     "test", # name of the well
-    "test segmentation ODE", #label of the experiment
-    list_of_models, # ode model to use
-    list_lb_param, # lower bound param
-    list_ub_param, # upper bound param
-    n_change_pointst;
-    detect_number_cpd=false,
-    fixed_cpd=true,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(), # selection of optimization method
-    integrator=Tsit5(), # selection of sciml integrator
-    type_of_loss="L2", # type of used loss
-    type_of_detection="slinding_win",
-    type_of_curve="original",
-    pt_avg=3, # number of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    win_size=10, #  
-    pt_smooth_derivative=0,
-    PopulationSize=25,
-    maxiters=100000,
-    abstol=0.00001,
-    type_of_smoothing="rolling_average",
-    thr_lowess=0.05,
-    correction_AIC=true)
+    "", #label of the experiment
+    list_of_models, # ode models to use
+    list_guess,
+    3;
+    detect_number_cpd=true,
+    fixed_cpd=false,
+)
 
 ```
 ### Fitting NL Models
-(we should discuss about this in theory the model selection functio can do all the stuffs except segmentation) With JKMAKi it is possible to fit any non-linear model this can be done by calling the function ```NL_model_selection``` in different ways.
+With KinBiont it is possible to fit any non-linear model this can be done by calling the function ```NL_model_selection``` in different ways.
 
 
 First we declare upper and lower bound and the model (note that in this case we use array of array because the input can be more than one model)
 
 ```julia
-nl_lb_1 = [0.0001 , 0.00000001, 0.00,0.0 ]
-nl_ub_1 = [2.0001 , 10.00000001, 5.00,5.0]
-list_models_f = ["NL_Richards"]
-list_lb =[nl_lb_1]
-list_ub = [nl_ub_1]
+nl_model = ["NL_Richards"]
+p_guess = [[1.0,1.0,0.01,300.0]]
+lb_nl =[[0.01,0.01,0.000001,00.01]]
+ub_nl =p_guess.*3
 ```
 
 
-To perform a single fit on a time series (i.e., ```data_OD```) then we run the following specifying ```method_of_fitting = "single_fit"```:
+To perform a single fit on a time series (i.e., ```data_OD```) then we run the following:
 ```julia
- NL_model_selection(data_OD, # dataset first row times second row OD
-  "test", # name of the well
-    "test NL fit", #label of the experiment
-    list_models_f, #  model to use
-    list_lb, # lower bound param
-    list_ub; # upper bound param
-    method_of_fitting="single_fit",
-    list_u0=list_lb .+ (list_ub .- list_lb) ./ 2,# initial guess param
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    pt_avg=3, # numebr of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    type_of_smoothing="rolling_avg",
-    PopulationSize=300,
-    maxiters=2000000,
-    abstol=0.00001,
+@time nl_fit = NL_model_selection(data_OD, # dataset first row times second row OD
+"test", 
+"test_model_selection",
+nl_model, #  model to use
+p_guess;
 )
 
+
 ```
 
 
-The user can specify the intial guess ```list_u0``` to improve the convergence of the fit.
-Otherwise it is possible to automatically find a good guess using a Markov Chain Monte Carlo restart (```method_of_fitting ="MCMC"```). 
-This it is done running the following:
-
+The user can specify any parameter of the optimizer, for the bound in this case it is done via:
 ```julia
- NL_model_selection(data_OD, # dataset first row times second row OD
-  "test", # name of the well
-    "test NL fit", #label of the experiment
-    list_models_f, #  model to use
-    list_lb, # lower bound param
-    list_ub; # upper bound param
-    method_of_fitting="MCMC",
-    nrep = 100,
-    optmizator=BBO_adaptive_de_rand_1_bin_radiuslimited(),
-    display_plots=true, # display plots in julia or not
-    pt_avg=3, # numebr of the point to generate intial condition
-    smoothing=true, # the smoothing is done or not?
-    type_of_smoothing="rolling_avg",
-    PopulationSize=300,
+@time nl_fit =  NL_model_selection(data_OD, # dataset first row times second row OD
+    "test", 
+    "test_model_selection",
+    nl_model, #  model to use
+    p_guess;
+    lb_param_array =lb_nl,
+    ub_param_array = ub_nl,
     maxiters=2000000,
     abstol=0.00001,
 )
