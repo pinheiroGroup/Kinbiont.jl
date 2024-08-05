@@ -897,6 +897,219 @@ ms_segmentation = fit_NL_segmentation_file(
 ## Downstream ML anlyses
 
 # Symbolic regression
-# Decision tree/forest regression
+
+This example demonstrates how to use the `KinBiont` and `SymbolicRegression` packages to analyze kinetics data.
+
+Set up paths to your data, annotation, calibration curve, and result directories (see examples):
+
+```julia
+using Kinbiont
+using Plots
+using Tables
+using SymbolicRegression
+
+path_to_data = "xxxx/channel_1.csv"
+path_to_annotation = "xxxx/annotation.csv"
+path_to_calib = "xxxxx/cal_curve_avg.csv"
+path_to_results = "xxxxs/seg_res/"
+```
+
+We fit with segmentation and 1 change point, we declare the models
+
+```julia
+model1 = "HPM_exp"
+lb_param1 = [0.00001, 0.000001]
+ub_param1 = [0.5, 1.5]
+param_guess1 = [0.01, 0.01]
+
+model2 = "logistic"
+lb_param2 = [0.00001, 0.000001]
+ub_param2 = [0.5, 2.5]
+param_guess2 = [0.01, 1.01]
+
+list_of_models = [model1, model2]
+list_guess = [param_guess1, param_guess2]
+list_lb = [lb_param1, lb_param2]
+list_ub = [ub_param1, ub_param2]
+```
+
+We perform  the fitting
+
+```julia
+fit_file = segmentation_ODE_file(
+    "seg_exp_1_test_2", # Label of the experiment
+    path_to_data, # Path to the folder to analyze
+    list_of_models, # ODE models to use
+    list_guess, # Parameter guesses
+    1;
+    path_to_annotation=path_to_annotation, # Path to the annotation of the wells
+    detect_number_cpd=false,
+    fixed_cpd=false,
+    path_to_calib=path_to_calib,
+    multiple_scattering_correction=false, # If true, use calibration curve for data correction
+    type_of_curve="deriv",
+    pt_smooth_derivative=10,
+    type_of_smoothing="lowess",
+    verbose=true,
+    write_res=false,
+    path_to_results=path_to_results,
+    win_size=12, # Number of points to generate initial condition
+    smoothing=true,
+    lb_param_array=list_lb, # Lower bounds for parameters
+    ub_param_array=list_ub, # Upper bounds for parameters
+    maxiters=200000
+)
+```
+
+Loading annotation to find concentrations and selecting results of a specific strain
+
+```julia
+annotation_test = CSV.File(path_to_annotation, header=false)
+names_of_annotation = propertynames(annotation_test)
+feature_matrix = hcat(annotation_test[:Column1], annotation_test[:Column3])
+
+# Selecting strain S5
+index_strain = findall(annotation_test[:Column2] .== "S5")
+index_cc = findall(annotation_test[:Column3] .> 0.01)
+to_keep = intersect(index_strain, index_cc)
+feature_matrix = feature_matrix[to_keep, :]
+wells_to_use = feature_matrix[:, 1]
+index_res = Any
+
+```
+
+Giving same order to the well to analyze and the features (can be skipped)
+```julia
+for i in wells_to_use
+    if i == wells_to_use[1]
+        index_res = findfirst(res_first_seg[:, 1:end] .== i)
+    else
+        index_res = hcat(index_res, findfirst(res_first_seg[:, 1:end] .== i))
+    end
+end
+
+iii = [index_res[1, i][2] for i in eachindex(index_res[1, :])]
+res_first_seg_ML = res_first_seg[:, iii]
+res_first_seg_ML = hcat(res_first_seg[:, 1], res_first_seg_ML)
+```
+
+Add x = 0.0, y = 0.0 to data for not growing cells
+
+```julia
+
+feature_matrix =vcat(feature_matrix,["zero" 0.0])
+res_first_seg_ML=hcat(res_first_seg_ML , reduce(vcat,["zero" ,"zero", "zero", 0.0 ,  0.0 ,0.0 ,0.0 ,0.0 ,0.0 ]))
 
 
+```
+
+Declaring the options of symbolic regression
+
+```julia
+
+options = SymbolicRegression.Options(
+    binary_operators=[+, /, *, -],
+    unary_operators=[],
+    constraints=nothing,
+    elementwise_loss=nothing,
+    loss_function=nothing,
+    tournament_selection_n=12,
+    tournament_selection_p=0.86,
+    topn=12,
+    complexity_of_operators=nothing,
+    complexity_of_constants=nothing,
+    complexity_of_variables=nothing,
+    parsimony=0.05,
+    dimensional_constraint_penalty=nothing,
+    alpha=0.100000,
+    maxsize=10,
+    maxdepth=nothing
+)
+```
+
+Run the symbolic regression using dependent variable that is the 7th row of the KinBiont results (i.e., the growth rate)
+
+```julia
+
+gr_sy_reg = downstream_symbolic_regression(res_first_seg_ML, feature_matrix, 7; options=options)
+
+scatter(feature_matrix[:, 2], res_first_seg_ML[7, 2:end], xlabel="Amino Acid concentration μM", ylabel="Growth rate [1/Min]", label=["Data" nothing])
+hline!(unique(gr_sy_reg[3][:, 1]), label=["Eq. 1" nothing], line=(3, :green, :dash))
+plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_reg[3][:, 2]), label=["Eq. 2" nothing], line=(3, :red))
+plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_reg[3][:, 3]), label=["Eq. 3" nothing], line=(3, :blue, :dashdot))
+plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_reg[3][:, 4]), label=["Eq. 4" nothing], line=(2, :black))
+plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_reg[3][:, 5]), label=["Eq. 5" nothing], line=(2, :black))
+
+```
+
+# Decision Tree Regression Analysis
+
+
+
+We declare the packages
+
+```julia
+using KinBiont
+using Plots
+using CSV, DataFrames
+using Statistics
+using DelimitedFiles
+using Random
+using DecisionTree
+using AbstractTrees
+using MLJDecisionTreeInterface
+using TreeRecipe
+```
+
+
+Read the data from CSV files:
+
+```julia
+KinBiont_res_test = readdlm("path_to_res_clean_ML_richards.csv", ',')
+annotation_test = readdlm("path_to_annotation_clean_richards.csv", ',')
+```
+
+
+Define necessary variables for analysis:
+
+```julia
+ordered_strain = annotation_test[:, end]
+n_folds = 10
+feature_names = unique(annotation_test[1, 2:end])[2:(end-1)]
+
+depth = -1 
+
+
+# Set random seed for reproducibility
+seed = Random.seed!(1234)
+```
+
+ Perform Decision Tree Regression
+
+Loop through each strain and perform decision tree regression and we plot the tree trying to analyze th 9th row (i.e. growht rate) of the results
+
+```julia
+
+
+index_strain = findall("N. soli".== ordered_strain)
+feature_matrix = annotation_test[index_strain, 2:(end-1)]
+KinBiont_results = KinBiont_res_test[:, index_strain]
+
+dt_gr = downstream_decision_tree_regression(KinBiont_results,
+        feature_matrix,
+        9;
+        do_pruning=false,
+        pruning_accuracy=1.00,
+        verbose=true,
+        do_cross_validation=true,
+        max_depth=depth,
+        n_folds_cv=n_folds,
+        seed=seed
+    )
+    
+# Wrap the decision tree model for visualization
+wt = DecisionTree.wrap(dt_gr[1], (featurenames = feature_names,))
+
+# Plot the decision tree
+p2 = Plots.plot(wt, 0.9, 0.2; size = (900, 400), connect_labels = ["yes", "no"])
+```
