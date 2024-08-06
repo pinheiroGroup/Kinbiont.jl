@@ -5,22 +5,22 @@ Download the folder from Github.
 First, it is necessary to install the Julia from https://julialang.org/.   
 Next, the user need to copy the project folder in the chosen working directory. 
 
-1. Using REPL or the COMMAND LINE move to the working directory.  
-2. If you use the COMMAND LINE, to start a Julia session run the command:
+- Using REPL or the COMMAND LINE move to the working directory.  
+- If you use the COMMAND LINE, to start a Julia session run the command:
 
 > julia
 
-3. To enter in the Pkg REPL  type 
+- To enter in the Pkg REPL  type 
 
 >]  
 
-4. Type the command 
+- Type the command 
 > activate .
 
-5. To activate the KinBiont project, type
+- To activate the KinBiont project, type
 > instantiate
 
-6. at the start of the code or notebook (where you are going to do analyses) you should write 
+- At the start of the code or notebook (where you are going to do analyses) you should write 
 
 ```
 using KinBiont
