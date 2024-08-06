@@ -45,16 +45,34 @@ end
     number_of_bin=40,
     )
 
-Perform the analyses with the required change point detection algorithm
+Performs change point detection analysis using the specified algorithm on the provided data matrix.
 
 # Arguments:
-- `type_of_detection="lsdd"`: or piecewise linear fitting on the specific growth rate
-- `pt_derivative`: number of point to evaluate the derivative/specific gr (if 0 numerical derivative if >1 specific gr with that size of sliding window)
-- `size_win::Int`: size of the used window in all of the methods
+
+- `data::Matrix{Float64}`: A matrix containing the data for change point detection. Each row should correspond to a different time series or experimental condition.
+- `n_max_cp::Int`: Maximum number of change points to detect.
+
+# Key Arguments:
+
+- `type_of_detection="lsdd"`: Algorithm for detecting change points. Options include:
+  - `"lsdd"`: Least Squares Density Difference.
+  - `"piecewise"`: Piecewise linear fitting on the specific growth rate (requires `pt_derivative` > 0).
+- `type_of_curve="original"`: Specifies the curve on which to perform change point detection. Options include:
+  - `"original"`: Use the original time series data.
+  - `"deriv"`: Use the specific growth rate time series.
+- `pt_derivative=0`: Number of points used to evaluate the derivative or specific growth rate:
+  - `0`: Use numerical derivative.
+  - `>0`: Use a sliding window approach with the specified window size.
+- `size_win::Int`: Size of the window used for the change point detection algorithms.
+- `method="peaks_prominence"`: Method for peak detection on the dissimilarity curve. Options include:
+  - `"peaks_prominence"`: Orders peaks by prominence.
+  - `"thr_scan"`: Uses a threshold to select peaks.
+- `number_of_bin=40`: Number of bins used to generate the threshold if `method="thr_scan"`.
 
 # Output:
 
-- Array with the list of change points
+- An array containing the list of detected change points for each time series or experimental condition.
+
 """
 function cpd_local_detection(
     data::Matrix{Float64},

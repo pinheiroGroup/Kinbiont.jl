@@ -30,20 +30,21 @@ function model_selector(model::String, u0, tspan, param=nothing)
 end
 
 """
-    specific_gr_evaluation(data_smooted::Any, 
-    pt_smoothing_derivative::Int)
+   specific_gr_evaluation(data_smoothed::Matrix{Float64}, 
+   pt_smoothing_derivative::Int)
 
-
-Function that evaluates specific gr evaluation with slinding window log-lin fitting
+This function evaluates the specific growth rate (GR) of a smoothed data set using a sliding window log-linear fitting approach.
 
 # Arguments:
 
-- `data_smooted`:  matrix of data 2xn_time points, it is a single curve.
-- `pt_smoothing_derivative`: Int size of the win, if <2 the the numerical derivative of (log) data is evaluate with interpolation algorithm
+- `data_smoothed::Matrix{Float64}`: A 2xN matrix of smoothed data. The first row contains time points, and the second row contains the corresponding OD (optical density) values. This matrix represents a single growth curve.
+
+- `pt_smoothing_derivative::Int`: Size of the window used for computing the numerical derivative of the log-transformed data. If `pt_smoothing_derivative` is less than 2, the function uses an interpolation algorithm to evaluate the numerical derivative.
 
 # Output:
 
-- `specific_gr` an array with the specific growth rate  in fuction of time.
+- `specific_gr::Vector{Float64}`: An array containing the specific growth rate as a function of time. The specific growth rate is calculated using a sliding window log-linear fitting approach applied to the smoothed data.
+
 """
 function specific_gr_evaluation(data_smooted::Any, pt_smoothing_derivative::Int)
 

@@ -12,34 +12,65 @@ using AbstractTrees
     verbose = true,
     pruning_purity = 1.0,
     min_samples_leaf = 5,
-    min_samples_split = 2,  
-    min_purity_increase = 0.0, 
+    min_samples_split = 2,
+    min_purity_increase = 0.0,
     n_subfeatures = 0,
     do_pruning = true,
-    pruning_accuracy = 1.0, 
+    pruning_accuracy = 1.0,
     seed = 3,
     do_cross_validation = false,
     n_folds_cv = 3,
     )
-Function that 
+
+This function performs regression using a decision tree algorithm on results from KinBiont. It includes options for tree pruning, cross-validation, and feature selection.
+
 # Arguments:
-- `kinBiont_results::Matrix{Any}`: The matrix of results of fitting one file with KinBiont. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
-- `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the KinBiont_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of KinBiont_results. 
-- `row_to_learn::Int`: which row of the matrix `kinBiont_results` will be the target of the ML inference.
+
+- `KinBiont_results::Matrix{Any}`: The matrix containing results from fitting one or more files using KinBiont. 
+
+- `feature_matrix::Matrix{Any}`: Matrix of features used for machine learning analysis. The number of rows should match the number of columns (minus one) in the `KinBiont_results`, with the first column containing well names to align with the well names in the second row of `KinBiont_results`.
+
+- `row_to_learn::Int`: The index of the row in the `KinBiont_results` matrix that will be used as the target for the regression model.
+
 # Key Arguments:
-- `max_depth = -1`, Int, maximum depth of the decision tree ( -1, no maximum)
-- `verbose = true`
-- `pruning_purity = 1.0`
-- `min_samples_leaf = 5`: Int, the minimum number of samples each leaf needs to have
-- `min_samples_split = 2`: Int, the minimum number of samples in needed for a split (
-- `min_purity_increase = 0.0`: Float, minimum purity needed for a split 
-- `n_subfeatures = 0`Int,  number of features to select at random ( 0, keep all)
-- `do_pruning = true` perform or not a post inference impurity pruning
-- `pruning_accuracy = 1.0`:Float, purity threshold used for post-pruning (1.0, no pruning)
-- `seed = 3`: the random seed
-- `do_cross_validation = false`:Bool, do or not the n-fold cross validation
-- `n_folds_cv = 3`: Int,   n-fold of the cross validation
-# Output:
+
+- `max_depth::Int = -1`: Maximum depth of the decision tree. If -1, there is no maximum depth.
+
+- `verbose::Bool = true`: If true, the function will output additional details during the training process.
+
+- `pruning_purity::Float64 = 1.0`: Purity threshold for pruning. If set to 1.0, no pruning will be performed.
+
+- `min_samples_leaf::Int = 5`: Minimum number of samples required to be at a leaf node.
+
+- `min_samples_split::Int = 2`: Minimum number of samples required to split an internal node.
+
+- `min_purity_increase::Float64 = 0.0`: Minimum increase in purity required for a split.
+
+- `n_subfeatures::Int = 0`: Number of features to select at random for splitting. If 0, all features are considered.
+
+- `do_pruning::Bool = true`: If true, post-inference impurity pruning will be performed.
+
+- `pruning_accuracy::Float64 = 1.0`: Purity threshold used for post-pruning. A value of 1.0 means no pruning.
+
+- `seed::Int = 3`: Random seed for reproducibility.
+
+- `do_cross_validation::Bool = false`: If true, performs n-fold cross-validation.
+
+- `n_folds_cv::Int = 3`: Number of folds for cross-validation. Ignored if `do_cross_validation` is false.
+
+# Outputs:
+
+1. `tree_model::Any`: The trained decision tree model.
+
+2. `importance_score::Vector{Float64}`: Importance scores of each feature used in the model.
+
+3. `importance_rank::Vector{Int}`: Ranking of features based on their importance scores.
+
+4. `cross_validation_score::Union{Float64, Nothing}`: Cross-validation score if `do_cross_validation` is true; otherwise, `nothing`.
+
+5. `samples_per_leaf::Matrix{Int}`: Matrix where each row represents a leaf node and the columns represent the samples associated with that leaf.
+
+
 """
 function downstream_decision_tree_regression(KinBiont_results::Matrix{Any}, # output of KinBiont results
   feature_matrix::Matrix{Any},
@@ -147,24 +178,39 @@ end
 
 """
     downstream_symbolic_regression(
-    KinBiont_results,
-    feature_matrix,
-    row_to_learn;
+    KinBiont_results::Matrix{Any},
+    feature_matrix::Matrix{Any},
+    row_to_learn::Int;
     options = SymbolicRegression.Options(),
     )
-Function that evalauates 
+
+This function performs symbolic regression on the results obtained from fitting models using KinBiont. It uses a feature matrix to train a symbolic regression model to predict a specific row of the KinBiont results.
+
 # Arguments:
-- `kinBiont_results::Matrix{Any}`: The matrix of results of fitting one file with KinBiont. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
-- `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the KinBiont_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of KinBiont_results. 
-- `row_to_learn::Int`: which row of the matrix `kinBiont_results` will be the target of the ML inference.
+
+- `KinBiont_results::Matrix{Any}`: The matrix containing results from fitting one or more files using KinBiont. 
+
+- `feature_matrix::Matrix{Any}`: Matrix of features used for machine learning analysis. The number of rows in this matrix should match the number of columns (minus one) in the `KinBiont_results`, with the first column containing well names to match the features with the well names in the second row of `KinBiont_results`.
+
+- `row_to_learn::Int`: The index of the row in the `KinBiont_results` matrix that will be the target for machine learning inference.
+
 # Key Arguments:
--  'options = SymbolicRegression.Options()' the option class of the symbolic regression class, see example and https://astroautomata.com/SymbolicRegression.jl/stable/api/#SymbolicRegression.CoreModule.OptionsStructModule.Options for details.
+
+- `options::SymbolicRegression.Options()`: Options for the symbolic regression process. This argument uses the `SymbolicRegression.Options` class, allowing customization of the symbolic regression parameters. See [SymbolicRegression.jl API documentation](https://astroautomata.com/SymbolicRegression.jl/stable/api/#SymbolicRegression.CoreModule.OptionsStructModule.Options) for details.
+
 # Outputs:
-if `res =  downstream_symbolic_regression()`:
--`trees`: the trees representing the hall of fames results
--`res_output`: a matrix containing the hall_of_fame  of the inference, where first column is the Complexity score, second column MSE and third column the equation Equation
--`predictions`: For each equation we return the predicted value for each sample (in this matrix equations are columns and rows are the samples)
--`index_annotation`: Index on how to order the rows of features matrix to match the columns of KinBiont results
+
+- `trees::Vector{SymbolicRegression.Tree}`: A vector of trees representing the hall of fame results from the symbolic regression process.
+
+- `res_output::Matrix{Any}`: A matrix containing the hall of fame results, where each row includes:
+1. Complexity score of the equation.
+2. Mean Squared Error (MSE) of the equation.
+3. The symbolic equation itself.
+
+- `predictions::Matrix{Float64}`: For each equation in the hall of fame, this matrix contains the predicted values for each sample. Columns represent the different equations, and rows correspond to the samples.
+
+- `index_annotation::Vector{Int}`: An index vector used to order the rows of the `feature_matrix` to match the columns of the `KinBiont_results`.
+
 """
 function downstream_symbolic_regression(kinBiont_results,
   feature_matrix,
