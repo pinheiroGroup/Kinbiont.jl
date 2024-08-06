@@ -5,7 +5,7 @@ using AbstractTrees
 
 """
     downstream_decision_tree_regression(
-    kinBiont_results::Matrix{Any},
+    KinBiont_results::Matrix{Any},
     feature_matrix::Matrix{Any},
     row_to_learn::Int;
     max_depth = -1,
@@ -24,7 +24,7 @@ using AbstractTrees
 Function that 
 # Arguments:
 - `kinBiont_results::Matrix{Any}`: The matrix of results of fitting one file with KinBiont. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
-- `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the kinBiont_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of kinBiont_results. 
+- `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the KinBiont_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of KinBiont_results. 
 - `row_to_learn::Int`: which row of the matrix `kinBiont_results` will be the target of the ML inference.
 # Key Arguments:
 - `max_depth = -1`, Int, maximum depth of the decision tree ( -1, no maximum)
@@ -41,7 +41,7 @@ Function that
 - `n_folds_cv = 3`: Int,   n-fold of the cross validation
 # Output:
 """
-function downstream_decision_tree_regression(kinBiont_results::Matrix{Any}, # output of kinBiont results
+function downstream_decision_tree_regression(kinBiont_results::Matrix{Any}, # output of KinBiont results
   feature_matrix::Matrix{Any},
   row_to_learn::Int;
   max_depth = -1,
@@ -62,7 +62,7 @@ function downstream_decision_tree_regression(kinBiont_results::Matrix{Any}, # ou
 
   feature_names = string.(feature_matrix[1,2:end])
 
-  names_of_the_wells_res = kinBiont_results[2, 1:end]
+  names_of_the_wells_res = KinBiont_results[2, 1:end]
   names_of_the_wells_annotation = feature_matrix[1:end, 1]
   wells_to_use = intersect(names_of_the_wells_res, names_of_the_wells_annotation)
 
@@ -80,7 +80,7 @@ function downstream_decision_tree_regression(kinBiont_results::Matrix{Any}, # ou
 
   #index_res[1, :] = index_res[1, :] 
 
-  output = convert.(Float64, kinBiont_results[row_to_learn, index_res])
+  output = convert.(Float64, KinBiont_results[row_to_learn, index_res])
 
   predictors = convert.(Float64, feature_matrix[index_annotation, 2:end])
 
@@ -145,7 +145,7 @@ end
 
 """
     downstream_symbolic_regression(
-    kinBiont_results,
+    KinBiont_results,
     feature_matrix,
     row_to_learn;
     options = SymbolicRegression.Options(),
@@ -153,7 +153,7 @@ end
 Function that evalauates 
 # Arguments:
 - `kinBiont_results::Matrix{Any}`: The matrix of results of fitting one file with KinBiont. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
-- `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the kinBiont_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of kinBiont_results. 
+- `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the KinBiont_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of KinBiont_results. 
 - `row_to_learn::Int`: which row of the matrix `kinBiont_results` will be the target of the ML inference.
 # Key Arguments:
 -  'options = SymbolicRegression.Options()' the option class of the symbolic regression class, see example and https://astroautomata.com/SymbolicRegression.jl/stable/api/#SymbolicRegression.CoreModule.OptionsStructModule.Options for details.
@@ -162,7 +162,7 @@ if `res =  downstream_symbolic_regression()`:
 -`trees`: the trees representing the hall of fames results
 -`res_output`: a matrix containing the hall_of_fame  of the inference, where first column is the Complexity score, second column MSE and third column the equation Equation
 -`predictions`: For each equation we return the predicted value for each sample (in this matrix equations are columns and rows are the samples)
--`index_annotation`: Index on how to order the rows of features matrix to match the columns of kinBiont results
+-`index_annotation`: Index on how to order the rows of features matrix to match the columns of KinBiont results
 """
 function downstream_symbolic_regression2(kinBiont_results,
   feature_matrix,
@@ -176,7 +176,7 @@ function downstream_symbolic_regression2(kinBiont_results,
 
 
 
-  names_of_the_wells_res = kinBiont_results[2, 1:end]
+  names_of_the_wells_res = KinBiont_results[2, 1:end]
   names_of_the_wells_annotation = feature_matrix[1:end, 1]
   wells_to_use = intersect(names_of_the_wells_res, names_of_the_wells_annotation)
 
@@ -198,7 +198,7 @@ function downstream_symbolic_regression2(kinBiont_results,
 
   #index_res[1, :] = index_res[1, :] 
 
-  output = convert.(Float64, kinBiont_results[row_to_learn, index_res])
+  output = convert.(Float64, KinBiont_results[row_to_learn, index_res])
 
 
   predictors = Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation,2])))
@@ -258,7 +258,7 @@ end
 
 """
     downstream_symbolic_regression(
-    kinBiont_results,
+    KinBiont_results,
     feature_matrix,
     row_to_learn;
     options = SymbolicRegression.Options(),
@@ -266,7 +266,7 @@ end
 Function that evalauates 
 # Arguments:
 - `kinBiont_results::Matrix{Any}`: The matrix of results of fitting one file with KinBiont. Compatible functions `fit_file_ODE`,`fit_file_custom_ODE`, `ODE_model_selection_file`, `segmentation_ODE_file`, `fit_NL_model_file`, `fit_NL_model_selection_file`, and `fit_NL_segmentation_file`.
-- `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the kinBiont_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of kinBiont_results. 
+- `feature_matrix::Matrix{Any}`: Matrix of the features for the ML analysis. Important, the number of rows of this file should be te number of columns (minus one) of the KinBiont_results, and the first column should have a name of the well in order to mach the feature with the names of the well in second row of KinBiont_results. 
 - `row_to_learn::Int`: which row of the matrix `kinBiont_results` will be the target of the ML inference.
 # Key Arguments:
 -  'options = SymbolicRegression.Options()' the option class of the symbolic regression class, see example and https://astroautomata.com/SymbolicRegression.jl/stable/api/#SymbolicRegression.CoreModule.OptionsStructModule.Options for details.
@@ -275,7 +275,7 @@ if `res =  downstream_symbolic_regression()`:
 -`trees`: the trees representing the hall of fames results
 -`res_output`: a matrix containing the hall_of_fame  of the inference, where first column is the Complexity score, second column MSE and third column the equation Equation
 -`predictions`: For each equation we return the predicted value for each sample (in this matrix equations are columns and rows are the samples)
--`index_annotation`: Index on how to order the rows of features matrix to match the columns of kinBiont results
+-`index_annotation`: Index on how to order the rows of features matrix to match the columns of KinBiont results
 """
 function downstream_symbolic_regression(kinBiont_results,
   feature_matrix,
@@ -287,7 +287,7 @@ function downstream_symbolic_regression(kinBiont_results,
 
 
 
-  names_of_the_wells_res = kinBiont_results[2, 1:end]
+  names_of_the_wells_res = KinBiont_results[2, 1:end]
   names_of_the_wells_annotation = feature_matrix[1:end, 1]
   wells_to_use = intersect(names_of_the_wells_res, names_of_the_wells_annotation)
 
@@ -309,7 +309,7 @@ function downstream_symbolic_regression(kinBiont_results,
 
   #index_res[1, :] = index_res[1, :] 
 
-  output = convert.(Float64, kinBiont_results[row_to_learn, index_res])
+  output = convert.(Float64, KinBiont_results[row_to_learn, index_res])
 
 
   predictors =Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation,2])))
