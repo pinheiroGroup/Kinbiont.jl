@@ -808,7 +808,7 @@ and the we can call the NL model selection function:
 ```julia
 @time fit_nl = fit_NL_model_selection_file(
     "TEST", #label of the experiment
-    path_to_dat, # path to the folder to analyze
+    path_to_data, # path to the folder to analyze
     nl_model, #  model to use
     p_guess;# initial guess param
     lb_param_array =lb_nl, # lower bound param
