@@ -261,9 +261,9 @@ Finally, we perform the fit:
     data_OD, # dataset first row times second row OD
    "test", # name of the well
     "test custom ode", #label of the experiment
-   ODE_custom, # ode model to use
+   ODE_custom, #  model to use
    param_guess,
-    1; # number ode in the system
+    1; # number  in the system
   )
 
 
@@ -456,7 +456,7 @@ First, we fit giving to KinBiont the list of change points:
    data_OD, # dataset first row times second row OD
     "test", # name of the well
     "", #label of the experiment
-    list_of_models, # ode models to use
+    list_of_models, #  models to use
     list_guess,
     cdp_list;
 )
@@ -473,7 +473,7 @@ n_change_points =2
    data_OD, # dataset first row times second row OD
     "test", # name of the well
     "", #label of the experiment
-    list_of_models, # ode models to use
+    list_of_models, #  models to use
     list_guess,
     3;
     detect_number_cpd=true,
@@ -633,7 +633,7 @@ cdp_list = [100.0, 200.0]
    data_OD, # dataset first row times second row OD
     "test", # name of the well
     "", #label of the experiment
-    list_of_models_nl, # ode models to use
+    list_of_models_nl, #  models to use
     list_guess,
     cdp_list;
     pt_smooth_derivative = 3
@@ -651,7 +651,7 @@ n_change_points = 2
    data_OD, # dataset first row times second row OD
     "test", # name of the well
     "", #label of the experiment
-    list_of_models_nl, # ode models to use
+    list_of_models_nl, #  models to use
     list_guess,
     2;
     detect_number_cpd=true,
@@ -755,7 +755,7 @@ After, we run the function ```ODE_model_selection_file```:
 @time ms_file = ODE_model_selection_file(
     "test", #label of the experiment
     path_to_data, # path to the folder to analyze
-    list_of_models, # ode model to use 
+    list_of_models, #  model to use 
     list_guess;
     lb_param_array=list_lb_param, # lower bound param
     ub_param_array=list_ub_param, # upper bound param
@@ -783,7 +783,7 @@ and then fit:
 @time fit_nl = fit_NL_model_selection_file(
     "TEST", #label of the experiment
     path_to_data    , # path to the folder to analyze
-    nl_model, # ode model to use
+    nl_model, #  model to use
     p_guess;# initial guess param
     lb_param_array =lb_nl, # lower bound param
     ub_param_array = ub_nl, # upper bound param
@@ -808,8 +808,8 @@ and the we can call the NL model selection function:
 ```julia
 @time fit_nl = fit_NL_model_selection_file(
     "TEST", #label of the experiment
-    path_to_data    , # path to the folder to analyze
-    nl_model, # ode model to use
+    path_to_dat, # path to the folder to analyze
+    nl_model, #  model to use
     p_guess;# initial guess param
     lb_param_array =lb_nl, # lower bound param
     ub_param_array = ub_nl, # upper bound param
@@ -850,7 +850,7 @@ Finally, we perform the fit:
 @time ms_file =  segmentation_ODE_file(
     " ", #label of the experiment
     path_to_data, # path to the folder to analyze
-    list_of_models, # ode model to use 
+    list_of_models, #  model to use 
     list_guess, #  param
     1;
     path_to_annotation=path_to_annotation,# path to the annotation of the wells
@@ -885,7 +885,7 @@ Then, we call the function to perform the fit:
 ms_segmentation = fit_NL_segmentation_file(
     "test", #label of the experiment
     path_to_data, # path to the folder to analyze
-    nl_model, # ode model to use
+    nl_model, #  model to use
     p_guess,# initial guess param
     1;
     lb_param_array=lb_nl, # lower bound param

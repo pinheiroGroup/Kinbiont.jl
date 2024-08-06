@@ -77,6 +77,10 @@ The models implemented in KinBiont are the following:
 
 
 
+- **Exponential**:
+
+$$\frac{d N(t)}{dt} =\mu N(t)$$
+
 
 - **Hyper Gompertz**:
 
@@ -167,7 +171,7 @@ $$\begin{cases}
   \frac{d N_2(t)}{dt} = \text{rate}_{\text{lag}} \cdot N_1(t) + \mu_{\text{max}} \cdot N_2(t) \cdot \left(1 - \frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)
 \end{cases}$$
 
-- **Exponential Heterogeneous Population Model (HPM McKellar)**:
+- **Exponential Heterogeneous Population Model**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) \\
@@ -227,6 +231,7 @@ To call these models use the string present in this table, the parameters will b
 
 | **Model Name**                               | **Parameters**                                                                                       | **String to call**                             |
 |----------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------|
+| Exponential ODE                              | `label_exp`, `well`, `model`, `gr`, `th_max_gr`, `emp_max_gr`, `loss`           | `"exponential"`                         |
 | Hyper Gompertz                              | `label_exp`, `well`, `model`, `gr`, `N_max`, `shape`, `th_max_gr`, `emp_max_gr`, `loss`           | `"hyper_gompertz"`                         |
 | Hyper Logistic                              | `label_exp`, `well`, `model`, `doubling_time`, `gr`, `N_max`, `shape`, `th_max_gr`, `emp_max_gr`, `loss` | `"hyper_logistic"`                         |
 | Von Bertalanffy ODE                         | `label_exp`, `well`, `model`, `alpha`, `beta`, `a`, `b`, `th_max_gr`, `emp_max_gr`, `loss`         | `"ode_von_bertalanffy"`                    |
