@@ -79,7 +79,8 @@ The models implemented in KinBiont are the following:
 
 
 - **Hyper Gompertz**:
- $$\frac{d N(t)}{dt} = \mu_{\text{max}} \cdot \log \left( \frac{N_{\text{max}}}{N(t)} \right)^{(1-n)}$$
+
+$$\frac{d N(t)}{dt} = \mu_{\text{max}} \cdot \log \left( \frac{N_{\text{max}}}{N(t)} \right)^{(1-n)}$$
 
 - **Hyper Logistic**:
 
