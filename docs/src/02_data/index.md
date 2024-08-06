@@ -68,13 +68,14 @@ See the folders  XXXXX for examples.
 All ML functions of KinBiont take as input a results matrix (i.e., the output of a fit) and a feature matrix (e.g., the concentration of antibiotics present in any well).
 
 ```julia
-downstream_decision_tree_regression(KinBiont_results::Matrix{Any}, # output of KinBiont results
-  feature_matrix::Matrix{Any},
-  row_to_learn::Int;)
+downstream_decision_tree_regression(KinBiont_results, 
+  feature_matrix,
+  row_to_learn;
+)
 ```
 
 ```julia
-function downstream_symbolic_regression(KinBiont_results,
+downstream_symbolic_regression(KinBiont_results,
   feature_matrix,
   row_to_learn;
 )
