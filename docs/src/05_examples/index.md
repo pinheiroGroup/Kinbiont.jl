@@ -215,7 +215,6 @@ using OptimizationNLopt
    ub = ub_ahpm,
    optimizer=LN_PRAXIS(), 
        multistart = true,
-
 )
 ```
 
