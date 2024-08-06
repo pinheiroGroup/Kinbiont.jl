@@ -196,7 +196,6 @@ using Optimization
     P_GUESS;
    lb = lb_ahpm,
    ub = ub_ahpm,
-    multistart = true,
    optimizer=BFGS(), 
 )
 ```
@@ -214,7 +213,9 @@ using OptimizationNLopt
     P_GUESS;
    lb = lb_ahpm,
    ub = ub_ahpm,
-   optimizer= BFGS(), 
+   optimizer=LN_PRAXIS(), 
+       multistart = true,
+
 )
 ```
 
@@ -908,10 +909,10 @@ using Plots
 using Tables
 using SymbolicRegression
 
-path_to_data = "xxxx/channel_1.csv"
-path_to_annotation = "xxxx/annotation.csv"
-path_to_calib = "xxxxx/cal_curve_avg.csv"
-path_to_results = "xxxxs/seg_res/"
+path_to_data = "/channel_1.csv"
+path_to_annotation = "/annotation.csv"
+path_to_calib = "/cal_curve_avg.csv"
+path_to_results = "/seg_res/"
 ```
 
 We fit with segmentation and 1 change point, we declare the models
