@@ -65,6 +65,51 @@ See the folders  XXXXX for examples.
 ## Data and annotation formatting for downstream ML
 
 
+All ML functions of KinBiont take as input a results matrix (i.e., the output of a fit) and a feature matrix (e.g., the concentration of antibiotics present in any well).
+
+```julia
+downstream_decision_tree_regression(KinBiont_results::Matrix{Any}, # output of KinBiont results
+  feature_matrix::Matrix{Any},
+  row_to_learn::Int;)
+```
+
+```julia
+function downstream_symbolic_regression(KinBiont_results,
+  feature_matrix,
+  row_to_learn;
+)
+```
+
+The first matrix is a standard output of any of the KinBiont fits. In this case, each row represents a parameter and each column a growth curve.
+For example:
+
+```
+label_exp,       exp_2_no_corrections,    exp_2_no_corrections
+well,            A1,                      A2
+model,           HPM,                     HPM
+gr,              0.008875566468779583,    0.010090369128600398
+exit_lag_rate,   1.7249775833759684e-6,   1.4012949810152472e-6
+N_max,           2.498999749717784,       1.6986904454789507
+th_max_gr,       0.005778245042794245,    0.00599548534261212
+emp_max_gr,      0.007951369027199616,    0.008096305651156249
+loss,            0.0013005418069932683,   0.0013349159149782007
+```
+
+Note the first column is dedicated to labels and will not be used by the functions. It is necessary that the second column reports a unique ID for each curve. The functions will ask which is the target row of the regression. Please do not use the first row.
+
+Instead, the feature matrix specifies the conditions associated with each unique ID of the previous file. For example, suppose you have two different antibiotics each with two different concentrations; then the matrix will be:
+
+```
+ID_exp,   abx_1,   abx_2
+A1,       0,       1,
+A2,       2,       0,
+A3,       1,       1,
+A4,       1,       0,
+```
+
+Note that it is necessary to add one column for each new chemical/condition added to the experiment (even if in a specific well it is absent). It is necessary that the first column contains the ID of the wells that must match with the previous file. The first row will not be used and is specific for the column names.
+
+
 ## Outputs of KinBiont
 
 KinBiont has different data struct as output
