@@ -5,53 +5,94 @@ using OptimizationBBO
 using OptimizationMultistartOptimization
 #######################################################################
 """
-    fitting_one_well_Log_Lin(
+    fit_NL_model(
     data::Matrix{Float64},
     name_well::String,
-    label_exp::String, 
+    label_exp::String,
+    model_function::Any,
+    u0;
+    pt_avg=1,
+    pt_smooth_derivative=7,
+    smoothing=false,
     type_of_smoothing="rolling_avg",
-    pt_avg=7, 
-    pt_smoothing_derivative=7, 
-    pt_min_size_of_win=7, 
-    type_of_win="maximum",
-    threshold_of_exp=0.9, 
-    multiple_scattering_correction=false, 
+    type_of_loss="RE",
+    multiple_scattering_correction=false,
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA", 
+    calibration_OD_curve="NA",
     thr_lowess=0.05,
-    start_exp_win_thr=0.05
-    ) 
+    penality_CI=3.0,
+    optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited(),
+    multistart=false,
+    n_restart=50,
+    auto_diff_method=nothing,
+    cons=nothing,
+    opt_params...
+    )
 
-This function fits a logarithmic-linear model to the growth curve data from a single well to evaluate the specific growth rate \(\lambda_s = \frac{d}{dt} \log(N(t))\). It uses a statistical threshold to define an exponential window within which the log-linear fit is performed.
+This function fits a nonlinear (NL) function to the time series input data of a single well. 
 
 # Arguments:
 
-- `data::Matrix{Float64}`: Growth curve dataset. The first row represents time, and the second row represents the observable (e.g., OD) values.
-- `name_well::String`: The name of the well.
-- `label_exp::String`: The label for the experiment.
+- `data::Matrix{Float64}`: The dataset with the growth curve. The first row represents times, and the second row represents the variable to fit (e.g., optical density). Ensure the data is formatted correctly as a 2-row matrix where each column corresponds to a time-point and its associated value.
+
+- `name_well::String`: The name of the well for which the model is being fitted.
+
+- `label_exp::String`: Label for the experiment, used for identification in outputs and results.
+
+- `model_function::Any`: The nonlinear model to use for fitting. This can be a function or a string representing one of the predefined NL models.
+
+- `u0::Any`: Initial guess for the model parameters. This should match the expected input format for the model being used.
 
 # Key Arguments:
 
-- `type_of_smoothing="rolling_avg"`: Method used to smooth the data. Options include `"NO"`, `"rolling_avg"` (rolling average), and `"lowess"`.
-- `pt_avg=7`: Size of the rolling average window for smoothing.
-- `pt_smoothing_derivative=7`: Number of points for evaluating the specific growth rate. If less than 2, interpolation is used; otherwise, a sliding window approach is applied.
-- `pt_min_size_of_win=7`: Minimum size of the exponential window in terms of the number of smoothed points.
-- `type_of_win="maximum"`: Method for selecting the exponential phase window. Options are `"maximum"` or `"global_thr"`.
-- `threshold_of_exp=0.9`: Quantile threshold for defining the exponential window based on the growth rate. This value ranges from 0 to 1.
-- `multiple_scattering_correction=false`: Whether to perform multiple scattering correction. Set to `true` to apply correction (requires a calibration curve), or `false` to skip it.
-- `calibration_OD_curve="NA"`: Path to the calibration curve file (CSV format). Used only if `multiple_scattering_correction=true`.
-- `method_multiple_scattering_correction="interpolation"`: Method for performing multiple scattering correction. Options include `"interpolation"` or `"exp_fit"` (adapted from Meyers et al., 2018).
-- `thr_lowess=0.05`: Threshold for lowess smoothing.
-- `start_exp_win_thr=0.05`: Minimum value of the observable to consider the start of the exponential window.
+- `optimizer::Any = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer used for parameter estimation. Default is `BBO_adaptive_de_rand_1_bin_radiuslimited()` from `optimizationBBO`.
+
+- `type_of_smoothing::String = "rolling_avg"`: Method for smoothing the data. Options include `"NO"` (no smoothing), `"rolling_avg"` (rolling average), and `"lowess"` (locally weighted scatterplot smoothing).
+
+- `pt_avg::Int = 7`: Number of points used for the rolling average window if `type_of_smoothing` is `"rolling_avg"`.
+
+- `smoothing::Bool = false`: Whether to apply smoothing to the data. Set to `true` to enable smoothing.
+
+- `type_of_loss::String = "RE"`: Type of loss function to be used for fitting. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`.
+
+- `blank_array::Vector{Float64} = zeros(100)`: Array containing blank data values, used for blank correction if needed.
+
+- `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. If less than 2, an interpolation algorithm is used; otherwise, a sliding window approach is used.
+
+- `calibration_OD_curve::String = "NA"`: Path to a CSV file with calibration data for optical density, used only if `multiple_scattering_correction` is true.
+
+- `multiple_scattering_correction::Bool = false`: Whether to apply multiple scattering correction. Set to `true` to use the calibration curve provided in `calibration_OD_curve`.
+
+- `thr_lowess::Float64 = 0.05`: Threshold parameter for the lowess smoothing method.
+
+- `penality_CI::Float64 = 3.0`: Penalty parameter for ensuring continuity at boundaries in segmentation. (Note: Consider removing this parameter if it is not applicable.)
+
+- `auto_diff_method::Any = nothing`: Differentiation method for the optimizer, to be specified if required.
+
+- `cons::Any = nothing`: Constraints for the optimization process.
+
+- `multistart::Bool = false`: Whether to use multistart optimization. Set to `true` to enable multistart.
+
+- `n_restart::Int = 50`: Number of restarts for multistart optimization, used if `multistart` is true.
+
+- `opt_params...`: Additional optional parameters for the optimizer, such as `lb` (lower bounds), `ub` (upper bounds), and `maxiters` (maximum iterations).
 
 # Output:
 
-- A data structure containing:
-  1. `method`: Description of the methods used.
-  2. Parameters array: `[label_exp, name_well, start of exp window, end of exp window, maximum specific growth rate, specific growth rate, 2 sigma CI of growth rate, doubling time, doubling time - 2 sigma, doubling time + 2 sigma, intercept of log-linear fit, 2 sigma CI of intercept, R^2]`
-  3. Exponential fit within the exponential window (log-transformed data).
-  4. Time points within the exponential window.
-  5. Confidence bands for the log-linear fit.
+- **Method String**: A string indicating the method used for the fitting process.
+
+- **Results Array**: An array where each entry contains:
+  - `"name of model"`: The name of the model used.
+  - `"well"`: The name of the well.
+  - `"param_1", "param_2", ..., "param_n"`: Parameters of the fitted NL model.
+  - `"maximum specific gr using NL"`: Maximum specific growth rate obtained using the NL model.
+  - `"maximum specific gr using data"`: Maximum specific growth rate obtained from the data.
+  - `"objective function value"`: Value of the objective function (i.e., the loss function value).
+
+- **Fitted NL Data**: Numerical solution of the fitted NL model.
+
+- **Fitted Time Coordinates**: Time coordinates corresponding to the fitted NL data.
+
 
 """
 function fitting_one_well_Log_Lin(

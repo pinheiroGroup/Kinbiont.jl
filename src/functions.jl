@@ -30,8 +30,8 @@ function model_selector(model::String, u0, tspan, param=nothing)
 end
 
 """
-   specific_gr_evaluation(data_smoothed::Matrix{Float64}, 
-   pt_smoothing_derivative::Int)
+    specific_gr_evaluation(data_smoothed::Matrix{Float64}, 
+    pt_smoothing_derivative::Int)
 
 This function evaluates the specific growth rate (GR) of a smoothed data set using a sliding window log-linear fitting approach.
 

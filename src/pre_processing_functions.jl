@@ -11,13 +11,19 @@ using DataFrames
     )
 
 Multiple scattering correction of a given time series.
+
 # Arguments:
 
-- `data`: Matrix of size 2xn, where n is the number of time points (single curve).
-- `calibration_OD_curve="NA"`: String. Path for the calibration data (.csv file). It is used only if `multiple_scattering_correction=true`.
-- `method`: String. Method of choice to perform the multiple scattering curve inference. Options: '"interpolation"' or '"exp_fit"' (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and microbial technology*, 118, 1-5., 2018). 
+- `data::Matrix{Float64}`: Matrix of size 2xN, where N is the number of time points (single curve).
 
-# Output: `Matrix{Float64}`. Array with the corrected data. 
+- `calibration_curve::String`: Path to the calibration data (.csv file). Used to correct the data for multiple scattering.
+
+- `method::String = "interpolation"`: Method for performing the multiple scattering correction. Options include `"interpolation"` and `"exp_fit"` (adapted from Meyers, A., Furtmann, C., & Jose, J., *Enzyme and Microbial Technology*, 118, 1-5., 2018).
+
+# Output:
+
+- `Matrix{Float64}`: Array with the corrected data.
+
 
 """
 function correction_OD_multiple_scattering(
@@ -59,20 +65,26 @@ end
 
 """
     smoothing_data(
-        data::Matrix{Float64};
-        method="rolling_avg",
-        pt_avg=7,
-        thr_lowess=0.05
-    )
+    data::Matrix{Float64};
+    method="rolling_avg",
+    pt_avg=7,
+    thr_lowess=0.05
+)
 
 # Arguments:
 
-- `data`: Matrix of size 2xn, where n is the number of time points (single curve).
-- `method="rolling_avg"`: String. Method of choice to smooth the data. Options: "NO", "rolling_avg" (rolling average of the data), and "lowess".
-- `pt_avg=7`: Number of points to generate the initial condition or to do the rolling avgerage smoothing.
-- `thr_lowess=0.05`: Float64. Argument of the lowess smoothing.
+- `data::Matrix{Float64}`: Matrix of size 2xN, where N is the number of time points (single curve).
 
-# Output: `Matrix{Float64}`. Array of smoothed data. 
+- `method::String = "rolling_avg"`: Method for smoothing the data. Options include `"NO"`, `"rolling_avg"` (rolling average), and `"lowess"`.
+
+- `pt_avg::Int = 7`: Number of points used for rolling average smoothing or initial condition generation.
+
+- `thr_lowess::Float64 = 0.05`: Parameter for lowess smoothing.
+
+# Output:
+
+- `Matrix{Float64}`: Array of smoothed data.
+
 
 """
 function smoothing_data(
