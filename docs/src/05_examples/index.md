@@ -12,7 +12,7 @@ Depth = 3
 It is possible to load single curves using CSV package in Julia and format them to be compatible with KinBiont. In this example we suppose that the .csv file is formatted as required in KinBiont documentation.
 
 ```julia
-df_data  =CSV.file("your_path/data.csv")
+df_data  =CSV.file("your_path/data_examples/plate_data.csv")
 names_of_cols = propertynames(df_data)  
 # assuming first column is time and we want to fit the second one 
 
@@ -90,7 +90,7 @@ Furthermore, to address potential external influences, a correction for multiple
 ```julia
 
 # Multiple scattering correction (optional, comment out if not needed)
-data_ODsmooth = correction_OD_multiple_scattering(data_ODsmooth, "/your_path/calibration_curve.csv")
+data_ODsmooth = correction_OD_multiple_scattering(data_ODsmooth, "/your_path/data_examples/cal_curve_examples.csv")
 using Plots
 # Plotting scatterplot of preprocessed data
 Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Pre-processed data" nothing], markersize=2, color=:blue, size=(300, 300))
@@ -669,7 +669,7 @@ Instead fitting a single kinetics the user can supply a ".csv" file (formatted a
 To use the following functions the user should input to KinBiont variables that contains the string of the path to the .csv files:
 
 ```julia
-path_to_data = "your_path_to_data/data.csv"
+path_to_data = "your_path/data_examples/plate_data.csv"
 path_to_annotation ="your_path_to_annotation/annotation.csv"
 ```
 In the following examples we assume that these two variables have a value.
@@ -908,10 +908,10 @@ using Plots
 using Tables
 using SymbolicRegression
 
-path_to_data = "/channel_1.csv"
-path_to_annotation = "/annotation.csv"
-path_to_calib = "/cal_curve_avg.csv"
-path_to_results = "/seg_res/"
+path_to_data = "your_path/data_examples/plate_data.csv"
+path_to_annotation = "your_path/data_examples/annotation.csv"
+path_to_calib = "your_path/data_examples/cal_curve_example.csv"
+path_to_results = "your_path//seg_res/"
 ```
 
 We fit with segmentation and 1 change point, we declare the models
@@ -1065,8 +1065,8 @@ using TreeRecipe
 Read the data from CSV files:
 
 ```julia
-KinBiont_res_test = readdlm("path_to_res_clean_ML_richards.csv", ',')
-annotation_test = readdlm("path_to_annotation_clean_richards.csv", ',')
+KinBiont_res_test = readdlm("your_path/data_examples/Results_for_ML.csv", ',')
+annotation_test = readdlm("your_path/data_examples/annotation_for_ML.csv", ',')
 ```
 
 

@@ -60,7 +60,7 @@ Raw_Microplate_OD,Real_Spectrophotometer_OD
 ```
 
 
-See the folders  XXXXX for examples. 
+See the folders  `data_examples` for examples. 
 
 ## Data and annotation formatting for downstream ML
 
@@ -110,6 +110,7 @@ A4,       1,       0,
 
 Note that it is necessary to add one column for each new chemical/condition added to the experiment (even if in a specific well it is absent). It is necessary that the first column contains the ID of the wells that must match with the previous file. The first row will not be used and is specific for the column names.
 
+See the folders  `data_examples` for examples. 
 
 ## Outputs of KinBiont
 
