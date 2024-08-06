@@ -38,12 +38,12 @@ Function that evaluates specific gr evaluation with slinding window log-lin fitt
 
 # Arguments:
 
-- 'data_smooted':  matrix of data 2xn_time points, it is a single curve.
-- 'pt_smoothing_derivative': Int size of the win, if <2 the the numerical derivative of (log) data is evaluate with interpolation algorithm
+- `data_smooted`:  matrix of data 2xn_time points, it is a single curve.
+- `pt_smoothing_derivative`: Int size of the win, if <2 the the numerical derivative of (log) data is evaluate with interpolation algorithm
 
 # Output:
 
-- 'specific_gr' an array with the specific growth rate 
+- `specific_gr` an array with the specific growth rate  in fuction of time.
 """
 function specific_gr_evaluation(data_smooted::Any, pt_smoothing_derivative::Int)
 
