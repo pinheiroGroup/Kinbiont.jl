@@ -726,6 +726,19 @@ fit_od = fit_file_ODE(
 )
 
 ```
+To plot the results of such fitting one can do the following
+
+```julia
+using Plots
+
+well_to_plot = 13
+
+# plot data 
+Plot.scatter(fit_od[4][well_to_plot][:,1],fit_od[4][well_to_plot][:,2])
+# plot fits 
+Plot.scatter(fit_od[3][well_to_plot][1,:],fit_od[3][well_to_plot][2,:])
+
+```
 It is also possible to perform the model selection on an entire file. First we declare the lis of models
 
 ```julia
