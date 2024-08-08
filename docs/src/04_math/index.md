@@ -21,7 +21,7 @@ $$N(t) = p_1 \cdot e^{-e^{-p_2 \cdot (t - p_3)}}$$
 
 - **Logistic**
 
-$$N(t) = \frac{p_3}{1 + \left( \frac{p_3}{p_2} - 1 \right) \exp\left( - p_4 \cdot (t - p_1) \right)}$$
+$$N(t) =\frac{p_1}{1 + \left( \frac{p_1}{p_2} - 1 \right) \exp\left( - p_4 \cdot (t ) \right)}     $$
 
 - **Richards model**
 
@@ -84,11 +84,11 @@ $$\frac{d N(t)}{dt} =\mu N(t)$$
 
 - **Hyper Gompertz**:
 
-$$\frac{d N(t)}{dt} = \mu_{\text{max}} \cdot \log \left( \frac{N_{\text{max}}}{N(t)} \right)^{(1-n)}$$
+$$\frac{d N(t)}{dt} = \mu \cdot \log \left( \frac{N_{\text{max}}}{N(t)} \right)^{(1-n)}$$
 
 - **Hyper Logistic**:
 
-$$\frac{d N(t)}{dt} = \frac{\mu_{\text{max}}}{N_{\text{max}}} \cdot N(t)^{(1-n)} (N(t) - N_{\text{max}})^{(1+n)}$$
+$$\frac{d N(t)}{dt} = \frac{\mu}{N_{\text{max}}} \cdot N(t)^{(1-n)} (N(t) - N_{\text{max}})^{(1+n)}$$
 
 - **Von Bertalanffy ODE**:
 
@@ -96,34 +96,34 @@ $$\frac{d N(t)}{dt} = N(t) \cdot (p_1 \cdot p_2 \cdot t^{p_2-1}) - p_3 \cdot p_4
 
 - **Bertalanffy-Richards**:
 
-$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \cdot \mu_{\text{max}} \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \cdot N(t)$$
+$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \cdot \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \cdot N(t)$$
 
 - **Logistic**:
 
-$$\frac{d N(t)}{dt} = \mu_{\text{max}} \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \cdot N(t)$$
+$$\frac{d N(t)}{dt} = \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \cdot N(t)$$
 
 - **Adjusted Logistic**:
 
-$$\frac{d N(t)}{dt} = \mu_{\text{max}} \left( 1 - \left(\frac{N(t)}{N_{\text{max}}}\right) ^n \right) \cdot N(t)$$
+$$\frac{d N(t)}{dt} = \mu \left( 1 - \left(\frac{N(t)}{N_{\text{max}}}\right) ^n \right) \cdot N(t)$$
 
 - **Gompertz**:
 
-$$\frac{d N(t)}{dt} = \mu_{\text{max}} \cdot N(t) \cdot \log \left( \frac{N_{\text{max}}}{N(t)} \right)$$
+$$\frac{d N(t)}{dt} = \mu \cdot N(t) \cdot \log \left( \frac{N_{\text{max}}}{N(t)} \right)$$
 
 - **Baranyi Richards**:
 
-$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \cdot \mu_{\text{max}} \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \cdot N(t)$$
+$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \cdot \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \cdot N(t)$$
 
 - **Baranyi Roberts**:
 
-$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \cdot \mu_{\text{max}} \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t)$$
+$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \cdot \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t)$$
 
 - **Piece-wise Adjusted Logistic**:
 
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
   \text{const.} \cdot N(t) & t < t_{\text{lag}} \\ 
-  \mu_{\text{max}} \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t) & t \geq t_{\text{lag}}
+  \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t) & t \geq t_{\text{lag}}
 \end{cases}$$
 
 - **Triple Piece-wise Adjusted Logistic**:
@@ -131,7 +131,7 @@ $$\frac{d N(t)}{dt} =
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
   \text{const}_1 \cdot N(t) & t < t_{\text{lag}} \\ 
-  \mu_{\text{max}} \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
+  \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
   \text{const}_2 \cdot N(t) & t \geq t_{\text{stat}}
 \end{cases}$$
 
@@ -140,7 +140,7 @@ $$\frac{d N(t)}{dt} =
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
   \text{const}_1 \cdot N(t) & t < t_{\text{lag}} \\ 
-  \mu_{\text{max}} \cdot N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
+  \mu \cdot N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
   \text{const}_2 \cdot (1 - \log \left( \frac{N(t)}{N_{\text{max}}} \right)) & t \geq t_{\text{stat}}
 \end{cases}$$
 
@@ -149,7 +149,7 @@ $$\frac{d N(t)}{dt} =
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
   \text{const}_1 \cdot N(t) & t < t_{\text{lag}} \\ 
-  \mu_{\text{max}} \cdot N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
+  \mu \cdot N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
   \text{const}_2 \cdot N(t) & t \geq t_{\text{stat}}
 \end{cases}$$
 
@@ -158,7 +158,7 @@ $$\frac{d N(t)}{dt} =
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
   \text{const}_1 \cdot N(t) & t < t_1 \\ 
-  \mu_{\text{max}} \cdot N(t) & t_1 \leq t < t_2 \\ 
+  \mu \cdot N(t) & t_1 \leq t < t_2 \\ 
   \text{const}_2 \cdot N(t) & t_2 \leq t < t_3 \\ 
   \text{const}_3 \cdot N(t) & t \geq t_3
 \end{cases}$$
@@ -167,62 +167,53 @@ $$\frac{d N(t)}{dt} =
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) \\
-  \frac{d N_1(t)}{dt} = - \text{rate}_{\text{lag}} \cdot N_1(t) \\
-  \frac{d N_2(t)}{dt} = \text{rate}_{\text{lag}} \cdot N_1(t) + \mu_{\text{max}} \cdot N_2(t) \cdot \left(1 - \frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t) \\
+  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) \cdot \left(1 - \frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)
 \end{cases}$$
 
 - **Exponential Heterogeneous Population Model**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) \\
-  \frac{d N_1(t)}{dt} = - \text{rate}_{\text{lag}} \cdot N_1(t) \\
-  \frac{d N_2(t)}{dt} = \text{rate}_{\text{lag}} \cdot N_1(t) + \mu_{\text{max}} \cdot N_2(t) 
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t) \\
+  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) 
 \end{cases}$$
 
 - **Adjusted Heterogeneous Population Model**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) \\
-  \frac{d N_1(t)}{dt} = - \text{rate}_{\text{lag}} \cdot N_1(t) \\
-  \frac{d N_2(t)}{dt} = \text{rate}_{\text{lag}} \cdot N_1(t) + \mu_{\text{max}} \cdot N_2(t) \cdot \left(1 - \frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t) \\
+  \frac{d N_2(t)}{dt} = r_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) \cdot \left(1 - \left(\frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)^m\right)
 \end{cases}$$
 
 - **Heterogeneous Population Model with Inhibition**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) + N_3(t), \\
-  \frac{d N_1(t)}{dt} = - \text{rate}_{\text{lag}} \cdot N_1(t), \\
-  \frac{d N_2(t)}{dt} = \text{rate}_{\text{lag}} \cdot N_1(t) + \mu_{\text{max}} \cdot N_2(t) - \text{rate}_{\text{inhibition}} \cdot N_2(t), \\
-  \frac{d N_3(t)}{dt} = \text{rate}_{\text{inhibition}} \cdot N_2(t),
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t), \\
+  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) - \text{r}_{\text{inhibition}} \cdot N_2(t), \\
+  \frac{d N_3(t)}{dt} = \text{r}_{\text{inhibition}} \cdot N_2(t),
 \end{cases}$$
 
-
-- **Adjusted Heterogeneous Population Model with Inhibition**:
-
-$$\begin{cases}
-  N(t) = N_1(t) + N_2(t) + N_3(t), \\
-  \frac{d N_1(t)}{dt} = - \text{rate}_{\text{lag}} \cdot N_1(t), \\
-  \frac{d N_2(t)}{dt} = \text{rate}_{\text{lag}} \cdot N_1(t) + \mu_{\text{max}} \cdot N_2(t) - \text{rate}_{\text{inhibition}} \cdot N_2(t), \\
-  \frac{d N_3(t)}{dt} = \text{rate}_{\text{inhibition}} \cdot N_2(t),
-\end{cases}$$
 
 
 - **Heterogeneous Population Model with Inhibition and Death**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) + N_3(t), \\
-  \frac{d N_1(t)}{dt} = - \text{rate}_{\text{lag}} \cdot N_1(t), \\
-  \frac{d N_2(t)}{dt} = \text{rate}_{\text{lag}} \cdot N_1(t) + \mu_{\text{max}} \cdot N_2(t) - \text{rate}_{\text{inhibition}} \cdot N_2(t), \\
-  \frac{d N_3(t)}{dt} = - \text{rate}_{\text{death}} \cdot N_3(t) + \text{rate}_{\text{inhibition}} \cdot N_2(t),
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t), \\
+  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) - \text{r}_{\text{inhibition}} \cdot N_2(t), \\
+  \frac{d N_3(t)}{dt} = - \text{r}_{\text{death}} \cdot N_3(t) + \text{r}_{\text{inhibition}} \cdot N_2(t),
 \end{cases}$$
 
-- **Heterogeneous Population Model for Inhibition + Death + Resistance**:
+- **Heterogeneous Population Model with Inhibition, Death and Resistance**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) + N_3(t), \\
-  \frac{d N_1(t)}{dt} = - \text{rate}_{\text{lag}} \cdot N_1(t), \\
-  \frac{d N_2(t)}{dt} = \text{rate}_{\text{lag}} \cdot N_1(t) + \mu_{\text{max}} \cdot N_2(t) - \text{rate}_{\text{inhibition}} \cdot N_2(t), \\
-  \frac{d N_3(t)}{dt} = - \text{rate}_{\text{death}} \cdot N_3(t) \left(1 - \frac{N_3(t)}{N_{\text{res}}}\right) + \text{rate}_{\text{inhibition}} \cdot N_2(t),
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t), \\
+  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) - \text{r}_{\text{inhibition}} \cdot N_2(t), \\
+  \frac{d N_3(t)}{dt} = - \text{r}_{\text{death}} \cdot N_3(t) \left(1 - \frac{N_3(t)}{N_{\text{res}}}\right) + \text{r}_{\text{inhibition}} \cdot N_2(t),
 \end{cases}$$
 
 To call these models use the string present in this table, the parameters will be returned in the same order of this table.
@@ -252,7 +243,7 @@ To call these models use the string present in this table, the parameters will b
 | Adjusted Heterogeneous Population Model     | `label_exp`, `well`, `model`, `gr`, `exit_lag_rate`, `N_max`, `shape`, `th_max_gr`, `emp_max_gr`, `loss` | `"aHPM"`                 |
 | Heterogeneous Population Model with Inhibition | `label_exp`, `well`, `model`, `gr`, `exit_lag_rate`, `inactivation_rate`, `th_max_gr`, `emp_max_gr`, `loss`| `"HPM_3_inhibition"`                    |
 | Heterogeneous Population Model with Inhibition and Death | `label_exp`, `well`, `model`, `gr`, `exit_lag_rate`, `inactivation_rate`, `death_rate`, `th_max_gr`, `emp_max_gr`, `loss` | `"HPM_3_death"`                         |
-| Heterogeneous Population Model for Inhibition + Death + Resistance | `label_exp`, `well`, `model`, `gr`, `exit_lag_rate`, `inactivation_rate`, `death_rate`, `n_res`, `shape`, `th_max_gr`, `emp_max_gr`, `loss` | `"aHPM_3_death_resistance"`             |
+| Heterogeneous Population Model with Inhibition, Death and Resistance | `label_exp`, `well`, `model`, `gr`, `exit_lag_rate`, `inactivation_rate`, `death_rate`, `n_res`, `shape`, `th_max_gr`, `emp_max_gr`, `loss` | `"aHPM_3_death_resistance"`             |
 
 ## Stochastic models for bacterial growth
 
