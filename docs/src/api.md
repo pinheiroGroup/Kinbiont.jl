@@ -62,7 +62,6 @@ Kinbiont.one_well_morris_sensitivity
 
 ### NL Fitting
 
-### NL Fitting
 
 [`Kinbiont.fit_NL_model`](@ref)
 

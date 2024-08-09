@@ -2,9 +2,8 @@
   <img src="https://github.com/pinheiroGroup/Kinbiont.jl/blob/main/static/kinbiont_logo.png">
 </p>
 
-Kinbiont (a Julia package for Model-based Analyses of microbial Kinetics) is a versatile software tool that utilizes Ordinary Differential Equations (ODEs) to fit bacterial growth data from plate reader experiments. 
-With Kinbiont it is possible to simulate, fit, perform model selection, and conduct sensitivity analysis for multi-well plate reader experiments.
-The parameter fitting in Kinbiont is defined as a constrained optimization problem, which is solved using a differential evolution box-constrained non-linear optimizer.
 
-To address complex cases, Kinbiont preprocesses data by detecting change points in the differential operator (or in the solution of the ODE) within the time series. 
-It then automatically assembles and fits a segmented ODE model, resulting in a fully interpretable representation of the time series.
+Ecological and evolutionary processes of microbes are characterized by observables like growth rates and biomass yield, inferred from kinetics experiments. 
+Across conditions, these observables map response patterns such as antibiotic growth inhibition and yield dependence on substrate.
+But how do we extract ecological and evolutionary insights from massive datasets of time-resolved microbial data? Here we introduce KinBiont — an ecosystem of numerical methods combining state-of-the-art solvers for ordinary differential equations, non-linear optimization, signal processing, and interpretable machine learning algorithms.
+KinBiont provides a comprehensive, model-based analysis pipeline, covering all aspects of microbial kinetics data, from preprocessing to result interpretation. 

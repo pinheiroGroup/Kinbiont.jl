@@ -40,12 +40,12 @@ as unique_ID the user can insert anything but consider that if two wells has the
 
 
 
-To provide a calibration curve of OD, that maps optical density (OD) values obtained from a microplate reader to corresponding values obtained from a spectrophotometer, the file should be provided to Kinbiont as a CSV file contains two columns:
-- `Raw_Microplate_OD`: Optical density values measured using a microplate reader.
-- `Real_Spectrophotometer_OD`: Optical density values measured using a real spectrophotometer.
+To provide a calibration curve of OD, that maps optical density (OD) values obtained from a microplate reader to corresponding values obtained from a independent source, the file should be provided to KinBiont as a CSV file contains two columns:
+- `Raw_OD`: Optical density values measured using a microplate reader.
+- `Real_OD`: Optical density values measured using a real spectrophotometer.
 
 ```csv
-Raw_Microplate_OD,Real_Spectrophotometer_OD
+Raw_OD,Real_OD
 1.9617333333333333,4.19666666666
 1.57826666,2.813333333
 1.1751333333,1.68333333333
