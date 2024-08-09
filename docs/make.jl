@@ -1,7 +1,7 @@
-using Documenter, KinBiont
+using Documenter, Kinbiont
 
-makedocs(sitename="KinBiont Documentation",
-        modules = [KinBiont],
+makedocs(sitename="Kinbiont Documentation",
+        modules = [Kinbiont],
         checkdocs=:none,
         format = Documenter.HTML(
             assets = ["assets/favicon.ico"]

@@ -5,7 +5,7 @@ using AbstractTrees
 
 """
     downstream_decision_tree_regression(
-    KinBiont_results::Matrix{Any},
+    Kinbiont_results::Matrix{Any},
     feature_matrix::Matrix{Any},
     row_to_learn::Int;
     max_depth = -1,
@@ -22,15 +22,15 @@ using AbstractTrees
     n_folds_cv = 3,
     )
 
-This function performs regression using a decision tree algorithm on results from KinBiont. It includes options for tree pruning, cross-validation, and feature selection.
+This function performs regression using a decision tree algorithm on results from Kinbiont. It includes options for tree pruning, cross-validation, and feature selection.
 
 # Arguments:
 
-- `KinBiont_results::Matrix{Any}`: The matrix containing results from fitting one or more files using KinBiont. 
+- `Kinbiont_results::Matrix{Any}`: The matrix containing results from fitting one or more files using Kinbiont. 
 
-- `feature_matrix::Matrix{Any}`: Matrix of features used for machine learning analysis. The number of rows should match the number of columns (minus one) in the `KinBiont_results`, with the first column containing well names to align with the well names in the second row of `KinBiont_results`.
+- `feature_matrix::Matrix{Any}`: Matrix of features used for machine learning analysis. The number of rows should match the number of columns (minus one) in the `Kinbiont_results`, with the first column containing well names to align with the well names in the second row of `Kinbiont_results`.
 
-- `row_to_learn::Int`: The index of the row in the `KinBiont_results` matrix that will be used as the target for the regression model.
+- `row_to_learn::Int`: The index of the row in the `Kinbiont_results` matrix that will be used as the target for the regression model.
 
 # Key Arguments:
 
@@ -72,7 +72,7 @@ This function performs regression using a decision tree algorithm on results fro
 
 
 """
-function downstream_decision_tree_regression(KinBiont_results::Matrix{Any}, # output of KinBiont results
+function downstream_decision_tree_regression(Kinbiont_results::Matrix{Any}, # output of Kinbiont results
   feature_matrix::Matrix{Any},
   row_to_learn::Int;
   max_depth = -1,
@@ -93,7 +93,7 @@ function downstream_decision_tree_regression(KinBiont_results::Matrix{Any}, # ou
 
   feature_names = string.(feature_matrix[1,2:end])
 
-  names_of_the_wells_res = KinBiont_results[2, 1:end]
+  names_of_the_wells_res = Kinbiont_results[2, 1:end]
   names_of_the_wells_annotation = feature_matrix[1:end, 1]
   wells_to_use = intersect(names_of_the_wells_res, names_of_the_wells_annotation)
 
@@ -111,7 +111,7 @@ function downstream_decision_tree_regression(KinBiont_results::Matrix{Any}, # ou
 
   #index_res[1, :] = index_res[1, :] 
 
-  output = convert.(Float64, KinBiont_results[row_to_learn, index_res])
+  output = convert.(Float64, Kinbiont_results[row_to_learn, index_res])
 
   predictors = convert.(Float64, feature_matrix[index_annotation, 2:end])
 
@@ -178,21 +178,21 @@ end
 
 """
     downstream_symbolic_regression(
-    KinBiont_results::Matrix{Any},
+    Kinbiont_results::Matrix{Any},
     feature_matrix::Matrix{Any},
     row_to_learn::Int;
     options = SymbolicRegression.Options(),
     )
 
-This function performs symbolic regression on the results obtained from fitting models using KinBiont. It uses a feature matrix to train a symbolic regression model to predict a specific row of the KinBiont results.
+This function performs symbolic regression on the results obtained from fitting models using Kinbiont. It uses a feature matrix to train a symbolic regression model to predict a specific row of the Kinbiont results.
 
 # Arguments:
 
-- `KinBiont_results::Matrix{Any}`: The matrix containing results from fitting one or more files using KinBiont. 
+- `Kinbiont_results::Matrix{Any}`: The matrix containing results from fitting one or more files using Kinbiont. 
 
-- `feature_matrix::Matrix{Any}`: Matrix of features used for machine learning analysis. The number of rows in this matrix should match the number of columns (minus one) in the `KinBiont_results`, with the first column containing well names to match the features with the well names in the second row of `KinBiont_results`.
+- `feature_matrix::Matrix{Any}`: Matrix of features used for machine learning analysis. The number of rows in this matrix should match the number of columns (minus one) in the `Kinbiont_results`, with the first column containing well names to match the features with the well names in the second row of `Kinbiont_results`.
 
-- `row_to_learn::Int`: The index of the row in the `KinBiont_results` matrix that will be the target for machine learning inference.
+- `row_to_learn::Int`: The index of the row in the `Kinbiont_results` matrix that will be the target for machine learning inference.
 
 # Key Arguments:
 
@@ -209,10 +209,10 @@ This function performs symbolic regression on the results obtained from fitting 
 
 - `predictions::Matrix{Float64}`: For each equation in the hall of fame, this matrix contains the predicted values for each sample. Columns represent the different equations, and rows correspond to the samples.
 
-- `index_annotation::Vector{Int}`: An index vector used to order the rows of the `feature_matrix` to match the columns of the `KinBiont_results`.
+- `index_annotation::Vector{Int}`: An index vector used to order the rows of the `feature_matrix` to match the columns of the `Kinbiont_results`.
 
 """
-function downstream_symbolic_regression(kinBiont_results,
+function downstream_symbolic_regression(kinbiont_results,
   feature_matrix,
   row_to_learn;
   options = SymbolicRegression.Options(),
@@ -222,7 +222,7 @@ function downstream_symbolic_regression(kinBiont_results,
 
 
 
-  names_of_the_wells_res = KinBiont_results[2, 1:end]
+  names_of_the_wells_res = Kinbiont_results[2, 1:end]
   names_of_the_wells_annotation = feature_matrix[1:end, 1]
   wells_to_use = intersect(names_of_the_wells_res, names_of_the_wells_annotation)
 
@@ -244,7 +244,7 @@ function downstream_symbolic_regression(kinBiont_results,
 
   #index_res[1, :] = index_res[1, :] 
 
-  output = convert.(Float64, KinBiont_results[row_to_learn, index_res])
+  output = convert.(Float64, Kinbiont_results[row_to_learn, index_res])
 
 
   predictors =Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation,2])))

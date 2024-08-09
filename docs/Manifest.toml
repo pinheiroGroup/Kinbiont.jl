@@ -1146,7 +1146,7 @@ weakdeps = ["EnzymeCore"]
     [deps.KernelAbstractions.extensions]
     EnzymeExt = "EnzymeCore"
 
-[[deps.KinBiont]]
+[[deps.Kinbiont]]
 deps = ["AbstractTrees", "BetaML", "CSV", "ChangePointDetection", "Combinatorics", "DataFrames", "DecisionTree", "DelimitedFiles", "DifferentialEquations", "Distributions", "Interpolations", "Lowess", "LsqFit", "MLJ", "MLJDecisionTreeInterface", "Missings", "NaNMath", "Optim", "Optimization", "OptimizationBBO", "OptimizationCMAEvolutionStrategy", "OptimizationEvolutionary", "OptimizationGCMAES", "OptimizationMOI", "OptimizationMultistartOptimization", "OptimizationNLopt", "OptimizationOptimJL", "OptimizationOptimisers", "OptimizationPRIMA", "OptimizationPolyalgorithms", "OrdinaryDiffEq", "Peaks", "Random", "SciMLBase", "SpecialFunctions", "Statistics", "StatsBase", "SymbolicRegression", "SymbolicUtils", "Tables", "Zygote"]
 path = ".."
 uuid = "3b7c519f-be5e-4159-a208-6486ce96bb37"

@@ -1,7 +1,7 @@
 # [Data formatting and outputs](@id data)
 ## Data and annotation formatting
 
-KinBiont can operate directly on data files or inside the julia notebook.
+Kinbiont can operate directly on data files or inside the julia notebook.
 When are in a julia notebook the  format of single time series that want to be analyzed is a 2 x n_time_points Matrix of FLoat64, e.g.,
 
 
@@ -12,8 +12,8 @@ When are in a julia notebook the  format of single time series that want to be a
 ```
 The first row should be time and the second the quantity to be fitted (e.g., Optical Density or CFU)
 
-Instead, three APIs call direclty the files: the user must input  the paths to  a .csv data file and a .csv annotation to the functions of KinBiont.jl
-; In these cases KinBiont expect for data a matrix where the first row are the names of the wells and the columns the numerical value of the measurements. Note that the first one will be used as time:
+Instead, three APIs call direclty the files: the user must input  the paths to  a .csv data file and a .csv annotation to the functions of Kinbiont.jl
+; In these cases Kinbiont expect for data a matrix where the first row are the names of the wells and the columns the numerical value of the measurements. Note that the first one will be used as time:
 
 ```
 Time,  A1,     A2,      A3, 
@@ -23,7 +23,7 @@ Time,  A1,     A2,      A3,
 3.0,   0.012,  0.32,    0.22,
 4.0,   0.008,  0.41,    0.122,
 ```
-KinBiont expect a "," as separator between columns
+Kinbiont expect a "," as separator between columns
 
 The annotation file instead should be a two columns .csv file where the number of rows correspond to the number of wells, note that the name of the well should be the same between the data.csv and annotation.csv:
 
@@ -40,7 +40,7 @@ as unique_ID the user can insert anything but consider that if two wells has the
 
 
 
-To provide a calibration curve of OD, that maps optical density (OD) values obtained from a microplate reader to corresponding values obtained from a spectrophotometer, the file should be provided to KinBiont as a CSV file contains two columns:
+To provide a calibration curve of OD, that maps optical density (OD) values obtained from a microplate reader to corresponding values obtained from a spectrophotometer, the file should be provided to Kinbiont as a CSV file contains two columns:
 - `Raw_Microplate_OD`: Optical density values measured using a microplate reader.
 - `Real_Spectrophotometer_OD`: Optical density values measured using a real spectrophotometer.
 
@@ -65,23 +65,23 @@ See the folders  `data_examples` for examples.
 ## Data and annotation formatting for downstream ML
 
 
-All ML functions of KinBiont take as input a results matrix (i.e., the output of a fit) and a feature matrix (e.g., the concentration of antibiotics present in any well).
+All ML functions of Kinbiont take as input a results matrix (i.e., the output of a fit) and a feature matrix (e.g., the concentration of antibiotics present in any well).
 
 ```julia
-downstream_decision_tree_regression(KinBiont_results, 
+downstream_decision_tree_regression(Kinbiont_results, 
   feature_matrix,
   row_to_learn;
 )
 ```
 
 ```julia
-downstream_symbolic_regression(KinBiont_results,
+downstream_symbolic_regression(Kinbiont_results,
   feature_matrix,
   row_to_learn;
 )
 ```
 
-The first matrix is a standard output of any of the KinBiont fits. In this case, each row represents a parameter and each column a growth curve.
+The first matrix is a standard output of any of the Kinbiont fits. In this case, each row represents a parameter and each column a growth curve.
 For example:
 
 ```
@@ -112,11 +112,11 @@ Note that it is necessary to add one column for each new chemical/condition adde
 
 See the folders  `data_examples` for examples. 
 
-## Outputs of KinBiont
+## Outputs of Kinbiont
 
-KinBiont has different data struct as output
+Kinbiont has different data struct as output
 
-- `KinBiont_res_one_well_log_lin`
+- `Kinbiont_res_one_well_log_lin`
 
 This structure stores results for a single well using a log-linear method.
 
@@ -126,7 +126,7 @@ This structure stores results for a single well using a log-linear method.
 1. `times:Any` - The times at which measurements were taken.
 1. `confidence_band:Any` - The confidence band for the fit.
 
-- `KinBiont_res_one_well`
+- `Kinbiont_res_one_well`
 
 This structure stores results for a single well.
 
@@ -135,7 +135,7 @@ This structure stores results for a single well.
 1. `fit:Any` - The fit result.
 1. `times:Any` - The times at which measurements were taken.
 
-- `KinBiont_res_bootstrap_NL`
+- `Kinbiont_res_bootstrap_NL`
 
 This structure stores results from a bootstrap process using non-linear methods.
 
@@ -148,7 +148,7 @@ This structure stores results from a bootstrap process using non-linear methods.
 1. `mean_param:Any` - Mean of the parameters.
 1. `sd_param:Any` - Standard deviation of the parameters.
 
-- `KinBiont_res_Log_Lin_files`
+- `Kinbiont_res_Log_Lin_files`
 
 This structure stores results for log-linear fits across multiple files.
 
@@ -158,7 +158,7 @@ This structure stores results for log-linear fits across multiple files.
 1. `data:Tuple{Any}` - The data used for fitting.
 1. `confidence_bands:Tuple{Any}` - Confidence bands for the fits.
 
-- `KinBiont_res_one_file`
+- `Kinbiont_res_one_file`
 
 This structure stores results for a single file.
 
@@ -167,7 +167,7 @@ This structure stores results for a single file.
 1. `fits:Tuple{Any}` - The fit results.
 1. `data:Tuple{Any}` - The data used for fitting.
 
-- `KinBiont_res_one_file_segmentation`
+- `Kinbiont_res_one_file_segmentation`
 
 This structure stores segmentation results for a single file.
 
@@ -178,7 +178,7 @@ This structure stores segmentation results for a single file.
 1. `cp:Tuple{Any}` - Change points detected.
 1. `vector_AIC:Any` - AIC values for model selection.
 
-- `KinBiont_res_model_selection`
+- `Kinbiont_res_model_selection`
 
 This structure stores model selection results.
 
@@ -194,7 +194,7 @@ This structure stores model selection results.
 1. `full_param:Vector{Any}` - Full parameter set.
 
 
-- `KinBiont_res_NL_model_selection`
+- `Kinbiont_res_NL_model_selection`
 
 This structure stores non-linear model selection results.
 
@@ -205,7 +205,7 @@ This structure stores non-linear model selection results.
 1. `score_res:Any` - Score results.
 1. `top_loss:Any` - Top loss values.
 
-- `KinBiont_res_sensitivity_NL`
+- `Kinbiont_res_sensitivity_NL`
 
 This structure stores sensitivity analysis results using non-linear methods.
 
@@ -215,7 +215,7 @@ This structure stores sensitivity analysis results using non-linear methods.
 1. `times:Any` - The times at which measurements were taken.
 1. `combinations:Matrix{Any}` - Combinations of parameters used in sensitivity analysis.
 
-- `KinBiont_res_sensitivity`
+- `Kinbiont_res_sensitivity`
 
 This structure stores sensitivity analysis results.
 
@@ -223,7 +223,7 @@ This structure stores sensitivity analysis results.
 1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
 1. `combinations:Matrix{Any}` - Combinations of parameters used in sensitivity analysis.
 
-- `KinBiont_res_segmentation_ODE`
+- `Kinbiont_res_segmentation_ODE`
 
 This structure stores segmentation results using ODE methods.
 
@@ -234,7 +234,7 @@ This structure stores segmentation results using ODE methods.
 1. `interval_cdp:Array{Any}` - Change point intervals.
 1. `score_of_the_models:Any` - Scores of the models.
 
-- `KinBiont_res_segmentation_NL`
+- `Kinbiont_res_segmentation_NL`
 
 This structure stores segmentation results using non-linear methods.
 

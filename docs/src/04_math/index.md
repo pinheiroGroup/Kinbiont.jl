@@ -8,7 +8,7 @@
 
 
 
-KinBiont employs the following NL model to fit growth curves
+Kinbiont employs the following NL model to fit growth curves
 
 
 - **Exponential**
@@ -73,7 +73,7 @@ To call these models use the string present in this table, the parameters will b
 
 ## ODEs for bacterial growth
 
-The models implemented in KinBiont are the following:
+The models implemented in Kinbiont are the following:
 
 
 

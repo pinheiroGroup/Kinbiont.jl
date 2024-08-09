@@ -18,13 +18,13 @@ include("NL_fit_one_file.jl");
 include("NL_loss_list.jl");
 include("cpd_functions.jl");
 include("ML_downstream.jl");
-include("data_struct_KinBiont.jl");
+include("data_struct_Kinbiont.jl");
 
 
 function model_selector(model::String, u0, tspan, param=nothing)
 
 
-    ODE_prob = ODEProblem(KinBiont.ODE_models[model].func, u0, tspan, param)
+    ODE_prob = ODEProblem(Kinbiont.ODE_models[model].func, u0, tspan, param)
 
     return ODE_prob
 end
@@ -787,7 +787,7 @@ function reading_annotation(path_to_annotation::Any)
 end
 
 
-function KinBiontSolve(loss_function,
+function KinbiontSolve(loss_function,
     u0,
     p;
     opt,
@@ -843,7 +843,7 @@ function KinBiontSolve(loss_function,
 end
 
 
-function KinBiontSolve_NL(loss_function,
+function KinbiontSolve_NL(loss_function,
     u0,
     data;
     opt,
@@ -910,9 +910,9 @@ function check_bounds_opt(opt,p_guess,
 
         if  !(:lb  in keys(opt_params)) && !(:ub  in keys(opt_params) )
 
-            @warn "The used optimization method requires box bounds, KinBiont.jl will use upper bounds that are 10 times the guess
+            @warn "The used optimization method requires box bounds, Kinbiont.jl will use upper bounds that are 10 times the guess
              and lower bounds that are 10 times lower the guess.
-             This choice can be suboptimal. Note that the KinBiont.jl default optimizer requires box bounds to guaranteed a Real N(t) and positive parameters.
+             This choice can be suboptimal. Note that the Kinbiont.jl default optimizer requires box bounds to guaranteed a Real N(t) and positive parameters.
              To avoid to specify the bounds use you can use an optimizer that do not require it, e.g., `optimizer = NOMADOpt()`. 
              Note that numerical instabilities may occur.
              "
@@ -934,7 +934,7 @@ export initialize_df_results
 export initialize_df_results_ode_custom
 export expand_res
 export expand_res_seg
-export KinBiontSolve
+export KinbiontSolve
 export generating_IC
-export KinBiontSolve_NL
+export KinbiontSolve_NL
 export model_selector

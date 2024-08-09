@@ -1,4 +1,4 @@
-using KinBiont
+using Kinbiont
 using DifferentialEquations
 using CSV
 using Distributions

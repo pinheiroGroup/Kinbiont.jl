@@ -1,8 +1,8 @@
-using Documenter, KinBiont
+using Documenter, Kinbiont
 push!(LOAD_PATH,"../src/")
 Documenter.Remotes.URL("../src/", nothing)
-makedocs(sitename="KinBiont Documentation",
-        modules = [KinBiont],
+makedocs(sitename="Kinbiont Documentation",
+        modules = [Kinbiont],
         source  = "src/",
         checkdocs=:none,
         remotes = nothing,

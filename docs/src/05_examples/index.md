@@ -1,6 +1,6 @@
 # [Examples and Tutorial](@id examples)
 
-This section provides some copy-and-paste examples of KinBiont.jl
+This section provides some copy-and-paste examples of Kinbiont.jl
 
 ```@contents
 Pages = ["index.md"]
@@ -9,7 +9,7 @@ Depth = 3
 
 ## Simulating/Loading single kinetics data
 ### Loading  data from a .csv
-It is possible to load single curves using CSV package in Julia and format them to be compatible with KinBiont. In this example we suppose that the .csv file is formatted as required in KinBiont documentation.
+It is possible to load single curves using CSV package in Julia and format them to be compatible with Kinbiont. In this example we suppose that the .csv file is formatted as required in Kinbiont documentation.
 
 ```julia
 df_data  =CSV.file("your_path/data_examples/plate_data.csv")
@@ -449,7 +449,7 @@ list_guess = [p1_guess, p2_guess, p3_guess]
 
 ```
 
-First, we fit giving to KinBiont the list of change points:
+First, we fit giving to Kinbiont the list of change points:
 
 ```julia
 @time seg_fitting = selection_ODE_fixed_intervals(
@@ -482,7 +482,7 @@ n_change_points =2
 
 ```
 ### Fitting NL Models
-With KinBiont it is possible to fit any non-linear model this can be done by calling the function ```NL_model_selection``` in different ways.
+With Kinbiont it is possible to fit any non-linear model this can be done by calling the function ```NL_model_selection``` in different ways.
 
 
 First we declare upper and lower bound and the model (note that in this case we use array of array because the input can be more than one model)
@@ -664,9 +664,9 @@ n_change_points = 2
 ```
 ## Fitting a .csv file
 
-Instead fitting a single kinetics the user can supply a ".csv" file (formatted as described in the section), and KinBiont will proceed to perform all the analysis on all the wells of the experiment. Note that the user can supply a annotation .csv in this case becomes possible to subtract the blanks and fit the average of replicates.
+Instead fitting a single kinetics the user can supply a ".csv" file (formatted as described in the section), and Kinbiont will proceed to perform all the analysis on all the wells of the experiment. Note that the user can supply a annotation .csv in this case becomes possible to subtract the blanks and fit the average of replicates.
 
-To use the following functions the user should input to KinBiont variables that contains the string of the path to the .csv files:
+To use the following functions the user should input to Kinbiont variables that contains the string of the path to the .csv files:
 
 ```julia
 path_to_data = "your_path/data_examples/plate_data.csv"
@@ -898,7 +898,7 @@ ms_segmentation = fit_NL_segmentation_file(
 
 ### Symbolic regression
 
-This example demonstrates how to use the `KinBiont` and `SymbolicRegression` packages to analyze kinetics data.
+This example demonstrates how to use the `Kinbiont` and `SymbolicRegression` packages to analyze kinetics data.
 
 Set up paths to your data, annotation, calibration curve, and result directories (see examples):
 
@@ -1027,7 +1027,7 @@ options = SymbolicRegression.Options(
 )
 ```
 
-Run the symbolic regression using dependent variable that is the 7th row of the KinBiont results (i.e., the growth rate)
+Run the symbolic regression using dependent variable that is the 7th row of the Kinbiont results (i.e., the growth rate)
 
 ```julia
 
@@ -1049,7 +1049,7 @@ plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_r
 We declare the packages
 
 ```julia
-using KinBiont
+using Kinbiont
 using Plots
 using CSV, DataFrames
 using Statistics
@@ -1065,7 +1065,7 @@ using TreeRecipe
 Read the data from CSV files:
 
 ```julia
-KinBiont_res_test = readdlm("your_path/data_examples/Results_for_ML.csv", ',')
+Kinbiont_res_test = readdlm("your_path/data_examples/Results_for_ML.csv", ',')
 annotation_test = readdlm("your_path/data_examples/annotation_for_ML.csv", ',')
 ```
 
@@ -1093,9 +1093,9 @@ Loop through each strain and perform decision tree regression and we plot the tr
 
 index_strain = findall("N. soli".== ordered_strain)
 feature_matrix = annotation_test[index_strain, 2:(end-1)]
-KinBiont_results = KinBiont_res_test[:, index_strain]
+Kinbiont_results = Kinbiont_res_test[:, index_strain]
 
-dt_gr = downstream_decision_tree_regression(KinBiont_results,
+dt_gr = downstream_decision_tree_regression(Kinbiont_results,
         feature_matrix,
         9;
         do_pruning=false,

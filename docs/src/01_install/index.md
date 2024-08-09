@@ -17,25 +17,25 @@ Next, the user need to copy the project folder in the chosen working directory.
 - Type the command 
 > activate .
 
-- To activate the KinBiont project, type
+- To activate the Kinbiont project, type
 > instantiate
 
 - At the start of the code or notebook (where you are going to do analyses) you should write 
 
 ```
-using KinBiont
+using Kinbiont
 ```
 
 ## Package installation
 
 With any package manager run
 ```
-Pkg.add(KinBiont)
+Pkg.add(Kinbiont)
 ```
 and then in your script use:
 
 ```
-using KinBiont
+using Kinbiont
 ```
 ## Requirements & Dependencies
 

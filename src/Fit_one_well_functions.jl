@@ -290,9 +290,9 @@ function fitting_one_well_Log_Lin(
     end
 
 
-    KinBiont_res_one_well_log_lin = ("Log-lin", results_lin_log_fit, hcat(data_to_fit_times, data_to_fit_values), data_smooted, confidence_band)
+    Kinbiont_res_one_well_log_lin = ("Log-lin", results_lin_log_fit, hcat(data_to_fit_times, data_to_fit_values), data_smooted, confidence_band)
 
-    return KinBiont_res_one_well_log_lin
+    return Kinbiont_res_one_well_log_lin
 end
 
 
@@ -419,7 +419,7 @@ function fitting_one_well_ODE_constrained(
 
     ## defining loss function
     loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
-    res = KinBiontSolve(loss_function,
+    res = KinbiontSolve(loss_function,
         u0,
         param;
         opt=optimizer,
@@ -451,9 +451,9 @@ function fitting_one_well_ODE_constrained(
     res_temp = res.u
     loss_value = res.objective
     res_param = vectorize_df_results(label_exp,name_well, model, res_temp, max_th_gr, max_em_gr, loss_value)
-    KinBiont_res_one_well = ("ODE", res_param, sol_fin, remade_solution.t)
+    Kinbiont_res_one_well = ("ODE", res_param, sol_fin, remade_solution.t)
 
-    return KinBiont_res_one_well
+    return Kinbiont_res_one_well
 end
 
 #######################################################################
@@ -580,7 +580,7 @@ function fitting_one_well_custom_ODE(
     loss_function =
         select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
 
-    res = KinBiontSolve(loss_function,
+    res = KinbiontSolve(loss_function,
         u0,
         param;
         opt=optimizer,
@@ -611,10 +611,10 @@ function fitting_one_well_custom_ODE(
     res_param =
         [string(name_well), "custom_model", res_temp, max_th_gr, max_em_gr, loss_value]
 
-    KinBiont_res_one_well = ("custom_ODE", res_param, data_th[2, :], data_th[1, :])
+    Kinbiont_res_one_well = ("custom_ODE", res_param, data_th[2, :], data_th[1, :])
 
 
-    return KinBiont_res_one_well
+    return Kinbiont_res_one_well
 end
 
 #######################################################################
@@ -798,7 +798,7 @@ function ODE_Model_selection(
                 ub=temp_param_ub,
                 )
 
-            res = KinBiontSolve(loss_function,
+            res = KinbiontSolve(loss_function,
                 u0,
                 temp_start_param;
                 opt=optimizer,
@@ -810,7 +810,7 @@ function ODE_Model_selection(
 
         else
 
-            res = KinBiontSolve(loss_function,
+            res = KinbiontSolve(loss_function,
                 u0,
                 temp_start_param;
                 opt=optimizer,
@@ -894,7 +894,7 @@ function ODE_Model_selection(
 
     data_th = transpose(hcat(sol_time[index_not_zero], sol_fin))
 
-    KinBiont_res_model_selection = ("ODE_model_selection",
+    Kinbiont_res_model_selection = ("ODE_model_selection",
         df_res_optimization,
         sol_fin,
         sol_time[index_not_zero],
@@ -908,7 +908,7 @@ function ODE_Model_selection(
 
 
 
-    return KinBiont_res_model_selection
+    return Kinbiont_res_model_selection
 
 end
 
@@ -1060,7 +1060,7 @@ function one_well_morris_sensitivity(
         lb=lb_param,
         ub=ub_param,
         )
-        res = KinBiontSolve(loss_function,
+        res = KinbiontSolve(loss_function,
             u0,
             param;
             opt=optimizer,
@@ -1110,9 +1110,9 @@ function one_well_morris_sensitivity(
         )
     end
 
-    KinBiont_res_sensitivity = ("ODE_Morris_sensitivity", results_sensitivity, param_combination)
+    Kinbiont_res_sensitivity = ("ODE_Morris_sensitivity", results_sensitivity, param_combination)
 
-    return KinBiont_res_sensitivity
+    return Kinbiont_res_sensitivity
 end
 
 
@@ -1729,8 +1729,8 @@ function segmentation_ODE(
 
 
 
-    KinBiont_res_segmentation_ODE = ("ODE_segmentation", top_model, sol_to_plot, time_points_to_plot, top_cps, score_of_the_models)
-    return KinBiont_res_segmentation_ODE
+    Kinbiont_res_segmentation_ODE = ("ODE_segmentation", top_model, sol_to_plot, time_points_to_plot, top_cps, score_of_the_models)
+    return Kinbiont_res_segmentation_ODE
 end
 
 """
@@ -1879,11 +1879,11 @@ function segment_gr_analysis(
 
 
 
-    KinBiont_res_one_well = ("segment_analysis", res, interval_changepoints, data)
+    Kinbiont_res_one_well = ("segment_analysis", res, interval_changepoints, data)
 
 
 
-    return KinBiont_res_one_well
+    return Kinbiont_res_one_well
 end
 
 
