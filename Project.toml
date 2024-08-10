@@ -3,9 +3,6 @@ uuid = "3b7c519f-be5e-4159-a208-6486ce96bb37"
 authors = ["Fabrizio Angaroni", "Edgar Zanella Alvarenga"]
 version = "1.0.0"
 
-[compat]
-julia = "1.10"
-
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 BetaML = "024491cd-cc6b-443e-8034-08ea7eb7db2b"
@@ -43,9 +40,9 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 
 [compat]
+julia = "1.10"
 AbstractTrees ="0.4.5"
 BetaML ="0.12.0"
-CSV ="0.10.14"
 ChangePointDetection ="1.2.0"
 Combinatorics ="1.0.2"
 DataFrames ="1.6.1"
