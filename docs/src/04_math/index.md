@@ -25,7 +25,7 @@ $$N(t) =\frac{p_1}{1 + \left( \frac{p_1}{p_2} - 1 \right) \exp\left( - p_4 \cdot
 
 - **Richards model**
 
-$$N(t) = \frac{p_1}{[1 + p_2 \cdot e^{-p_3 \cdot (t - p_4)}]^{\frac{1}{p_2}}}$$
+$$N(t) = \frac{p_1}{[1 + p_2 \cdot e^{-p_3 \cdot (t - p_4)]}^{\frac{1}{p_2}}}$$
 
 - **Weibull**
 
