@@ -13,44 +13,44 @@ Kinbiont employs the following NL model to fit growth curves
 
 - **Exponential**
 
-$$N(t) = p_1 \cdot e^{p_2 \cdot t}$$
+$$N(t) = p_1 \, e^{p_2 \, t}$$
 
 - **Gompertz**
 
-$$N(t) = p_1 \cdot e^{-e^{-p_2 \cdot (t - p_3)}}$$
+$$N(t) = p_1 \, e^{-e^{-p_2 \, (t - p_3)}}$$
 
 - **Logistic**
 
-$$N(t) =\frac{p_1}{1 + \left( \frac{p_1}{p_2} - 1 \right) \exp\left( - p_4 \cdot (t ) \right)}     $$
+$$N(t) =\frac{p_1}{1 + \left( \frac{p_1}{p_2} - 1 \right) \exp\left( - p_4 \, (t ) \right)}     $$
 
 - **Richards model**
 
-$$N(t) = \frac{p_1}{[1 + p_2 \cdot e^{-p_3 \cdot (t - p_4)]}^{\frac{1}{p_2}}}$$
+$$N(t) = \frac{p_1}{[1 + p_2 \, e^{-p_3 \, (t - p_4)]}^{\frac{1}{p_2}}}$$
 
 - **Weibull**
 
-$$N(t) = p_1 - (p_1 - p_2) \cdot e^{-(p_3 \cdot t)^{p_4}}$$
+$$N(t) = p_1 - (p_1 - p_2) \, e^{-(p_3 \, t)^{p_4}}$$
 
 - **Morgan**
 
-$$N(t) = \frac{p_1 \cdot p_2^{p_3} + p_4 \cdot t^{p_3}}{p_2^{p_3} + t^{p_3}}$$
+$$N(t) = \frac{p_1 \, p_2^{p_3} + p_4 \, t^{p_3}}{p_2^{p_3} + t^{p_3}}$$
 
 - **Bertalanffy**
 
-$$N(t) = p_1 + (p_2 - p_1) \cdot (1 - e^{-p_3 \cdot t})^{\frac{1}{p_4}}$$
+$$N(t) = p_1 + (p_2 - p_1) \, (1 - e^{-p_3 \, t})^{\frac{1}{p_4}}$$
 
 - **Piece-wise linear-logistic**
 
 $$\begin{cases}
   N(t) = p_2, & t < t_\text{lag} \\
-  N(t) = \frac{p_3}{1 + \left( \frac{p_3}{p_2} - 1 \right) \exp\left( - p_4 \cdot (t - p_1) \right)}, & t_\text{lag} \leq t
+  N(t) = \frac{p_3}{1 + \left( \frac{p_3}{p_2} - 1 \right) \exp\left( - p_4 \, (t - p_1) \right)}, & t_\text{lag} \leq t
 \end{cases}$$
 
 - **Piece-wise exponential-logistic**
 
 $$\begin{cases}
   N(t) = \text{const}_1 \exp{(p_0 t)}, & t < t_\text{lag} \\
-  N(t) = \frac{p_3}{1 + \left( \frac{p_3}{\text{const}_1 \exp^{(p_0 t_\text{lag})}} - 1 \right) \exp\left( - p_4 \cdot (t - p_1) \right)}, & t_\text{lag} \leq t
+  N(t) = \frac{p_3}{1 + \left( \frac{p_3}{\text{const}_1 \exp^{(p_0 t_\text{lag})}} - 1 \right) \exp\left( - p_4 \, (t - p_1) \right)}, & t_\text{lag} \leq t
 \end{cases}$$
 
 
@@ -84,116 +84,116 @@ $$\frac{d N(t)}{dt} =\mu N(t)$$
 
 - **Hyper Gompertz**:
 
-$$\frac{d N(t)}{dt} = \mu \cdot \log \left( \frac{N_{\text{max}}}{N(t)} \right)^{(1-n)}$$
+$$\frac{d N(t)}{dt} = \mu \, \log \left( \frac{N_{\text{max}}}{N(t)} \right)^{(1-n)}$$
 
 - **Hyper Logistic**:
 
-$$\frac{d N(t)}{dt} = \frac{\mu}{N_{\text{max}}} \cdot N(t)^{(1-n)} (N(t) - N_{\text{max}})^{(1+n)}$$
+$$\frac{d N(t)}{dt} = \frac{\mu}{N_{\text{max}}} \, N(t)^{(1-n)} (N(t) - N_{\text{max}})^{(1+n)}$$
 
 - **Von Bertalanffy ODE**:
 
-$$\frac{d N(t)}{dt} = N(t) \cdot (p_1 \cdot p_2 \cdot t^{p_2-1}) - p_3 \cdot p_4 \cdot t^{p_4-1}$$
+$$\frac{d N(t)}{dt} = N(t) \, (p_1 \, p_2 \, t^{p_2-1}) - p_3 \, p_4 \, t^{p_4-1}$$
 
 - **Bertalanffy-Richards**:
 
-$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \cdot \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \cdot N(t)$$
+$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \, \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \, N(t)$$
 
 - **Logistic**:
 
-$$\frac{d N(t)}{dt} = \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \cdot N(t)$$
+$$\frac{d N(t)}{dt} = \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \, N(t)$$
 
 - **Adjusted Logistic**:
 
-$$\frac{d N(t)}{dt} = \mu \left( 1 - \left(\frac{N(t)}{N_{\text{max}}}\right) ^n \right) \cdot N(t)$$
+$$\frac{d N(t)}{dt} = \mu \left( 1 - \left(\frac{N(t)}{N_{\text{max}}}\right) ^n \right) \, N(t)$$
 
 - **Gompertz**:
 
-$$\frac{d N(t)}{dt} = \mu \cdot N(t) \cdot \log \left( \frac{N_{\text{max}}}{N(t)} \right)$$
+$$\frac{d N(t)}{dt} = \mu \, N(t) \, \log \left( \frac{N_{\text{max}}}{N(t)} \right)$$
 
 - **Baranyi Richards**:
 
-$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \cdot \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \cdot N(t)$$
+$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \, \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \, N(t)$$
 
 - **Baranyi Roberts**:
 
-$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \cdot \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t)$$
+$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \, \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \, N(t)$$
 
 - **Piece-wise Adjusted Logistic**:
 
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
-  \text{const.} \cdot N(t) & t < t_{\text{lag}} \\ 
-  \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t) & t \geq t_{\text{lag}}
+  \text{const.} \, N(t) & t < t_{\text{lag}} \\ 
+  \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \, N(t) & t \geq t_{\text{lag}}
 \end{cases}$$
 
 - **Triple Piece-wise Adjusted Logistic**:
 
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
-  \text{const}_1 \cdot N(t) & t < t_{\text{lag}} \\ 
-  \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
-  \text{const}_2 \cdot N(t) & t \geq t_{\text{stat}}
+  \text{const}_1 \, N(t) & t < t_{\text{lag}} \\ 
+  \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \, N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
+  \text{const}_2 \, N(t) & t \geq t_{\text{stat}}
 \end{cases}$$
 
 - **Triple Piece-wise**:
 
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
-  \text{const}_1 \cdot N(t) & t < t_{\text{lag}} \\ 
-  \mu \cdot N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
-  \text{const}_2 \cdot (1 - \log \left( \frac{N(t)}{N_{\text{max}}} \right)) & t \geq t_{\text{stat}}
+  \text{const}_1 \, N(t) & t < t_{\text{lag}} \\ 
+  \mu \, N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
+  \text{const}_2 \, (1 - \log \left( \frac{N(t)}{N_{\text{max}}} \right)) & t \geq t_{\text{stat}}
 \end{cases}$$
 
 - **Triple Piece-wise Exponential**:
 
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
-  \text{const}_1 \cdot N(t) & t < t_{\text{lag}} \\ 
-  \mu \cdot N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
-  \text{const}_2 \cdot N(t) & t \geq t_{\text{stat}}
+  \text{const}_1 \, N(t) & t < t_{\text{lag}} \\ 
+  \mu \, N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
+  \text{const}_2 \, N(t) & t \geq t_{\text{stat}}
 \end{cases}$$
 
 - **Four Piece-wise Exponential**:
 
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
-  \text{const}_1 \cdot N(t) & t < t_1 \\ 
-  \mu \cdot N(t) & t_1 \leq t < t_2 \\ 
-  \text{const}_2 \cdot N(t) & t_2 \leq t < t_3 \\ 
-  \text{const}_3 \cdot N(t) & t \geq t_3
+  \text{const}_1 \, N(t) & t < t_1 \\ 
+  \mu \, N(t) & t_1 \leq t < t_2 \\ 
+  \text{const}_2 \, N(t) & t_2 \leq t < t_3 \\ 
+  \text{const}_3 \, N(t) & t \geq t_3
 \end{cases}$$
 
 - **Heterogeneous Population Model (HPM McKellar)**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t) \\
-  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) \cdot \left(1 - \frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t) \\
+  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \, N_1(t) + \mu \, N_2(t) \, \left(1 - \frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)
 \end{cases}$$
 
 - **Exponential Heterogeneous Population Model**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t) \\
-  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) 
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t) \\
+  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \, N_1(t) + \mu \, N_2(t) 
 \end{cases}$$
 
 - **Adjusted Heterogeneous Population Model**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t) \\
-  \frac{d N_2(t)}{dt} = r_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) \cdot \left(1 - \left(\frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)^m\right)
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t) \\
+  \frac{d N_2(t)}{dt} = r_{\text{lag}} \, N_1(t) + \mu \, N_2(t) \, \left(1 - \left(\frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)^m\right)
 \end{cases}$$
 
 - **Heterogeneous Population Model with Inhibition**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) + N_3(t), \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t), \\
-  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) - \text{r}_{\text{inhibition}} \cdot N_2(t), \\
-  \frac{d N_3(t)}{dt} = \text{r}_{\text{inhibition}} \cdot N_2(t),
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t), \\
+  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \, N_1(t) + \mu \, N_2(t) - \text{r}_{\text{inhibition}} \, N_2(t), \\
+  \frac{d N_3(t)}{dt} = \text{r}_{\text{inhibition}} \, N_2(t),
 \end{cases}$$
 
 
@@ -202,18 +202,18 @@ $$\begin{cases}
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) + N_3(t), \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t), \\
-  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) - \text{r}_{\text{inhibition}} \cdot N_2(t), \\
-  \frac{d N_3(t)}{dt} = - \text{r}_{\text{death}} \cdot N_3(t) + \text{r}_{\text{inhibition}} \cdot N_2(t),
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t), \\
+  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \, N_1(t) + \mu \, N_2(t) - \text{r}_{\text{inhibition}} \, N_2(t), \\
+  \frac{d N_3(t)}{dt} = - \text{r}_{\text{death}} \, N_3(t) + \text{r}_{\text{inhibition}} \, N_2(t),
 \end{cases}$$
 
 - **Heterogeneous Population Model with Inhibition, Death and Resistance**:
 
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t) + N_3(t), \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \cdot N_1(t), \\
-  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) - \text{r}_{\text{inhibition}} \cdot N_2(t), \\
-  \frac{d N_3(t)}{dt} = - \text{r}_{\text{death}} \cdot N_3(t) \left(1 - \frac{N_3(t)}{N_{\text{res}}}\right) + \text{r}_{\text{inhibition}} \cdot N_2(t),
+  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t), \\
+  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \, N_1(t) + \mu \, N_2(t) - \text{r}_{\text{inhibition}} \, N_2(t), \\
+  \frac{d N_3(t)}{dt} = - \text{r}_{\text{death}} \, N_3(t) \left(1 - \frac{N_3(t)}{N_{\text{res}}}\right) + \text{r}_{\text{inhibition}} \, N_2(t),
 \end{cases}$$
 
 To call these models use the string present in this table, the parameters will be returned in the same order of this table.
@@ -312,7 +312,7 @@ where $n$ is the number of data points.
 
 `type_of_loss = "RE"`: Minimize the relative error between the solution and data.
 
-$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \frac{1}{n} \sum_{i=1}^n 0.5 \cdot \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2$$
+$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2$$
 
 where $n$ is the number of data points.
 
@@ -324,7 +324,7 @@ where $n$ is the number of data points.
 
 `type_of_loss = "blank_weighted_L2"`: Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data.
 
-$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \frac{1}{n} \sum_{i=1}^n \left(1 - P(D(t_i) - \bar{N}(t_i, \{P\})|\text{noise})\right) \cdot \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2$$
+$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \frac{1}{n} \sum_{i=1}^n \left(1 - P(D(t_i) - \bar{N}(t_i, \{P\})|\text{noise})\right) \, \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2$$
 
 where $P(D(t_i) - \bar{N}(t_i, \{P\})|\text{noise})$ is the probability distribution of the empirical blank data, and $n$ is the number of data points.
 
@@ -336,7 +336,7 @@ where $n$ is the number of data points.
 
 `type_of_loss = "RE_log"`: Minimize the logarithm of the relative error between the solution and data.
 
-$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \log\left(\frac{1}{n} \sum_{i=1}^n 0.5 \cdot \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2\right)$$
+$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \log\left(\frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2\right)$$
 
 where $n$ is the number of data points.
 
