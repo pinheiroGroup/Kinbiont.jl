@@ -1,8 +1,8 @@
 # [Data formatting and outputs](@id data)
 ## Data and annotation formatting
 
-Kinbiont can operate directly on data files or inside the julia notebook.
-When are in a julia notebook the  format of single time series that want to be analyzed is a 2 x n_time_points Matrix of FLoat64, e.g.,
+Kinbiont can operate directly on data files or inside a julia notebook.
+The format of a single time series that you want to analyze must be a `2 x n_time_points` Matrix of FLoat64:
 
 
 ```
@@ -10,9 +10,9 @@ When are in a julia notebook the  format of single time series that want to be a
  0.0912154  0.107956  0.105468  0.101727  0.0931484   0.106318   0.103697   0.139821   0.173598   0.204888   0.251052   0.289018   0.31298   0.33752   0.359356   0.370861   0.376347   0.383732   0.398496   0.384511 …  
 
 ```
-The first row should be time and the second the quantity to be fitted (e.g., Optical Density or CFU)
+The first row should be the time and the second the quantity to be fitted (e.g., Optical Density or CFU).
 
-Instead, three APIs call direclty the files: the user must input  the paths to  a .csv data file and a .csv annotation to the functions of Kinbiont.jl
+Three APIs call directly the files: the user must input the paths to a .csv data file and a .csv annotation to the functions of Kinbiont.jl
 ; In these cases Kinbiont expect for data a matrix where the first row are the names of the wells and the columns the numerical value of the measurements. Note that the first one will be used as time:
 
 ```
@@ -23,9 +23,9 @@ Time,  A1,     A2,      A3,
 3.0,   0.012,  0.32,    0.22,
 4.0,   0.008,  0.41,    0.122,
 ```
-Kinbiont expect a "," as separator between columns
+Kinbiont expect a "," as separator between columns.
 
-The annotation file instead should be a two columns .csv file where the number of rows correspond to the number of wells, note that the name of the well should be the same between the data.csv and annotation.csv:
+The annotation file instead should be a two columns .csv file where the number of rows correspond to the number of wells. Note that the name of the well should be the same between the data.csv and annotation.csv:
 
 ```
 A1, b
@@ -33,14 +33,11 @@ A2, X
 A3, unique_ID
 
 ```
-as unique_ID the user can insert anything but consider that if two wells has the same ID the will be considered replicates. 'b' indicates that the well should be cosidered a blank and 'X' that the well should be discarded from any analysis
+as unique_ID the user can insert anything but consider that if two wells have the same ID they will be considered replicates. 'b' indicates that the well should be cosidered as a blank and 'X' that the well should be discarded from the analysis.
 
 
 
-
-
-
-To provide a calibration curve of OD, that maps optical density (OD) values obtained from a microplate reader to corresponding values obtained from a independent source, the file should be provided to KinBiont as a CSV file contains two columns:
+To provide a calibration curve of optical density (OD), that maps OD values obtained from a microplate reader to corresponding values obtained from an independent source, the file should be provided to KinBiont as a CSV file containing two columns:
 - `Raw_OD`: Optical density values measured using a microplate reader.
 - `Real_OD`: Optical density values measured using a real spectrophotometer.
 
@@ -65,7 +62,7 @@ See the folders  `data_examples` for examples.
 ## Data and annotation formatting for downstream ML
 
 
-All ML functions of Kinbiont take as input a results matrix (i.e., the output of a fit) and a feature matrix (e.g., the concentration of antibiotics present in any well).
+All ML functions of Kinbiont take as input a matrix of results (i.e., the output of a fit) and a matrix of features(e.g., the concentration of antibiotics present in any well).
 
 ```julia
 downstream_decision_tree_regression(Kinbiont_results, 
@@ -81,7 +78,8 @@ downstream_symbolic_regression(Kinbiont_results,
 )
 ```
 
-The first matrix is a standard output of any of the Kinbiont fits. In this case, each row represents a parameter and each column a growth curve.
+The first matrix is the standard output of any of the Kinbiont fits functions. In this case, each row represents a parameter and each column a growth curve.
+
 For example:
 
 ```
@@ -96,7 +94,7 @@ emp_max_gr,      0.007951369027199616,    0.008096305651156249
 loss,            0.0013005418069932683,   0.0013349159149782007
 ```
 
-Note the first column is dedicated to labels and will not be used by the functions. It is necessary that the second column reports a unique ID for each curve. The functions will ask which is the target row of the regression. Please do not use the first row.
+Note the first column is dedicated to labels and will not be used by the functions. It is necessary that the second column reports a unique ID for each curve. The functions will ask which is the target row of the regression, do not use the first row.
 
 Instead, the feature matrix specifies the conditions associated with each unique ID of the previous file. For example, suppose you have two different antibiotics each with two different concentrations; then the matrix will be:
 
@@ -108,7 +106,7 @@ A3,       1,       1,
 A4,       1,       0,
 ```
 
-Note that it is necessary to add one column for each new chemical/condition added to the experiment (even if in a specific well it is absent). It is necessary that the first column contains the ID of the wells that must match with the previous file. The first row will not be used and is specific for the column names.
+Note that it is necessary to add one column for each new chemical/condition added to the experiment (even if in a specific well it is absent). It is necessary that the first column contains the ID of the wells that must match with the previous file. The first row will not be used and it is specific for the column names.
 
 See the folders  `data_examples` for examples. 
 
