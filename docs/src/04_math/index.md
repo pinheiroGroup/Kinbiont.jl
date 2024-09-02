@@ -8,50 +8,69 @@
 
 
 
-Kinbiont employs the following NL model to fit growth curves
+In this case, we are supposed to know the analytic formula of microbial growth; in particular, we have implemented some models from "Statistical evaluation of mathematical models for microbial growth" and added some piecewise models. They are:
 
+- **Exponential**  
 
-- **Exponential**
+  $$N(t) = N_0 \cdot e^{\mu \cdot t}$$
 
-$$N(t) = p_1 \, e^{p_2 \, t}$$
+  where $\mu$ is the growth rate, and $N_0$ is the starting condition.
 
-- **Gompertz**
+- **Gompertz**  
 
-$$N(t) = p_1 \, e^{-e^{-p_2 \, (t - p_3)}}$$
+  $$N(t) = N_{\text{max}} \cdot e^{-e^{-\mu \cdot (t - t_{\text{lag}})}}$$
 
-- **Logistic**
+  where $\mu$ is the growth rate, $N_{\text{max}}$ is the total growth, and $t_{\text{lag}}$ is the lag time.
 
-$$N(t) =\frac{p_1}{1 + \left( \frac{p_1}{p_2} - 1 \right) \exp\left( - p_4 \, (t ) \right)}     $$
+- **Logistic**  
 
-- **Richards model**
+  $$N(t) = \frac{N_{\text{max}}}{1 + \left( \frac{N_{\text{max}}}{N_0} - 1 \right) \exp\left( - \mu \cdot t \right)}$$
 
-$$N(t) = \frac{p_1}{[1 + p_2 \, e^{-p_3 \, (t - p_4)]}^{\frac{1}{p_2}}}$$
+  where $\mu$ is the growth rate, $N_0$ is the starting condition, and $N_{\text{max}}$ is the total growth.
 
-- **Weibull**
+- **Richards model**  
 
-$$N(t) = p_1 - (p_1 - p_2) \, e^{-(p_3 \, t)^{p_4}}$$
+  $$N(t) = \frac{N_{\text{max}}}{[1 + \nu \cdot e^{-\mu \cdot (t - t^{\text{lag}})}]^{\frac{1}{\nu}}}$$
 
-- **Morgan**
+  where $\mu$ is the growth rate, $N_{\text{max}}$ is the total growth, $t_{\text{lag}}$ is the lag time, and $\nu$ is a shape constant.
 
-$$N(t) = \frac{p_1 \, p_2^{p_3} + p_4 \, t^{p_3}}{p_2^{p_3} + t^{p_3}}$$
+- **Weibull**  
 
-- **Bertalanffy**
+  $$N(t) = N_{\text{max}} - (N_{\text{max}} - N_0) \cdot e^{-(\mu \cdot t)^{\nu}}$$
 
-$$N(t) = p_1 + (p_2 - p_1) \, (1 - e^{-p_3 \, t})^{\frac{1}{p_4}}$$
+  where $\mu$ is the growth rate, $N_0$ is the starting condition, $N_{\text{max}}$ is the total growth, and $\nu$ is a shape constant.
 
-- **Piece-wise linear-logistic**
+- **Morgan**  
 
-$$\begin{cases}
-  N(t) = p_2, & t < t_\text{lag} \\
-  N(t) = \frac{p_3}{1 + \left( \frac{p_3}{p_2} - 1 \right) \exp\left( - p_4 \, (t - p_1) \right)}, & t_\text{lag} \leq t
-\end{cases}$$
+  $$N(t) = \frac{N_0 \cdot K^{\nu} + N_{\text{max}} \cdot t^{\nu}}{K^{\nu} + t^{\nu}}$$
 
-- **Piece-wise exponential-logistic**
+  where $N_0$ is the starting condition, $N_{\text{max}}$ is the total growth, and $K$ and $\nu$ are shape constants.
 
-$$\begin{cases}
-  N(t) = \text{const}_1 \exp{(p_0 t)}, & t < t_\text{lag} \\
-  N(t) = \frac{p_3}{1 + \left( \frac{p_3}{\text{const}_1 \exp^{(p_0 t_\text{lag})}} - 1 \right) \exp\left( - p_4 \, (t - p_1) \right)}, & t_\text{lag} \leq t
-\end{cases}$$
+- **Bertalanffy**  
+
+  $$N(t) = N_0 + (N_{\text{max}} - N_0) \cdot (1 - e^{-\mu \cdot t})^{\frac{1}{\nu}}$$
+
+  where $N_0$ is the starting condition, $N_{\text{max}}$ is the total growth, $\mu$ is the growth rate, and $\nu$ is a shape constant.
+
+- **Piece-Wise Linear-Logistic**  
+
+  $$N(t) = 
+  \begin{cases} 
+  N_0, & t < t_{\text{lag}} \\ 
+  N(t) = \frac{N_{\text{max}}}{1 + \left( \frac{N_{\text{max}}}{N_0} - 1 \right) \exp\left( - \mu \cdot (t - t_{\text{lag}}) \right)}, & t_{\text{lag}} \leq t 
+  \end{cases}$$
+
+  where $N_0$ is the starting condition, $N_{\text{max}}$ is the total growth, $\mu$ is the growth rate, and $t_{\text{lag}}$ is the lag time.
+
+- **Piece-wise Exponential-Logistic** 
+
+  $$N(t) = 
+  \begin{cases} 
+  N_0 \exp{(\mu_0 \cdot t)}, & t < t_{\text{lag}} \\ 
+  \frac{N_{\text{max}}}{1 + \left( \frac{N_{\text{max}}}{N_0 \exp{(\mu_0 \cdot t_{\text{lag}})}} - 1 \right) \exp\left( - \mu \cdot (t - t_{\text{lag}}) \right)}, & t_{\text{lag}} \leq t 
+  \end{cases}$$
+
+  where $N_0$ is the starting condition, $N_{\text{max}}$ is the total growth, $\mu$ is the growth rate, $t_{\text{lag}}$ is the lag time, and $\mu_0$ is the growth rate during the lag phase.
 
 
 
@@ -80,43 +99,46 @@ The models implemented in Kinbiont are the following:
 - **Exponential**:
 
 $$\frac{d N(t)}{dt} =\mu N(t)$$
+where $\mu$ is the growth rate.
 
 
 - **Hyper Gompertz**:
 
 $$\frac{d N(t)}{dt} = \mu \, \log \left( \frac{N_{\text{max}}}{N(t)} \right)^{(1-n)}$$
-
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth and $n$ a shape constant.
 - **Hyper Logistic**:
 
 $$\frac{d N(t)}{dt} = \frac{\mu}{N_{\text{max}}} \, N(t)^{(1-n)} (N(t) - N_{\text{max}})^{(1+n)}$$
-
-- **Von Bertalanffy ODE**:
-
-$$\frac{d N(t)}{dt} = N(t) \, (p_1 \, p_2 \, t^{p_2-1}) - p_3 \, p_4 \, t^{p_4-1}$$
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth and $n$ a shape constant.
 
 - **Bertalanffy-Richards**:
 
 $$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \, \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \, N(t)$$
 
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $\lambda$ is the lag time and $n$ a shape constant.
 - **Logistic**:
 
 $$\frac{d N(t)}{dt} = \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \, N(t)$$
+where $\mu$ is the growth rate, and $N_{\text{max}}$ the total growth.
 
 - **Adjusted Logistic**:
 
 $$\frac{d N(t)}{dt} = \mu \left( 1 - \left(\frac{N(t)}{N_{\text{max}}}\right) ^n \right) \, N(t)$$
-
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth and $n$ a shape constant.
 - **Gompertz**:
 
 $$\frac{d N(t)}{dt} = \mu \, N(t) \, \log \left( \frac{N_{\text{max}}}{N(t)} \right)$$
+where $\mu$ is the growth rate, and $N_{\text{max}}$ the total growth.
 
 - **Baranyi Richards**:
 
 $$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \, \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \, N(t)$$
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $\lambda$ is the lag time and $n$ a shape constant.
 
 - **Baranyi Roberts**:
 
 $$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \, \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \, N(t)$$
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $\lambda$ is the lag time,  $n$ and $m$  are shape constants.
 
 - **Piece-wise Adjusted Logistic**:
 
@@ -125,51 +147,59 @@ $$\frac{d N(t)}{dt} =
   \text{const.} \, N(t) & t < t_{\text{lag}} \\ 
   \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \, N(t) & t \geq t_{\text{lag}}
 \end{cases}$$
-
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{lag}$ is the lag time,    $m$  is shape constant, and $c$ the growth  rate during the lag phase (can be 0).
 - **Triple Piece-wise Adjusted Logistic**:
 
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
-  \text{const}_1 \, N(t) & t < t_{\text{lag}} \\ 
-  \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \, N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
-  \text{const}_2 \, N(t) & t \geq t_{\text{stat}}
+  c_1 \cdot N(t) & \text{for } t < t_{\text{lag}}, \\ 
+  \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t) & \text{for } t_{\text{lag}} \leq t < t_{\text{stat}}, \\ 
+  c_2 \cdot N(t) & \text{for } t \geq t_{\text{stat}},
 \end{cases}$$
 
+ where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{lag}$ is the lag time,    $m$  is a shape constant,  $c_1$ the growth rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
 - **Triple Piece-wise**:
 
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
-  \text{const}_1 \, N(t) & t < t_{\text{lag}} \\ 
-  \mu \, N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
-  \text{const}_2 \, (1 - \log \left( \frac{N(t)}{N_{\text{max}}} \right)) & t \geq t_{\text{stat}}
+  c_1 \cdot N(t) & \text{for } t < t_{\text{lag}}, \\ 
+  \mu \cdot N(t) & \text{for } t_{\text{lag}} \leq t < t_{\text{stat}},\\ 
+  c_2 \cdot \left(1 - \log \left( \frac{N(t)}{N_{\text{max}}} \right)\right) & \text{for } t \geq t_{\text{stat}},
 \end{cases}$$
+
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{lag}$ is the lag time,       $c_1$ the growth rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
 
 - **Triple Piece-wise Exponential**:
 
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
-  \text{const}_1 \, N(t) & t < t_{\text{lag}} \\ 
-  \mu \, N(t) & t_{\text{lag}} \leq t < t_{\text{stat}} \\ 
-  \text{const}_2 \, N(t) & t \geq t_{\text{stat}}
+  c_1 \cdot N(t) & \text{for } t < t_{\text{lag}}, \\ 
+  \mu \cdot N(t) & \text{for } t_{\text{lag}} \leq t < t_{\text{stat}}, \\ 
+  c_2 \cdot N(t) & \text{for } t \geq t_{\text{stat}},
 \end{cases}$$
 
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{lag}$ is the lag time,    $c_1$ the growth  rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
 - **Four Piece-wise Exponential**:
 
 $$\frac{d N(t)}{dt} = 
   \begin{cases} 
-  \text{const}_1 \, N(t) & t < t_1 \\ 
-  \mu \, N(t) & t_1 \leq t < t_2 \\ 
-  \text{const}_2 \, N(t) & t_2 \leq t < t_3 \\ 
-  \text{const}_3 \, N(t) & t \geq t_3
+  c_1 \cdot N(t) & \text{for } t < t_1, \\ 
+  \mu \cdot N(t) & \text{for } t_1 \leq t < t_2, \\ 
+  c_2 \cdot N(t) & \text{for } t_2 \leq t < t_3,\\ 
+  c_3 \cdot N(t) & \text{for } t \geq t_3,
 \end{cases}$$
 
-- **Heterogeneous Population Model (HPM McKellar)**:
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_1$ is the lag time,    $c_1$ the growth rate during the lag phase (can be 0), $t_2 $ the time when a growth after exponential growths,  $c_2$ the growth rate during this phase, $t_3$ the start of stationary phase and, $c_3$ the growth  rate during the stationary phase.
 
+- **Heterogeneous Population Model (HPM)**:
 $$\begin{cases}
-  N(t) = N_1(t) + N_2(t) \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t) \\
-  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \, N_1(t) + \mu \, N_2(t) \, \left(1 - \frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)
+  N(t) = N_1(t) + N_2(t), \\
+  \frac{d N_1(t)}{dt} = - r_{\text{lag}} \cdot N_1(t), \\
+  \frac{d N_2(t)}{dt} = r_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) \cdot \left(1 - \frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right),
 \end{cases}$$
+
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, and $r_\text{lag}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$).     
+Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase) and $N_2(t)$ active cells, which are able to duplicate.At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(start) = OD(start)$, and $N_{2}(start) = 0.0  $) .
 
 - **Exponential Heterogeneous Population Model**:
 
@@ -182,39 +212,51 @@ $$\begin{cases}
 - **Adjusted Heterogeneous Population Model**:
 
 $$\begin{cases}
-  N(t) = N_1(t) + N_2(t) \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t) \\
-  \frac{d N_2(t)}{dt} = r_{\text{lag}} \, N_1(t) + \mu \, N_2(t) \, \left(1 - \left(\frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)^m\right)
+  N(t) = N_1(t) + N_2(t), \\
+  \frac{d N_1(t)}{dt} = - r_{\text{lag}} \cdot N_1(t), \\
+  \frac{d N_2(t)}{dt} = r_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) ,
 \end{cases}$$
+
+where $\mu$ is the growth rate, and $N_{\text{max}}$ the total growth.
+Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase) and $N_2(t)$ active cells, which are able to duplicate.At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(start) = OD(start)$, and $N_{2}(start) = 0.0  $) .
 
 - **Heterogeneous Population Model with Inhibition**:
 
 $$\begin{cases}
-  N(t) = N_1(t) + N_2(t) + N_3(t), \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t), \\
-  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \, N_1(t) + \mu \, N_2(t) - \text{r}_{\text{inhibition}} \, N_2(t), \\
-  \frac{d N_3(t)}{dt} = \text{r}_{\text{inhibition}} \, N_2(t),
+  N(t) = N_1(t) + N_2(t) \\
+  \frac{d N_1(t)}{dt} = - r_{\text{lag}} \cdot N_1(t) \\
+  \frac{d N_2(t)}{dt} = r_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) \cdot \left(1 - \left(\frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)^m\right)
 \end{cases}$$
 
 
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth,  $r_\text{lag}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) and $m$ a shape constant.     
+Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase) and $N_2(t)$ active cells, which are able to duplicate.At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(start) = OD(start)$, and $N_{2}(start) = 0.0  $) .
 
 - **Heterogeneous Population Model with Inhibition and Death**:
 
-$$\begin{cases}
-  N(t) = N_1(t) + N_2(t) + N_3(t), \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t), \\
-  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \, N_1(t) + \mu \, N_2(t) - \text{r}_{\text{inhibition}} \, N_2(t), \\
-  \frac{d N_3(t)}{dt} = - \text{r}_{\text{death}} \, N_3(t) + \text{r}_{\text{inhibition}} \, N_2(t),
+$$N(t) = N_1(t) + N_2(t) + N_3(t), \\
+\frac{d N_1(t)}{dt} = - r_{\text{lag}} \cdot N_1(t), \\
+\frac{d N_2(t)}{dt} = r_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) - r_{\text{inhibition}} \cdot N_2(t), \\
+\frac{d N_3(t)}{dt} = - r_{\text{d}} \cdot N_3(t) + r_{\text{inhibition}} \cdot N_2(t),
 \end{cases}$$
+
+where $\mu$ is the growth rate, $r_\text{lag}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the  rate of which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$), and $r_{\text{d}}$ is the  rate of which cell are die.
+
+
+Note that these models assume that the cells are in three states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase), $N_2(t)$ active cells, which are able to duplicate, and inactive cells $N_3(t)$ that die at a rate $r_{\text{d}}$. At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(\text{start}) = OD(\text{start})$, $N_{2}(\text{start}) = 0.0$, and $N_{3}(\text{start}) = 0.0$).
 
 - **Heterogeneous Population Model with Inhibition, Death and Resistance**:
 
 $$\begin{cases}
-  N(t) = N_1(t) + N_2(t) + N_3(t), \\
-  \frac{d N_1(t)}{dt} = - \text{r}_{\text{lag}} \, N_1(t), \\
-  \frac{d N_2(t)}{dt} = \text{r}_{\text{lag}} \, N_1(t) + \mu \, N_2(t) - \text{r}_{\text{inhibition}} \, N_2(t), \\
-  \frac{d N_3(t)}{dt} = - \text{r}_{\text{death}} \, N_3(t) \left(1 - \frac{N_3(t)}{N_{\text{res}}}\right) + \text{r}_{\text{inhibition}} \, N_2(t),
+N(t) = N_1(t) + N_2(t) + N_3(t), \\
+\frac{d N_1(t)}{dt} = - r_{\text{lag}} \cdot N_1(t), \\
+\frac{d N_2(t)}{dt} = r_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) - r_{\text{inhibition}} \cdot N_2(t), \\
+\frac{d N_3(t)}{dt} = - r_{\text{d}} \cdot N_3(t) \left(1 - \frac{N_3(t)}{N_{\text{res}}}\right) + r_{\text{inhibition}} \cdot N_2(t), \quad \text{with} \quad N_3(t) \leq N_{\text{res}}
 \end{cases}$$
+
+where $\mu$ is the growth rate, $r_\text{lag}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the  rate of which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$),  $r_{\text{d}}$ is the  rate of which cell are die, and $N_{\text{res}}$ it the number of cell that will be inactive but do not die.
+
+
 
 To call these models use the string present in this table, the parameters will be returned in the same order of this table.
 
