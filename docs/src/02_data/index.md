@@ -1,7 +1,6 @@
 # [Data formatting and outputs](@id data)
 ## Data and annotation formatting
 
-Here's your corrected text, with the markdown template preserved:
 
 Kinbiont can operate directly on data files or within a Julia notebook. The format of a single time series that you want to analyze must be a  `2 x n_time_points ` matrix of Float64:
 
@@ -26,12 +25,11 @@ Kinbiont.jl expects a comma (,) as the separator between columns.
 
 The annotation file, on the other hand, should be a two-column .csv file where the number of rows corresponds to the number of wells. The first column should contain the name of the well (this should match between the data .csv and annotation .csv files), while the second column should contain a unique ID for each biological replicate. A `b` indicates that the well should be considered as a blank, and an `X` indicates that the well should be discarded from the analysis:
 
-css
-Copy code
+```
 A1, b
 A2, X
 A3, unique_ID
-
+```
 
 To provide a calibration curve of optical density (OD), that maps OD values obtained from a microplate reader to corresponding values obtained from an independent source, the file should be provided to KinBiont as a CSV file containing two columns:
 - `Raw_OD`: Optical density values measured using a microplate reader.
