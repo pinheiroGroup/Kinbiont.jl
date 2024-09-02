@@ -28,7 +28,7 @@ using Kinbiont
 
 ## Package installation
 
-With any package manager run
+With any package manager run (example with Pkg.jl)
 ```
 Pkg.add(Kinbiont)
 ```
