@@ -6,7 +6,28 @@ This section provides some copy-and-paste examples of Kinbiont.jl
 Pages = ["index.md"]
 Depth = 3
 ```
+To run all these example you need to call the following packages:
 
+
+```julia
+using Kinbiont
+using CSV
+using Plots
+using Distributions
+using Optimization
+using OptimizationNLopt
+using Tables
+using SymbolicRegression
+using DataFrames
+using Statistics
+using DelimitedFiles
+using Random
+using DecisionTree
+using AbstractTrees
+using MLJDecisionTreeInterface
+using TreeRecipe
+```
+```
 ## Simulating/Loading single kinetics data
 ### Loading  data from a .csv
 It is possible to load single curves using CSV package in Julia and format them to be compatible with Kinbiont. In this example we suppose that the .csv file is formatted as required in Kinbiont documentation.
@@ -14,16 +35,14 @@ It is possible to load single curves using CSV package in Julia and format them 
 ```julia
 df_data  =CSV.file("your_path/data_examples/plate_data.csv")
 names_of_cols = propertynames(df_data)  
-# assuming first column is time and we want to fit the second one 
 
 data_OD = Matrix(hcat(df_data[names_of_cols[1]],df_data[names_of_cols[2]]))
 ```
 ### Simulating Data with ODEs
 
-To simulate data using Ordinary Differential Equations (ODEs):
+To simulate data using Ordinary Differential Equations (ODEs), first we declare the model and the parameters of the simulation :
 
 ```julia
-# Simulating data with an ODE
 model = "triple_piecewise_adjusted_logistic"
 n_start = [0.1]
 tstart = 0.0
@@ -32,13 +51,17 @@ delta_t = 15.0
 
 
 param_of_ode = [0.06, 1.0, 200, 0.5, 0.001, 450, -0.0002]
+```
+Them we call the Kinbiont.jl API:
 
-# Calling the simulation function
-sim = ODE_sim(model, n_start, tstart, tmax, delta_t, param_of_ode)
+```julia
+sim = Kinbiont.ODE_sim(model, n_start, tstart, tmax, delta_t, param_of_ode)
 
-# Plotting scatterplot of data without noise
+# Plotting scatterplot of data 
 Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing], color=:blue, size=(300, 300))
-
+```
+We add uniform noise to the data
+```julia
 #adding uniform random noise
 noise_unifom = rand(Uniform(-0.05,0.05),length(sim.t))
 
@@ -58,7 +81,7 @@ Plots.scatter!(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", la
 To simulate data using  stochastic models:
 
 ```julia
-sim =stochastic_sim("Monod", #string of the model
+sim = Kinbiont.stochastic_sim("Monod", #string of the model
    1, # number of starting cells
    10000.1, # starting # molecules (in "biomass units") of the limiting nutrients
     0.0, # start time of the sim
@@ -71,8 +94,8 @@ sim =stochastic_sim("Monod", #string of the model
     0.0000001,# nutrient consumed per division (conc)
     1000.0 #volume
 )
-plot(sim[3],sim[1], xlabel="Time",ylabel="# of indivuals")
-plot(sim[3],sim[2], xlabel="Time",ylabel="nutrients/volume")
+Plots.plot(sim[3],sim[1], xlabel="Time",ylabel="# of indivuals")
+Plots.plot(sim[3],sim[2], xlabel="Time",ylabel="nutrients/volume")
 
 data_OD = Matrix(transpose(hcat(sim[3],sim[1])))
 ```
@@ -80,7 +103,7 @@ data_OD = Matrix(transpose(hcat(sim[3],sim[1])))
 ## Data Preprocessing
 We start applying a rolling average smoothing to the data. In the example, a rolling window of size 7 is applied to the original data (```data_OD``` generated in the previous examples). 
 ```julia
-data_ODsmooth = smoothing_data(data_OD, 7)
+data_ODsmooth = Kinbiont.smoothing_data(data_OD, 7)
 data_ODsmooth = Matrix(data_ODsmooth)
 
 # Plotting scatterplot of smoothed data
@@ -89,9 +112,7 @@ Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="A
 Furthermore, to address potential external influences, a correction for multiple scattering is applied to the smoothed data. This correction is executed through the ```correction_OD_multiple_scattering``` function, requiring an external file (```calibration_curve.csv```).  it is  optional in the provided example. 
 ```julia
 
-# Multiple scattering correction (optional, comment out if not needed)
-data_ODsmooth = correction_OD_multiple_scattering(data_ODsmooth, "/your_path/data_examples/cal_curve_examples.csv")
-using Plots
+data_ODsmooth = Kinbiont.correction_OD_multiple_scattering(data_ODsmooth, "/your_path/data_examples/cal_curve_examples.csv")
 # Plotting scatterplot of preprocessed data
 Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Pre-processed data" nothing], markersize=2, color=:blue, size=(300, 300))
 ```
@@ -105,7 +126,7 @@ The user can evaluate   of the specific growth rate  during all the curve. This 
 ```julia
 
 pt_win = 7
-specific_gr_array = specific_gr_evaluation(data_OD,pt_win )
+specific_gr_array = Kinbiont.specific_gr_evaluation(data_OD,pt_win )
 specific_gr_times = [
     (data_OD[1, r] + data_OD[1, 	(r+pt_smoopt_winthing_derivative)]) / 2 for
     r = 1:1:(eachindex(data_OD[2, :])[end].- pt_win)
@@ -119,7 +140,7 @@ Plots.scatter(specific_gr_times,specific_gr_array, xlabel="Time", ylabel="Arb. U
 To perform the log-linear fitting  (of data generated in the previous examples) it is suffucient to run. 
 
 ```julia
-res_log_lin = fitting_one_well_Log_Lin(
+res_log_lin = Kinbiont.fitting_one_well_Log_Lin(
     data_OD, # dataset first row times second row OD
    "test", # name of the well
     "test log-lin fitting"; #label of the experiment
@@ -134,43 +155,42 @@ res_log_lin = fitting_one_well_Log_Lin(
 
 ###    Fitting ODE Models
 
-Before fitting, the model, the initial guess of parameters for the optimization and upper and lower bounds for the ODE parameters are defined 
+Before fitting, the model, the initial guess of parameters for the optimization and upper and lower bounds for the ODE parameters are defined :
 ```julia
 
 
 model ="aHPM"
 
-P_GUESS = [0.01, 0.001, 1.00, 1]
-ub_ahpm = P_GUESS.*4
-lb_ahpm = P_GUESS./4
+p_guess = [0.01, 0.001, 1.00, 1]
+ub_ahpm = p_guess.*4
+lb_ahpm = p_guess./4
 ```
 The actual fitting is accomplished through the ```fitting_one_well_ODE_constrained``` function.  In this case wed do not use the lb and ub they will be generated automatically.
 ```julia
 # Performing ODE fitting
- results_ODE_fit = fitting_one_well_ODE_constrained(
+ results_ODE_fit = Kinbiont.fitting_one_well_ODE_constrained(
     data_OD, 
     "test",
     "test_ODE",
     model,
-    P_GUESS;
+    p_guess;
 )
 Plots.scatter(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],color=:red,markersize =2 ,size = (300,300))
 Plots.plot!(results_ODE_fit[4],results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit " nothing],color=:red,markersize =2 ,size = (300,300))
 
 
 ```
-The results are stored in  the second entry of ```results_ODE_fit``` with the following format. 
 
-To add lower and upper bounds one should use the ```the opt_params...```,  in addition we put also ```multistart = true```:
+To add lower and upper bounds one should use the ```opt_params...``` keyword argument:
 ```julia
 # Performing ODE fitting
 
-@time results_ODE_fit = fitting_one_well_ODE_constrained(
+results_ODE_fit = Kinbiont.fitting_one_well_ODE_constrained(
     data_OD, 
     "test",
     "test_ODE",
     model,
-    P_GUESS;
+    p_guess;
    lb = lb_ahpm,
    ub = ub_ahpm
 )
@@ -186,14 +206,13 @@ To change the optimization method one should call the desired library from Optim
 
 - using Broyden–Fletcher–Goldfarb–Shanno algorithm
 ```julia
-using Optimization
 
-@time results_ODE_fit = fitting_one_well_ODE_constrained(
+results_ODE_fit = Kinbiont.fitting_one_well_ODE_constrained(
     data_OD, 
     "test",
     "test_ODE",
     model,
-    P_GUESS;
+    p_guess;
    lb = lb_ahpm,
    ub = ub_ahpm,
    optimizer=BFGS(), 
@@ -203,14 +222,13 @@ using Optimization
 - using PRAXIS algorithm, with Tik-Tak restart (from Benchmarking global optimizers, Arnoud et al 2019)
 
 ```julia
-using OptimizationNLopt
 
-@time results_ODE_fit = fitting_one_well_ODE_constrained(
+results_ODE_fit = Kinbiont.fitting_one_well_ODE_constrained(
     data_OD, 
     "test",
     "test_ODE",
     model,
-    P_GUESS;
+    p_guess;
    lb = lb_ahpm,
    ub = ub_ahpm,
    optimizer=LN_PRAXIS(), 
@@ -222,12 +240,12 @@ using OptimizationNLopt
 
 ```julia
 
-@time results_ODE_fit = fitting_one_well_ODE_constrained(
+results_ODE_fit = Kinbiont.fitting_one_well_ODE_constrained(
     data_OD, 
     "test",
     "test_ODE",
     model,
-    P_GUESS;
+    p_guess;
    lb = lb_ahpm,
    ub = ub_ahpm,
    optimizer= BFGS(), 
@@ -249,7 +267,6 @@ end
 Now, we set upper and lower bounds of the parameters of the ODE:
 
 ```julia
-# Bounds for the custom ODE parameters
 custom_ub = [1.2, 1.1]
 custom_lb = [0.0001, 0.00000001]
 ```
@@ -257,7 +274,7 @@ Finally, we perform the fit:
 ```julia
 
 # Performing custom ODE fitting
-@time results_ODE_fit = fitting_one_well_custom_ODE(
+results_ODE_fit = Kinbiont.fitting_one_well_custom_ODE(
     data_OD, # dataset first row times second row OD
    "test", # name of the well
     "test custom ode", #label of the experiment
@@ -268,20 +285,19 @@ Finally, we perform the fit:
 
 
 ```
-The results are stored in ```results_ODE_fit``` .
 
 ###   ODE Sensitivity Analysis
 
-The sensitivity analysis is performed with the ```one_well_morris_sensitivity``` function. This function takes the preprocessed dataset (```data_OD``` generated in the previous examples), the name and label of the well, the ODE model to use ("aHPM" in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (```n_step_sensitivity```) should be specified.
+The sensitivity analysis is performed with the ```one_well_morris_sensitivity``` function. This function takes a preprocessed time series (```data_OD```), the name and label of the well, the ODE model to use ("aHPM" in this case), as well as the lower and upper bounds for the ODE parameters. The number of steps in the Morris method (```n_step_sensitivity```) should be specified.
 
 ```julia
 # Number of steps for Morris sensitivity analysis
 n_step_sensitivity = 5
-P_GUESS = [0.01, 0.001, 1.00, 1]
-ub_ahpm = P_GUESS.*5
-lb_ahpm = P_GUESS./5
+p_guess = [0.01, 0.001, 1.00, 1]
+ub_ahpm = p_guess.*5
+lb_ahpm = p_guess./5
 # Performing Morris sensitivity analysis
-@time sensitivity_test = one_well_morris_sensitivity(
+@time sensitivity_test = Kinbiont.one_well_morris_sensitivity(
     data_OD, 
     "test",
      "test_sensitivity",
@@ -293,11 +309,10 @@ lb_ahpm = P_GUESS./5
 
 
 ```
-In this case the user will obtain the results of the fit for each of the Morris step and a matrix containg the coordinate of the hyperspace of the starting guess assicioted to each fit.
 ###   ODE Model Selection
 
 The user can use the model selection function to use AIC (or AICc) to identify the best model to fit a specific kinetics.
-We start defining the list of the models and the upper and lower bounds of the parameters of each one:
+We start defining the list of the models and the upper and lower bounds of the parameters:
 
 ```julia
 # Models candidates and their parameter bounds
@@ -317,7 +332,7 @@ p2_guess = lb_2 .+ (ub_2.-lb_2)./2
 The model selection process is runned with the ```ODE_Model_selection``` function. 
 
 ```julia
-results_ms = ODE_Model_selection(
+results_ms = Kinbiont.ODE_Model_selection(
     data_OD,
     "test", 
     "test_model_selection",
@@ -355,7 +370,7 @@ tmax = 0100.0
 delta_t=2.0
 param_of_ode= [0.1,0.2]
 
-sim_1 = ODE_sim(model, #string of the model
+sim_1 = Kinbiont.ODE_sim(model, #string of the model
     n_start, # starting condition
     tstart, # start time of the sim
     tmax, # final time of the sim
@@ -376,7 +391,7 @@ delta_t=2.0
 param_of_ode= [0.2,0.5]
 
 
-sim_2= ODE_sim(model, #string of the model
+sim_2= Kinbiont.ODE_sim(model, #string of the model
     n_start, # starting condition
     tstart, # start time of the sim
     tmax, # final time of the sim
@@ -395,7 +410,7 @@ tmax = 0300.0
 delta_t=2.0
 param_of_ode= [0.1,0.9]
 
-sim_3= ODE_sim(model, #string of the model
+sim_3= Kinbiont.ODE_sim(model, #string of the model
     n_start, # starting condition
     tstart, # start time of the sim
     tmax, # final time of the sim
@@ -452,7 +467,7 @@ list_guess = [p1_guess, p2_guess, p3_guess]
 First, we fit giving to Kinbiont the list of change points:
 
 ```julia
-@time seg_fitting = selection_ODE_fixed_intervals(
+seg_fitting = Kinbiont.selection_ODE_fixed_intervals(
    data_OD, # dataset first row times second row OD
     "test", # name of the well
     "", #label of the experiment
@@ -468,14 +483,14 @@ In alternative, if the change points are not known we can run a cpd algorithm an
 
 
 ```julia
-n_change_points =2
-@time seg_fitting = segmentation_ODE(
+n_change_points =3
+seg_fitting = Kinbiont.segmentation_ODE(
    data_OD, # dataset first row times second row OD
     "test", # name of the well
     "", #label of the experiment
     list_of_models, #  models to use
     list_guess,
-    3;
+    n_change_points;
     detect_number_cpd=true,
     fixed_cpd=false,
 )
@@ -497,7 +512,7 @@ ub_nl =p_guess.*3
 
 To perform a single fit on a time series (i.e., ```data_OD```) then we run the following:
 ```julia
-@time nl_fit = NL_model_selection(data_OD, # dataset first row times second row OD
+nl_fit = Kinbiont.NL_model_selection(data_OD, # dataset first row times second row OD
 "test", 
 "test_model_selection",
 nl_model, #  model to use
@@ -510,7 +525,7 @@ p_guess;
 
 The user can specify any parameter of the optimizer, for the bound in this case it is done via:
 ```julia
-@time nl_fit =  NL_model_selection(data_OD, # dataset first row times second row OD
+nl_fit =  Kinbiont.NL_model_selection(data_OD, # dataset first row times second row OD
     "test", 
     "test_model_selection",
     nl_model, #  model to use
@@ -531,7 +546,7 @@ As for the ODE model, also for the NL fit it is possible to perform a sensitivit
 
 
 ```julia
-@time nl_fit =  NL_model_selection(data_OD, # dataset first row times second row OD
+nl_fit =  Kinbiont.NL_model_selection(data_OD, # dataset first row times second row OD
 "test", 
 "test_model_selection",
 nl_model, #  model to use
@@ -581,7 +596,7 @@ list_guess = [p1_guess,p2_guess,p3_guess,  p4_guess]
 and the we perform the fit:
 ```julia
 
-results_ms = ODE_Model_selection(
+results_ms = Kinbiont.NL_model_selection(
     data_OD,
     "test", 
     "test_model_selection",
@@ -629,7 +644,7 @@ As before we specify the intervals of the segment and we proceed to fit:
 ```julia
 cdp_list = [100.0, 200.0]
 
-@time seg_fitting = selection_NL_fixed_interval(
+seg_fitting = Kinbiont.selection_NL_fixed_interval(
    data_OD, # dataset first row times second row OD
     "test", # name of the well
     "", #label of the experiment
@@ -647,7 +662,7 @@ Another option could be to  run a cpd algorithm and perfom the fitting:
 ```julia
 n_change_points = 2
 
-@time seg_fitting = segmentation_NL(
+seg_fitting = Kinbiont.segmentation_NL(
    data_OD, # dataset first row times second row OD
     "test", # name of the well
     "", #label of the experiment
@@ -664,7 +679,7 @@ n_change_points = 2
 ```
 ## Fitting a .csv file
 
-Instead fitting a single kinetics the user can supply a ".csv" file (formatted as described in the section), and Kinbiont will proceed to perform all the analysis on all the wells of the experiment. Note that the user can supply a annotation .csv in this case becomes possible to subtract the blanks and fit the average of replicates.
+Instead fitting a single kinetics the user can supply a `.csv` file (formatted as described in the section), and Kinbiont will proceed to perform all the analysis on all the wells of the experiment. Note that the user can supply a annotation .csv in this case becomes possible to subtract the blanks and fit the average of replicates.
 
 To use the following functions the user should input to Kinbiont variables that contains the string of the path to the .csv files:
 
@@ -672,7 +687,7 @@ To use the following functions the user should input to Kinbiont variables that 
 path_to_data = "your_path/data_examples/plate_data.csv"
 path_to_annotation ="your_path_to_annotation/annotation.csv"
 ```
-In the following examples we assume that these two variables have a value.
+In the following examples we assume that these two variables have a value. You can use the file in the folder `data_exmples`.
 
 
 
@@ -681,8 +696,8 @@ In the following examples we assume that these two variables have a value.
 If the paths are provided to ```fit_one_file_Log_Lin```, the user will obtain a matrix containing the results for each well:
 
 ```julia
-fit_log_lin = fit_one_file_Log_Lin(
-    " ", #label of the experiment
+fit_log_lin = Kinbiont.fit_one_file_Log_Lin(
+    "test", #label of the experiment
     path_to_data; # path to the folder to analyze
     path_to_annotation=path_to_annotation,# path to the annotation of the wells
   )
@@ -715,7 +730,7 @@ lb_param = [0.001,0.1,0.0,0.01]
 ub_param =[0.1,5.0 ,1000.0,5.01]
 param_guess =[0.01,1.0 ,500.0,1.01]
 
-fit_od = fit_file_ODE(
+fit_od = Kinbiont.fit_file_ODE(
     "test", #label of the experiment
     path_to_data, # path to the folder to analyze
     model, # string of the used model
@@ -726,10 +741,9 @@ fit_od = fit_file_ODE(
 )
 
 ```
-To plot the results of such fitting one can do the following
+To plot the results of such fitting one can do the following:
 
 ```julia
-using Plots
 
 well_to_plot = 13
 
@@ -739,7 +753,7 @@ Plot.scatter(fit_od[4][well_to_plot][:,1],fit_od[4][well_to_plot][:,2])
 Plot.scatter(fit_od[3][well_to_plot][1,:],fit_od[3][well_to_plot][2,:])
 
 ```
-It is also possible to perform the model selection on an entire file. First we declare the lis of models
+It is also possible to perform the model selection on an entire file. First we declare the list of the models:
 
 ```julia
 model_1 = "baranyi_richards"
@@ -765,7 +779,7 @@ After, we run the function ```ODE_model_selection_file```:
 
 ```julia
 
-@time ms_file = ODE_model_selection_file(
+ms_file = Kinbiont.ODE_model_selection_file(
     "test", #label of the experiment
     path_to_data, # path to the folder to analyze
     list_of_models, #  model to use 
@@ -779,11 +793,11 @@ After, we run the function ```ODE_model_selection_file```:
 ### Fitting NL Models
 
 
-The user can fit any NL model by calling the function ```fit_NL_model_file```.
+The user can fit any NL model by calling the function ```fit_NL_model_selection_file```.
 As usual the user should declare the model and the bounds
 
 
-
+We declare the model and the bounds:
 ```julia
 nl_model = ["NL_Richards"]
 p_guess = [[1.0,1.0,0.01,300.0]]
@@ -793,7 +807,7 @@ ub_nl =p_guess.*50
 ```
 and then fit:
 ```julia
-@time fit_nl = fit_NL_model_selection_file(
+fit_nl = Kinbiont.fit_NL_model_selection_file(
     "TEST", #label of the experiment
     path_to_data    , # path to the folder to analyze
     nl_model, #  model to use
@@ -819,7 +833,7 @@ ub_nl =p_guess.*50
 and the we can call the NL model selection function:
 
 ```julia
-@time fit_nl = fit_NL_model_selection_file(
+fit_nl = Kinbiont.fit_NL_model_selection_file(
     "TEST", #label of the experiment
     path_to_data, # path to the folder to analyze
     nl_model, #  model to use
@@ -857,15 +871,15 @@ list_guess = [param_guess_1, param_guess_2]
 
 ```
 
-Finally, we perform the fit:
+Finally, we perform the fit using one changepoint:
 ```julia
-
-@time ms_file =  segmentation_ODE_file(
+n_change_points = 1
+segmentation_file =  Kinbiont.segmentation_ODE_file(
     " ", #label of the experiment
     path_to_data, # path to the folder to analyze
     list_of_models, #  model to use 
     list_guess, #  param
-    1;
+    n_change_points;
     path_to_annotation=path_to_annotation,# path to the annotation of the wells
     detect_number_cpd=false,
     fixed_cpd=true,
@@ -894,13 +908,13 @@ n_change_points =2
 
 Then, we call the function to perform the fit:
 ```julia
-
-ms_segmentation = fit_NL_segmentation_file(
+n_change_points = 1
+NL_segmentation = Kinbiont.fit_NL_segmentation_file(
     "test", #label of the experiment
     path_to_data, # path to the folder to analyze
     nl_model, #  model to use
     p_guess,# initial guess param
-    1;
+    n_change_points;
     lb_param_array=lb_nl, # lower bound param
     ub_param_array=ub_nl, # upper bound param
     path_to_annotation = path_to_annotation,# path to the annotation of the wells
@@ -916,18 +930,13 @@ This example demonstrates how to use the `Kinbiont` and `SymbolicRegression` pac
 Set up paths to your data, annotation, calibration curve, and result directories (see examples):
 
 ```julia
-using Kinbiont
-using Plots
-using Tables
-using SymbolicRegression
-
 path_to_data = "your_path/data_examples/plate_data.csv"
 path_to_annotation = "your_path/data_examples/annotation.csv"
 path_to_calib = "your_path/data_examples/cal_curve_example.csv"
 path_to_results = "your_path//seg_res/"
 ```
 
-We fit with segmentation and 1 change point, we declare the models
+We fit the data with  segmentation and 1 change point. First, we declare the models
 
 ```julia
 model1 = "HPM_exp"
@@ -944,17 +953,19 @@ list_of_models = [model1, model2]
 list_guess = [param_guess1, param_guess2]
 list_lb = [lb_param1, lb_param2]
 list_ub = [ub_param1, ub_param2]
+
+n_change_points =1
 ```
 
-We perform  the fitting
+We perform  the fitting:
 
 ```julia
-fit_file = segmentation_ODE_file(
-    "seg_exp_1_test_2", # Label of the experiment
+fit_file = Kinbiont.segmentation_ODE_file(
+    "seg_exp_1", # Label of the experiment
     path_to_data, # Path to the folder to analyze
     list_of_models, # ODE models to use
     list_guess, # Parameter guesses
-    1;
+    n_change_points;
     path_to_annotation=path_to_annotation, # Path to the annotation of the wells
     detect_number_cpd=false,
     fixed_cpd=false,
@@ -973,8 +984,7 @@ fit_file = segmentation_ODE_file(
     maxiters=200000
 )
 ```
-
-Loading annotation to find concentrations and selecting results of a specific strain
+We load the annotation and  select results of a specific strain
 
 ```julia
 annotation_test = CSV.File(path_to_annotation, header=false)
@@ -991,7 +1001,7 @@ index_res = Any
 
 ```
 
-Giving same order to the well to analyze and the features (can be skipped)
+We give same order to the well to analyze and the features (can be skipped)
 ```julia
 for i in wells_to_use
     if i == wells_to_use[1]
@@ -1006,7 +1016,7 @@ res_first_seg_ML = res_first_seg[:, iii]
 res_first_seg_ML = hcat(res_first_seg[:, 1], res_first_seg_ML)
 ```
 
-Add x = 0.0, y = 0.0 to data for not growing cells
+We add x = 0.0, y = 0.0 to data to take in consideration  not growing wells:
 
 ```julia
 
@@ -1016,7 +1026,7 @@ res_first_seg_ML=hcat(res_first_seg_ML , reduce(vcat,["zero" ,"zero", "zero", 0.
 
 ```
 
-Declaring the options of symbolic regression
+We Declare the options of symbolic regression:
 
 ```julia
 
@@ -1040,11 +1050,11 @@ options = SymbolicRegression.Options(
 )
 ```
 
-Run the symbolic regression using dependent variable that is the 7th row of the Kinbiont results (i.e., the growth rate)
+We run the symbolic regression using dependent variable that is the 7th row of the Kinbiont results (i.e., the growth rate)
 
 ```julia
 
-gr_sy_reg = downstream_symbolic_regression(res_first_seg_ML, feature_matrix, 7; options=options)
+gr_sy_reg = Kinbiont.downstream_symbolic_regression(res_first_seg_ML, feature_matrix, 7; options=options)
 
 scatter(feature_matrix[:, 2], res_first_seg_ML[7, 2:end], xlabel="Amino Acid concentration μM", ylabel="Growth rate [1/Min]", label=["Data" nothing])
 hline!(unique(gr_sy_reg[3][:, 1]), label=["Eq. 1" nothing], line=(3, :green, :dash))
@@ -1059,23 +1069,10 @@ plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_r
 
 
 
-We declare the packages
-
-```julia
-using Kinbiont
-using Plots
-using CSV, DataFrames
-using Statistics
-using DelimitedFiles
-using Random
-using DecisionTree
-using AbstractTrees
-using MLJDecisionTreeInterface
-using TreeRecipe
-```
 
 
-Read the data from CSV files:
+
+We read the data from CSV files:
 
 ```julia
 Kinbiont_res_test = readdlm("your_path/data_examples/Results_for_ML.csv", ',')
@@ -1083,7 +1080,7 @@ annotation_test = readdlm("your_path/data_examples/annotation_for_ML.csv", ',')
 ```
 
 
-Define necessary variables for analysis:
+We define some variables for analysis:
 
 ```julia
 ordered_strain = annotation_test[:, end]
@@ -1096,10 +1093,7 @@ depth = -1
 # Set random seed for reproducibility
 seed = Random.seed!(1234)
 ```
-
- Perform Decision Tree Regression
-
-Loop through each strain and perform decision tree regression and we plot the tree trying to analyze th 9th row (i.e. growht rate) of the results
+We perform decision tree regression only on "N. soli" strain and we  analyze the 9th row (i.e. growht rate) of the results:
 
 ```julia
 
@@ -1108,9 +1102,9 @@ index_strain = findall("N. soli".== ordered_strain)
 feature_matrix = annotation_test[index_strain, 2:(end-1)]
 Kinbiont_results = Kinbiont_res_test[:, index_strain]
 
-dt_gr = downstream_decision_tree_regression(Kinbiont_results,
+dt_gr = Kinbiont.downstream_decision_tree_regression(Kinbiont_results,
         feature_matrix,
-        9;
+        9;# row to learn
         do_pruning=false,
         pruning_accuracy=1.00,
         verbose=true,
@@ -1119,7 +1113,10 @@ dt_gr = downstream_decision_tree_regression(Kinbiont_results,
         n_folds_cv=n_folds,
         seed=seed
     )
-    
+```
+
+We plot the tree
+```julia
 # Wrap the decision tree model for visualization
 wt = DecisionTree.wrap(dt_gr[1], (featurenames = feature_names,))
 

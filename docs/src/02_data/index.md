@@ -2,16 +2,14 @@
 ## Data and annotation formatting
 
 
-Kinbiont can operate directly on data files or within a Julia notebook. The format of a single time series that you want to analyze must be a  `2 x n_time_points ` matrix of Float64:
-
+Kinbiont can operate directly on data files or within a Julia notebook. The format of a single time series must be a `2 x n_time_points` matrix of `Float64`:
 ```
  0.0        2.0       4.0       6.0       8.0        10.0       10.0       12.0       14.0       16.0       18.0       20.0       22.0      24.0      26.0       28.0       30.0       32.0       34.0       36.0       …  
  0.0912154  0.107956  0.105468  0.101727  0.0931484   0.106318   0.103697   0.139821   0.173598   0.204888   0.251052   0.289018   0.31298   0.33752   0.359356   0.370861   0.376347   0.383732   0.398496   0.384511 …  
 ```
 The first row should represent the time, and the second row should represent the quantity to be fitted (e.g., optical density or CFU).
 
-If the user calls APIs that require a .csv input, him must provides Kinbiont.jl with the paths to the .csv data file and the .csv annotation file. In these cases, Kinbiont expects a data matrix where the first row contains the names of the wells and the other columns contain the numerical values of the measurements. Note that the first column will be used as time:
-
+If the user calls APIs that require a `.csv` input, they must provide Kinbiont.jl with the paths to the `.csv` data file and the optional `.csv` annotation file. In these cases, Kinbiont expects a data matrix where the first row contains the names of the wells, and the other columns contain the numerical values of the measurements:
 ```
 Time,  A1,     A2,      A3, 
 0.0,   0.09,   0.09,    0.087,
@@ -21,10 +19,9 @@ Time,  A1,     A2,      A3,
 4.0,   0.008,  0.41,    0.122,
 ```
 
-Kinbiont.jl expects a comma (,) as the separator between columns.
+Kinbiont.jl expects a comma (,) as the separator between columns and  the first column will be used as time.
 
-The annotation file, on the other hand, should be a two-column .csv file where the number of rows corresponds to the number of wells. The first column should contain the name of the well (this should match between the data .csv and annotation .csv files), while the second column should contain a unique ID for each biological replicate. A `b` indicates that the well should be considered as a blank, and an `X` indicates that the well should be discarded from the analysis:
-
+The annotation file is optional (but mandatory if blank subtraction and averaging of replicates are required) and should be a two-column .csv file where the number of rows corresponds to the number of wells. The first column should contain the name of the well (they should match the names of the wells in the data .csv), while the second column should contain a unique ID for each technical replicate. A `b` indicates that the well should be considered as a blank, an `X` indicates that the well should be discarded from the analysis, and if two wells have the same ID, they will be considered replicates:
 ```
 A1, b
 A2, X
@@ -33,7 +30,7 @@ A3, unique_ID
 
 To provide a calibration curve of optical density (OD), that maps OD values obtained from a microplate reader to corresponding values obtained from an independent source, the file should be provided to KinBiont as a CSV file containing two columns:
 - `Raw_OD`: Optical density values measured using a microplate reader.
-- `Real_OD`: Optical density values measured using a spectrophotometer (or evaluated by dilution of the initial sample).
+- `Real_OD`: Optical density values measured using an independent source.
 
 ```csv
 Raw_OD,Real_OD
@@ -56,8 +53,8 @@ See the folder  `data_examples` for examples.
 ## Data and annotation formatting for downstream ML
 
 
-All ML functions of Kinbiont take as input a matrix of results (i.e., the outputs of a fit) and a matrix of features (e.g., the concentration of antibiotics present in any well).
-
+All ML functions of Kinbiont take as input a matrix of results  (i.e., the outputs of fits `Kinbiont_results`) and a matrix of features  (e.g., the concentration of antibiotics present in all wells `feature_matrix`).
+For example:
 ```julia
 downstream_decision_tree_regression(Kinbiont_results, 
   feature_matrix,
@@ -88,9 +85,9 @@ emp_max_gr,      0.007951369027199616,    0.008096305651156249
 loss,            0.0013005418069932683,   0.0013349159149782007
 ```
 
-Note the first column is dedicated to labels and will not be used by the functions. It is necessary that the second column reports a unique ID for each curve. The functions will ask which is the target row of the regression, do not use the first row.
+Note the first row is dedicated to the label of the experiment and will not be used by the functions. It is necessary that the second row (i.e., `well`) reports a unique ID for each curve. The functions will ask which is the target row of the regression (i.e., `row_to_learn`); please do not use the first row. The first column is dedicated to the names of the columns and will be discarded from the ML analysis.
 
-Instead, the feature matrix specifies the conditions associated with each unique ID of the previous file. For example, suppose you have two different antibiotics each with two different concentrations; then the matrix will be:
+Instead, the feature matrix specifies the conditions associated with each unique ID of the previous matrix. Only the wells where there is a macth  between the first column of the feature matrix and the second row of the fitting results will be used. For example, suppose you have two different antibiotics each with two different concentrations, then the matrix could be:
 
 ```
 ID_exp,   abx_1,   abx_2
@@ -98,9 +95,10 @@ A1,       0,       1,
 A2,       2,       0,
 A3,       1,       1,
 A4,       1,       0,
+A5,       0,       2,
 ```
 
-Note that it is necessary to add one column for each new chemical/condition added to the experiment (even if in a specific well it is absent). It is necessary that the first column contains the ID of the wells that must match with the previous file. The first row will not be used and it is used to have the feature names.
+Note that it is necessary to add one column for each new chemical/condition added to the experiment (even if in a specific well it is absent).  The first row will not be used and is dedicated to the feature names.
 
 See the folder  `data_examples` for examples. 
 
@@ -135,8 +133,8 @@ This structure stores results of the bootstrap fitting of a NL function.
 1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
 1. `fit:Any` - The fitted function.
 1. `times:Any` - The times at which measurements were taken.
-1. `fin_param:Any` - Final parameters after bootstrapping. check
-1. `new_param_fin:Any` - New final parameters. chec k 
+1. `fin_param:Any` - The  parameters of each bootstrap fit.
+1. `new_param_fin:Any` - The  parameters of each bootstrap fit after considering only the best $95/%$ of the losses.
 1. `mean_param:Any` - Mean of the parameters.
 1. `sd_param:Any` - Standard deviation of the parameters.
 

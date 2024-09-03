@@ -80,15 +80,15 @@ To call these models use the string present in this table, the parameters will b
 
 | **Model Name**                   | **Parameters List**                       | **String to call**                     |
 | ------------------------------- | ------------------------------------- | ---------------------------------- |
-| Exponential                     | $p_1, p_2$                          | `"NL_exponential"`                 |
-| Gompertz                        | $p_1, p_2, p_3$                     | `"NL_Gompertz"`                    |
-| Logistic                        | $p_1, p_2, p_3, p_4$                | `"NL_logistic"`                    |
-| Richards model                  | $p_1, p_2, p_3, p_4$                | `"NL_Richards"`                    |
-| Weibull                         | $p_1, p_2, p_3, p_4$                | `"NL_Weibull"`                     |
-| Morgan                          | $p_1, p_2, p_3, p_4$                | `"NL_Morgan"`                      |
-| Bertalanffy                     | $p_1, p_2, p_3, p_4$                | `"NL_Bertalanffy"`                 |
-| piece-wise linear-logistic      | $p_1, p_2, p_3, p_4, t_\text{lag}$  | `"NL_piecewise_lin_logistic"`      |
-| piece-wise exponential-logistic | $p_0, p_1, p_3, p_4, t_\text{lag}, \text{const}_1$ | `"NL_piecewise_exp_logistic"` |
+| Exponential                     | $N_0, \mu$                          | `"NL_exponential"`                 |
+| Gompertz                        | $N_{\text{max}}, \mu, t_{\text{lag}}$                     | `"NL_Gompertz"`                    |
+| Logistic                        | $N_{\text{max}}, N_0,\mu$                | `"NL_logistic"`                    |
+| Richards model                  | $N_{\text{max}}, \mu,\nu,t_{\text{lag}}$                | `"NL_Richards"`                    |
+| Weibull                         | $N_{\text{max}}, N_0,\mu,\nu$                | `"NL_Weibull"`                     |
+| Morgan                          | $N_{\text{max}}, N_0,K,\nu$                | `"NL_Morgan"`                      |
+| Bertalanffy                     | $N_{\text{max}}, N_0,\mu,\nu$                | `"NL_Bertalanffy"`                 |
+| piece-wise linear-logistic      | $N_0, N_{\text{max}},\mu, t_\text{lag}$  | `"NL_piecewise_lin_logistic"`      |
+| piece-wise exponential-logistic | $N_0, N_{\text{max}},\mu, t_\text{lag}, t_\text{lag},\mu_0$ | `"NL_piecewise_exp_logistic"` |
 
 ## ODEs for bacterial growth
 
@@ -234,10 +234,10 @@ Note that these models assume that the cells are in two states: $N_1(t)$ dormant
 
 - **Heterogeneous Population Model with Inhibition and Death**:
 
-$$N(t) = N_1(t) + N_2(t) + N_3(t), \\
+$$\begin{cases} N(t) = N_1(t) + N_2(t) + N_3(t), \\
 \frac{d N_1(t)}{dt} = - r_{\text{lag}} \cdot N_1(t), \\
 \frac{d N_2(t)}{dt} = r_{\text{lag}} \cdot N_1(t) + \mu \cdot N_2(t) - r_{\text{inhibition}} \cdot N_2(t), \\
-\frac{d N_3(t)}{dt} = - r_{\text{d}} \cdot N_3(t) + r_{\text{inhibition}} \cdot N_2(t),
+\frac{d N_3(t)}{dt} = - r_{\text{d}} \cdot N_3(t) + r_{\text{inhibition}} \cdot N_2(t), 
 \end{cases}$$
 
 where $\mu$ is the growth rate, $r_\text{lag}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the  rate of which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$), and $r_{\text{d}}$ is the  rate of which cell are die.
@@ -345,47 +345,44 @@ $\mu(N; N_\text{max}, \mu_\text{max}) = \mu_\text{max} \left(1 - \frac{N}{N_\tex
 
 
 ## Error functions
+The user can choose to use different error functions to perfor the fitting. Each fitting API has its keyword argument to change the loss. The possible options are described in the following section.
 
-`type_of_loss = "L2"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the given data.
+In the  equations of this list, the notation is the following: $n$ the number of time points $t_i$, $\hat{N}(t_i, \{P\})$ is the proposed numerical solution at time $t_i$ and using the parameters $\{P\}$, and $N(t_i)$ is the data value at $t_i$.
 
-$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \frac{1}{n} \sum_{i=1}^n \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2$$
+`"L2"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the given data.
 
-where $n$ is the number of data points.
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2$$
 
-`type_of_loss = "RE"`: Minimize the relative error between the solution and data.
 
-$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2$$
+`"RE"`: Minimize the relative error between the solution and data.
 
-where $n$ is the number of data points.
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2$$
 
-`type_of_loss = "L2_derivative"`: Minimize the L2 norm of the difference between the specific growth rate of the numerical solution of the desired model and the corresponding derivatives of the data.
 
-$$\mathcal{D}\left(\frac{dD(t_i)}{dt}, \frac{d\bar{N}(t_i, \{P\})}{dt}\right) = \frac{1}{n} \sum_{i=1}^n \left(\frac{dD(t_i)}{dt} - \frac{d\bar{N}(t_i, \{P\})}{dt}\right)^2$$
+`"L2_derivative"`: Minimize the L2 norm of the difference between the specific growth rate of the numerical solution of the desired model and the corresponding derivatives of the data.
 
-where $n$ is the number of data points.
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{dD(t_i)}{dt} - \frac{d\bar{N}(t_i, \{P\})}{dt}\right)^2$$
 
-`type_of_loss = "blank_weighted_L2"`: Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data.
 
-$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \frac{1}{n} \sum_{i=1}^n \left(1 - P(D(t_i) - \bar{N}(t_i, \{P\})|\text{noise})\right) \, \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2$$
+`"blank_weighted_L2"`: Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data.
 
-where $P(D(t_i) - \bar{N}(t_i, \{P\})|\text{noise})$ is the probability distribution of the empirical blank data, and $n$ is the number of data points.
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(1 - P(N(t_i) - \hat{N}(t_i, \{P\})|\text{noise})\right) \, \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2$$
 
-`type_of_loss = "L2_log"`: Minimize the logarithm of the L2 norm of the difference between the numerical solution of the desired model and the given data.
+where $P(N(t_i) - \hat{N}(t_i, \{P\})|\text{noise})$ is the probability distribution of the empirical blank data.
+`"L2_log"`: Minimize the logarithm of the L2 norm of the difference between the numerical solution of the desired model and the given data.
 
-$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \log\left(\frac{1}{n} \sum_{i=1}^n \left(D(t_i) - \bar{N}(t_i, \{P\})\right)^2\right)$$
+$$\mathcal{L}(\{P\}) = \log\left(\frac{1}{n} \sum_{i=1}^n \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2\right)$$
 
-where $n$ is the number of data points.
 
-`type_of_loss = "RE_log"`: Minimize the logarithm of the relative error between the solution and data.
+`"RE_log"`: Minimize the logarithm of the relative error between the solution and data.
 
-$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \log\left(\frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2\right)$$
+$$\mathcal{L}(\{P\})= \log\left(\frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2\right)$$
 
-where $n$ is the number of data points.
 
-`type_of_loss = "L2_std_blank"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the data, normalized by the standard deviation of empirical blank data.
+`"L2_std_blank"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the data, normalized by the standard deviation of empirical blank data.
 
-$$\mathcal{D}(D(t_i), \bar{N}(t_i, \{P\})) = \frac{1}{n} \sum_{i=1}^n \left(\frac{D(t_i) - \bar{N}(t_i, \{P\})}{\text{std\_blank}}\right)^2$$
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{N(t_i) - \hat{N}(t_i, \{P\})}{\text{std\_blank}}\right)^2$$
 
-where $\text{std\_blank}$ is the standard deviation of the empirical blank data, and $n$ is the number of data points.
+where $\text{std\_blank}$ is the standard deviation of the empirical blank data.
 
 ---
