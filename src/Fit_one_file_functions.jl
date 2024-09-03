@@ -27,7 +27,7 @@ using Optimization
     start_exp_win_thr=0.05
     )
 
-Fits a logarithmic-linear model to data from a CSV file. The function assumes that the first column represents time. It evaluates the specific growth rate, identifies an exponential window based on a statistical threshold, and performs a log-linear fitting.
+Fits a logarithmic-linear model to data from a CSV file. The function assumes that the first column of the file represents time. It evaluates the specific growth rate, identifies an exponential window based on a statistical threshold, and performs a log-linear fitting.
 
 # Arguments:
 
@@ -78,25 +78,25 @@ Fits a logarithmic-linear model to data from a CSV file. The function assumes th
 
 """
 function fit_one_file_Log_Lin(
-    label_exp::String, #label of the experiment
-    path_to_data::String; # path to the folder to analyze
-    path_to_annotation::Any=missing,# path to the annotation of the wells
-    path_to_results="NA",# path where save results
-    write_res=false, # write results
-    type_of_smoothing="rolling_avg", # option, NO, gaussian, rolling avg
-    pt_avg=7, # number of points to do smoothing average
-    pt_smoothing_derivative=7, # number of poits to smooth the derivative
-    pt_min_size_of_win=7, # minimum size of the exp windows in number of smooted points
-    type_of_win="maximum", # how the exp. phase win is selected, "maximum" of "global_thr"
-    threshold_of_exp=0.9, # threshold of growth rate in quantile to define the exp windows
-    do_blank_subtraction="avg_blank", # string on how to use blank (NO,avg_subtraction,time_avg)
-    avg_replicate=false, # if true the average between replicates is fitted. If false all replicate are fitted indipendelitly
-    correct_negative="remove", # if "thr_correction" it put a thr on the minimum value of the data with blank subracted, if "blank_correction" uses blank distrib to impute negative values
-    thr_negative=0.01, # used only if correct_negative == "thr_correction"
-    multiple_scattering_correction=false, # if true uses the given calibration curve to fix the data
+    label_exp::String, 
+    path_to_data::String; 
+    path_to_annotation::Any=missing,
+    path_to_results="NA",
+    write_res=false, 
+    type_of_smoothing="rolling_avg", 
+    pt_avg=7, 
+    pt_smoothing_derivative=7, 
+    pt_min_size_of_win=7, 
+    type_of_win="maximum", 
+    threshold_of_exp=0.9, 
+    do_blank_subtraction="avg_blank",
+    avg_replicate=false, 
+    correct_negative="remove", 
+    thr_negative=0.01, 
+    multiple_scattering_correction=false, 
     method_multiple_scattering_correction="interpolation",
-    calibration_OD_curve="NA", #  the path to calibration curve to fix the data
-    thr_lowess=0.05, # keyword argument of lowees smoothing
+    calibration_OD_curve="NA",
+    thr_lowess=0.05, 
     verbose=false,
     start_exp_win_thr=0.05,
     blank_value=0.0,
@@ -112,7 +112,6 @@ function fit_one_file_Log_Lin(
 
 
 
-    # TEMPORARY results df
     results_Log_Lin = [
         "label_exp",
         "well_name",
@@ -292,11 +291,11 @@ end
     opt_params...
     )
 
-This function fits a ODE model to a csv file. The function assumes that the first column is the time, see the documentation for example of the data format. It evaluate the specific growht rate, the with a statistical threshold it individuates a exponetial window and perform a-log lin fitting
+This function fits a ODE model to a csv file. The function assumes that the first column is the time, see the documentation for example of the data format. 
 # Arguments:
-- `data::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD), see documentation.
 - `label_exp::String`: The label of the experiment.
--  `model::String`:String of the ODE to be fitted. See the documentation for the complete list.
+- `path_to_data::String`: String of the path where data file is located.
+- `model::String`:String of the ODE to be fitted. See the documentation for the complete list.
 - `param`:Vector{Float64}, Initial guess for the model parameters.
 
 
@@ -336,7 +335,7 @@ This function fits a ODE model to a csv file. The function assumes that the firs
 
 - a data struct containing:
 1. method string
-2. matrix with the following contents for each row :`[] "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
+2. matrix with the following contents for each row :`[ "name of model", "well", "param_1","param_2",..,"param_n","maximum specific gr using ode","maximum specific gr using data", "objective function value (i.e. loss of the solution)"]` where ' "param_1","param_2",..,"param_n" ' are the parameter of the selected ODE as in the documentation,
 3. the fittings
 4. the preprocessed data
 """
@@ -570,12 +569,11 @@ end
     opt_params...
     )
 
-Fits a customizable Ordinary Differential Equation (ODE) model to a dataset from a CSV file. This function allows for flexible definition of the ODE model and includes various options for data preprocessing and optimization.
-
+Fits a customizable Ordinary Differential Equation (ODE) model to a dataset from a .csv file. 
 # Arguments:
 
 - `label_exp::String`: The label for the experiment.
-- `path_to_data::String`: Path to the CSV file containing the data.
+- `path_to_data::String`: Path to the .csv file containing the data.
 - `model::Any`: Function representing the ODE model to be fitted. Refer to the documentation for model definition examples.
 - `param::Vector{Float64}`: Initial guesses for the model parameters.
 - `n_equation::Int`: Number of ODEs in the system.
@@ -847,12 +845,12 @@ end
     opt_params...
     )
 
-This function performs model selection for ordinary differential equations (ODEs) on a dataset provided in a CSV file. It evaluates multiple ODE models to determine the best fit based on various criteria.
+This function performs model selection for ordinary differential equations (ODEs) on a dataset provided in a .csv  file. 
 
 # Arguments:
 
 - `label_exp::String`: The label for the experiment.
-- `path_to_data::String`: Path to the CSV file containing the data.
+- `path_to_data::String`: Path to the .csv file containing the data.
 - `models_list::Vector{String}`: List of ODE models to evaluate.
 - `param_array::Any`: Initial guesses for the parameters of the models. It can be a matrix where each row corresponds to initial guesses for the models in `models_list`.
 
@@ -860,7 +858,7 @@ This function performs model selection for ordinary differential equations (ODEs
 
 - `lb_param_array::Any=nothing`: Lower bounds for the model parameters. Must be compatible with the models.
 - `ub_param_array::Any=nothing`: Upper bounds for the model parameters. Must be compatible with the models.
-- `path_to_annotation::Any=missing`: Path to the CSV file with annotation data. Required if `avg_replicate=true`.
+- `path_to_annotation::Any=missing`: Path to the .csv  file with annotation data. Required if `avg_replicate=true`.
 - `integrator=Tsit5()`: SciML integrator to use. For piecewise models, consider using `KenCarp4(autodiff=true)`.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer used for parameter fitting from optimization.jl.
 - `loss_type="L2"`: Type of loss function. Options include `"L2"`, `"RE"`, `"L2_derivative"`, and `"blank_weighted_L2"`.
@@ -1153,7 +1151,7 @@ end
     opt_params...
     )
 
-This function performs model selection for ordinary differential equation (ODE) models while segmenting the time series data using change point detection algorithms. It evaluates various ODE models and identifies segments within the data that exhibit different behavior based on detected change points.
+This function performs model selection for ordinary differential equation (ODE) models while segmenting the time series data using change point detection algorithms.
 
 # Arguments:
 
@@ -1475,7 +1473,7 @@ end
     verbose=false,
     )
 
-This function analyzes change points in growth curve data from a CSV file and evaluates various metrics for each segment. It can handle data preprocessing, smoothing, blank correction, and multiple scattering correction. The output includes growth rate statistics, delta OD for each segment, and times of change points.
+This function analyzes change points in growth curve data from a CSV file and evaluates various metrics for each segment. 
 
 # Arguments:
 

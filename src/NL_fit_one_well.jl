@@ -527,7 +527,7 @@ This function performs nonlinear (NL) fitting of the growth curve data using a b
   3. The numerical solution of the fitted nonlinear model.
   4. Time coordinates corresponding to the fitted nonlinear model.
   5.  The  parameters of each bootstrap fit
-  6. The  parameters of each bootstrap fit after considering only the best $95/%$ of the losses.
+  6. The  parameters of each bootstrap fit after considering only the best 95% of the losses.
   7. Mean parameters from the bootstrap analysis.
   8. Standard deviation of parameters from the bootstrap analysis.
   9. (Optional) Results saved in the specified `path_to_results` folder if `write_res` is `true`.

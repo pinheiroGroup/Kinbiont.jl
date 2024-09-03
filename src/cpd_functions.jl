@@ -71,7 +71,7 @@ Performs change point detection analysis using the specified algorithm on the pr
 
 # Output:
 
-- An array containing the list of detected change points for each time series or experimental condition.
+- An array containing the list of detected change points.
 
 """
 function cpd_local_detection(
