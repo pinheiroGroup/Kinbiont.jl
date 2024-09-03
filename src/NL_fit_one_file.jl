@@ -40,21 +40,63 @@ using OptimizationMultistartOptimization
     opt_params...
     )
 
-This function performs nonlinear (NL) model fitting for a given CSV file using specified models and optimization techniques.
+This function performs nonlinear (NL) model fitting for a given .csv file.
 
-# Arguments:
 
-- `label_exp::String`: The label of the experiment.
+- `label_exp::String`: The label for the experiment.
+- `path_to_data::String`: Path to the CSV file containing the data. The file should be formatted with time in the first column and corresponding data values in subsequent columns.
+- `model::Any`: Function or strings representing the NL models to be tested.
+- `u0`: Initial gues for the parameters of the NL model.
 
-- `path_to_data::String`: Path to the CSV file containing the data. The file should be formatted with time in the first column and the corresponding data values in the second column.
-
-- `model::Any`: The nonlinear model to fit. This can be a function or a string representing a hardcoded NL model.
-
-- `u0`: Initial guess for the model parameters.
 
 # Key Arguments:
 
-- `lb_param::Vector{Float64} = nothing`: Vector o
+- `lb_param_array::Vector{Vector{Float64}} = nothing`: Array of lower bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
+- `ub_param_array::Vector{Vector{Float64}} = nothing`: Array of upper bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
+- `path_to_annotation::Any = missing`: Path to a CSV file with annotation data, if available.
+- `method_of_fitting::String = "NA"`: Method for NL fitting. Options include `"Bootstrap"`, `"Normal"`, and `"Morris_sensitivity"`. 
+- `nrep::Int = 10`: Number of repetitions for methods like Morris sensitivity or bootstrap. Used only if `method_of_fitting` is `"Bootstrap"` or `"Morris_sensitivity"`.
+- `path_to_results::String = "NA"`: Path to the folder where results will be saved.
+- `loss_type::String = "RE"`: Type of loss function used. Options include `"RE"` (Residual Error), `"L2"`, `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
+- `smoothing::Bool = false`: Whether to apply smoothing to the data.
+- `type_of_smoothing::String = "lowess"`: Type of smoothing. Options include `"NO"`, `"rolling_avg"`, and `"lowess"`.
+- `pt_avg::Int = 1`: Number of points for rolling average smoothing or initial condition generation.
+- `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. If less than 2, uses an interpolation algorithm.
+- `do_blank_subtraction::String = "avg_blank"`: Method for blank subtraction. Options include `"NO"`, `"avg_subtraction"`, and `"time_avg"`.
+- `avg_replicate::Bool = false`: If true, averages replicates if annotation data is provided.
+- `correct_negative::String = "remove"`: Method for treating negative values after blank subtraction. Options include `"thr_correction"`, `"blank_correction"`, and `"remove"`.
+- `thr_negative::Float64 = 0.01`: Threshold for correcting negative values if `correct_negative` is `"thr_correction"`.
+- `multiple_scattering_correction::Bool = false`: If true, uses a calibration curve to correct data for multiple scattering.
+- `method_multiple_scattering_correction::String = "interpolation"`: Method for correcting multiple scattering. Options include `"interpolation"` and `"exp_fit"`.
+- `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data, used if `multiple_scattering_correction` is true.
+- `thr_lowess::Float64 = 0.05`: Parameter for lowess smoothing.
+- `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
+- `penality_CI::Float64 = 8.0`: Penalty parameter for ensuring continuity in segmentation.
+- `size_bootstrap::Float64 = 0.7`: Fraction of data used for each bootstrap run, used only if `method_of_fitting` is `"Bootstrap"`.
+- `correction_AIC::Bool = true`: If true, performs finite sample correction for AIC.
+- `blank_value::Float64 = 0.0`: Average value of blanks used if `do_blank_subtraction` is not `"NO"` and `path_to_annotation` is missing.
+- `blank_array::Vector{Float64} = [0.0]`: Array of blank values used if `do_blank_subtraction` is not `"NO"` and `path_to_annotation` is missing.
+- `auto_diff_method::Any = nothing`: Differentiation method to be specified if required by the optimizer.
+- `cons::Any = nothing`: Constraints for optimization equations.
+- `multistart::Bool = false`: If true, performs multistart optimization.
+- `n_restart::Int = 50`: Number of restarts for multistart optimization if `multistart` is true.
+- `optimizer::Any = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer used for the fitting process. Default is `BBO_adaptive_de_rand_1_bin_radiuslimited()`.
+- `opt_params...`: Additional optional parameters for the optimizer.
+
+# Outputs:
+
+- Method String: Description of the fitting method used.
+- Results Matrix: A matrix where each row contains:
+  - `"name of model"`: The name of the model used.
+  - `"well"`: The name of the well.
+  - `"param_1", "param_2", ..., "param_n"`: Parameters of the selected NL model.
+  - `"maximum specific gr using NL"`: Maximum specific growth rate obtained using the NL model.
+  - `"maximum specific gr using data"`: Maximum specific growth rate obtained from the data.
+  - `"objective function value"`: The value of the objective function (i.e., loss of the solution).
+- Fittings: The numerical values of the fitted solution.
+- Times: The time points of the data.
+- The data set that was fitted.
+    
 
 """
 function fit_NL_model_file(
@@ -468,23 +510,62 @@ end
     opt_params...
     )
 
-This function performs nonlinear (NL) model selection for an array of NL models using either AIC or AICc. It applies to a full CSV file of data.
-
+function performs nonlinear (NL) model selection on a segmented time series using AIC or AICc. It operates on an entire .csv file of data.
 # Arguments:
 
 - `label_exp::String`: The label for the experiment.
-
 - `path_to_data::String`: Path to the CSV file containing the data. The file should be formatted with time in the first column and corresponding data values in subsequent columns.
-
 - `list_model_function::Any`: Array of functions or strings representing the NL models to be tested.
+- `list_u0::Any`: Initial guesses for the parameters of each NL model.
 
-- `list_u0::Vector{Float64}`: Initial guesses for the parameters of each NL model.
 
 # Key Arguments:
 
-- `lb_param_array::Any = nothing`: Array of lower bounds for the parameters of each model. If not provided, no bounds are enforced.
+- `lb_param_array::Vector{Vector{Float64}} = nothing`: Array of lower bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
+- `ub_param_array::Vector{Vector{Float64}} = nothing`: Array of upper bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
+- `path_to_annotation::Any = missing`: Path to a CSV file with annotation data, if available.
+- `method_of_fitting::String = "NA"`: Method for NL fitting. Options include `"Bootstrap"`, `"Normal"`, and `"Morris_sensitivity"`. 
+- `nrep::Int = 10`: Number of repetitions for methods like Morris sensitivity or bootstrap. Used only if `method_of_fitting` is `"Bootstrap"` or `"Morris_sensitivity"`.
+- `path_to_results::String = "NA"`: Path to the folder where results will be saved.
+- `loss_type::String = "RE"`: Type of loss function used. Options include `"RE"` (Residual Error), `"L2"`, `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
+- `smoothing::Bool = false`: Whether to apply smoothing to the data.
+- `type_of_smoothing::String = "lowess"`: Type of smoothing. Options include `"NO"`, `"rolling_avg"`, and `"lowess"`.
+- `pt_avg::Int = 1`: Number of points for rolling average smoothing or initial condition generation.
+- `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. If less than 2, uses an interpolation algorithm.
+- `do_blank_subtraction::String = "avg_blank"`: Method for blank subtraction. Options include `"NO"`, `"avg_subtraction"`, and `"time_avg"`.
+- `avg_replicate::Bool = false`: If true, averages replicates if annotation data is provided.
+- `correct_negative::String = "remove"`: Method for treating negative values after blank subtraction. Options include `"thr_correction"`, `"blank_correction"`, and `"remove"`.
+- `thr_negative::Float64 = 0.01`: Threshold for correcting negative values if `correct_negative` is `"thr_correction"`.
+- `multiple_scattering_correction::Bool = false`: If true, uses a calibration curve to correct data for multiple scattering.
+- `method_multiple_scattering_correction::String = "interpolation"`: Method for correcting multiple scattering. Options include `"interpolation"` and `"exp_fit"`.
+- `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data, used if `multiple_scattering_correction` is true.
+- `thr_lowess::Float64 = 0.05`: Parameter for lowess smoothing.
+- `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
+- `penality_CI::Float64 = 8.0`: Penalty parameter for ensuring continuity in segmentation.
+- `size_bootstrap::Float64 = 0.7`: Fraction of data used for each bootstrap run, used only if `method_of_fitting` is `"Bootstrap"`.
+- `correction_AIC::Bool = true`: If true, performs finite sample correction for AIC.
+- `blank_value::Float64 = 0.0`: Average value of blanks used if `do_blank_subtraction` is not `"NO"` and `path_to_annotation` is missing.
+- `blank_array::Vector{Float64} = [0.0]`: Array of blank values used if `do_blank_subtraction` is not `"NO"` and `path_to_annotation` is missing.
+- `auto_diff_method::Any = nothing`: Differentiation method to be specified if required by the optimizer.
+- `cons::Any = nothing`: Constraints for optimization equations.
+- `multistart::Bool = false`: If true, performs multistart optimization.
+- `n_restart::Int = 50`: Number of restarts for multistart optimization if `multistart` is true.
+- `optimizer::Any = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer used for the fitting process. Default is `BBO_adaptive_de_rand_1_bin_radiuslimited()`.
+- `opt_params...`: Additional optional parameters for the optimizer.
 
-- `ub_param_array::Any = nothing`: Array of upper bounds fo
+# Outputs:
+
+- Method String: Description of the fitting method used.
+- Results Matrix: A matrix where each row contains:
+  - `"name of model"`: The name of the model used.
+  - `"well"`: The name of the well.
+  - `"param_1", "param_2", ..., "param_n"`: Parameters of the selected NL model.
+  - `"maximum specific gr using NL"`: Maximum specific growth rate obtained using the NL model.
+  - `"maximum specific gr using data"`: Maximum specific growth rate obtained from the data.
+  - `"objective function value"`: The value of the objective function (i.e., loss of the solution).
+- Fittings: The numerical values of the fitted solution.
+- Times: The time points of the data.
+- The data set that was fitted.
 
 """
 function fit_NL_model_selection_file(
@@ -739,98 +820,57 @@ This function performs nonlinear (NL) model selection on a segmented time series
 # Arguments:
 
 - `label_exp::String`: The label for the experiment.
-
 - `path_to_data::String`: Path to the CSV file containing the data. The file should be formatted with time in the first column and corresponding data values in subsequent columns.
-
 - `list_model_function::Any`: Array of functions or strings representing the NL models to be tested.
-
 - `list_u0::Any`: Initial guesses for the parameters of each NL model.
-
 - `n_change_points::Int`: Maximum number of change points to consider in the segmentation process.
 
 # Key Arguments:
 
 - `lb_param_array::Vector{Vector{Float64}} = nothing`: Array of lower bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
-
 - `ub_param_array::Vector{Vector{Float64}} = nothing`: Array of upper bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
-
 - `path_to_annotation::Any = missing`: Path to a CSV file with annotation data, if available.
-
 - `method_of_fitting::String = "NA"`: Method for NL fitting. Options include `"Bootstrap"`, `"Normal"`, and `"Morris_sensitivity"`. Default is `"NA"`.
-
 - `nrep::Int = 10`: Number of repetitions for methods like Morris sensitivity or bootstrap. Used only if `method_of_fitting` is `"Bootstrap"` or `"Morris_sensitivity"`.
-
 - `path_to_results::String = "NA"`: Path to the folder where results will be saved.
-
-- `loss_type::String = "RE"`: Type of loss function used. Options include `"RE"` (Residual Error), `"L2"`, `"L2_derivative"`, and `"blank_weighted_L2"`.
-
+- `loss_type::String = "RE"`: Type of loss function used. Options include `"RE"` (Residual Error), `"L2"`, `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list..
 - `smoothing::Bool = false`: Whether to apply smoothing to the data.
-
 - `type_of_smoothing::String = "lowess"`: Type of smoothing. Options include `"NO"`, `"rolling_avg"`, and `"lowess"`.
-
 - `pt_avg::Int = 1`: Number of points for rolling average smoothing or initial condition generation.
-
 - `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. If less than 2, uses an interpolation algorithm.
-
 - `do_blank_subtraction::String = "avg_blank"`: Method for blank subtraction. Options include `"NO"`, `"avg_subtraction"`, and `"time_avg"`.
-
 - `avg_replicate::Bool = false`: If true, averages replicates if annotation data is provided.
-
 - `correct_negative::String = "remove"`: Method for treating negative values after blank subtraction. Options include `"thr_correction"`, `"blank_correction"`, and `"remove"`.
-
 - `thr_negative::Float64 = 0.01`: Threshold for correcting negative values if `correct_negative` is `"thr_correction"`.
-
 - `multiple_scattering_correction::Bool = false`: If true, uses a calibration curve to correct data for multiple scattering.
-
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for correcting multiple scattering. Options include `"interpolation"` and `"exp_fit"`.
-
 - `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data, used if `multiple_scattering_correction` is true.
-
 - `thr_lowess::Float64 = 0.05`: Parameter for lowess smoothing.
-
 - `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
-
 - `penality_CI::Float64 = 8.0`: Penalty parameter for ensuring continuity in segmentation.
-
 - `size_bootstrap::Float64 = 0.7`: Fraction of data used for each bootstrap run, used only if `method_of_fitting` is `"Bootstrap"`.
-
 - `correction_AIC::Bool = true`: If true, performs finite sample correction for AIC.
-
 - `blank_value::Float64 = 0.0`: Average value of blanks used if `do_blank_subtraction` is not `"NO"` and `path_to_annotation` is missing.
-
 - `blank_array::Vector{Float64} = [0.0]`: Array of blank values used if `do_blank_subtraction` is not `"NO"` and `path_to_annotation` is missing.
-
 - `type_of_detection::String = "sliding_win"`: Method for detecting change points. Options include `"sliding_win"` for sliding window approach and `"lsdd"` for least square density difference (LSDD) from `ChangePointDetection.jl`.
-
 - `type_of_curve::String = "original"`: Specifies the curve on which change point detection is performed. Options include `"original"` (the original time series) and `"deriv"` (the specific growth rate time series).
-
 - `fixed_cpd::Bool = false`: If true, returns the fitting using exactly `n_change_points` change points.
-
 - `detect_number_cpd::Bool = true`: If true, all possible combinations of lengths 1, 2, ..., `n_change_points` are tested, and the best combination for AICc is returned.
-
 - `method_peaks_detection::String = "peaks_prominence"`: Method for peak detection on the dissimilarity curve. Options include `"peaks_prominence"` (orders peaks by prominence) and `"thr_scan"` (uses a threshold to select peaks).
-
 - `n_bins::Int = 40`: Number of bins used to generate the threshold for peak detection if `method_peaks_detection` is `"thr_scan"`.
-
 - `win_size::Int = 14`: Size of the window used by the change point detection algorithms.
-
 - `auto_diff_method::Any = nothing`: Differentiation method to be specified if required by the optimizer.
-
 - `cons::Any = nothing`: Constraints for optimization equations.
-
 - `multistart::Bool = false`: If true, performs multistart optimization.
-
 - `n_restart::Int = 50`: Number of restarts for multistart optimization if `multistart` is true.
-
 - `optimizer::Any = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer used for the fitting process. Default is `BBO_adaptive_de_rand_1_bin_radiuslimited()`.
-
 - `opt_params...`: Additional optional parameters for the optimizer.
 
 # Outputs:
 
-- **Method String**: Description of the fitting method used.
+- Method String: Description of the fitting method used.
 
-- **Results Matrix**: A matrix where each row contains:
+- Results Matrix: A matrix where each row contains:
   - `"name of model"`: The name of the model used.
   - `"well"`: The name of the well.
   - `"param_1", "param_2", ..., "param_n"`: Parameters of the selected NL model.
@@ -838,13 +878,13 @@ This function performs nonlinear (NL) model selection on a segmented time series
   - `"maximum specific gr using data"`: Maximum specific growth rate obtained from the data.
   - `"objective function value"`: The value of the objective function (i.e., loss of the solution).
 
-- **Fittings**: Details of the model fittings.
+- Fittings: Details of the model fittings.
 
-- **Preprocessed Data**: Data that has been preprocessed according to the specified arguments.
+- Preprocessed Data: Data that has been preprocessed according to the specified arguments.
 
-- **Change Points Time**: Time of change points detected for each well.
+- Change Points Time: Time of change points detected for each well.
 
-- **AIC (or AICc) Score**: AIC or AICc score for each well.
+- AIC (or AICc) Score: AIC or AICc score of the best model for each well.
 
 """
 function fit_NL_segmentation_file(

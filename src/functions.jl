@@ -33,7 +33,7 @@ end
     specific_gr_evaluation(data_smoothed::Matrix{Float64}, 
     pt_smoothing_derivative::Int)
 
-This function evaluates the specific growth rate (GR) of a smoothed data set using a sliding window log-linear fitting approach.
+This function evaluates the specific growth rate of a smoothed time series using a sliding window log-linear fitting approach.
 
 # Arguments:
 
@@ -43,8 +43,7 @@ This function evaluates the specific growth rate (GR) of a smoothed data set usi
 
 # Output:
 
-- `specific_gr::Vector{Float64}`: An array containing the specific growth rate as a function of time. The specific growth rate is calculated using a sliding window log-linear fitting approach applied to the smoothed data.
-
+- `specific_gr::Vector{Float64}`: An array containing the specific growth rate as a function of time. 
 """
 function specific_gr_evaluation(data_smooted::Any, pt_smoothing_derivative::Int)
 
@@ -422,7 +421,7 @@ end
     )
 
 
-This function performs an ODE simulation of a model
+This function solve the harcoded ODE Kinbiont.jl models.
 
 # Arguments:
 - `model::String`: The model to simulate. For the possible options please check the documentation.
@@ -437,7 +436,7 @@ This function performs an ODE simulation of a model
 
 # Output:
     
-- it returns a standard SciML output (i.e., if `sim =ODE_sim(...)`, then `sim.t` is the array of times and `sim.u` is the array of the simulation)
+- it returns a standard SciML output (i.e., if `sim =ODE_sim(...)`, then `sim.t` is the array of times and `sim.u` is the array of the numerical solution).
 """
 function ODE_sim(
     model::String, #string of the model
@@ -484,7 +483,7 @@ end
     stochastic_sim(
     model::String,
     n_start::Int, 
-    n_mol_start::Float64, 
+    n_mass_start::Float64, 
     tstart::Float64, 
     tmax::Float64, 
     delta_t::Float64, 
@@ -497,18 +496,18 @@ end
     )
 
 
-This function performs a stochastic simulation of a model, considering cell growth and nutrient consumption over time.
+This function performs a stochastic simulation of a model, considering cell growth and nutrient consumption over time using Poisson approximation.
 
 # Arguments:
 
-- `model::String`: The model to simulate. Possible options "Monod","Haldane","Blackman","Tessier","Moser","Aiba-Edwards", and "Verhulst"
+- `model::String`: The model to simulate. Possible options "Monod","Haldane","Blackman","Tessier","Moser","Aiba-Edwards", and "Verhulst".
 - `n_start::Int`: The number of starting cells.
-- `n_mol_start::Float64`: The starting concentration of the limiting nutrient.
+- `n_mass_start::Float64`: The starting concentration of the limiting nutrient.
 - `tstart::Float64`: The start time of the simulation.
 - `tmax::Float64`: The final time of the simulation.
 - `delta_t::Float64`: The time step for the Poisson approximation.
 - `k_1_val::Float64`: The value of parameter k1.
-- `k_2_val::Float64`: The value of the Monod constant.
+- `k_2_val::Float64`: The value of the parameter k2.
 - `alpha_val::Float64`: The maximum possible growth rate.
 - `lambda::Float64`: The lag time, simulated as a zero growht time span at the start
 - `n_mol_per_birth::Float64`: The nutrient consumed per division (mass).
@@ -524,7 +523,7 @@ This function performs a stochastic simulation of a model, considering cell grow
 function stochastic_sim(
     model::String, #string of the model
     n_start::Int, # number of starting cells
-    n_mol_start::Float64, # starting concentration of the limiting nutrients
+    n_mass_start::Float64, # starting concentration of the limiting nutrients
     tstart::Float64, # start time of the sim
     tmax::Float64, # final time of the sim
     delta_t::Float64, # delta t for poisson approx
@@ -539,7 +538,7 @@ function stochastic_sim(
     #inizialization of times
     tot_pop = [copy(n_start)]
     times = [copy(tstart)]
-    conc_of_nutriens = [copy(n_mol_start / volume)]
+    conc_of_nutriens = [copy(n_mass_start / volume)]
     n_times = floor((tmax - tstart) / delta_t)
 
     for i = 2:n_times

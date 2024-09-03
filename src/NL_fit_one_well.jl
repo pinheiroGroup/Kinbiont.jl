@@ -31,50 +31,30 @@ This function fits a nonlinear function to the time series input data of a singl
 # Arguments:
 
 - `data::Matrix{Float64}`: The dataset containing the growth curve. The first row should represent time values, and the second row should represent the variable to fit (e.g., optical density). Refer to the documentation for proper formatting.
-
 - `name_well::String`: The name of the well being analyzed.
-
 - `label_exp::String`: The label for the experiment to identify the results.
-
 - `model_function::Any`: The nonlinear model function to be used for fitting. This can be a custom function or a predefined model specified as a string (see documentation for available models).
-
 - `u0::Vector{Float64}`: Initial guess for the model parameters.
 
 # Key Arguments:
 
 - `optimizer::Any = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer for parameter estimation, from the BBO optimization library.
-
 - `type_of_smoothing::String = "rolling_avg"`: Method for smoothing the data. Options include `"NO"` (no smoothing), `"rolling_avg"` (rolling average), and `"lowess"` (locally weighted scatterplot smoothing).
-
 - `pt_avg::Int = 7`: Size of the rolling average window for smoothing if `type_of_smoothing` is `"rolling_avg"`.
-
 - `smoothing::Bool = false`: Flag to apply data smoothing. Set to `true` to smooth the data; `false` to skip.
-
-- `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`.
-
+- `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
 - `blank_array::Vector{Float64} = zeros(100)`: Array containing data of blanks for correction.
-
 - `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, a sliding window approach is applied.
-
 - `multiple_scattering_correction::Bool = false`: Flag to perform multiple scattering correction. Set to `true` to apply correction, requiring a calibration curve.
-
 - `calibration_OD_curve::String = "NA"`: Path to a CSV file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
-
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"` (based on Meyers et al., 2018).
-
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
-
 - `penality_CI::Float64 = 3.0`: (Deprecated) Penalty for enforcing continuity at segment boundaries. Consider removing or updating.
-
 - `auto_diff_method::Any = nothing`: Differentiation method for the optimizer, if required.
-
 - `cons::Any = nothing`: Constraints for optimization.
-
 - `multistart::Bool = false`: Flag to enable multistart optimization. Set to `true` to use multiple starting points.
-
 - `n_restart::Int = 50`: Number of restarts for multistart optimization, used if `multistart` is `true`.
-
-- `opt_params...`: Additional optional parameters for the optimizer (e.g., `lb` (lower bounds), `ub` (upper bounds), `maxiters`).
+- `opt_params...`: Additional optional parameters for the optimizer(e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`).
 
 # Output:
 
@@ -216,61 +196,37 @@ end
     opt_params...
     )
 
-This function performs Morris sensitivity analysis on the nonlinear fit optimization. It evaluates the sensitivity of the fit parameters to variations in the initial guess, which is useful for quality checks of nonlinear model fits.
-
+This function performs Morris sensitivity analysis on the nonlinear fit optimization.
 # Arguments:
 
 - `data::Matrix{Float64}`: The growth curve data matrix. Time values are in the first row and the observable values (e.g., optical density) are in the second row.
-
 - `name_well::String`: The name of the well for which the model is being fitted.
-
 - `label_exp::String`: Label for the experiment, used for identifying results.
-
 - `model_function::Any`: The nonlinear model function to be used for fitting. This can be a custom function or a predefined model name.
-
 - `lb_param::Vector{Float64}`: Lower bounds for the model parameters. Defines the hyperspace for sensitivity analysis.
-
 - `ub_param::Vector{Float64}`: Upper bounds for the model parameters. Defines the hyperspace for sensitivity analysis.
 
 # Key Arguments:
 
 - `nrep::Int = 100`: Number of steps for the Morris sensitivity analysis. Determines the number of sampling points.
-
 - `optimizer::Any = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer for parameter estimation, from the BBO optimization library.
-
 - `type_of_smoothing::String = "rolling_avg"`: Method for smoothing the data. Options include `"NO"` (no smoothing), `"rolling_avg"` (rolling average), and `"lowess"` (locally weighted scatterplot smoothing).
-
 - `pt_avg::Int = 7`: Size of the rolling average window for smoothing if `type_of_smoothing` is `"rolling_avg"`.
-
 - `smoothing::Bool = false`: Flag to apply data smoothing. Set to `true` to enable smoothing; `false` to skip.
-
-- `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`.
-
+- `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
 - `blank_array::Vector{Float64} = zeros(100)`: Array containing data of blanks for correction.
-
 - `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, a sliding window approach is applied.
-
 - `multiple_scattering_correction::Bool = false`: Flag to perform multiple scattering correction. Set to `true` to apply correction, requiring a calibration curve.
-
 - `calibration_OD_curve::String = "NA"`: Path to a CSV file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
-
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"` (based on Meyers et al., 2018).
-
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
-
 - `write_res::Bool = false`: Flag to write results to a file. Set to `true` to enable file writing.
-
 - `penality_CI::Float64 = 3.0`: (Deprecated) Penalty for enforcing continuity at segment boundaries. Consider removing or updating.
-
 - `auto_diff_method::Any = nothing`: Differentiation method for the optimizer, if required.
-
 - `cons::Any = nothing`: Constraints for optimization.
-
 - `multistart::Bool = false`: Flag to enable multistart optimization. Set to `true` to use multiple starting points.
-
 - `n_restart::Int = 50`: Number of restarts for multistart optimization, used if `multistart` is `true`.
-
-- `opt_params...`: Additional optional parameters for the optimizer (e.g., `lb` (lower bounds), `ub` (upper bounds), `maxiters`).
+- `opt_params...`: Additional optional parameters for the optimizer(e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`).
 
 # Output:
 
@@ -462,61 +418,35 @@ This function performs nonlinear (NL) fitting of the growth curve data using a b
 # Arguments:
 
 - `data::Matrix{Float64}`: The growth curve data matrix, where the first row contains time values, and the second row contains the observable values (e.g., optical density (OD)).
-
 - `name_well::String`: The name of the well for which the model is being fitted.
-
 - `label_exp::String`: The label for the experiment, used for identifying the results.
-
 - `model_function::Any`: The nonlinear model function to be used for fitting. This can be a custom function or a predefined model name.
-
 - `u0`: Initial guess for the model parameters.
 
 # Key Arguments:
 
 - `lb_param::Vector{Float64} = nothing`: Lower bounds for the model parameters. Defines the parameter space.
-
 - `ub_param::Vector{Float64} = nothing`: Upper bounds for the model parameters. Defines the parameter space.
-
 - `size_bootstrap::Float64 = 0.7`: Fraction of the data used for each bootstrap iteration.
-
 - `nrep::Int = 100`: Number of bootstrap iterations to perform.
-
 - `pt_avg::Int = 7`: Number of points to use for initial conditions or rolling average smoothing.
-
 - `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, applies a sliding window approach.
-
 - `type_of_smoothing::String = "rolling_avg"`: Method for smoothing the data. Options include `"NO"` (no smoothing), `"rolling_avg"` (rolling average), and `"lowess"` (locally weighted scatterplot smoothing).
-
 - `smoothing::Bool = false`: Flag to apply data smoothing. Set to `true` to enable smoothing; `false` to skip.
-
-- `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`.
-
+- `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
 - `blank_array::Vector{Float64} = zeros(100)`: Array containing data of blanks for correction.
-
 - `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
-
 - `multiple_scattering_correction::Bool = false`: Flag to apply multiple scattering correction using the given calibration curve.
-
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"` (based on Meyers et al., 2018).
-
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
-
 - `penality_CI::Float64 = 3.0`: (Deprecated) Penalty for enforcing continuity at segment boundaries. Consider removing or updating.
-
 - `auto_diff_method::Any = nothing`: Differentiation method for the optimizer, if required.
-
 - `cons::Any = nothing`: Constraints for optimization.
-
 - `multistart::Bool = false`: Flag to enable multistart optimization. Set to `true` to use multiple starting points.
-
 - `n_restart::Int = 50`: Number of restarts for multistart optimization, used if `multistart` is `true`.
-
 - `optimizer::Any = BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer for parameter estimation, from the BBO optimization library.
-
-- `opt_params...`: Additional optional parameters for the optimizer (e.g., `lb` (lower bounds), `ub` (upper bounds), `maxiters`).
-
+- `opt_params...`: Additional optional parameters for the optimizer(e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`).
 - `write_res::Bool = false`: Flag to write results to a file. Set to `true` to enable file writing.
-
 - `path_to_results::String = "NA"`: Path to the folder where results will be saved if `write_res` is `true`.
 
 # Output:
@@ -718,51 +648,28 @@ This function performs nonlinear (NL) fitting of the growth curve data while acc
 # Arguments:
 
 - `data::Matrix{Float64}`: The dataset with the growth curve. The first row contains time values, and the second row contains optical density (OD) measurements.
-
 - `name_well::String`: The name of the well for which the model is being fitted.
-
 - `label_exp::String`: The label for the experiment, used to identify the results.
-
 - `model_function::Any`: The nonlinear model function to be used for fitting. This can be a custom function or one of the predefined models.
-
 - `u0`: Initial guess for the model parameters.
-
 - `blank_array::Vector{Float64}`: Array of blank data used to model the noise in the measurements.
-
 - `nrep::Int = 100`: Number of iterations for estimating the posterior distribution of the parameters.
-
 - `pt_avg::Int = 1`: Number of points used for generating initial conditions or performing smoothing.
-
 - `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, applies a sliding window approach.
-
 - `smoothing::Bool = false`: Whether to apply data smoothing. Set to `true` to enable smoothing; `false` to skip.
-
 - `type_of_smoothing::String = "rolling_avg"`: Method for smoothing the data. Options include `"NO"` (no smoothing), `"rolling_avg"` (rolling average), and `"lowess"` (locally weighted scatterplot smoothing).
-
-- `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`.
-
+- `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
 - `multiple_scattering_correction::Bool = false`: Whether to apply multiple scattering correction using the given calibration curve.
-
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"` (based on Meyers et al., 2018).
-
 - `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
-
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
-
 - `penality_CI::Float64 = 3.0`: (Deprecated) Penalty for enforcing continuity at segment boundaries. Consider removing or updating.
-
 - `auto_diff_method::Any = nothing`: Differentiation method for the optimizer, if required.
-
 - `cons::Any = nothing`: Constraints for optimization.
-
 - `multistart::Bool = false`: Flag to enable or disable multistart optimization. Set to `true` to use multiple starting points.
-
 - `n_restart::Int = 50`: Number of restarts for multistart optimization, used if `multistart` is `true`.
-
-- `opt_params...`: Additional optional parameters for the optimizer (e.g., `lb` (lower bounds), `ub` (upper bounds), `maxiters`).
-
+- `opt_params...`: Additional optional parameters for the optimizer(e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`).
 - `write_res::Bool = false`: Flag to write results to a file. Set to `true` to enable file writing.
-
 - `path_to_results::String = "NA"`: Path to the folder where results will be saved if `write_res` is `true`.
 
 # Output:
@@ -972,65 +879,37 @@ This function performs nonlinear (NL) model selection from an array of NL models
 # Arguments:
 
 - `data::Matrix{Float64}`: The dataset with the growth curve. The first row represents times, and the second row represents the variable to fit (e.g., OD).
-
 - `name_well::String`: Name of the well.
-
 - `label_exp::String`: Label of the experiment.
-
 - `list_model_function::Any`: Array containing functions or strings representing the NL models.
-
 - `list_u0`: Array of initial guesses for the parameters for each model.
 
 # Key Arguments:
 
 - `lb_param_array::Any = nothing`: Array of lower bounds for the parameters, compatible with the models.
-
 - `ub_param_array::Any = nothing`: Array of upper bounds for the parameters, compatible with the models.
-
 - `method_of_fitting::String = "Normal"`: Method of performing the NL fit. Options are `"Bootstrap"`, `"Normal"`, and `"Morris_sensitivity"`.
-
 - `nrep::Int = 100`: Number of iterations for estimating the posterior distribution.
-
 - `size_bootstrap::Float = 0.7`: Fraction of data used in each bootstrap run, applicable if `method_of_fitting` is `"Bootstrap"`.
-
 - `pt_avg::Int = 1`: Number of points to generate initial conditions or perform smoothing.
-
 - `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, applies a sliding window approach.
-
 - `smoothing::Bool = false`: Whether to apply smoothing to the data. Set to `true` to enable smoothing; `false` to skip.
-
 - `type_of_smoothing::String = "rolling_avg"`: Method for smoothing the data. Options are `"NO"`, `"rolling_avg"`, and `"lowess"`.
-
-- `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"`, `"L2"`, `"L2_derivative"`, and `"blank_weighted_L2"`.
-
+- `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"`, `"L2"`, `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
 - `blank_array::Vector{Float64} = zeros(100)`: Data of all blanks in a single array.
-
 - `pt_smoothing_derivative::Int = 7`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, uses a sliding window approach.
-
 - `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
-
 - `multiple_scattering_correction::Bool = false`: Whether to apply multiple scattering correction using the given calibration curve.
-
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"`.
-
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
-
 - `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
-
 - `penality_CI::Float64 = 8.0`: Penalty for enforcing continuity at segment boundaries.
-
 - `correction_AIC::Bool = false`: Whether to apply finite sample correction to AIC.
-
 - `auto_diff_method::Any = nothing`: Differentiation method for the optimizer, if required.
-
 - `multistart::Bool = false`: Flag to enable or disable multistart optimization. Set to `true` to use multiple starting points.
-
 - `n_restart::Int = 50`: Number of restarts for multistart optimization, used if `multistart` is `true`.
-
-- `opt_params...`: Additional optional parameters for the optimizer (e.g., `lb` (lower bounds), `ub` (upper bounds), `maxiters`).
-
+- `opt_params...`: Additional optional parameters for the optimizer(e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`).
 - `write_res::Bool = false`: Flag to write results to a file. Set to `true` to enable file writing.
-
 - `path_to_results::String = "NA"`: Path to the folder where results will be saved if `write_res` is `true`.
 
 # Output:
@@ -1309,73 +1188,44 @@ This function fits a segmented nonlinear (NL) model to a curve, using specified 
 # Arguments:
 
 - `data_testing::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD).
-
 - `name_well::String`: Name of the well.
-
 - `label_exp::String`: Label of the experiment.
-
 - `list_of_models::Vector{String}`: Array containing functions or strings representing the NL models.
-
 - `list_u0`: Initial guesses for the parameters for each model.
-
 - `intervals_changepoints::Any`: Array containing the change points for segmentation, e.g., `[0.0, 10.0, 30.0]`.
 
 # Key Arguments:
 
 - `lb_param_array::Any = nothing`: Array of lower bounds for the parameters, compatible with the models.
-
 - `ub_param_array::Any = nothing`: Array of upper bounds for the parameters, compatible with the models.
-
-- `type_of_loss::String = "L2"`: Type of loss function used. Options include `"L2"`, `"RE"`, `"L2_derivative"`, and `"blank_weighted_L2"`.
-
+- `type_of_loss::String = "L2"`: Type of loss function used. Options include `"L2"`, `"RE"`, `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
 - `method_of_fitting::String = "Normal"`: Method for performing the NL fit. Options are `"Normal"`, `"Bootstrap"`, and `"Morris_sensitivity"`.
-
 - `nrep::Int = 100`: Number of iterations for Bootstrap or Morris sensitivity analysis.
-
 - `smoothing::Bool = false`: Whether to apply smoothing to the data.
-
 - `type_of_smoothing::String = "lowess"`: Method for smoothing the data. Options include `"NO"`, `"rolling_avg"`, and `"lowess"`.
-
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
-
 - `pt_avg::Int = 1`: Number of points for generating initial conditions or performing smoothing.
-
 - `pt_smooth_derivative::Int = 0`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, applies a sliding window approach.
-
 - `multiple_scattering_correction::Bool = false`: Whether to apply multiple scattering correction using the given calibration curve.
-
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"`.
-
 - `calibration_OD_curve::String = "NA"`: Path to the CSV file with calibration data for optical density, used if `multiple_scattering_correction` is `true`.
-
 - `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
-
 - `penality_CI::Float64 = 8.0`: Penalty for enforcing continuity at segment boundaries.
-
 - `correction_AIC::Bool = true`: Whether to apply finite sample correction to AIC.
-
 - `size_bootstrap::Float = 0.7`: Fraction of data used in each bootstrap run, applicable if `method_of_fitting` is `"Bootstrap"`.
-
 - `auto_diff_method::Any = nothing`: Differentiation method for the optimizer, if required.
-
 - `cons::Any = nothing`: Constraints for optimization.
-
 - `multistart::Bool = false`: Whether to use multistart optimization. Set to `true` to use multiple starting points.
-
 - `n_restart::Int = 50`: Number of restarts for multistart optimization, used if `multistart` is `true`.
-
-- `opt_params...`: Additional optional parameters for the optimizer (e.g., `lb` (lower bounds), `ub` (upper bounds), `maxiters`).
+- `opt_params...`: Additional optional parameters for the optimizer(e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`).
 
 # Output:
 
 If `results_NL_fit = selection_NL_fixed_interval(...)`:
 
 - `results_NL_fit[1]`: Parameters of each segment.
-
 - `results_NL_fit[2]`: Numerical solutions of the fit.
-
 - `results_NL_fit[3]`: Time coordinates of the numerical solutions of the fit.
-
 - `results_NL_fit[4]`: Loss of the best model.
 
 """
@@ -1587,89 +1437,52 @@ This function performs model selection for nonlinear (NL) models while segmentin
 # Arguments:
 
 - `data_testing::Matrix{Float64}`: The dataset with the growth curve, where the first row represents times, and the second row represents the variable to fit (e.g., OD).
-
 - `name_well::String`: Name of the well.
-
 - `label_exp::String`: Label of the experiment.
-
 - `list_of_models::Any`: Array containing functions or strings representing the NL models.
-
 - `list_u0`: Initial guesses for the parameters of each model.
-
 - `n_change_points::Int`: Number of change points to use. The results will vary based on the `type_of_detection` and `fixed_cpd` arguments.
 
 # Key Arguments:
 
 - `lb_param_array::Any = nothing`: Array of lower bounds for the parameters, compatible with the models.
-
 - `ub_param_array::Any = nothing`: Array of upper bounds for the parameters, compatible with the models.
-
-- `type_of_loss::String = "L2_fixed_CI"`: Type of loss function used. Options include `"L2_fixed_CI"`, `"RE"`, `"L2"`, `"L2_derivative"`, and `"blank_weighted_L2"`.
-
+- `type_of_loss::String = "L2_fixed_CI"`: Type of loss function used. Options include `"L2_fixed_CI"`, `"RE"`, `"L2"`, `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
 - `method_of_fitting::String = "Normal"`: Method for performing the NL fit. Options are `"Normal"`, `"Bootstrap"`, and `"Morris_sensitivity"`.
-
 - `type_of_detection::String = "sliding_win"`: Change point detection algorithm. Options include `"sliding_win"` and `"lsdd"` (Least Squares Density Difference).
-
 - `type_of_curve::String = "original"`: Curve used for change point detection. Options are `"original"` (original time series) and `"deriv"` (specific growth rate time series).
-
 - `smoothing::Bool = false`: Whether to apply smoothing to the data.
-
 - `nrep::Int = 100`: Number of iterations for Bootstrap or Morris sensitivity analysis.
-
 - `type_of_smoothing::String = "lowess"`: Method for smoothing the data. Options include `"NO"`, `"rolling_avg"`, and `"lowess"`.
-
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
-
 - `pt_avg::Int = 1`: Number of points for generating initial conditions or performing smoothing.
-
 - `win_size::Int = 7`: Size of the window used by the change point detection algorithms.
-
 - `pt_smooth_derivative::Int = 0`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, applies a sliding window approach.
-
 - `multiple_scattering_correction::Bool = false`: Whether to apply multiple scattering correction using the given calibration curve.
-
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` and `"exp_fit"`.
-
 - `calibration_OD_curve::String = "NA"`: Path to the CSV file with calibration data for optical density, used if `multiple_scattering_correction` is `true`.
-
 - `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
-
 - `method_peaks_detection::String = "peaks_prominence"`: Method for peak detection on the dissimilarity curve. Options include `"peaks_prominence"` (orders peaks by prominence) and `"thr_scan"` (uses a threshold).
-
 - `n_bins::Int = 40`: Number of bins used to generate the threshold in `thr_scan` method for peak detection.
-
 - `detect_number_cpd::Bool = false`: Whether to test all possible combinations of change points up to `n_change_points` and return the best based on AICc.
-
 - `fixed_cpd::Bool = false`: If `true`, performs fitting using only the top `n_change_points` and tests a single combination.
-
 - `penality_CI::Float64 = 8.0`: Penalty for enforcing continuity at segment boundaries.
-
 - `size_bootstrap::Float = 0.7`: Fraction of data used in each bootstrap run, applicable if `method_of_fitting` is `"Bootstrap"`.
-
 - `correction_AIC::Bool = true`: Whether to apply finite sample correction to AIC.
-
 - `auto_diff_method::Any = nothing`: Differentiation method for the optimizer, if required.
-
 - `cons::Any = nothing`: Constraints for optimization.
-
 - `multistart::Bool = false`: Whether to use multistart optimization.
-
 - `n_restart::Int = 50`: Number of restarts for multistart optimization, used if `multistart` is `true`.
-
-- `opt_params...`: Additional optional parameters for the optimizer (e.g., `lb` (lower bounds), `ub` (upper bounds), `maxiters`).
+- `opt_params...`: Additional optional parameters for the optimizer(e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`).
 
 # Output:
 
 - A data struct containing:
 
 1. Method string.
-
 2. Matrix with each row containing: `["name of model", "well", "param_1", "param_2", ..., "param_n", "maximum specific gr using NL", "maximum specific gr using data", "objective function value (i.e. loss of the solution)"]`, where `"param_1", "param_2", ..., "param_n"` are the parameters of the selected NL model.
-
 3. The y-coordinates of the NL fit.
-
 4. The x-coordinates of the NL fit.
-
 5. The change point intervals.
 
 

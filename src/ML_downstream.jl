@@ -22,31 +22,31 @@ using AbstractTrees
     n_folds_cv = 3,
     )
 
-This function performs regression using a decision tree algorithm on results from Kinbiont. It includes options for tree pruning, cross-validation, and feature selection.
+This function performs regression using a decision tree algorithm on results from Kinbiont. 
 
 # Arguments:
 
 - `Kinbiont_results::Matrix{Any}`: The matrix containing results from fitting one or more files using Kinbiont. 
 
-- `feature_matrix::Matrix{Any}`: Matrix of features used for machine learning analysis. The number of rows should match the number of columns (minus one) in the `Kinbiont_results`, with the first column containing well names to align with the well names in the second row of `Kinbiont_results`.
+- `feature_matrix::Matrix{Any}`: Matrix of features used for machine learning analysis. The number of rows should match the number of columns (minus one) in the `Kinbiont_results`, with the first column containing well names that macth the well names in the second row of `Kinbiont_results`.
 
-- `row_to_learn::Int`: The index of the row in the `Kinbiont_results` matrix that will be used as the target for the regression model.
+- `row_to_learn::Int`: The index of the row in the `Kinbiont_results` matrix that will be used as the target for the regression.
 
 # Key Arguments:
 
 - `max_depth::Int = -1`: Maximum depth of the decision tree. If -1, there is no maximum depth.
 
-- `verbose::Bool = true`: If true, the function will output additional details during the training process.
+- `verbose::Bool = true`: If true, the function will output additional details.
 
 - `pruning_purity::Float64 = 1.0`: Purity threshold for pruning. If set to 1.0, no pruning will be performed.
 
-- `min_samples_leaf::Int = 5`: Minimum number of samples required to be at a leaf node.
+- `min_samples_leaf::Int = 5`: Minimum number of samples required to be assigned to leaf node.
 
-- `min_samples_split::Int = 2`: Minimum number of samples required to split an internal node.
+- `min_samples_split::Int = 2`: Minimum number of samples required to perform a split.
 
 - `min_purity_increase::Float64 = 0.0`: Minimum increase in purity required for a split.
 
-- `n_subfeatures::Int = 0`: Number of features to select at random for splitting. If 0, all features are considered.
+- `n_subfeatures::Int = 0`: Number of features, selected at random, for evaluating the tree. If 0, all features are considered.
 
 - `do_pruning::Bool = true`: If true, post-inference impurity pruning will be performed.
 
@@ -66,9 +66,9 @@ This function performs regression using a decision tree algorithm on results fro
 
 3. `importance_rank::Vector{Int}`: Ranking of features based on their importance scores.
 
-4. `cross_validation_score::Union{Float64, Nothing}`: Cross-validation score if `do_cross_validation` is true; otherwise, `nothing`.
+4. `cross_validation_score::Union{Float64, Nothing}`: Cross-validation score if `do_cross_validation=true` is true; otherwise, `nothing`.
 
-5. `samples_per_leaf::Matrix{Int}`: Matrix where each row represents a leaf node and the columns represent the samples associated with that leaf.
+5. `leaf_vs_samples::Matrix{Int}`: Matrix where the first  row represents a label of a leaf node and the secondo row contains the values of the samples.
 
 
 """
@@ -190,7 +190,7 @@ This function performs symbolic regression on the results obtained from fitting 
 
 - `Kinbiont_results::Matrix{Any}`: The matrix containing results from fitting one or more files using Kinbiont. 
 
-- `feature_matrix::Matrix{Any}`: Matrix of features used for machine learning analysis. The number of rows in this matrix should match the number of columns (minus one) in the `Kinbiont_results`, with the first column containing well names to match the features with the well names in the second row of `Kinbiont_results`.
+- `feature_matrix::Matrix{Any}`: Matrix of features used for machine learning analysis. The number of rows should match the number of columns (minus one) in the `Kinbiont_results`, with the first column containing well names that macth the well names in the second row of `Kinbiont_results`.
 
 - `row_to_learn::Int`: The index of the row in the `Kinbiont_results` matrix that will be the target for machine learning inference.
 
