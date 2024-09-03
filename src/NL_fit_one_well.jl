@@ -526,10 +526,11 @@ This function performs nonlinear (NL) fitting of the growth curve data using a b
   2. Parameters array: `["name of model", "well", "param_1", "param_2", ..., "param_n", "maximum specific GR using NL", "maximum specific GR using data", "objective function value (i.e., loss of the solution)"]`, where `"param_1", "param_2", ..., "param_n"` are the parameters of the fitted model.
   3. The numerical solution of the fitted nonlinear model.
   4. Time coordinates corresponding to the fitted nonlinear model.
-  5. Final parameters from the bootstrap analysis.
-  6. Mean parameters from the bootstrap analysis.
-  7. Standard deviation of parameters from the bootstrap analysis.
-  8. (Optional) Results saved in the specified `path_to_results` folder if `write_res` is `true`.
+  5.  The  parameters of each bootstrap fit
+  6. The  parameters of each bootstrap fit after considering only the best $95/%$ of the losses.
+  7. Mean parameters from the bootstrap analysis.
+  8. Standard deviation of parameters from the bootstrap analysis.
+  9. (Optional) Results saved in the specified `path_to_results` folder if `write_res` is `true`.
 
 """
 function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times second row OD
