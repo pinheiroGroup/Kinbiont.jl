@@ -112,10 +112,10 @@ $$\frac{d N(t)}{dt} = \frac{\mu}{N_{\text{max}}} \, N(t)^{(1-n)} (N(t) - N_{\tex
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth and $n$ a shape constant.
 
 - **Bertalanffy-Richards**:
+$$\frac{d N(t)}{dt} =  \frac{\mu}{N_\text{max}^n } \cdot  \left ( N_\text{max}^n - N^n(t) \right)$$
 
-$$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \, \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \, N(t)$$
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, and $n$ a shape constant.
 
-where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $\lambda$ is the lag time and $n$ a shape constant.
 - **Logistic**:
 
 $$\frac{d N(t)}{dt} = \mu \left( 1 - \frac{N(t)}{N_{\text{max}}} \right) \, N(t)$$
