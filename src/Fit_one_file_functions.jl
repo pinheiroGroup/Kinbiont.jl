@@ -327,7 +327,7 @@ This function fits a ODE model to a csv file. The function assumes that the firs
 - `cons=nothing`. Equation constrains for optimization.
 - `multistart=false`: use or not multistart optimization. Set to `true` uses Tik-Tak restart (from Benchmarking global optimizers, Arnoud et al 2019).
 - `n_restart=50`: number of restart. Used if `multistart = true`.
-- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`)
+- `opt_params...` :optional parameters of the required optimizer (e.g., `lb = [0.1, 0.3], ub =[9.0,1.0], maxiters=2000000`).
 
 
 

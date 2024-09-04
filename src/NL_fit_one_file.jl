@@ -44,7 +44,7 @@ This function performs nonlinear (NL) model fitting for a given .csv file.
 
 
 - `label_exp::String`: The label for the experiment.
-- `path_to_data::String`: Path to the CSV file containing the data. The file should be formatted with time in the first column and corresponding data values in subsequent columns.
+- `path_to_data::String`: Path to the .csv file containing the data. The file should be formatted with time in the first column and corresponding data values in subsequent columns.
 - `model::Any`: Function or strings representing the NL models to be tested.
 - `u0`: Initial gues for the parameters of the NL model.
 
@@ -53,7 +53,7 @@ This function performs nonlinear (NL) model fitting for a given .csv file.
 
 - `lb_param_array::Vector{Vector{Float64}} = nothing`: Array of lower bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
 - `ub_param_array::Vector{Vector{Float64}} = nothing`: Array of upper bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
-- `path_to_annotation::Any = missing`: Path to a CSV file with annotation data, if available.
+- `path_to_annotation::Any = missing`: Path to a .csv file with annotation data, if available.
 - `method_of_fitting::String = "NA"`: Method for NL fitting. Options include `"Bootstrap"`, `"Normal"`, and `"Morris_sensitivity"`. 
 - `nrep::Int = 10`: Number of repetitions for methods like Morris sensitivity or bootstrap. Used only if `method_of_fitting` is `"Bootstrap"` or `"Morris_sensitivity"`.
 - `path_to_results::String = "NA"`: Path to the folder where results will be saved.
@@ -68,7 +68,7 @@ This function performs nonlinear (NL) model fitting for a given .csv file.
 - `thr_negative::Float64 = 0.01`: Threshold for correcting negative values if `correct_negative` is `"thr_correction"`.
 - `multiple_scattering_correction::Bool = false`: If true, uses a calibration curve to correct data for multiple scattering.
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for correcting multiple scattering. Options include `"interpolation"` and `"exp_fit"`.
-- `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data, used if `multiple_scattering_correction` is true.
+- `calibration_OD_curve::String = "NA"`: Path to the .csv file containing calibration data, used if `multiple_scattering_correction` is true.
 - `thr_lowess::Float64 = 0.05`: Parameter for lowess smoothing.
 - `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
 - `penality_CI::Float64 = 8.0`: Penalty parameter for ensuring continuity in segmentation.
@@ -514,7 +514,7 @@ function performs nonlinear (NL) model selection on a segmented time series usin
 # Arguments:
 
 - `label_exp::String`: The label for the experiment.
-- `path_to_data::String`: Path to the CSV file containing the data. The file should be formatted with time in the first column and corresponding data values in subsequent columns.
+- `path_to_data::String`: Path to the .csv file containing the data. The file should be formatted with time in the first column and corresponding data values in subsequent columns.
 - `list_model_function::Any`: Array of functions or strings representing the NL models to be tested.
 - `list_u0::Any`: Initial guesses for the parameters of each NL model.
 
@@ -523,7 +523,7 @@ function performs nonlinear (NL) model selection on a segmented time series usin
 
 - `lb_param_array::Vector{Vector{Float64}} = nothing`: Array of lower bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
 - `ub_param_array::Vector{Vector{Float64}} = nothing`: Array of upper bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
-- `path_to_annotation::Any = missing`: Path to a CSV file with annotation data, if available.
+- `path_to_annotation::Any = missing`: Path to a .csv file with annotation data, if available.
 - `method_of_fitting::String = "NA"`: Method for NL fitting. Options include `"Bootstrap"`, `"Normal"`, and `"Morris_sensitivity"`. 
 - `nrep::Int = 10`: Number of repetitions for methods like Morris sensitivity or bootstrap. Used only if `method_of_fitting` is `"Bootstrap"` or `"Morris_sensitivity"`.
 - `path_to_results::String = "NA"`: Path to the folder where results will be saved.
@@ -538,7 +538,7 @@ function performs nonlinear (NL) model selection on a segmented time series usin
 - `thr_negative::Float64 = 0.01`: Threshold for correcting negative values if `correct_negative` is `"thr_correction"`.
 - `multiple_scattering_correction::Bool = false`: If true, uses a calibration curve to correct data for multiple scattering.
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for correcting multiple scattering. Options include `"interpolation"` and `"exp_fit"`.
-- `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data, used if `multiple_scattering_correction` is true.
+- `calibration_OD_curve::String = "NA"`: Path to the .csv file containing calibration data, used if `multiple_scattering_correction` is true.
 - `thr_lowess::Float64 = 0.05`: Parameter for lowess smoothing.
 - `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
 - `penality_CI::Float64 = 8.0`: Penalty parameter for ensuring continuity in segmentation.
@@ -554,7 +554,8 @@ function performs nonlinear (NL) model selection on a segmented time series usin
 - `opt_params...`: Additional optional parameters for the optimizer.
 
 # Outputs:
-
+A data struct containing:
+    
 - Method String: Description of the fitting method used.
 - Results Matrix: A matrix where each row contains:
   - `"name of model"`: The name of the model used.
@@ -815,12 +816,12 @@ end
     opt_params...
    )
 
-This function performs nonlinear (NL) model selection on a segmented time series using AIC or AICc. It operates on an entire CSV file of data.
+This function performs nonlinear (NL) model selection on a segmented time series using AIC or AICc. It operates on an entire .csv file of data.
 
 # Arguments:
 
 - `label_exp::String`: The label for the experiment.
-- `path_to_data::String`: Path to the CSV file containing the data. The file should be formatted with time in the first column and corresponding data values in subsequent columns.
+- `path_to_data::String`: Path to the .csv file containing the data. The file should be formatted with time in the first column and corresponding data values in subsequent columns.
 - `list_model_function::Any`: Array of functions or strings representing the NL models to be tested.
 - `list_u0::Any`: Initial guesses for the parameters of each NL model.
 - `n_change_points::Int`: Maximum number of change points to consider in the segmentation process.
@@ -829,7 +830,7 @@ This function performs nonlinear (NL) model selection on a segmented time series
 
 - `lb_param_array::Vector{Vector{Float64}} = nothing`: Array of lower bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
 - `ub_param_array::Vector{Vector{Float64}} = nothing`: Array of upper bounds for the parameters of each model. Each entry corresponds to the parameter bounds for a specific model.
-- `path_to_annotation::Any = missing`: Path to a CSV file with annotation data, if available.
+- `path_to_annotation::Any = missing`: Path to a .csv file with annotation data, if available.
 - `method_of_fitting::String = "NA"`: Method for NL fitting. Options include `"Bootstrap"`, `"Normal"`, and `"Morris_sensitivity"`. Default is `"NA"`.
 - `nrep::Int = 10`: Number of repetitions for methods like Morris sensitivity or bootstrap. Used only if `method_of_fitting` is `"Bootstrap"` or `"Morris_sensitivity"`.
 - `path_to_results::String = "NA"`: Path to the folder where results will be saved.
@@ -844,7 +845,7 @@ This function performs nonlinear (NL) model selection on a segmented time series
 - `thr_negative::Float64 = 0.01`: Threshold for correcting negative values if `correct_negative` is `"thr_correction"`.
 - `multiple_scattering_correction::Bool = false`: If true, uses a calibration curve to correct data for multiple scattering.
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for correcting multiple scattering. Options include `"interpolation"` and `"exp_fit"`.
-- `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data, used if `multiple_scattering_correction` is true.
+- `calibration_OD_curve::String = "NA"`: Path to the .csv file containing calibration data, used if `multiple_scattering_correction` is true.
 - `thr_lowess::Float64 = 0.05`: Parameter for lowess smoothing.
 - `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
 - `penality_CI::Float64 = 8.0`: Penalty parameter for ensuring continuity in segmentation.

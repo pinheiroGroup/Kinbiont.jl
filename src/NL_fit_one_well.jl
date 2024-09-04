@@ -46,7 +46,7 @@ This function fits a nonlinear function to the time series input data of a singl
 - `blank_array::Vector{Float64} = zeros(100)`: Array containing data of blanks for correction.
 - `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, a sliding window approach is applied.
 - `multiple_scattering_correction::Bool = false`: Flag to perform multiple scattering correction. Set to `true` to apply correction, requiring a calibration curve.
-- `calibration_OD_curve::String = "NA"`: Path to a CSV file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
+- `calibration_OD_curve::String = "NA"`: Path to a .csv file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"` (based on Meyers et al., 2018).
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
 - `penality_CI::Float64 = 3.0`: (Deprecated) Penalty for enforcing continuity at segment boundaries. Consider removing or updating.
@@ -217,7 +217,7 @@ This function performs Morris sensitivity analysis on the nonlinear fit optimiza
 - `blank_array::Vector{Float64} = zeros(100)`: Array containing data of blanks for correction.
 - `pt_smooth_derivative::Int = 7`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, a sliding window approach is applied.
 - `multiple_scattering_correction::Bool = false`: Flag to perform multiple scattering correction. Set to `true` to apply correction, requiring a calibration curve.
-- `calibration_OD_curve::String = "NA"`: Path to a CSV file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
+- `calibration_OD_curve::String = "NA"`: Path to a .csv file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"` (based on Meyers et al., 2018).
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
 - `write_res::Bool = false`: Flag to write results to a file. Set to `true` to enable file writing.
@@ -435,7 +435,7 @@ This function performs nonlinear (NL) fitting of the growth curve data using a b
 - `smoothing::Bool = false`: Flag to apply data smoothing. Set to `true` to enable smoothing; `false` to skip.
 - `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
 - `blank_array::Vector{Float64} = zeros(100)`: Array containing data of blanks for correction.
-- `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
+- `calibration_OD_curve::String = "NA"`: Path to the .csv file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
 - `multiple_scattering_correction::Bool = false`: Flag to apply multiple scattering correction using the given calibration curve.
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"` (based on Meyers et al., 2018).
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
@@ -661,7 +661,7 @@ This function performs nonlinear (NL) fitting of the growth curve data while acc
 - `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"` (relative error), `"L2"` (L2 norm), `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
 - `multiple_scattering_correction::Bool = false`: Whether to apply multiple scattering correction using the given calibration curve.
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"` (based on Meyers et al., 2018).
-- `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
+- `calibration_OD_curve::String = "NA"`: Path to the .csv file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
 - `penality_CI::Float64 = 3.0`: (Deprecated) Penalty for enforcing continuity at segment boundaries. Consider removing or updating.
 - `auto_diff_method::Any = nothing`: Differentiation method for the optimizer, if required.
@@ -898,7 +898,7 @@ This function performs nonlinear (NL) model selection from an array of NL models
 - `type_of_loss::String = "RE"`: Type of loss function used for optimization. Options include `"RE"`, `"L2"`, `"L2_derivative"`, and `"blank_weighted_L2"`. See documentation for the full list.
 - `blank_array::Vector{Float64} = zeros(100)`: Data of all blanks in a single array.
 - `pt_smoothing_derivative::Int = 7`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, uses a sliding window approach.
-- `calibration_OD_curve::String = "NA"`: Path to the CSV file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
+- `calibration_OD_curve::String = "NA"`: Path to the .csv file containing calibration data for optical density, used if `multiple_scattering_correction` is `true`.
 - `multiple_scattering_correction::Bool = false`: Whether to apply multiple scattering correction using the given calibration curve.
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"`.
 - `thr_lowess::Float64 = 0.05`: Threshold parameter for lowess smoothing.
@@ -1208,7 +1208,7 @@ This function fits a segmented nonlinear (NL) model to a curve, using specified 
 - `pt_smooth_derivative::Int = 0`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, applies a sliding window approach.
 - `multiple_scattering_correction::Bool = false`: Whether to apply multiple scattering correction using the given calibration curve.
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` or `"exp_fit"`.
-- `calibration_OD_curve::String = "NA"`: Path to the CSV file with calibration data for optical density, used if `multiple_scattering_correction` is `true`.
+- `calibration_OD_curve::String = "NA"`: Path to the .csv file with calibration data for optical density, used if `multiple_scattering_correction` is `true`.
 - `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
 - `penality_CI::Float64 = 8.0`: Penalty for enforcing continuity at segment boundaries.
 - `correction_AIC::Bool = true`: Whether to apply finite sample correction to AIC.
@@ -1460,7 +1460,7 @@ This function performs model selection for nonlinear (NL) models while segmentin
 - `pt_smooth_derivative::Int = 0`: Number of points for evaluating the specific growth rate. Uses interpolation if less than 2; otherwise, applies a sliding window approach.
 - `multiple_scattering_correction::Bool = false`: Whether to apply multiple scattering correction using the given calibration curve.
 - `method_multiple_scattering_correction::String = "interpolation"`: Method for performing multiple scattering correction. Options are `"interpolation"` and `"exp_fit"`.
-- `calibration_OD_curve::String = "NA"`: Path to the CSV file with calibration data for optical density, used if `multiple_scattering_correction` is `true`.
+- `calibration_OD_curve::String = "NA"`: Path to the .csv file with calibration data for optical density, used if `multiple_scattering_correction` is `true`.
 - `beta_smoothing_ms::Float64 = 2.0`: Penalty parameter for AIC (or AICc) evaluation.
 - `method_peaks_detection::String = "peaks_prominence"`: Method for peak detection on the dissimilarity curve. Options include `"peaks_prominence"` (orders peaks by prominence) and `"thr_scan"` (uses a threshold).
 - `n_bins::Int = 40`: Number of bins used to generate the threshold in `thr_scan` method for peak detection.
