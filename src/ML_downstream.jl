@@ -212,7 +212,7 @@ This function performs symbolic regression on the results obtained from fitting 
 - `index_annotation::Vector{Int}`: An index vector used to order the rows of the `feature_matrix` to match the columns of the `Kinbiont_results`.
 
 """
-function downstream_symbolic_regression(kinbiont_results,
+function downstream_symbolic_regression(Kinbiont_results,
   feature_matrix,
   row_to_learn;
   options = SymbolicRegression.Options(),
@@ -249,8 +249,8 @@ function downstream_symbolic_regression(kinbiont_results,
 
   predictors =Matrix(transpose(  convert.(Float64, feature_matrix[index_annotation,2])))
 
-  #hall_of_fame = SymbolicRegression.equation_search(predictors,output,options =options)
-  hall_of_fame = SymbolicRegression.equation_search(predictors,output)
+  hall_of_fame = SymbolicRegression.equation_search(predictors,output,options =options)
+  #hall_of_fame = SymbolicRegression.equation_search(predictors,output)
 
   dominating = calculate_pareto_frontier(hall_of_fame)
   trees = [member.tree for member in dominating]
