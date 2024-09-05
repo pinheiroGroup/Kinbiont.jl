@@ -2,6 +2,7 @@ using DecisionTree
 using MLJDecisionTreeInterface
 using DecisionTree
 using AbstractTrees
+using SymbolicRegression
 
 """
     downstream_decision_tree_regression(
