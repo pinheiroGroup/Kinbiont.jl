@@ -27,7 +27,6 @@ using AbstractTrees
 using MLJDecisionTreeInterface
 using TreeRecipe
 ```
-```
 ## Simulating/Loading single kinetics data
 ### Loading  data from a .csv
 It is possible to load single curves using CSV package in Julia and format them to be compatible with Kinbiont. In this example we suppose that the .csv file is formatted as required in Kinbiont documentation.
