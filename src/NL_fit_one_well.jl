@@ -358,7 +358,7 @@ function fit_NL_model_with_sensitivity(data::Matrix{Float64}, # dataset first ro
 
     best_res_param = fin_param[:, index_best+1]
 
-    best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
+    best_fitted_model = model_function(best_res_param[4:(end-3)], data[1, :])
 
     if write_res == true
         mkpath(path_to_results)
@@ -588,7 +588,7 @@ function fit_NL_model_bootstrap(data::Matrix{Float64}, # dataset first row times
     index_best = findmin(fin_param[end, 2:end])[2]
 
     best_res_param = fin_param[:, index_best+1]
-    best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
+    best_fitted_model = model_function(best_res_param[4:(end-3)], data[1, :])
 
     if write_res == true
         mkpath(path_to_results)
@@ -807,7 +807,7 @@ function NL_error_blanks(data::Matrix{Float64}, # dataset first row times second
     index_best = findmin(fin_param[end, 2:end])[2]
 
     best_res_param = fin_param[:, index_best+1]
-    best_fitted_model = model_function(best_res_param[3:(end-3)], data[1, :])
+    best_fitted_model = model_function(best_res_param[4:(end-3)], data[1, :])
 
     if write_res == true
         mkpath(path_to_results)
