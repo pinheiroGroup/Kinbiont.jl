@@ -1,7 +1,3 @@
-<p align="center">
-  <img src = "/docs/src/assets/logo.png" >
-</p>
-
 
 Ecological and evolutionary processes of microbes are characterized by observables like growth rates and biomass yield, inferred from kinetics experiments. 
 Across conditions, these observables map response patterns such as antibiotic growth inhibition and yield dependence on substrate.
