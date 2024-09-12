@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://kinbiont.fuzue.org/assets/logo.png">
+  <img /docs/src/assets/logo.png>
 </p>
 
 
