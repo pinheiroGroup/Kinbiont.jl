@@ -6,4 +6,5 @@ Kinbiont provides a comprehensive, model-based analysis pipeline, covering all a
 
 
 
-For stable documentation please consult [Documentation](https://kinbiont.fuzue.org/)
+For stable documentation please consult [Documentation](https://kinbiont.fuzue.org/. 
+Pre-print at  [Biorxiv](https://www.biorxiv.org/content/10.1101/2024.09.09.611847v1) .
