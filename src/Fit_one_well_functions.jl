@@ -34,7 +34,7 @@ Fits a logarithmic-linear model to data from a .csv file. The function assumes t
 - `pt_avg=7`:  Number of points used in the rolling average smoothing.
 - `pt_smoothing_derivative=7`: Number of points for evaluating specific growth rate. If less than 2, uses interpolation; otherwise, a sliding window approach is used.
 - `pt_min_size_of_win=7`: Minimum size of the exponential windows in terms of the number of smoothed points.
-- `type_of_win="maximum"`: Method for selecting the exponential phase window. Options are `"maximum"` or `"global_thr"`.
+- `type_of_win="maximum"`: Method for selecting the exponential phase window. Options are `"maximum"`, `"global_thr"` or `"max_with_min_OD"`.
 - `threshold_of_exp=0.9`: Threshold in quantile to define the exponential windows, between 0 and 1.
 - `do_blank_subtraction="avg_blank"`: Method for blank subtraction. Options include `"NO"`, `"avg_subtraction"`, and `"time_avg"`.
 - `blank_value=0.0`: Average value of the blank, used only if `do_blank_subtraction` is not `"NO"`.
@@ -85,7 +85,7 @@ function fitting_one_well_Log_Lin(
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",
     thr_lowess=0.05,
-    start_exp_win_thr=0.05
+    start_exp_win_thr=0.01,
     )
     if multiple_scattering_correction == true
 
@@ -120,6 +120,10 @@ function fitting_one_well_Log_Lin(
     t_start = 0.0
 
     if type_of_win == "maximum"
+
+
+
+        
         for yy = 1:(index_of_max-2)
             if specific_gr[index_of_max-yy] >= lb_of_distib
                 t_start = copy(specific_gr_times[index_of_max-yy])
@@ -187,6 +191,58 @@ function fitting_one_well_Log_Lin(
 
     end
 
+    
+    if type_of_win == "max_with_min_OD"
+
+        index_od_over_thr = findfirst(data_smooted[2, :] .> start_exp_win_thr)
+
+        if isnothing(index_od_over_thr) == false && length(specific_gr[index_od_over_thr:end]) > 2
+
+            for yy = 1:(index_of_max-2)
+                if specific_gr[index_of_max-yy] >= lb_of_distib
+                    t_start = copy(specific_gr_times[index_of_max-yy])
+                else
+                    if specific_gr[(index_of_max-yy-1)] < lb_of_distib
+                        break
+                    end
+    
+                end
+            end
+    
+            # index of start
+            index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
+            
+            if index_od_over_thr[1] > index_of_t_start
+                    index_of_t_start = index_od_over_thr[1] 
+                   t_start = specific_gr_times[index_of_t_start]
+            end   
+
+            # searching t_end of the exp phase
+            t_end = specific_gr_times[end]
+    
+            for yy = index_of_max:(eachindex(specific_gr)[end]-1)
+                if specific_gr[yy] >= lb_of_distib
+                    t_end = copy(specific_gr_times[yy])
+                else
+                    if specific_gr[(yy+1)] < lb_of_distib
+                        break
+                    end
+                end
+            end
+            index_of_t_end = findfirst(x -> x > t_end, data_smooted[1, :])[1]
+
+
+        else
+            # the conditions are not satisfied i fix t_end and  t_start to be discarded later and have all results to missing
+            t_end = 100
+            t_start = 200
+            index_of_t_start = 1
+            index_of_t_end = index_of_t_start + 2 * pt_min_size_of_win
+
+        end
+    end
+
+    
     # checking the minimum size of the window before fitting
     if (index_of_t_end - index_of_t_start) < pt_min_size_of_win
         index_of_t_start = convert(Int, index_of_max - floor(pt_min_size_of_win / 2))
