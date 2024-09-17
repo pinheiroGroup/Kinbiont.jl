@@ -246,6 +246,11 @@ function fitting_one_well_Log_Lin(
 
     else
 
+
+        data_to_fit_times  = missing
+        Theoretical_fitting = missing
+        confidence_band = missing
+
         results_lin_log_fit = [
             label_exp,
             name_well,
