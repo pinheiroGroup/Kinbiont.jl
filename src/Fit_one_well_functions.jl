@@ -266,7 +266,7 @@ function fitting_one_well_Log_Lin(
     end
 
 
-    Kinbiont_res_one_well_log_lin = ("Log-lin", results_lin_log_fit, hcat(data_to_fit_times, data_to_fit_values), data_smooted, confidence_band)
+    Kinbiont_res_one_well_log_lin = ("Log-lin", results_lin_log_fit, hcat(data_to_fit_times, Theoretical_fitting), data_smooted, confidence_band)
 
     return Kinbiont_res_one_well_log_lin
 end
