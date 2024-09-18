@@ -71,7 +71,7 @@ Fits a logarithmic-linear model to data from a .csv file. The function assumes t
 
 
 """
-function fitting_one_well_Log_Lin(
+function fitting_one_well_Log_Lin2(
     data::Matrix{Float64},
     name_well::String,
     label_exp::String;
@@ -88,41 +88,41 @@ function fitting_one_well_Log_Lin(
     start_exp_win_thr=0.01,
     )
     if multiple_scattering_correction == true
-
+  
         data = correction_OD_multiple_scattering(data, calibration_OD_curve; method=method_multiple_scattering_correction)
     end
-
-
+  
+  
     data_smooted = smoothing_data(
         data;
         method=type_of_smoothing,
         pt_avg=pt_avg,
         thr_lowess=thr_lowess
     )
-
-
+  
+  
     # local fitting generating of specific growth rate (derivative)
     specific_gr = specific_gr_evaluation(data_smooted, pt_smoothing_derivative)
     specific_gr_times = [
         (data_smooted[1, r] + data_smooted[1, (r+pt_smoothing_derivative)]) / 2 for
         r = 1:1:(eachindex(data_smooted[2, :])[end].-pt_smoothing_derivative)
     ]
-
+  
     # selecting the max
     gr_max = maximum(specific_gr)
     index_of_max = findall(x -> x == gr_max, specific_gr)[1]
-
+  
     # selecting the windows
     # lower threshold of the exp phase using quantile
     lb_of_distib = quantile(specific_gr, threshold_of_exp)
-
+  
     # searching for t_start_exp
     t_start = 0.0
-
+  
     if type_of_win == "maximum"
-
-
-
+  
+  
+  
         
         for yy = 1:(index_of_max-2)
             if specific_gr[index_of_max-yy] >= lb_of_distib
@@ -131,16 +131,16 @@ function fitting_one_well_Log_Lin(
                 if specific_gr[(index_of_max-yy-1)] < lb_of_distib
                     break
                 end
-
+  
             end
         end
-
+  
         # index of start
         index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
-
+  
         # searching t_end of the exp phase
         t_end = specific_gr_times[end]
-
+  
         for yy = index_of_max:(eachindex(specific_gr)[end]-1)
             if specific_gr[yy] >= lb_of_distib
                 t_end = copy(specific_gr_times[yy])
@@ -150,54 +150,60 @@ function fitting_one_well_Log_Lin(
                 end
             end
         end
-
+  
         index_of_t_end = findfirst(x -> x > t_end, data_smooted[1, :])[1]
     end
-
+  
     # selection of exp win with a global thr on the growht rate
     if type_of_win == "global_thr"
-
+  
         index_od_over_thr = findfirst(data_smooted[2, :] .> start_exp_win_thr)
-
+  
         if isnothing(index_od_over_thr) == false && length(specific_gr[index_od_over_thr:end]) > 2
-
+  
             lb_of_distib = quantile(specific_gr[index_od_over_thr:end], threshold_of_exp)
-
+  
             index_of_max = argmax(specific_gr[index_od_over_thr:end])[1] + index_od_over_thr - 1
-
+  
             index_gr_max = findlast(x -> x > lb_of_distib, specific_gr[index_od_over_thr:end])[1] + index_od_over_thr - 1
-
+  
             index_gr_min = findfirst(x -> x > lb_of_distib, specific_gr[index_od_over_thr:index_of_max])[1] + index_od_over_thr - 1
-
-
-
-
+  
+  
+  
+  
             t_start = specific_gr_times[index_gr_min]
             t_end = specific_gr_times[index_gr_max]
-
+  
             index_of_t_start = findfirst(x -> x > t_start, data_smooted[1, :])[1]
             index_of_t_end = findall(x -> x > t_end, data_smooted[1, :])[1]
-
-
+  
+  
         else
             # the conditions are not satisfied i fix t_end and  t_start to be discarded later and have all results to missing
             t_end = 100
             t_start = 200
             index_of_t_start = 1
             index_of_t_end = index_of_t_start + 2 * pt_min_size_of_win
-
+  
         end
-
-
+  
+  
     end
-
+  
     
     if type_of_win == "max_with_min_OD"
-
+  
         index_od_over_thr = findfirst(data_smooted[2, :] .> start_exp_win_thr)
-
+  
         if isnothing(index_od_over_thr) == false && length(specific_gr[index_od_over_thr:end]) > 2
-
+  
+            lb_of_distib = quantile(specific_gr[index_od_over_thr:end], threshold_of_exp)
+  
+            index_of_max = argmax(specific_gr[index_od_over_thr:end])[1] + index_od_over_thr - 1
+  
+  
+  
             for yy = 1:(index_of_max-2)
                 if specific_gr[index_of_max-yy] >= lb_of_distib
                     t_start = copy(specific_gr_times[index_of_max-yy])
@@ -216,7 +222,7 @@ function fitting_one_well_Log_Lin(
                     index_of_t_start = index_od_over_thr[1] 
                    t_start = specific_gr_times[index_of_t_start]
             end   
-
+  
             # searching t_end of the exp phase
             t_end = specific_gr_times[end]
     
@@ -230,43 +236,43 @@ function fitting_one_well_Log_Lin(
                 end
             end
             index_of_t_end = findfirst(x -> x > t_end, data_smooted[1, :])[1]
-
-
+  
+  
         else
             # the conditions are not satisfied i fix t_end and  t_start to be discarded later and have all results to missing
             t_end = 100
             t_start = 200
             index_of_t_start = 1
             index_of_t_end = index_of_t_start + 2 * pt_min_size_of_win
-
+  
         end
     end
-
+  
     
     # checking the minimum size of the window before fitting
     if (index_of_t_end - index_of_t_start) < pt_min_size_of_win
         index_of_t_start = convert(Int, index_of_max - floor(pt_min_size_of_win / 2))
         index_of_t_end = convert(Int, index_of_max + floor(pt_min_size_of_win / 2))
-
+  
         if index_of_t_start < 1
             index_of_t_start =1 
         end
-
+  
         if index_of_t_end > length(data_smooted[1, :])
             index_of_t_end = length(data_smooted[1, :]) 
         end
     end
-
+  
     if t_end > t_start
         # fitting data
         data_to_fit_times = data_smooted[1, index_of_t_start:index_of_t_end]
         data_to_fit_values = log.(data_smooted[2, index_of_t_start:index_of_t_end])
-
+  
         N = length(data_to_fit_times)
         M = [ones(N) data_to_fit_times]
         (coeff_1, coeff_2) = M \ data_to_fit_values
         mean_x = mean(data_to_fit_times)
-
+  
         sigma_a = sigma_b = r = zeros(N)
         Theoretical_fitting = coeff_1 .+ data_to_fit_times .* coeff_2
         
@@ -279,10 +285,10 @@ function fitting_one_well_Log_Lin(
         d = TDist(N - 2)     # t-Student distribution with N-2 degrees of freedom
         cf = quantile(d, 0.975)  # correction factor for 95% confidence intervals (two-tailed distribution)
         confidence_band = cf * Cantrell_errors * sqrt.(1 / N .+ (data_to_fit_times .- mean(data_to_fit_times)) .^ 2 / var(data_to_fit_times) / (N - 1))
-
-
+  
+  
         # storing results
-
+  
         results_lin_log_fit = [
             label_exp,
             name_well,
@@ -299,14 +305,14 @@ function fitting_one_well_Log_Lin(
             sigma_a,
             rho,
         ]
-
+  
     else
-
-
+  
+  
         data_to_fit_times  = missing
         Theoretical_fitting = missing
         confidence_band = missing
-
+  
         results_lin_log_fit = [
             label_exp,
             name_well,
@@ -323,15 +329,14 @@ function fitting_one_well_Log_Lin(
             missing,
             missing,
         ]
-
+  
     end
-
-
+  
+  
     Kinbiont_res_one_well_log_lin = ("Log-lin", results_lin_log_fit, hcat(data_to_fit_times, Theoretical_fitting), data_smooted, confidence_band)
-
+  
     return Kinbiont_res_one_well_log_lin
-end
-
+  end
 
 """
     fitting_one_well_ODE_constrained(
