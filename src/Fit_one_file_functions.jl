@@ -143,8 +143,11 @@ function fit_one_file_Log_Lin(
 
     # excluding blank data and discarded wells
     if length(list_of_blank) > 0
+
         names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+
     end
+    
     if length(list_of_discarded) > 0
 
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
@@ -1662,7 +1665,7 @@ function segment_gr_analysis_file(
     if write_res == true
 
         CSV.write(
-            string(path_to_results,results, label_exp, "_results.csv"),
+            string(path_to_results,label_exp, "_results.csv"),
             Tables.table(Matrix(results)),
         )
 
