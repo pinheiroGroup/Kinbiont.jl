@@ -43,7 +43,7 @@ Fits a logarithmic-linear model to data from a .csv file. The function assumes t
 - `pt_avg=7`:  Number of points used in the rolling average smoothing.
 - `pt_smoothing_derivative=7`: Number of points for evaluating specific growth rate. If less than 2, uses interpolation; otherwise, a sliding window approach is used.
 - `pt_min_size_of_win=7`: Minimum size of the exponential windows in terms of the number of smoothed points.
-- `type_of_win="maximum"`: Method for selecting the exponential phase window. Options are `"maximum"` or `"global_thr"`.
+- `type_of_win="maximum"`: Method for selecting the exponential phase window. Options are "maximum"` or `"global_thr"` "max_with_min_OD".
 - `threshold_of_exp=0.9`: Threshold in quantile to define the exponential windows, between 0 and 1.
 - `do_blank_subtraction="avg_blank"`: Method for blank subtraction. Options include `"NO"`, `"avg_subtraction"`, and `"time_avg"`.
 - `blank_value=0.0`: Average value of the blank, used only if `do_blank_subtraction` is not `"NO"`.
@@ -143,8 +143,11 @@ function fit_one_file_Log_Lin(
 
     # excluding blank data and discarded wells
     if length(list_of_blank) > 0
+
         names_of_cols = filter!(e -> !(e in list_of_blank), names_of_cols)
+
     end
+    
     if length(list_of_discarded) > 0
 
         names_of_cols = filter!(e -> !(e in list_of_discarded), names_of_cols)
@@ -1662,7 +1665,7 @@ function segment_gr_analysis_file(
     if write_res == true
 
         CSV.write(
-            string(path_to_results,results, label_exp, "_results.csv"),
+            string(path_to_results,label_exp, "_results.csv"),
             Tables.table(Matrix(results)),
         )
 
