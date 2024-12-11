@@ -1,7 +1,7 @@
 # Kinbiont 
 
 ```@raw html
-<div style="text-align: center; margin-bottom: 20px;">
+<div style="text-align: center; margin-bottom: 20px; max-width: 320px;">
     <img alt="Kinbiont logo" src="./assets/logo.png">
 </div>
 ```
