@@ -7,10 +7,10 @@ Kinbiont provides a comprehensive, model-based analysis pipeline, covering all a
 
 # Documentation
 
-For stable documentation please consult [Documentation](https://pinheirogroup.github.io/Kinbiont.jl/)). 
+For stable documentation please consult [Documentation](https://pinheirogroup.github.io/Kinbiont.jl/). 
 
 # Publication
 
-Pre-print at  [Biorxiv](https://www.biorxiv.org/content/10.1101/2024.09.09.611847v1) .
+Pre-print at  [Biorxiv](https://www.biorxiv.org/content/10.1101/2024.09.09.611847v1).
 
 Data and scripts to reproduce the paper results at [Kinbiont utilities](https://github.com/pinheiroGroup/Kinbiont_utilities)
