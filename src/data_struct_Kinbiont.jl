@@ -5,7 +5,12 @@ struct Kinbiont_res_one_well_log_lin
     times::Any
     confidence_band::Any
 end
+struct  Kinbiont_res_odes_system
 
+    method::String
+    params::Vector{Any}
+    fit::Any
+end
 struct Kinbiont_res_one_well
     method::String
     params::Vector{Any}

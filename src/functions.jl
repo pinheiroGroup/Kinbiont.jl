@@ -19,7 +19,8 @@ include("NL_loss_list.jl");
 include("cpd_functions.jl");
 include("ML_downstream.jl");
 include("data_struct_Kinbiont.jl");
-
+include("ODEs_system_functions.jl");
+include("ODEs_system_models.jl");
 
 function model_selector(model::String, u0, tspan, param=nothing)
 
