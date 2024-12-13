@@ -6,11 +6,11 @@ end
 
 
 
-model_Michaelis_Menten_enzyme_kinetics= @reaction_network begin
-    kB, S + E --> SE
-    kD, SE --> S + E
-    kP, SE --> P + E
-end
+            model_Michaelis_Menten_enzyme_kinetics= @reaction_network begin
+                kB, S + E --> SE
+                kD, SE --> S + E
+                kP, SE --> P + E
+            end
 
 
 

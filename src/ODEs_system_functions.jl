@@ -1,11 +1,11 @@
 
-function     vectorize_df_results_ODE_System(label_exp, model, res, loss_value)
+function vectorize_df_results_ODE_System(label_exp, model, res, loss_value)
 
     if typeof(model) == String
 
-        param_names =["label_exp" "model" reduce(hcat,ODEs_system_models[model].params)   "loss" ]
+        param_names = ["label_exp" "model" reduce(hcat, ODEs_system_models[model].params) "loss"]
 
-        param_values = [label_exp  model  reduce(hcat,res)  loss_value ]
+        param_values = [label_exp model reduce(hcat, res) loss_value]
 
 
     else
@@ -15,23 +15,23 @@ function     vectorize_df_results_ODE_System(label_exp, model, res, loss_value)
         nmax_param = size(res)[1]
 
 
-       
-
-        param_names_t = reduce(hcat,[string("param_", i ) for i in 1:nmax_param]  )
 
 
-        param_names =["label_exp" "model"  param_names_t "loss" ]
+        param_names_t = reduce(hcat, [string("param_", i) for i in 1:nmax_param])
 
-        param_values = [label_exp  model_string   reduce(hcat,res)  loss_value ]
+
+        param_names = ["label_exp" "model" param_names_t "loss"]
+
+        param_values = [label_exp model_string reduce(hcat, res) loss_value]
 
     end
 
 
-    res_matrix = vcat(param_names,param_values)
+    res_matrix = vcat(param_names, param_values)
 
 
 
-  return res_matrix
+    return res_matrix
 
 end
 
@@ -61,24 +61,24 @@ end
 
 
 
-function  define_loss_function_odes_system( data, set_of_equation_to_fit, ODE_prob, integrator, tsteps)
-   
-   
-    if !isnothing(set_of_equation_to_fit)
-        index_of_eqs = set_of_equation_to_fit .-1
-        index_of_data = set_of_equation_to_fit 
+function define_loss_function_odes_system(data, set_of_equation_to_fit, ODE_prob, integrator, tsteps)
 
-    
+
+    if !isnothing(set_of_equation_to_fit)
+        index_of_eqs = set_of_equation_to_fit .- 1
+        index_of_data = set_of_equation_to_fit
+
+
     else
-    
+
         index_of_eqs = 1:1:(size(data)[1]-1)
         index_of_data = index_of_eqs .+ 1
 
-    end    
+    end
 
 
 
-    function loss_RE_ODE_Sys(data,index_of_eqs,index_of_data, ODE_prob, integrator, p, tsteps)
+    function loss_RE_ODE_Sys(data, index_of_eqs, index_of_data, ODE_prob, integrator, p, tsteps)
         sol = solve(
             ODE_prob,
             integrator,
@@ -105,15 +105,15 @@ function  define_loss_function_odes_system( data, set_of_equation_to_fit, ODE_pr
             lossa = 10.0^9 * length(data[2, :])
         end
 
-    
+
         return lossa, sol
     end
-    
-    
 
-        return (p) ->
-        loss_RE_ODE_Sys(data, index_of_eqs,index_of_data, ODE_prob, integrator, p, tsteps)
-   
+
+
+    return (p) ->
+        loss_RE_ODE_Sys(data, index_of_eqs, index_of_data, ODE_prob, integrator, p, tsteps)
+
 end
 
 
@@ -124,9 +124,9 @@ function ODEs_system_sim(
     tstart::Float64, # start time of the sim
     tmax::Float64, # final time of the sim
     delta_t::Float64, # 
-    param_of_ode ; # parameters of the ODE model
+    param_of_ode; # parameters of the ODE model
     integrator=KenCarp4(), # which sciml solver of ode
-    )
+)
 
     t_steps = tstart:delta_t:tmax
     tspan = (tstart, tmax)
@@ -154,7 +154,7 @@ function fit_ODEs_System(data::Matrix{Float64}, # dataset first row times second
     model::Any, # ode model to use
     param,
     Start_IC;
-    set_of_equations_to_fit = nothing,
+    set_of_equations_to_fit=nothing,
     integrator=Tsit5(), # selection of sciml integrator
     pt_avg=1, # numebr of the point to generate intial condition
     smoothing=false, # the smoothing is done or not?
@@ -191,7 +191,7 @@ function fit_ODEs_System(data::Matrix{Float64}, # dataset first row times second
     ODE_prob = ODEs_system_model_selector2(model, Start_IC, tspan)
 
 
-    loss_function = define_loss_function_odes_system( data,set_of_equations_to_fit, ODE_prob, integrator, tsteps)
+    loss_function = define_loss_function_odes_system(data, set_of_equations_to_fit, ODE_prob, integrator, tsteps)
 
     res = KinbiontSolve(loss_function,
         Start_IC,
@@ -209,8 +209,8 @@ function fit_ODEs_System(data::Matrix{Float64}, # dataset first row times second
     loss_value = res.objective
 
     res_param = vectorize_df_results_ODE_System(label_exp, model, res.u, loss_value)
-    
-    Kinbiont_res_odes_system = ("ODEs_System", res_param, remade_solution )
+
+    Kinbiont_res_odes_system = ("ODEs_System", res_param, remade_solution)
 
     return Kinbiont_res_odes_system
 
