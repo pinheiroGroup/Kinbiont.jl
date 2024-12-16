@@ -197,6 +197,8 @@ function Generate_Generalized_cybernetic_ODEs_problem_simulation(Cybernetic_Mode
     k_S = Cybernetic_Model1.k_S  # Saturation constants for substrates
     Y_S = Cybernetic_Model1.Y_S  # Yield coefficients for cell mass per substrate
     r = Cybernetic_Model1.reaction
+    cost = Cybernetic_Model1.cost
+    protein_thresholds = Cybernetic_Model1.protein_thresholds
     # Define allocation vector for resource allocation (normalized)
     if typeof(rule) == Vector{Float64} 
    

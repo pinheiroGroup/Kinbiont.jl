@@ -65,8 +65,8 @@ function define_loss_function_odes_system(data, set_of_equation_to_fit, ODE_prob
 
 
     if !isnothing(set_of_equation_to_fit)
-        index_of_eqs = set_of_equation_to_fit .- 1
-        index_of_data = set_of_equation_to_fit
+        index_of_eqs = set_of_equation_to_fit 
+        index_of_data = set_of_equation_to_fit .+1 
 
 
     else
