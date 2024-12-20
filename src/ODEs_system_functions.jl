@@ -59,6 +59,36 @@ function ODEs_system_model_selector2(model, u0, tspan; param=nothing)
     return ODE_prob
 end
 
+function loss_RE_ODE_Sys(data, index_of_eqs, index_of_data, ODE_prob, integrator, p, tsteps)
+    sol = solve(
+        ODE_prob,
+        integrator,
+        p=p,
+        saveat=tsteps,
+        verbose=false,
+        abstol=1e-10,
+        reltol=1e-10,
+    )
+
+
+    sol_t = reduce(hcat, sol.u)
+
+
+
+    if size(sol_t)[2] == size(data)[2]
+
+        lossa =
+            0.5 * NaNMath.sum(abs2.(1.0 .- (data[index_of_data, :] ./ sol_t[index_of_eqs, :]))) /
+            length(data[2, :])
+
+    else
+
+        lossa = 10.0^9 * length(data[2, :])
+    end
+
+
+    return lossa, sol
+end
 
 
 function define_loss_function_odes_system(data, set_of_equation_to_fit, ODE_prob, integrator, tsteps)
@@ -78,7 +108,7 @@ function define_loss_function_odes_system(data, set_of_equation_to_fit, ODE_prob
 
 
 
-    function loss_RE_ODE_Sys(data, index_of_eqs, index_of_data, ODE_prob, integrator, p, tsteps)
+    function loss_L2_ODE_Sys(data, index_of_eqs, index_of_data, ODE_prob, integrator, p, tsteps)
         sol = solve(
             ODE_prob,
             integrator,
@@ -96,9 +126,7 @@ function define_loss_function_odes_system(data, set_of_equation_to_fit, ODE_prob
 
         if size(sol_t)[2] == size(data)[2]
 
-            lossa =
-                0.5 * NaNMath.sum(abs2.(1.0 .- (data[index_of_data, :] ./ sol_t[index_of_eqs, :]))) /
-                length(data[2, :])
+            lossa =NaNMath.sum(abs2.( (data[index_of_data, :] .- sol_t[index_of_eqs, :]))) / length(data[2, :])
 
         else
 
@@ -112,7 +140,7 @@ function define_loss_function_odes_system(data, set_of_equation_to_fit, ODE_prob
 
 
     return (p) ->
-        loss_RE_ODE_Sys(data, index_of_eqs, index_of_data, ODE_prob, integrator, p, tsteps)
+        loss_RE_ODE_loss_L2_ODE_SysSys(data, index_of_eqs, index_of_data, ODE_prob, integrator, p, tsteps)
 
 end
 
@@ -125,7 +153,7 @@ function ODEs_system_sim(
     tmax::Float64, # final time of the sim
     delta_t::Float64, # 
     param_of_ode; # parameters of the ODE model
-    integrator=KenCarp4(), # which sciml solver of ode
+    integrator=Tsit5(), # which sciml solver of ode
 )
 
     t_steps = tstart:delta_t:tmax
