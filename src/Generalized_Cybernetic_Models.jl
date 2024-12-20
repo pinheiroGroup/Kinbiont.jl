@@ -14,6 +14,65 @@ struct Kinbiont_Cybernetic_Model_sim
     protein_thresholds::Any
 end
 
+
+
+
+
+function define_loss_function_cybernetic_ODEs(data, set_of_equation_to_fit, ODE_prob, integrator, tsteps)
+
+
+    if !isnothing(set_of_equation_to_fit)
+        index_of_eqs = set_of_equation_to_fit 
+        index_of_data = set_of_equation_to_fit .+1 
+
+
+    else
+
+        index_of_eqs = 1:1:(size(data)[1]-1)
+        index_of_data = index_of_eqs .+ 1
+
+    end
+
+
+
+    function loss_RE_Cybernentic(data, index_of_eqs, index_of_data, ODE_prob, integrator, p, tsteps)
+        sol = solve(
+            ODE_prob,
+            integrator,
+            p=p,
+            saveat=tsteps,
+            verbose=false,
+            abstol=1e-10,
+            reltol=1e-10,
+        )
+
+
+        sol_t = reduce(hcat, sol.u)
+
+
+
+        if size(sol_t)[2] == size(data)[2]
+
+            lossa =
+                0.5 * NaNMath.sum(abs2.(1.0 .- (data[index_of_data, :] ./ sol_t[index_of_eqs, :]))) /
+                length(data[2, :])
+
+        else
+
+            lossa = 10.0^9 * length(data[2, :])
+        end
+
+
+        return lossa, sol
+    end
+
+
+
+    return (p) ->
+    loss_RE_Cybernentic(data, index_of_eqs, index_of_data, ODE_prob, integrator, p, tsteps)
+
+end
+
 # Custom constructor to allow initialization using keyword arguments
 function Kinbiont_Cybernetic_Model_sim(; Bio_mass_conc, Substrate_concentrations, Protein_concentrations,
     allocation_rule, reaction, a, b, V_S, k_S, Y_S,cost,protein_thresholds)
@@ -159,7 +218,7 @@ function Generate_Generalized_cybernetic_ODEs_problem(Cybernetic_Model1)
         V_S_val = get_val(V_S[i])
         k_S_val = get_val(k_S[i])
 
-        du[i + 1]= - V_S[i] * P[i] * S[i] / (k_S[i] + S[i]) * u[1]  # Rate of change of each substrate
+        du[i + 1]= -V_S_val * P[i] * S[i] / (k_S_val + S[i]) * u[1]  # Rate of change of each substrate
     end
 
     # Protein synthesis rate 
@@ -168,13 +227,13 @@ function Generate_Generalized_cybernetic_ODEs_problem(Cybernetic_Model1)
         b_val = get_val(b[i])
         k_S_val = get_val(k_S[i])
 
-           du[i + n + 1]  = a[i] * alloc[i] * k_S[i] - b[i] * P[i] * u[1] # Rate of change of each key protein
+           du[i + n + 1]  = a_val * alloc[i] * k_S_val - b_val * P[i] * u[1] # Rate of change of each key protein
       end
 
-    
-
+     
+      Y_S_vec = [get_val(Y_S[i]) for i in 1:eachindex(Y_S)]
     # Cell growth dynamics (cumulative effect of substrate utilization)
-            du[1] = -sum(get_val(Y_S[i]) .* du[2:(n+1)] ) * u[1]   # Change in biomass concentration based on substrate utilization
+            du[1] = -sum(Y_S_vec .* du[2:(n+1)] ) * u[1]   # Change in biomass concentration based on substrate utilization
     end
 
 
@@ -262,8 +321,6 @@ function Kinbiont_Cybernetic_Model_simulation(model,tmin,tmax,deltaT; integrator
     u0 = [model.Bio_mass_conc, model.Substrate_concentrations..., model.Protein_concentrations...]
     Cybernetic_Model_odes = Generate_Generalized_cybernetic_ODEs_problem_simulation(model)
     oprob = ODEProblem(Cybernetic_Model_odes, u0, tspan)
-    prob = Generate_Generalized_cybernetic_ODEs_problem_simulation(model)
-    println(tsteps1)
     sol = solve(oprob, integrator,saveat=tsteps1)
    return sol
 
@@ -294,7 +351,7 @@ function fit_Cybernetic_models(data::Matrix{Float64}, # dataset first row times 
     # Defining ODE problem
 
     ODE_function = Generate_Generalized_cybernetic_ODEs_problem(model)
-    oprob = ODEProblem(Cybernetic_Model_odes, Start_IC, tspan)
+    ODE_prob = ODEProblem(ODE_function, Start_IC, tspan)
     # to do
     loss_function = define_loss_function_cybernetic_ODEs(data, set_of_equations_to_fit, ODE_prob, integrator, tsteps)
 
@@ -315,7 +372,7 @@ function fit_Cybernetic_models(data::Matrix{Float64}, # dataset first row times 
     # to do
     res_param = vectorize_df_results_Cybernetic_model(label_exp, model, res.u, loss_value)
     # to do
-    Kinbiont_res_Cybernetic_model = ("ODEs_System", res_param, remade_solution)
+    Kinbiont_res_Cybernetic_model = ("Cybernetic_model", res_param, remade_solution)
 
     return Kinbiont_res_Cybernetic_model
 
