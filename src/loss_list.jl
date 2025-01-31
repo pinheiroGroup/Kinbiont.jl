@@ -1,8 +1,8 @@
 
-function loss_L2_derivative(data, ODE_prob, integrator, p, tsteps)
+function loss_L2_derivative(data, ODE_prob, Integration_method, p, tsteps)
     sol = solve(
         ODE_prob,
-        integrator,
+        Integration_method,
         p=p,
         saveat=tsteps,
         verbose=false,
@@ -31,10 +31,10 @@ function loss_L2_derivative(data, ODE_prob, integrator, p, tsteps)
     return lossa, sol
 end
 
-function loss_blank_weighted_L2(data, ODE_prob, integrator, p, tsteps, blank_array)
+function loss_blank_weighted_L2(data, ODE_prob, Integration_method, p, tsteps, blank_array)
     sol = solve(
         ODE_prob,
-        integrator,
+        Integration_method,
         p=p,
         saveat=tsteps,
         verbose=false,
@@ -70,10 +70,10 @@ function loss_blank_weighted_L2(data, ODE_prob, integrator, p, tsteps, blank_arr
     return lossa, sol
 end
 
-function loss_L2(data, ODE_prob, integrator, p, tsteps)
+function loss_L2(data, ODE_prob, Integration_method, p, tsteps)
     sol = solve(
         ODE_prob,
-        integrator,
+        Integration_method,
         p=p,
         saveat=tsteps,
         verbose=false,
@@ -92,10 +92,10 @@ function loss_L2(data, ODE_prob, integrator, p, tsteps)
     return lossa, sol
 end
 
-function loss_L2_log(data, ODE_prob, integrator, p, tsteps)
+function loss_L2_log(data, ODE_prob, Integration_method, p, tsteps)
     sol = solve(
         ODE_prob,
-        integrator,
+        Integration_method,
         p=p,
         saveat=tsteps,
         verbose=false,
@@ -115,10 +115,10 @@ function loss_L2_log(data, ODE_prob, integrator, p, tsteps)
 end
 
 
-function loss_RE(data, ODE_prob, integrator, p, tsteps)
+function loss_RE(data, ODE_prob, Integration_method, p, tsteps)
     sol = solve(
         ODE_prob,
-        integrator,
+        Integration_method,
         p=p,
         saveat=tsteps,
         verbose=false,
@@ -141,10 +141,10 @@ end
 
 
 
-function loss_RE_log(data, ODE_prob, integrator, p, tsteps)
+function loss_RE_log(data, ODE_prob, Integration_method, p, tsteps)
     sol = solve(
         ODE_prob,
-        integrator,
+        Integration_method,
         p=p,
         saveat=tsteps,
         verbose=false,
@@ -166,7 +166,7 @@ function loss_RE_log(data, ODE_prob, integrator, p, tsteps)
 end
 
 
-function loss_L2_std_blank(data, ODE_prob, integrator, p, tsteps, blank_array)
+function loss_L2_std_blank(data, ODE_prob, Integration_method, p, tsteps, blank_array)
 
     # evaluation of std of  empirica distrib of the blank
 
@@ -176,7 +176,7 @@ function loss_L2_std_blank(data, ODE_prob, integrator, p, tsteps, blank_array)
     end
     sol = solve(
         ODE_prob,
-        integrator,
+        Integration_method,
         p=p,
         saveat=tsteps,
         verbose=false,
@@ -201,7 +201,7 @@ end
 
 
 
-function select_loss_function(loss_name, data, ODE_prob, integrator, tsteps, blank_array)
+function select_loss_function(loss_name, data, ODE_prob, Integration_method, tsteps, blank_array)
     loss_functions = Dict(
         "L2" => loss_L2,
         "RE" => loss_RE,
@@ -213,9 +213,9 @@ function select_loss_function(loss_name, data, ODE_prob, integrator, tsteps, bla
 
     if loss_name == "blank_weighted_L2" || loss_name == "L2_std_blank"
         return (p) ->
-            loss_functions[loss_name](data, ODE_prob, integrator, p, tsteps, blank_array)
+            loss_functions[loss_name](data, ODE_prob, Integration_method, p, tsteps, blank_array)
     else
-        return (p) -> loss_functions[loss_name](data, ODE_prob, integrator, p, tsteps)
+        return (p) -> loss_functions[loss_name](data, ODE_prob, Integration_method, p, tsteps)
     end
 end
 
