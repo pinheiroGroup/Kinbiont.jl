@@ -33,6 +33,7 @@ feature_range = 0.0:0.2:2.0
 
 # defining the parameters values for the simulation 
 p_sim = [0.05, 1.0, 50.0, 1.0]
+psim_1_0 =  p_sim[1]
 t_min = 0.0
 t_max = 800.0
 n_start = [0.1]
@@ -43,7 +44,7 @@ plot(0, 0)
 for f in feature_range
 
     # changing the parameters with unknown perturbation 
-    p_sim[1] = p_sim[1] * unknown_response(f) .+ 0.01
+    p_sim[1] = psim_1_0 * unknown_response(f) .+ 0.01
 
 
     # Calling the simulation function

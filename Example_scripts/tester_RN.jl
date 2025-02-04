@@ -114,3 +114,39 @@ Simulation =  Kinbiont.Kinbiont_Reaction_network_sim(model_Glycolysis,
     )
 
 plot(Simulation)
+
+
+
+u0 = [
+    :Acetyl_CoA => 1, :Citrate => 0, :Isocitrate => 0, :α_Ketoglutarate => 0,
+    :Succinyl_CoA => 0, :Succinate => 0, :Fumarate => 0, :Malate => 0, :Oxaloacetate => 0,
+    :H2O => 10, :NAD_plus => 10, :NADH => 0, :CO2 => 0, :H_plus => 0
+]
+
+ps = [
+    :k1 => 1.0, :k2 => 1.0, :k3 => 1.0, :k4 => 1.0,
+    :k5 => 1.0, :k6 => 1.0, :k7 => 1.0, :k8 => 1.0,
+    :k9 => 1.0, :k10 => 1.0, :k11 => 1.0
+]
+
+model_TCA_cycle = @reaction_network begin
+    k1, Acetyl_CoA + Oxaloacetate + H2O --> Citrate
+    k2, Citrate --> Isocitrate
+    k3, Isocitrate + NAD_plus --> α_Ketoglutarate + NADH + CO2 + H_plus
+    k4, α_Ketoglutarate + NAD_plus + H2O --> Succinyl_CoA + NADH + CO2 + H_plus
+    k5, Succinyl_CoA --> Succinate
+    k6, Succinate + NAD_plus --> Fumarate + NADH + H_plus
+    k7, Fumarate + H2O --> Malate
+    k8, Malate + NAD_plus --> Oxaloacetate + NADH + H_plus
+end
+
+
+Simulation =  Kinbiont.Kinbiont_Reaction_network_sim(model_Glycolysis,
+    u0,
+   0.0, # start time of the sim
+   30.0, # final time of the sim
+    0.1, # delta t for poisson approx
+    ps; # parameters of the ODE model
+    )
+
+plot(Simulation)

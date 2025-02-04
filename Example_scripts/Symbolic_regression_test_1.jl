@@ -26,21 +26,23 @@ p1_guess = lb_1 .+ (ub_1 .- lb_1) ./ 2
 
 # defining the range of the perturbation on feature
 
-feature_range = 0.0:0.2:1.0
+feature_range = 0.0:0.4:4.0
 
 # defining the parameters values for the simulation 
 p_sim = [0.1, 1.0, 50.0, 1.0]
+psim_1_0 =  p_sim[1]
+
 t_min = 0.0
 t_max = 800.0
 n_start = [0.1]
 delta_t = 5.0
-noise_value = 0.03
+noise_value = 0.02
 
 plot(0, 0)
 for f in feature_range
 
     # changing the parameters with unknown perturbation 
-    p_sim[1] = p_sim[1] * unknown_response(f)
+    p_sim[1] =psim_1_0* unknown_response(f)
 
 
     # Calling the simulation function
