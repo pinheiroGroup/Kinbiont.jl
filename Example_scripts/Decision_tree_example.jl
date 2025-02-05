@@ -132,8 +132,8 @@ feature_matrix = vcat(["label" "abx_1" "abx_2" "abx_3"],random_matrix)
 dt_gr = Kinbiont.downstream_decision_tree_regression(results_fit,
         feature_matrix,
         4;# row to learn
-        do_pruning=false,
-        pruning_accuracy=1.00,
+        do_pruning=true,
+        pruning_accuracy=0.025,
         verbose=true,
         do_cross_validation=true,
         max_depth=depth,
@@ -146,4 +146,4 @@ dt_gr = Kinbiont.downstream_decision_tree_regression(results_fit,
 wt = DecisionTree.wrap(dt_gr[1], (featurenames = feature_names,))
 
 # Plot the decision tree
-p2 = Plots.plot(wt, 0.9, 0.2; size = (900, 400), connect_labels = ["yes", "no"])
+p2 = Plots.plot(wt, 0.9, 0.2; size = (1500, 700), connect_labels = ["yes", "no"])

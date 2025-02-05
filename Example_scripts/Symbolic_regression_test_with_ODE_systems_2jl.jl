@@ -6,6 +6,9 @@ using Plots
 using StatsBase
 using SymbolicRegression
 using Distributions
+using OptimizationBBO
+using Optimization
+using NaNMath
 # Generate a dataset with an unknown dependence on a feature 
 function unknown_response(feature)
 
@@ -14,15 +17,23 @@ function unknown_response(feature)
 
 end
 
+function time_dep(time)
+
+    activity = exp((- (time-20)^2)./20)
+    return     activity 
+
+end
 
 
 function model_1(du, u, param, t)
     # Define the ODEs
     du[1] = param[1] * u[1] * u[4]
-    du[2] = param[4] * du[1] - param[3] * u[2] - param[2] * u[2]
+    du[2] = time_dep(t)*param[4] * u[1] - param[3] * u[2] - param[2] * u[2]
     du[3] = param[3] * u[2] - param[2] * u[3]
     du[4] = -du[1]
 end
+
+
 u0 = [0.1, 0.0, 0.0,1.0]  # Initial conditions for the variables
 
 # Parameters
@@ -35,10 +46,11 @@ param0 = param[4]
 noise_value = 0.01
 
 # defining the range of the perturbation on feature
+results_fit = Any
 
 feature_range = 0.0:0.1:2.0
 
-
+results_fit = Any
 plot(0, 0)
 for f in feature_range
 
@@ -51,8 +63,8 @@ for f in feature_range
         model_1, #string of the model
         u0, # starting condition
         0.0, # start time of the sim
-        50.0, # final time of the sim
-        1.0, # delta t for poisson approx
+        100.0, # final time of the sim
+        2.0, # delta t for poisson approx
         param; # parameters of the ODE model
     )
     
@@ -132,3 +144,8 @@ scatter(results_fit[2,2:end],results_fit[6,2:end,],xlabel="Feature value", ylabe
 hline!(unique(gr_sy_reg[3][:, 1]), label=["Eq. 1" nothing], line=(3, :green, :dash))
 plot!(unique(results_fit[2,2:end]), unique(gr_sy_reg[3][:, 2]), label=["Eq. 2" nothing], line=(3, :red))
 plot!(unique(results_fit[2,2:end]), unique(gr_sy_reg[3][:, 3]), label=["Eq. 3" nothing], line=(3, :blue, :dashdot))
+x = -10.0:0.1:10.0
+
+plot(x,exp.(.-x.^2))
+plot!(x,exp.(.-(x .-5).^2))
+plot!(x,exp.((.-(x .-5).^2)./4))
