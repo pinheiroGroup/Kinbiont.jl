@@ -5,69 +5,85 @@ using NaNMath
 using Plots
 using Distributions
 
-# generate Simulated data with SIR model
-Simulation =  ODEs_system_sim(
-    "SIR", #string of the model
-   [0.9,0.1,0.0], # starting condition
-    0.0, # start time of the sim
-    30.0, # final time of the sim
-    1.0, # delta t for poisson approx
-    [0.5,0.3]; # parameters of the ODE model
+# ----------------------------------------------
+# Step 1: Generate Simulated Data with the SIR Model
+# ----------------------------------------------
+
+Simulation = ODEs_system_sim(
+    "SIR",          # Name of the model (Susceptible-Infected-Recovered)
+    [0.9, 0.1, 0.0], # Initial conditions: [S, I, R]
+    0.0,            # Start time of the simulation
+    30.0,           # End time of the simulation
+    1.0,            # Time step for Poisson approximation
+    [0.5, 0.3]      # Parameters of the ODE model: [Infection rate, Recovery rate]
 )
 
+# ----------------------------------------------
+# Step 2: Plot the Simulated Data
+# ----------------------------------------------
 
-# Plot the data
+scatter(Simulation)  # Scatter plot of the simulation results
 
+# ----------------------------------------------
+# Step 3: Add Noise and Format Data for Kinbiont
+# ----------------------------------------------
 
-scatter(Simulation)
+# Extracting time points and solution values
+sol_time = reduce(hcat, Simulation.t) 
+sol_t = reduce(hcat, Simulation.u)
 
-# Add the noise and formating the data as required by Kibiont
+# Adding uniform random noise to the simulation data
+noise_uniform = rand(Uniform(-0.05, 0.05), size(sol_t)[2])
+sol_t_noise = [sol_t[i, :] .+ rand(Uniform(-0.05, 0.05), size(sol_t)[2]) for i in 1:size(sol_t)[1]]
+sol_t_noise = permutedims(reduce(hcat, sol_t_noise))
 
+# Combining time and noisy solution data
+data = vcat(sol_time, sol_t_noise)
 
-#adding uniform random noise
+# Plot the noisy data
+scatter(data[1, :], data[2, :])  # Susceptible
+scatter!(data[1, :], data[3, :]) # Infected
+scatter!(data[1, :], data[4, :]) # Recovered
 
-sol_time = reduce(hcat, Simulation.t)
-sol_t = reduce(hcat,Simulation.u)
-noise_unifom = rand(Uniform(-0.05,0.05),size(sol_t)[2])
-sol_t_noise = [sol_t[i,:] .+ rand(Uniform(-0.05,0.05),size(sol_t)[2]) for i in 1:size(sol_t)[1]]
-sol_t_noise =permutedims(reduce(hcat,sol_t_noise))
+# ----------------------------------------------
+# Step 4: Fit the Full Dataset to the SIR Model
+# ----------------------------------------------
 
-data = vcat(sol_time,sol_t_noise)
-# Plot data with noise
-scatter(data[1,:],data[2,:])
-scatter!(data[1,:],data[3,:])
-scatter!(data[1,:],data[4,:])
+Start_IC = [0.9, 0.1, 0.0]  # Initial conditions
 
-Start_IC = [0.9,0.1,0.0]
-# fit all dataset  
-
-fit = fit_ODEs_System(data,
-                    "test",
-                    "SIR", 
-                    [0.1,0.5],
-                    Start_IC;
+fit = fit_ODEs_System(
+    data,
+    "test",     # Label for the dataset
+    "SIR",      # Model name
+    [0.1, 0.5], # Initial guess for parameters
+    Start_IC    # Initial conditions
 )
 
-plot!(fit[3])
+plot!(fit[3])  # Plot the fitted results
 
-# Now we remove a data form the system the measura=ment of R
-data_reduced = hcat(data[1,:],data[2,:])
-data_reduced = permutedims(hcat(data_reduced,data[3,:]))
+# ----------------------------------------------
+# Step 5: Remove "Recovered" (R) Data and Refit
+# ----------------------------------------------
 
+# Keep only time, S (Susceptible), and I (Infected)
+data_reduced = hcat(data[1, :], data[2, :])
+data_reduced = permutedims(hcat(data_reduced, data[3, :]))
 
-fit = fit_ODEs_System(data_reduced,
-                    "test",
-                    "SIR", 
-                    [0.1,0.5],
-                    Start_IC;
-                    set_of_equation_to_fit = [1,2]
+# Fit using only the first two states (S and I)
+fit = fit_ODEs_System(
+    data_reduced,
+    "test",
+    "SIR",
+    [0.1, 0.5], # Initial guess for parameters
+    Start_IC;
+    set_of_equation_to_fit = [1, 2]  # Only fit S and I equations
 )
 
+# ----------------------------------------------
+# Step 6: Plot the Data and New Fit
+# ----------------------------------------------
 
-
-scatter(data[1,:],data[2,:])
-scatter!(data[1,:],data[3,:])
-scatter!(data[1,:],data[4,:])
-plot!(fit[3])
-
-
+scatter(data[1, :], data[2, :])  # Susceptible
+scatter!(data[1, :], data[3, :]) # Infected
+scatter!(data[1, :], data[4, :]) # Recovered
+plot!(fit[3])  # Plot the fitted model without R measurements
