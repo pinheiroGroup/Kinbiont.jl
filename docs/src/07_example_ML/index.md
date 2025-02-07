@@ -29,14 +29,166 @@ using TreeRecipe
 ```
 ## Symbolic regression detection of laws
 
-## Decision tree regression
+
+This example demonstrates how to use **Kinbiont.jl** for simulating a growth model, fitting data with an ODE-based model, and performing symbolic regression to retrieve the relationship between an experimental feature and the effective growth rate.
 
 
+To run this example, you will need the following packages:
+
+```julia
+using DifferentialEquations
+using CSV
+using SymbolicRegression
+using Plots
+using StatsBase
+using Distributions
+```
+
+In this example, we simulate data for a single species. The growth rate depends on an experimental feature, and we assume the user does not know the exact relationship between the feature and the growth rate. We perform the experiment at different conditions and fit the data using a simple ODE model. Afterward, we apply **symbolic regression** to discover the relationship between the experimental feature and the effective growth rate.
+
+
+The function `unknown_response` defines the relationship between the experimental feature and the growth rate, where the growth rate is altered as a function of the feature.
+
+```julia
+function unknown_response(feature)
+    response = 1 / (1 + feature)
+    return response
+end
+```
+
+
+We use the `baranyi_richards` ODE model in this example. First, we define the parameter ranges for the simulation:
+
+```julia
+ODE_models = "baranyi_richards"
+
+# Parameter bounds and initial guess
+ub_1 = [0.2, 5.1, 500.0, 5.0]
+lb_1 = [0.0001, 0.1, 0.00, 0.2]
+p1_guess = lb_1 .+ (ub_1 .- lb_1) ./ 2
+```
+
+Next, we define the feature range and simulation parameters:
+
+```julia
+# Range of experimental feature
+feature_range = 0.0:0.4:4.0
+
+# Simulation parameters
+p_sim = [0.1, 1.0, 50.0, 1.0]
+psim_1_0 = p_sim[1]
+
+# Time range for simulation
+t_min = 0.0
+t_max = 800.0
+n_start = [0.1]  # Initial population size
+delta_t = 5.0  # Time step
+noise_value = 0.02  # Noise for simulation
+```
+
+
+We loop through different feature values, modify the growth rate according to the `unknown_response`, and run the simulation. We also add noise to the simulated data for realism.
+
+```julia
+plot(0, 0)
+for f in feature_range
+    # Modify the parameter for the current feature
+    p_sim[1] = psim_1_0 * unknown_response(f)
+
+    # Run the simulation with Kinbiont
+    sim = Kinbiont.ODE_sim("baranyi_richards", n_start, t_min, t_max, delta_t, p_sim)
+
+    # Adding uniform noise
+    noise_uniform = rand(Uniform(-noise_value, noise_value), length(sim.t))
+
+    # Collecting the simulated data
+    data_t = reduce(hcat, sim.t)
+    data_o = reduce(hcat, sim.u)
+    data_OD = vcat(data_t, data_o)
+    data_OD[2, :] = data_OD[2, :] .+ noise_uniform
+
+    # Plot the data with noise
+    display(Plots.scatter!(data_OD[1, :], data_OD[2, :], xlabel="Time", ylabel="Arb. Units", label=nothing, color=:red, markersize=2, size=(300, 300)))
+
+    # Fit the ODE model to the data
+    results_ODE_fit = fitting_one_well_ODE_constrained(
+        data_OD,
+        string(f),
+        "test_ODE",
+        "baranyi_richards",
+        p1_guess;
+        lb=lb_1,
+        ub=ub_1
+    )
+
+    display(Plots.plot!(results_ODE_fit[4], results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=nothing, color=:red, markersize=2, size=(300, 300)))
+
+    # Collect the fitted results for later use
+    if f == feature_range[1]
+        results_fit = results_ODE_fit[2]
+    else
+        results_fit = hcat(results_fit, results_ODE_fit[2])
+    end
+end
+```
+
+
+After fitting the ODE model to the data at each feature condition, we plot the feature value versus the effective growth rate:
+
+```julia
+scatter(results_fit[2, :], results_fit[4, :], xlabel="Feature value", ylabel="Growth rate")
+```
+
+
+We now perform symbolic regression to discover the relationship between the feature and the effective growth rate. We set up the options for symbolic regression and generate a feature matrix based on the `feature_range`.
+
+```julia
+# Symbolic regression options
+options = SymbolicRegression.Options(
+    binary_operators=[+, /, *, -],
+    unary_operators=[],
+    constraints=nothing,
+    elementwise_loss=nothing,
+    loss_function=nothing,
+    tournament_selection_n=12,
+    tournament_selection_p=0.86,
+    topn=12,
+    complexity_of_operators=nothing,
+    complexity_of_constants=nothing,
+    complexity_of_variables=nothing,
+    parsimony=0.05,
+    dimensional_constraint_penalty=nothing,
+    alpha=0.100000,
+    maxsize=10,
+    maxdepth=nothing
+)
+
+# Generating the feature matrix
+feature_matrix = [[string(f), f] for f in feature_range]
+feature_matrix = permutedims(reduce(hcat, feature_matrix))
+
+# Performing symbolic regression
+gr_sy_reg = Kinbiont.downstream_symbolic_regression(results_fit, feature_matrix, 4; options=options)
+
+# Plot the growth rate with symbolic regression results
+scatter(results_fit[2, :], results_fit[4, :], xlabel="Feature value", ylabel="Growth rate")
+hline!(unique(gr_sy_reg[3][:, 1]), label=["Eq. 1" nothing], line=(3, :green, :dash))
+plot!(unique(results_fit[2, :]), unique(gr_sy_reg[3][:, 2]), label=["Eq. 2" nothing], line=(3, :red))
+plot!(unique(results_fit[2, :]), unique(gr_sy_reg[3][:, 3]), label=["Eq. 3" nothing], line=(3, :blue, :dashdot))
+```
+
+
+The unkwon function can be definde in different ways, for example a quadratic function: 
+
+```julia
+function unknown_response(feature)
+    response = (1 - feature)^2
+    return response
+end
+```
 ## Symbolic regression on real data
 
-This example demonstrates how to use the `Kinbiont` and `SymbolicRegression` packages to analyze kinetics data.
-
-Set up paths to your data, annotation, calibration curve, and result directories (see examples):
+In this example we replicate the detection of the Monod law on real data presented in the Kinbiont paper. First we set up the paths of the data and where to save the results
 
 ```julia
 path_to_data = "your_path/data_examples/plate_data.csv"
@@ -173,6 +325,333 @@ plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_r
 plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_reg[3][:, 5]), label=["Eq. 5" nothing], line=(2, :black))
 
 ```
+
+
+
+
+## Decision tree regression
+
+
+
+In this example, we explore how **Kinbiont.jl** can be used to simulate data about a species exposed to various antibiotics, both individually and in combination. We then apply a decision tree regression model to predict the growth rate of the species based on the antibiotics present in the media.
+
+
+To run this example, you will need the following Julia packages:
+
+```julia
+using DifferentialEquations
+using CSV
+using SymbolicRegression
+using Plots
+using StatsBase
+using Distributions
+using DecisionTree
+```
+
+
+We define a transformation function that modifies the growth rate (`mu`) of the species depending on the antibiotics present in the media. This function uses a predefined concentration map:
+
+```julia
+function transform_abx_vector(input_vector::Vector, mu::Float64)
+    concentration_map = Dict(
+        (1, 0, 0) => 1.0 ,    # abx_1 -> μ
+        (0, 1, 0) => 0.5 ,    # abx_2 -> 0.5μ
+        (0, 0, 1) => 0.3 ,    # abx_3 -> 0.3μ
+        (1, 1, 0) => 0.0 ,    # abx_1 + abx_2 -> 0μ
+        (1, 0, 1) => 0.3 ,    # abx_1 + abx_3 -> 0.3μ
+        (0, 1, 1) => 0.0 ,    # abx_2 + abx_3 -> 0μ
+        (1, 1, 1) => 0.0,     # abx_1 + abx_2 + abx_3 -> 0.0μ
+        (0, 0, 0) => 1.0      # No antibiotics -> 1.0μ
+    )
+
+    mu_correct = concentration_map[Tuple(input_vector[2:end])] * mu   # Default to 0μ if not found
+    return mu_correct
+end
+```
+
+
+The concentration map defines how the growth rate (`mu`) is modified for different combinations of antibiotics. Here is a table of the concentration values used in the simulation:
+
+| Antibiotic 1 | Antibiotic 2 | Antibiotic 3 | Growth Rate Scaling (μ) |
+|--------------|--------------|--------------|-----------------|
+| 1            | 0            | 0            | 1.0             |
+| 0            | 1            | 0            | 0.5             |
+| 0            | 0            | 1            | 0.3             |
+| 1            | 1            | 0            | 0.0             |
+| 1            | 0            | 1            | 0.3             |
+| 0            | 1            | 1            | 0.0             |
+| 1            | 1            | 1            | 0.0             |
+| 0            | 0            | 0            | 1.0             |
+
+
+We generate a random matrix representing the combinations of antibiotics present in each experiment. For each row, we apply the antibiotic transformation function to modify the growth rate.
+
+```julia
+# Generate random antibiotic combinations
+cols = 3
+n_experiment = 100
+random_matrix = rand(0:1, n_experiment, cols)
+labels = string.(1:1:n_experiment)
+random_matrix = hcat(labels, random_matrix)
+
+# Define parameters for simulation
+p_sim = [0.05, 1.0, 50.0, 1.0]
+psim_1_0 = p_sim[1]
+p1_array = [transform_abx_vector(random_matrix[f, :], psim_1_0) for f in 1:size(random_matrix)[1]]
+
+# Simulation settings
+t_min = 0.0
+t_max = 800.0
+n_start = [0.1]
+delta_t = 10.0
+noise_value = 0.03
+
+plot(0, 0)
+```
+
+For each experiment, the antibiotic effect is applied, the data is simulated using **Kinbiont**, and noise is added to the data. The resulting data is then fitted to an ODE model (`baranyi_richards`).
+
+```julia
+for f in 1:size(random_matrix)[1]
+    p_sim[1] = transform_abx_vector(random_matrix[f, :], psim_1_0)
+
+    # Run simulation with Kinbiont
+    sim = Kinbiont.ODE_sim("baranyi_richards", n_start, t_min, t_max, delta_t, p_sim)
+
+    # Add noise to simulation results
+    noise_uniform = rand(Uniform(-noise_value, noise_value), length(sim.t))
+
+    # Collect data
+    data_t = reduce(hcat, sim.t)
+    data_o = reduce(hcat, sim.u)
+    data_OD = vcat(data_t, data_o)
+    data_OD[2, :] = data_OD[2, :] .+ noise_uniform
+
+    # Plot noisy data
+    display(Plots.scatter!(data_OD[1, :], data_OD[2, :], xlabel="Time", ylabel="Arb. Units", label=nothing, color=:red, markersize=2, size=(300, 300)))
+
+    # Fit the ODE model
+    results_ODE_fit = fitting_one_well_ODE_constrained(
+        data_OD,
+        string(random_matrix[f, 1]),
+        "test_ODE",
+        "baranyi_richards",
+        p1_guess;
+        lb=lb_1,
+        ub=ub_1
+    )
+
+    # Plot fitted data
+    display(Plots.plot!(results_ODE_fit[4], results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=nothing, color=:red, markersize=2, size=(300, 300)))
+
+    # Store results
+    if f == 1
+        results_fit = results_ODE_fit[2]
+    else
+        results_fit = hcat(results_fit, results_ODE_fit[2])
+    end
+end
+```
+
+
+Once we have the fitted results, we use a decision tree regression model to predict the growth rate based on the antibiotic combinations. We set the parameters for the decision tree and perform cross-validation.
+
+```julia
+# Parameters of the decision tree
+n_folds = 10
+depth = -1  # No depth limit
+
+# Set random seed for reproducibility
+seed = Random.seed!(1234)
+
+# Generating feature matrix
+feature_matrix = vcat(["label" "abx_1" "abx_2" "abx_3"], random_matrix)
+
+# Decision tree regression
+dt_gr = Kinbiont.downstream_decision_tree_regression(results_fit,
+        feature_matrix,
+        4;  # Row to learn
+        do_pruning=false,
+        verbose=true,
+        do_cross_validation=true,
+        max_depth=depth,
+        n_folds_cv=n_folds,
+        seed=seed
+    )
+
+# Visualizing the decision tree
+wt = DecisionTree.wrap(dt_gr[1], (featurenames = ["abx_1", "abx_2", "abx_3"]))
+p2 = Plots.plot(wt, 0.9, 0.2; size=(1400, 700), connect_labels=["yes", "no"])
+```
+
+
+In this example, we simulated the effects of different antibiotic combinations on the growth rate of a species, fitted the data using the **baranyi_richards** model, and used decision tree regression to predict the growth rate based on the antibiotics present in the media. We also visualized the decision tree to gain insights into how the antibiotics impact the growth dynamics. Since this tree completely reconstruct the starting concentration map table the decision tree algorithm can help in identifying which combinations have the most significant effects.
+
+
+
+
+##  Modeling Tree Species Interactions with ODEs and Decision Trees
+
+In this tutorial, we simulate a simple community of three tree species (N_1, N_2, and N_3) using Ordinary Differential Equations (ODEs) and analyze the community dynamics using decision tree regression, note that in this case we reduce the information aviable to the downstream analysis supposing that is possible only to measure the total biomass (N_1 + N_2 Z + N_3). We will vary the initial composition of the species, fit with an empirical ODE model with only one equation, and by applying a decsion tree regression on the parameters of this empirical model we study how initial conditions modify the population behavior.
+
+
+The tree species interact in a competitive environment where:
+- `u[1]` is species 1 (e.g., Tree species 1),
+- `u[2]` is species 2,
+- `u[3]` is species 3,
+- `u[4]` is the shared resource.
+
+The growth rates and predation interactions are modeled with the following set of ODEs:
+
+```julia
+function model_1(du, u, param, t)
+    # Define the ODEs
+    du[1] = param[1] * u[1] * u[4] - param[4] * u[3] * u[1]  # Species 1 growth and predation by species 3
+    du[2] = param[2] * u[2] * u[4]  # Species 2 growth
+    du[3] = param[3] * u[2] * u[4] + param[4] * u[3] * u[1]  # Species 3 growth and interaction with species 1
+    du[4] = (-param[1] * u[1] - param[2] * u[2] + -param[3] * u[3]) * u[4]  # Resource consumption
+end
+```
+
+Here, the parameters are:
+- `param[1]` is the yield rate of species 1,
+- `param[2]` is the yield rate of species 2,
+- `param[3]` is the yield rate of species 3,
+- `param[4]` represents the predation rate between species 3 and species 1.
+
+We simulate the community dynamics using random initial conditions for the species populations.
+
+```julia
+# We generate a random matrix of features (i.e., initial conditions)
+# Define the dimensions of the matrix
+cols = 3
+n_experiment = 150
+
+# Generate a random matrix with 0s and 0.1s
+random_matrix = rand([0, 0.1], n_experiment, cols)
+labels = string.(1:1:n_experiment)
+random_matrix = hcat(labels, random_matrix)
+
+
+```
+
+Next, we introduce some randomness into the data by adding uniform noise to the simulations to make it more realistic. This noise simulates small environmental fluctuations that might be observed in real data.
+
+```julia
+
+# Defining the parameter values for the simulation 
+t_min = 0.0
+t_max = 200.0
+delta_t = 8.0
+noise_value = 0.05
+blank_value = 0.08
+plot(0, 0)
+```
+We define the model used to fit, note that is a 1 dimensional ODE since we suppose we measure only the total sum of biomass.
+```julia
+# We declare the ODE model, its upper/lower bounds, and initial guess
+# Parameters to fit
+ODE_models = "HPM"
+ub_1 = [0.5, 5.1, 16.0]
+lb_1 = [0.0001, 0.000001, 0.00]
+p1_guess = lb_1 .+ (ub_1 .- lb_1) ./ 2
+```
+
+
+```julia
+
+for f in 1:size(random_matrix)[1]
+
+    # Defining the initial condition with different community compositions
+    u0 = random_matrix[f, 2:4]
+    u0 = push!(u0, 5.0)
+    u0 = convert.(Float64, u0)
+
+    # Calling the simulation function
+    Simulation = ODEs_system_sim(
+        model_1, # ODE system 
+        u0, # Initial conditions
+        t_min, # Start time of the simulation
+        t_max, # Final time of the simulation
+        delta_t, # Delta t for Poisson approximation
+        param; # Parameters of the ODE model
+    )
+
+    # Plotting scatterplot of data without noise
+
+    # Adding uniform random noise
+    noise_uniform = rand(Uniform(-noise_value, noise_value), length(Simulation.t))
+
+    data_t = reduce(hcat, Simulation.t)
+    data_o = reduce(hcat, Simulation.u)
+    data_o = data_o[1:3, :]
+     # we sum up all ODEs to represent the fact that we measure the total biomass of the community
+    data_o = sum(data_o, dims=1)
+
+    data_OD = vcat(data_t, data_o)
+    data_OD[2, :] = data_OD[2, :] .+ noise_uniform .+ blank_value
+    # Plotting scatterplot of data with noise
+
+    display(Plots.scatter!(data_OD[1, :], data_OD[2, :], xlabel="Time", ylabel="Arb. Units", label=nothing, color=:red, markersize=2, size=(300, 300)))
+
+    # Fitting with Kinbiont
+    results_ODE_fit = fitting_one_well_ODE_constrained(
+        data_OD,
+        string(random_matrix[f, 1]),
+        "test_ODE",
+        ODE_models,
+        p1_guess;
+        remove_negative_value=true,
+        pt_avg=2,
+        lb=lb_1,
+        ub=ub_1
+    )
+
+    display(Plots.plot!(results_ODE_fit[4], results_ODE_fit[3], xlabel="Time", ylabel="Arb. Units", label=nothing, color=:red, markersize=2, size=(300, 300)))
+
+    # Storing results
+    if f == 1
+        results_fit = results_ODE_fit[2]
+    else
+        results_fit = hcat(results_fit, results_ODE_fit[2])
+    end
+end
+
+
+```
+
+We define the feature matrix based on the initial conditions of the species populations:
+
+```julia
+feature_matrix = vcat(["label" "CI_1" "CI_2" "CI_3"], random_matrix)
+```
+
+Next, we apply the decision tree regression algorithm using the `Kinbiont.downstream_decision_tree_regression` function. We predict specific model parameters (e.g., saturation value `N_max`) from the initial conditions.
+
+```julia
+dt_gr = Kinbiont.downstream_decision_tree_regression(
+    results_fit,          # Fitted model parameters
+    feature_matrix,       # Initial conditions
+    6;                    # Row representing the saturation value
+    do_pruning=false,     # Pruning option for decision tree
+    verbose=true,         # Display detailed output
+    do_cross_validation=true,  # Cross-validation option
+    max_depth=-1,         # Maximum tree depth
+    n_folds_cv=10,        # Number of cross-validation folds
+    seed=Random.seed!(1234)  # Random seed for reproducibility
+)
+```
+
+
+Finally, we visualize the decision tree using the `DecisionTree.wrap` function to help understand how the decision tree splits based on the initial conditions.
+
+```julia
+wt = DecisionTree.wrap(dt_gr[1], (featurenames=feature_names,))
+p2 = Plots.plot(wt, 0.9, 0.2; size=(1500, 700), connect_labels=["yes", "no"])
+```
+
+This decision tree shows how the initial community composition (CI_1, CI_2, CI_3) influences the predicted model parameters.
+
 
 ### Decision Tree Regression Analysis on real data
 
