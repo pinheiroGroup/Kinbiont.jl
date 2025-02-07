@@ -13,6 +13,8 @@ Pages = [
     "01_install/index.md",
     "02_data/index.md",
     "04_math/index.md",
-    "05_examples/index.md"
+    "05_examples_simulations/index.md",
+    "06_examples_fit/index.md",
+    "07_examples_ML/index.md"
 ]
 ```
