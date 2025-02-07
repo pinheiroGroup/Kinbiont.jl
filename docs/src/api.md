@@ -113,7 +113,28 @@ Kinbiont.selection_NL_fixed_interval
 ```@docs
 Kinbiont.segmentation_NL
 ```
+#### ODEs system fitting
 
+[`Kinbiont.fit_ODEs_System`](@ref)
+
+```@docs
+Kinbiont.fit_ODEs_System
+```
+
+#### Reaction network fitting
+
+[`Kinbiont.RN_fit`](@ref)
+
+```@docs
+Kinbiont.RN_fit
+```
+#### Cybernetic model fitting
+
+[`Kinbiont.fit_Cybernetic_models`](@ref)
+
+```@docs
+Kinbiont.fit_Cybernetic_models
+```
 
 ## Fitting one a .csv file
 
@@ -200,6 +221,22 @@ Kinbiont.ODE_sim
 ```@docs
 Kinbiont.stochastic_sim
 ```
+### ODEs system 
+[`Kinbiont.ODEs_system_sim`](@ref)
+```@docs
+Kinbiont.ODEs_system_sim
+```
+### Cybernetic models 
+[`Kinbiont.Kinbiont_Cybernetic_Model_simulation`](@ref)
+```@docs
+Kinbiont.Kinbiont_Cybernetic_Model_simulation
+```
+### Reaction network via Catalyst.jl
+[`Kinbiont.Kinbiont_Reaction_network_sim`](@ref)
+```@docs
+Kinbiont.Kinbiont_Reaction_network_sim
+```
+
 ## Various
  [`Kinbiont.specific_gr_evaluation`](@ref)
 
@@ -207,5 +244,10 @@ Kinbiont.stochastic_sim
 Kinbiont.specific_gr_evaluation
 ```
 
+ [`Kinbiont.Kinbiont_Cybernetic_Model`](@ref)
+
+```@docs
+Kinbiont_Cybernetic_Model
+```
 
 
