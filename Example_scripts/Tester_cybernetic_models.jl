@@ -21,8 +21,8 @@ using Optimization
 
 # Define the Kinbiont Cybernetic Model with specific parameters
 model = Kinbiont_Cybernetic_Model(
-    Bio_mass_conc = 1.01,  # Initial biomass concentration
-    Substrate_concentrations = [5.0, 5.0],  # Concentrations of 2 substrates
+    Bio_mass_conc = 1.0,  # Initial biomass concentration
+    Substrate_concentrations = [3.0, 3.0],  # Concentrations of 2 substrates
     Protein_concentrations = [0.0, 0.0],  # Initial protein concentrations
     allocation_rule = threshold_switching_rule,  # Dynamic resource allocation rule
     reaction = nothing,  # No specific reaction function provided
@@ -50,11 +50,11 @@ plot(simulation)
 # ------------------------------------------------------------------------------
 # Extract the data (biomass, substrate, and protein concentrations over time) from the simulation.
 # Prepare the data in the format expected for model fitting.
-data_to_fit = hcat(prob.t, reduce(hcat, prob.u)[1,:])
-data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[2,:])
-data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[3,:])
-data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[4,:])
-data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[5,:])
+data_to_fit = hcat(simulation.t, reduce(hcat, simulation.u)[1,:])
+data_to_fit = hcat(data_to_fit, reduce(hcat, simulation.u)[2,:])
+data_to_fit = hcat(data_to_fit, reduce(hcat, simulation.u)[3,:])
+data_to_fit = hcat(data_to_fit, reduce(hcat,simulation.u)[4,:])
+data_to_fit = hcat(data_to_fit, reduce(hcat, simulation.u)[5,:])
 data_to_fit = permutedims(data_to_fit)  # Convert data to column-major order
 
 # ------------------------------------------------------------------------------
@@ -80,18 +80,13 @@ model_fit = Kinbiont_Cybernetic_Model(
 # Step 5: Fit the Cybernetic Model to Experimental Data
 # ------------------------------------------------------------------------------
 # Use the `fit_Cybernetic_models` function to fit the model parameters to experimental data.
-# The data_to_fit contains the time series of biomasses and other parameters for model fitting.
+# The data_to_fit contains the time series of biomasses and other curves for model fitting.
 results = fit_Cybernetic_models(
     data_to_fit,  # Experimental data to fit
     "test",  # Name of the dataset for reference
     model_fit,  # Cybernetic model with unknown parameters to fit
     [0.01, 0.1];  # Initial guesses for the unknown parameters (a and V_S)
-    set_of_equations_to_fit = nothing  # No additional equations to constrain fitting
+    set_of_equations_to_fit = nothing  # No a sub set of equations to  fit
 )
 
-# -------------------------------------------------------------------------------
-# Notes:
-# - **Kinbiont** models self-regulation, resource allocation, and optimization.
-# - The **threshold_switching_rule** and **proportional_allocation_rule** allow the model to adjust resource allocation dynamically during simulation and fitting.
-# - **Fitting** parameters to data can provide insights into how biological systems behave under different conditions.
-# -------------------------------------------------------------------------------
+plot(results[3])  # Plot the fitted model

@@ -29,7 +29,7 @@ p1_guess = lb_1 .+ (ub_1 .- lb_1) ./ 2
 
 # defining the range of the perturbation on feature
 
-feature_range = 0.0:0.2:2.0
+feature_range = 0.0:0.1:2.0
 
 # defining the parameters values for the simulation 
 p_sim = [0.05, 1.0, 50.0, 1.0]
@@ -121,4 +121,6 @@ scatter(results_fit[2,:],results_fit[4,:,],xlabel="Feature value", ylabel="Growt
 hline!(unique(gr_sy_reg[3][:, 1]), label=["Eq. 1" nothing], line=(3, :green, :dash))
 plot!(unique(results_fit[2,:]), unique(gr_sy_reg[3][:, 2]), label=["Eq. 2" nothing], line=(3, :red))
 plot!(unique(results_fit[2,:]), unique(gr_sy_reg[3][:, 3]), label=["Eq. 3" nothing], line=(3, :blue, :dashdot))
+plot!(unique(results_fit[2,:]), unique(gr_sy_reg[3][:, 4]), label=["Eq. 3" nothing], line=(3, :blue, :dashdot))
 
+plot!(unique(results_fit[2,:]), unique(gr_sy_reg[3][:, 5]), label=["Eq. 3" nothing], line=(3, :blue, :dashdot))

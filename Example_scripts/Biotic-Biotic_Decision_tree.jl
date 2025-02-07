@@ -25,7 +25,7 @@ function model_1(du, u, param, t)
     du[1] = param[1] * u[1] * u[4] - param[4] * u[3] * u[1] 
     du[2] = param[2] * u[2] * u[4]
     du[3] = param[3] * u[2] * u[4] + param[4] * u[3] * u[1]
-    du[4] = -param[1] * (u[1] + u[2] + u[3]) * u[4]
+    du[4] = (-param[1] * u[1] - param[2] * u[2] + -param[3] * u[3]) * u[4]
 end
 
 # Parameters [1/yield_1, 1/yield_2, 1/yield_3, predation (3->1)]
@@ -144,7 +144,7 @@ wt = DecisionTree.wrap(dt_gr[1], (featurenames=feature_names,))
 p2 = Plots.plot(wt, 0.9, 0.2; size=(1500, 700), connect_labels=["yes", "no"])
 
 # Calling the decision tree regression for the 7th row of results_fit. It represents the maximum per capita growth rate
-dt_gr = Kinbiont.downstream_decision_tree_regression(results_fit,
+ dt_gr = Kinbiont.downstream_decision_tree_regression(results_fit,
     feature_matrix,
     7; # Row to learn
     do_pruning=false,

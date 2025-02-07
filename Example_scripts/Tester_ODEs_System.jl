@@ -70,7 +70,7 @@ data_reduced = hcat(data[1, :], data[2, :])
 data_reduced = permutedims(hcat(data_reduced, data[3, :]))
 
 # Fit using only the first two states (S and I)
-fit = fit_ODEs_System(
+fit_res = fit_ODEs_System(
     data_reduced,
     "test",
     "SIR",
@@ -86,4 +86,4 @@ fit = fit_ODEs_System(
 scatter(data[1, :], data[2, :])  # Susceptible
 scatter!(data[1, :], data[3, :]) # Infected
 scatter!(data[1, :], data[4, :]) # Recovered
-plot!(fit[3])  # Plot the fitted model without R measurements
+plot!(fit_res[3])  # Plot the fitted model without R measurements
