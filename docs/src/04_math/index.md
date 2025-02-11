@@ -438,9 +438,9 @@ $$\mathcal{L}(\{P\})= \log\left(\frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{
 
 `"L2_std_blank"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the data, normalized by the standard deviation of empirical blank data.
 
-$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{N(t_i) - \hat{N}(t_i, \{P\})}{\text{std\_blank}}\right)^2$$
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{N(t_i) - \hat{N}(t_i, \{P\})}{\text{std_blank}}\right)^2$$
 
-where $\text{std\_blank}$ is the standard deviation of the empirical blank data.
+where $\text{std_blank}$ is the standard deviation of the empirical blank data.
 
 
 4. [ODEs system for bacterial growth](#ODEs_system_list)
@@ -537,3 +537,4 @@ $$q_s = r \frac{Q_s K_s}{K_s + s} + (1 - r) \frac{Q_s' K_s'}{K_s' + s}$$
 5. [Cybernetic models for bacterial growth](#Cybernetic_list)
 
 6. [Reaction networks](#RN_list)
+
