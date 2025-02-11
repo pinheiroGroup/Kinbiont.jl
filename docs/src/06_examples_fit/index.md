@@ -1,6 +1,16 @@
 # [Examples and Tutorial](@id examples)
 
-This section provides some copy-and-paste examples of Kinbiont.jl
+This section provides some copy-and-paste examples on how to fit kinetics data with Kinbiont.jl. A corse grain description on which function/method to fit can be done by using the following flow chart. 
+
+
+```@raw html
+<div style="text-align: center; margin-bottom: 20px; margin: auto; max-width: 320px;">
+    <img alt="Kinbiont flow chart on how select fit functions" src="./assets/workflow_fit.png">
+</div>
+```
+
+
+
 
 To run all these example you need to call the following packages:
 
@@ -615,270 +625,10 @@ seg_fitting = Kinbiont.segmentation_NL(
 
 
 ```
-
-### Fitting a ODEs System
-
-This example demonstrates how to fit an Ordinary Differential Equations (ODEs) syste using Kinbiont. The system models interactions between four variables, and we aim to estimate its parameters from noisy simulated data.
-
-First we define a custom model (if you want to use an harcoded model just put the corresponding sting in the model field for the simulation and the fit).
-The system consists of:
-- **u1**: A reactant influenced by u4.
-- **u2**: An intermediate product.
-- **u3**: A final product.
-- **u4**: A resource that decreases as the reaction proceeds.
-
-The ODE system is defined as:
-
-```julia
-using Kinbiont
-using DifferentialEquations
-using CSV
-using SymbolicRegression
-using Plots
-using StatsBase
-using Distributions
-
-function model_1(du, u, param, t)
-    du[1] = param[1] * u[1] * u[4]                  # Reactant conversion
-    du[2] = param[4] * du[1] - param[3] * u[2] - param[2] * u[2]  # Intermediate balance
-    du[3] = param[3] * u[2] - param[2] * u[3]       # Final product formation
-    du[4] = -du[1]                                  # Resource consumption
-end
-```
-
-We define initial conditions, true parameters, adn the bounds of the fit:
-
-```julia
-u0 = [0.1, 0.0, 0.0, 1.0]  # Initial conditions for [u1, u2, u3, u4]
-param = [0.1, 0.01, 0.5, 0.42]  # True parameter values
-
-lb1 = [0.01, 0.0001, 0.0, 0.01]  # Lower bounds
-ub1 = [0.2, 0.3, 1.1, 1.0]       # Upper bounds
-param_guess = lb1 .+ (ub1 .- lb1) ./ 2  # Initial parameter guess
-```
-We simulate the data
-
-```julia
-Simulation = ODEs_system_sim(
-    model_1, # ODE function
-    u0,      # Initial conditions
-    0.0,     # Start time
-    50.0,    # End time
-    1.0,     # Time step for Poisson approximation
-    param    # True parameters
-)
-```
-
-
-```julia
-sol_time = reduce(hcat, Simulation.t)
-sol_t = reduce(hcat, Simulation.u)
-
-# Adding uniform random noise
-sol_t_noise = [sol_t[i, :] .+ rand(Uniform(-0.05, 0.05), size(sol_t)[2]) for i in 1:size(sol_t)[1]]
-sol_t_noise = permutedims(reduce(hcat, sol_t_noise))
-
-data = vcat(sol_time, sol_t_noise)
-```
-We plot the data:
-
-```julia
-display(scatter(data[1, :], data[2, :], label="u1"))
-display(scatter!(data[1, :], data[3, :], label="u2"))
-display(scatter!(data[1, :], data[4, :], label="u3"))
-display(scatter!(data[1, :], data[5, :], label="u4"))
-```
-
-We Fit the Model Using Kinbiont
-
-```julia
-fit = fit_ODEs_System(
-    data,
-    "test",     # Label for dataset
-    model_1,    # ODE model
-    param_guess, # Initial parameter guess
-    u0;         # Initial conditions
-    lb=lb1,     # Lower bounds
-    ub=ub1      # Upper bounds
-)
-```
-
-We plot the fitted model
-```julia
-plot!(fit[3], label="Fitted Model")
-```
-
-
-### Fitting reaction network
-
-## Overview
-
-We define a **Michaelis-Menten enzyme kinetics** reaction network using Catalyst (https://docs.sciml.ai/Catalyst/stable/) :
-
-```julia
-# Define initial conditions
-u0 = [:S => 301, :E => 100, :SE => 0, :P => 0]
-
-# Define kinetic parameters
-ps = [:kB => 0.00166, :kD => 0.0001, :kP => 0.1]
-
-# Define the Michaelis-Menten reaction network
-model_Michaelis_Menten = @reaction_network begin
-    kB, S + E --> SE
-    kD, SE --> S + E
-    kP, SE --> P + E
-end
-```
-
-We simulate the reaction system over a time range (`t=0` to `t=10`) using Kinbiont's reaction network simulation function:
-
-```julia
-# Run simulation
-Simulation = Kinbiont.Kinbiont_Reaction_network_sim(
-    "Michaelis_Menten",
-    u0,
-    0.0, 10.0, 0.1, # Start time, end time, step size
-    ps
-)
-
-# Plot the simulation results
-plot(Simulation)
-```
-
-We introduce synthetic noise to the simulated data to mimic experimental uncertainty:
-
-```julia
-# Extract time-series data from the simulation
-sol_time = reduce(hcat, Simulation.t)
-sol_t = reduce(hcat, Simulation.u)
-
-# Add noise to the dataset
-noise = rand(Uniform(-0.01, 0.05), size(sol_t))
-sol_t_noise = sol_t .+ noise
-
-# Prepare noisy data for fitting
-data = vcat(sol_time, permutedims(sol_t_noise))
-```
-
-We plot the data
-
-```julia
-# Scatter plot of noisy data
-scatter(data[1, :], data[2, :], label="S")
-scatter!(data[1, :], data[3, :], label="E")
-scatter!(data[1, :], data[4, :], label="SE")
-scatter!(data[1, :], data[5, :], label="P")
-```
-
-We use `RN_fit` to estimate the reaction parameters from the noisy dataset:
-
-```julia
-# Fit the model to noisy data
-fit = RN_fit(data, model_Michaelis_Menten, u0, ps)
-
-# Overlay the fitted model on the original plot
-plot!(fit[4])
-```
-
-
-### Fitting a cybernetic models
-
-
-
-We define a Kinbiont Cybernetic Model with specific parameters:
-
-```julia
-using Kinbiont
-using DifferentialEquations
-using OptimizationBBO
-using NaNMath
-using Plots
-using Distributions
-using Optimization
-
-# Define the Cybernetic Model
-model = Kinbiont_Cybernetic_Model(
-    Bio_mass_conc = 1.01,  # Initial biomass concentration
-    Substrate_concentrations = [5.0, 5.0],  # Concentrations of 2 substrates
-    Protein_concentrations = [0.0, 0.0],  # Initial protein concentrations
-    allocation_rule = threshold_switching_rule,  # Dynamic resource allocation rule
-    reaction = nothing,  # No specific reaction function provided
-    cost = nothing,  # No cost function
-    protein_thresholds = 0.01,  # Protein activation threshold
-    a = [0.1, 0.4],  # Synthesis rate constants for proteins
-    b = [0.00001, 0.000001],  # Degradation constants for proteins
-    V_S = [0.7, 0.1],  # Substrate utilization rates
-    k_S = [0.1, 0.11],  # Saturation constants for substrates
-    Y_S = [0.07, 0.11]  # Yield coefficients for biomass per substrate
-)
-```
-
-
-We simulate the model over time (from `t=0` to `t=100`) using the `Tsit5` solver:
-
-```julia
-# Simulate the model
-simulation = Kinbiont_Cybernetic_Model_simulation(model, 0.0, 100.0, 0.1; Integration_method = Tsit5())
-
-# Plot the results
-plot(simulation)
-```
-
-
-We extract the simulation data (biomass, substrate, and protein concentrations over time) for fitting:
-
-```julia
-# Extract time-series data from the simulation
-prob = simulation.prob
-
-data_to_fit = hcat(prob.t, reduce(hcat, prob.u)[1,:])
-data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[2,:])
-data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[3,:])
-data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[4,:])
-data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[5,:])
-data_to_fit = permutedims(data_to_fit)  # Convert to column-major order
-```
-
-
-We define a new model where some parameters (`a`, `V_S`)  are unknown and need to be fitted, to do that we put them to nothing in the data struct:
-
-```julia
-# Define a new model with unknown parameters
-model_fit = Kinbiont_Cybernetic_Model(
-    Bio_mass_conc = 1.01,  # Initial biomass concentration
-    Substrate_concentrations = [2.0, 5.0],  # Initial substrate concentrations
-    Protein_concentrations = [0.0, 0.0],  # No initial protein concentrations
-    allocation_rule = proportional_allocation_rule,  # Different allocation rule
-    reaction = nothing,  # No specific reaction function
-    cost = nothing,  # No cost function
-    protein_thresholds = 0.01,  # Protein activation threshold
-    a = [nothing, 0.1],  # One synthesis rate is unknown
-    b = [0.00001, 0.000001],  # Known degradation constants
-    V_S = [nothing, 0.4],  # One substrate utilization rate is unknown
-    k_S = [0.1, 0.11],  # Saturation constants
-    Y_S = [0.07, 0.11]  # Yield coefficients
-)
-```
-
-Using `fit_Cybernetic_models`, we fit the model parameters to experimental data:
-
-```julia
-# Fit the model to experimental data
-results = fit_Cybernetic_models(
-    data_to_fit,  # Experimental data
-    "test",  # Dataset name
-    model_fit,  # Model with unknown parameters
-    [0.01, 0.1];  # Initial guesses for unknown parameters (a and V_S)
-    set_of_equations_to_fit = nothing  # No additional constraints
-)
-```
-
-
 ## Fitting a .csv file
 
 Instead fitting a single kinetics the user can supply a `.csv` file (formatted as described in the section), and Kinbiont will proceed to perform all the analysis on all the wells of the experiment. Note that the user can supply a annotation .csv in this case becomes possible to subtract the blanks and fit the average of replicates.
 
-Note that this is aviable only for ODE with one dimensional data (OD or biomass). For use a `.csv` with multidimensional ODEs you need import the data and shape them in the format required by Kinbiont. 
 To use the following functions the user should input to Kinbiont variables that contains the string of the path to the .csv files:
 
 ```julia
@@ -1118,3 +868,6 @@ NL_segmentation = Kinbiont.fit_NL_segmentation_file(
     path_to_annotation = path_to_annotation,# path to the annotation of the wells
 )
 ```
+## ODEs system fitting
+## RN fitting
+## Cybernetic models fitting

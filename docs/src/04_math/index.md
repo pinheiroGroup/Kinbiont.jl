@@ -1,14 +1,26 @@
 # [The mathematical models](@id models)
 
+In Kinbiont is possible to simulate and fit the bacterial growth with any Ordinary Differential Equation System.  We can broadly divide the classed of possible mathematical models in the following:
+
 1. [NL models for bacterial growth](#NL_list)
 2. [ODEs for bacterial growth](#ODE_list)
-3. [ Stochastic models for bacterial growth](#stoch_model)
-4. [Error functions](#loss)
+3. [Stochastic models for bacterial growth](#stoch_model)
+4. [ODEs system for bacterial growth](#ODEs_system_list)
+5. [Cybernetic models for bacterial growth](#Cybernetic_list)
+6. [Reaction networks](#RN_list)
+
+When fitting, NL models and 1D ODE will assume that you are measuring only the biomass of the system (e.g., microplate reader experiments that register the Optical Density).
+
+
+
 ## NL models for bacterial growth
 
 
 
 In this case, we are supposed to know the analytic formula of microbial growth; in particular, we have implemented some models from "Statistical evaluation of mathematical models for microbial growth" and added some piecewise models. They are:
+Note that in generale NL fitting is preferred to ODE fitting in the following cases:
+1.  Since is a lot faster when you have to analyze large dataset
+2. When you do not trust initial conditions (e.g., initial inocolum under the detection limit of the instrument). ODE fit needs to fix the intial condition of data on the first (or an average of the firts) time point of data and this could lead to errors/
 
 - **Exponential**  
 
@@ -89,6 +101,28 @@ To call these models use the string present in this table, the parameters will b
 | Bertalanffy                     | $N_{\text{max}}, N_0,\mu,\nu$                | `"NL_Bertalanffy"`                 |
 | piece-wise linear-logistic      | $N_0, N_{\text{max}},\mu, t_\text{L}$  | `"NL_piecewise_lin_logistic"`      |
 | piece-wise exponential-logistic | $N_0, N_{\text{max}},\mu, t_\text{L}, t_\text{L},\mu_0$ | `"NL_piecewise_exp_logistic"` |
+
+
+
+
+
+For a general idea of the property of models consult the following table:
+
+
+| **Model Name**                   | **Has Lag?** | **Is Piecewise?** | **Has Stationary Phase?** |
+| --------------------------------- | ---------- | -------------- | ------------------- |
+| Exponential                       | No         | No             | No                    |
+| Gompertz                          | Yes        | No             | Yes                   |
+| Logistic                          | No         | No             | Yes                   |
+| Richards model                    | Yes        | No             | Yes                   |
+| Weibull                           | No         | No             | Yes                   |
+| Morgan                            | No         | No             | Yes                   |
+| Bertalanffy                       | No         | No             | Yes                   |
+| Piece-wise linear-logistic        | Yes        | Yes            | Yes                   |
+| Piece-wise exponential-logistic   | Yes        | Yes            | Yes                   |
+
+If undecided between different models plese use the model selection function.
+
 
 ## ODEs for bacterial growth
 
@@ -290,10 +324,41 @@ To call these models use the string present in this table, the parameters will b
 | Heterogeneous Population Model with Inhibition and Death | `label_exp`, `well`, `model`, `gr`, `exit_lag_rate`, `inactivation_rate`, `death_rate`, `th_max_gr`, `emp_max_gr`, `loss` | `"HPM_3_death"`                         |
 | Heterogeneous Population Model with Inhibition, Death and Resistance | `label_exp`, `well`, `model`, `gr`, `exit_lag_rate`, `inactivation_rate`, `death_rate`, `n_res`, `shape`, `th_max_gr`, `emp_max_gr`, `loss` | `"aHPM_3_death_resistance"`             |
 
+
+In the following table you can find a general description of the properties of the harcoded ODE models of Kinbiont:
+
+
+| **Model Name**                               | **Has Lag?** | **Is Piecewise?** | **Has Stationary Phase?** | **Has Inhibition?** | **Is Monotonic?** | **Supposes Multiple States?** |
+|----------------------------------------------|-------------|------------------|--------------------------|-------------------|----------------|----------------------------|
+| Exponential ODE                              | No          | No               | No                       | No                | Yes            | No                         |
+| Hyper Gompertz                               | No          | No               | Yes                      | No                | Yes            | No                         |
+| Hyper Logistic                               | No          | No               | Yes                      | No                | Yes            | No                         |
+| Von Bertalanffy ODE                          | No          | No               | Yes                      | No                | Yes            | No                         |
+| Bertalanffy-Richards                         | No          | No               | Yes                      | No                | Yes            | No                         |
+| Logistic                                     | No          | No               | Yes                      | No                | Yes            | No                         |
+| Adjusted Logistic                            | No          | No               | Yes                      | No                | Yes            | No                         |
+| Gompertz                                     | No          | No               | Yes                      | No                | Yes            | No                         |
+| Baranyi Richards                             | Yes         | No               | Yes                      | No                | Yes            | No                         |
+| Baranyi Roberts                              | Yes         | No               | Yes                      | No                | Yes            | No                         |
+| Piece-wise Adjusted Logistic                 | Yes         | Yes              | Yes                      | No                | No             | No                         |
+| Triple Piece-wise Adjusted Logistic          | Yes         | Yes              | Yes                      | No                | No             | No                         |
+| Triple Piece-wise                            | Yes         | Yes              | Yes                      | No                | No             | No                         |
+| Triple Piece-wise Exponential                | Yes         | Yes              | Yes                      | No                | No             | No                         |
+| Four Piece-wise Exponential                  | Yes         | Yes              | Yes                      | No                | No             | No                         |
+| Diauxic Piecewise Adjusted Logistic          | Yes         | Yes              | Yes                      | No                | No             | No                         |
+| Heterogeneous Population Model (HPM McKellar) | Yes        | No               | Yes                      | No                | Yes            | Yes                        |
+| Exponential Heterogeneous Population Model (HPM McKellar) | Yes | No | No | No | Yes | Yes |
+| Adjusted Heterogeneous Population Model      | Yes         | No               | Yes                      | No                | Yes            | Yes                        |
+| Heterogeneous Population Model with Inhibition | Yes       | No               | Yes                      | Yes               | Yes             | Yes                        |
+| Heterogeneous Population Model with Inhibition and Death | Yes | No | Yes | Yes | No | Yes |
+| Heterogeneous Population Model with Inhibition, Death and Resistance | Yes | No | Yes | Yes | No | Yes |
+
+If undecided between different model the model selection function should be used.
+
 ## Stochastic models for bacterial growth
 
 
-In the stochastic version of the growth models, the growth rate of each population component (denoted as $\mu_i$) is evaluated based on the concentration of the limiting nutrient and then the number of birth event is evaluated with the Poisson approximation. The user is required to specify the starting amount of nutrients and the volume of the solution. Various kinetic growth models are considered. Note that these models can be used only during simulations.
+In the stochastic version of the growth models, the growth rate of each population component (denoted as $\mu_i$) is evaluated based on the concentration of the limiting nutrient and then the number of birth event is evaluated with the Poisson approximation. The user is required to specify the starting amount of nutrients and the volume of the solution. Various kinetic growth models are considered. **Note that these models can be used only during simulations.**
 In the following, we use $\nu$ to represent the limiting nutrient concentration throughout, $\mu_\text{max}$ denotes the maximum possible growth rate, $k_1$ (for $i=1,2$) is a numerical constant whose specific meaning depends on the model, $N$ indicates the number of present cells, and $N_\text{max}$ is the carrying capacity in the Verhulst model.
 
 - Monod Model:
@@ -377,4 +442,98 @@ $$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{N(t_i) - \hat{N}(t_i
 
 where $\text{std\_blank}$ is the standard deviation of the empirical blank data.
 
----
+
+4. [ODEs system for bacterial growth](#ODEs_system_list)
+
+
+In this section, we present various Ordinary Differential Equation (ODE) models used to describe microbial and population dynamics. These models are fundamental in epidemiology, ecology, and biotechnology. The models implemented include standard epidemiological models like SIR and SIS, predator-prey models, and different chemostat models for microbial growth.
+
+
+- **SIR Model** (Susceptible-Infected-Recovered)  
+$$\begin{cases}
+    \frac{dS}{dt} = -\beta S I \\
+    \frac{dI}{dt} = \beta S I - \gamma I \\
+    \frac{dR}{dt} = \gamma I
+  \end{cases}$$
+  Parameters: Infection rate ($\beta$), Recovery rate ($\gamma$).
+
+- **SIR with Birth and Death (SIR_BD)**  
+$$\begin{cases}
+    \frac{dS}{dt} = -\beta S I + b S - d S \\
+    \frac{dI}{dt} = \beta S I - \gamma I - d I \\
+    \frac{dR}{dt} = \gamma I - d R
+  \end{cases}$$
+  Parameters: Infection rate ($\beta$), Recovery rate ($\gamma$), Birth rate ($b$), Death rate ($d$).
+
+- **SIS Model** (Susceptible-Infected-Susceptible)  
+$$\begin{cases}
+    \frac{dS}{dt} = -\beta S I + \gamma I \\
+    \frac{dI}{dt} = \beta S I - \gamma I
+  \end{cases}$$
+  Parameters: Infection rate ($\beta$), Recovery rate ($\gamma$).
+
+- **Lotka-Volterra Predator-Prey Model**  
+$$\begin{cases}
+    \frac{dP}{dt} = \alpha P - \beta P C \\
+    \frac{dC}{dt} = -\delta C + \gamma C P
+  \end{cases}$$
+  Parameters: Prey birth rate ($\alpha$), Predation rate ($\beta$), Predator death rate ($\delta$), Predator reproduction rate ($\gamma$).
+
+- **Lotka-Volterra with Substrate Limitation**  
+$$\begin{cases}
+    \frac{dP}{dt} = \alpha P \frac{S}{S + K} - \beta P C \\
+    \frac{dC}{dt} = -\delta C + \gamma C P \\
+    \frac{dS}{dt} = -\alpha P \frac{S}{S + K}
+  \end{cases}$$
+  Parameters: Growth rate ($\alpha$), Half-saturation ($K$), Predation rate ($\beta$), Predator mortality ($\delta$), Predator efficiency ($\gamma$).
+
+- **Monod Chemostat Model** (Microbial Growth in a Chemostat)  
+$$\begin{cases}
+    \frac{dX}{dt} = \mu X - D X \\
+    \frac{dS}{dt} = D (S_{\text{in}} - S) - \frac{\mu X}{Y} - m X
+  \end{cases}$$
+  where  
+$$\mu = \mu_m \frac{S}{K_s + S}$$
+  Parameters: Substrate affinity ($K_s$), Maintenance coefficient ($m$), Yield coefficient ($Y$), Max growth rate ($\mu_m$), Dilution rate ($D$), Substrate inflow ($S_{\text{in}}$).
+
+- **Droop Model** (Nutrient Quota Model)  
+$$\begin{cases}
+    \frac{dX}{dt} = \mu X - D X \\
+    \frac{dS}{dt} = \rho X - D S + D S_{\text{in}} \\
+    \frac{dQ}{dt} = \rho - \mu Q
+  \end{cases}$$
+  where  
+$$\mu = \mu_m \left(1 - \frac{Q_0}{Q}\right)$$
+  and  
+$$\rho = \rho_m \frac{S}{K_s + S}$$
+  Parameters: Growth rate ($\mu_m$), Nutrient uptake rate ($\rho_m$), Half-saturation ($K_s$), Dilution rate ($D$), Minimum quota ($Q_0$), Substrate inflow ($S_{\text{in}}$).
+
+- **Synthetic Chemostat Model** (Including Biological Inertia)  
+$$\begin{cases}
+    \frac{dx}{dt} = Y q_s - a_0 r x - D x \\
+    \frac{ds}{dt} = D (s_r - s) - q_s x \\
+    \frac{dr}{dt} = (Y q_s - a_0 r) \left(\frac{s}{K_r + s} - r\right)
+  \end{cases}$$
+  where  
+$$q_s = r \frac{Q_s K_s}{K_s + s} + (1 - r) \frac{Q_s' K_s'}{K_s' + s}$$
+  Parameters: Yield ($Y$), Biological inertia ($a_0$), Dilution rate ($D$), Nutrient uptake coefficients ($Q_s, Q_s'$), Saturation constants ($K_s, K_s'$), Half-saturation constant for $r$($K_r$).
+
+- **monod_ierusalimsky** (Including Biological Inertia)  
+
+### Model Reference Table  
+
+| **Model Name**                   | **Parameters List**                                 | **String to Call**                   |
+|-----------------------------------|----------------------------------------------------|--------------------------------------|
+| SIR Model                        | $\beta, \gamma$                                | "SIR"                           |
+| SIR with Birth/Death             | $\beta, \gamma, b, d$                          | "SIR_BD"                        |
+| SIS Model                         | $\beta, \gamma$                                | "SIS"                           |
+| Lotka-Volterra                   | $\alpha, \beta, \delta, \gamma$                | "Lotka_Volterra"                |
+| Lotka-Volterra with Substrate     | $\alpha, \beta, \delta, \gamma, K$            | "Lotka_Volterra_with_substrate"                  |
+| Monod Chemostat                  | $K_s, m, Y, \mu_m, D, S_{\text{in}}$          | "Monod_Chemostat"               |
+| Droop Model                       | $\mu_m, \rho_m, K_s, D, S_{\text{in}}, Q_0$   | "Droop"                         |
+| Synthetic Chemostat               | $Y, a_0, D, Q_s, Q_s', K_s, K_s', K_r$       | "Synthetic_Chemostat"           |
+| monod_ierusalimsky             | X       | "X"           |
+
+5. [Cybernetic models for bacterial growth](#Cybernetic_list)
+
+6. [Reaction networks](#RN_list)
