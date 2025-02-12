@@ -1,20 +1,20 @@
 # [The mathematical models](@id models)
 
-In Kinbiont is possible to simulate and fit the bacterial growth with any Ordinary Differential Equation System.  We can broadly divide the classed of possible mathematical models in the following:
+In Kinbiont is possible to simulate and fit the bacterial growth with any Ordinary Differential Equations System.  We can broadly divide the classed of possible mathematical models in the following:
 
 ```@contents
 Pages = ["index.md"]
 Depth = 2
 ```
 
-
+In this section we show some of the harcoded models of Kinbiont.jl but note that you can input any custom model both has analytic functio both as ODE.
 
 
 
 ## NL models for bacterial growth
 
 In generale NL fitting is preferred to ODE fitting in the following cases:
-1.  Since is a lot faster when you have to analyze large dataset
+1.  Since is faster when you have to analyze large dataset
 2. When you do not trust initial conditions (e.g., initial inocolum under the detection limit of the instrument). ODE fit needs to fix the intial condition of data on the first (or an average of the firts) time point of data and this could lead to errors.
 
 In this case, we are supposed to know the analytic formula of microbial growth; in particular, we have implemented some models from "Statistical evaluation of mathematical models for microbial growth" and added some piecewise models. They are:
@@ -520,15 +520,15 @@ The system dynamics are governed by the following parameters:
 
 | **Model Name**                   | **Parameters List**                                 | **String to Call**                   |
 |-----------------------------------|----------------------------------------------------|--------------------------------------|
-| SIR Model                        | $\beta, \gamma$                                | "SIR"                           |
-| SIR with Birth/Death             | $\beta, \gamma, b, d$                          | "SIR_BD"                        |
-| SIS Model                         | $\beta, \gamma$                                | "SIS"                           |
-| Lotka-Volterra                   | $\alpha, \beta, \delta, \gamma$                | "Lotka_Volterra"                |
-| Lotka-Volterra with Substrate     | $\alpha, \beta, \delta, \gamma, K$            | "Lotka_Volterra_with_substrate"                  |
-| Monod Chemostat                  | $K_s, m, Y, \mu_m, D, S_{\text{in}}$          | "Monod_Chemostat"               |
-| Droop Model                       | $\mu_m, \rho_m, K_s, D, S_{\text{in}}, Q_0$   | "Droop"                         |
-| Synthetic Chemostat               | $Y, a_0, D, Q_s, Q_s', K_s, K_s', K_r$       | "Synthetic_Chemostat"           |
-| Monod-Ierusalimsky            | $K_s, K_p, \mu, Y_{max}, Y_p", D, s_r, m$   | "Monod_Ierusalimsky"          |
+| SIR Model                        | $\beta, \gamma$                                | `SIR`                           |
+| SIR with Birth/Death             | $\beta, \gamma, b, d$                          | `SIR_BD`                        |
+| SIS Model                         | $\beta, \gamma$                                | `SIS`                           |
+| Lotka-Volterra                   | $\alpha, \beta, \delta, \gamma$                | `Lotka_Volterra`                |
+| Lotka-Volterra with Substrate     | $\alpha, \beta, \delta, \gamma, K$            | `Lotka_Volterra_with_substrate`                  |
+| Monod Chemostat                  | $K_s, m, Y, \mu_m, D, S_{\text{in}}$          | `Monod_Chemostat`               |
+| Droop Model                       | $\mu_m, \rho_m, K_s, D, S_{\text{in}}, Q_0$   | `Droop`                         |
+| Synthetic Chemostat               | $Y, a_0, D, Q_s, Q_s', K_s, K_s', K_r$       | `Synthetic_Chemostat`           |
+| Monod-Ierusalimsky            | $K_s, K_p, \mu, Y_{max}, Y_p", D, s_r, m$   | `Monod_Ierusalimsky`          |
 
 ## Cybernetic models for bacterial growth
 
@@ -580,7 +580,7 @@ For the moment all substrate follow a Monod-like concentration effect on growth 
 
 ## Reaction networks
 
-In the case the user want to input the system as a network of reaction, Kinbiont.jl relies on Catalyst.jl ( https://github.com/SciML/Catalyst.jl ) to generate the ODE problem to be fitted and solved.
+In the case the user want to input the system as a network of reaction, Kinbiont.jl relies on [Catalyst.jl](https://github.com/SciML/Catalyst.jl) to generate the ODE problem to be fitted and solved.
 A network and its parameters should be declared as the following:
 ```julia
 u0 = [:S => 301, :E => 100, :SE => 0, :P => 0]
@@ -592,4 +592,4 @@ model_Michaelis_Menten = @reaction_network begin
     kP, SE --> P + E
 end 
 ```
-For other examples on how declare a reaction network please consult: https://docs.sciml.ai/Catalyst/stable/. 
+For other examples on how declare a reaction network please consult:[Catalyst.jl documentation](https://docs.sciml.ai/Catalyst/stable/).

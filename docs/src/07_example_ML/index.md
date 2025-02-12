@@ -9,7 +9,7 @@ Depth = 3
 
 ## Symbolic regression detection of laws
 
-In this section we present different example of how to use symbolic regression.
+In this section we present different examples of how to use symbolic regression.
 
 To run these examples, you will need the following packages:
 
@@ -25,7 +25,7 @@ using Distributions
 
 In this example, we simulate data for a single species. The growth rate depends on an experimental feature, and we assume the user does not know the exact relationship between this feature and the growth rate but it can manipulate and register the value of this feature.
 We conduct the experiment under different conditions and fit the data using a simple ODE model.
-Afterward, we apply symbolic regression between the experimental feature and the fitted growth rates the to discover the the relationship.
+Afterward, we apply symbolic regression between the experimental feature and the fitted growth rates the to discover the relationship.
 This workflow can be represented by the following diagram:
 
 
@@ -158,7 +158,11 @@ hline!(unique(gr_sy_reg[3][:, 1]), label=["Eq. 1" nothing], line=(3, :green, :da
 plot!(unique(results_fit[2, :]), unique(gr_sy_reg[3][:, 2]), label=["Eq. 2" nothing], line=(3, :red))
 plot!(unique(results_fit[2, :]), unique(gr_sy_reg[3][:, 3]), label=["Eq. 3" nothing], line=(3, :blue, :dashdot))
 ```
-
+The Hall of fame can be visulalized looking into
+```
+gr_sy_reg[1]
+gr_sy_reg[2]
+```
 
 The unkwon function can be definde in different ways, for example a quadratic function: 
 
@@ -399,7 +403,6 @@ n_start = [0.1]
 delta_t = 10.0
 noise_value = 0.03
 
-plot(0, 0)
 ```
 We initialize the model, the guess, and the bounds to fit and the array to store the results:
 
@@ -420,6 +423,9 @@ p1_guess = lb_1 .+ (ub_1 .- lb_1) ./ 2
 For each experiment, the antibiotic effect is applied, the data is simulated using **Kinbiont**, and noise is added to the data. The resulting data is then fitted to an ODE model (`baranyi_richards`).
 
 ```julia
+# just to reset the display of plots
+plot(0, 0)
+
 for f in 1:size(random_matrix)[1]
     p_sim[1] = transform_abx_vector(random_matrix[f, :], psim_1_0)
 
@@ -486,6 +492,11 @@ dt_gr = Kinbiont.downstream_decision_tree_regression(results_fit,
         n_folds_cv=n_folds,
         seed=seed
     )
+```
+The result (tree, cross validation R^2 and importance score) are stored into dt_gr[1],dt_gr[2] and dt_gr[3]
+
+For a basic visualization of the tree you can digit
+```julia
 
 # Visualizing the decision tree
 wt = DecisionTree.wrap(dt_gr[1], (featurenames = ["abx_1", "abx_2", "abx_3"]))
@@ -510,7 +521,7 @@ The growth rates and predation interactions are modeled with the following set o
 function model_1(du, u, param, t)
     # Define the ODEs
     du[1] = param[1] * u[1] * u[4] - param[4] * u[3] * u[1]  # Species 1 growth and predation by species 3
-    du[2] = param[2] * u[2] * u[4]  # Species 2 growth
+    du[2] = param[2] * u[2] * u[4]  # Species 2 growth no interaction
     du[3] = param[3] * u[2] * u[4] + param[4] * u[3] * u[1]  # Species 3 growth and interaction with species 1
     du[4] = (-param[1] * u[1] - param[2] * u[2] + -param[3] * u[3]) * u[4]  # Resource consumption
 end
@@ -522,7 +533,8 @@ Here, the parameters are:
 - `param[3]` is the yield rate of species 3,
 - `param[4]` represents the predation rate between species 3 and species 1.
 
-We simulate the community dynamics using random initial conditions for the species populations.
+We will simulate the community dynamics using random initial conditions for the species populations.
+Then, we generate a random matrix of features (i.e., initial conditions) used in the for loop later on
 
 ```julia
 # We generate a random matrix of features (i.e., initial conditions)
@@ -555,7 +567,7 @@ ub_1 = [0.5, 5.1, 16.0]
 lb_1 = [0.0001, 0.000001, 0.00]
 p1_guess = lb_1 .+ (ub_1 .- lb_1) ./ 2
 ```
-We make a for loop with the different initial conditions:
+We make a for loop within the different initial conditions:
 
 ```julia
 
@@ -655,7 +667,7 @@ This decision tree shows how the initial community composition ($CI_1, CI_2, CI_
 
 
 
-In this example we analyze the already fitted data from: High-throughput characterization of bacterial responses to complex mixtures of chemical pollutants in Nature Microbiology, https://doi.org/10.1038/s41564-024-01626-9.
+In this example we analyze the already fitted data from: [High-throughput characterization of bacterial responses to complex mixtures of chemical pollutants in Nature Microbiology](https://doi.org/10.1038/s41564-024-01626-9.)
 
 
 We read the results of the fits and the antibiotic present in each well from the data examples provided in the Kinbiont.jl github:
@@ -663,7 +675,7 @@ We read the results of the fits and the antibiotic present in each well from the
 Kinbiont_res_test = readdlm("your_path/data_examples/Results_for_ML.csv", ',')
 annotation_test = readdlm("your_path/data_examples/annotation_for_ML.csv", ',')
 ```
-If you want to replicate the fitting procedure for this dataset please look at this script https://github.com/pinheiroGroup/Kinbiont_utilities/blob/main/Fig_4_5/loop_chem_isolates_analysis_NL.jl . Note that this could require some time since the number of curves is about $10^4$. 
+If you want to replicate the fitting procedure for this dataset please look at this script [script](https://github.com/pinheiroGroup/Kinbiont_utilities/blob/main/Fig_4_5/loop_chem_isolates_analysis_NL.jl). Note that this could require some time since the number of curves is about $10^4$. 
 
 We define some variables for analysis:
 

@@ -723,7 +723,7 @@ plot!(fit[3], label="Fitted Model")
 ### Fitting reaction network
 
 
-We define a **Michaelis-Menten enzyme kinetics** reaction network using Catalyst (https://docs.sciml.ai/Catalyst/stable/) :
+We define a **Michaelis-Menten enzyme kinetics** reaction network using [Catalyst](https://docs.sciml.ai/Catalyst/stable/) :
 
 ```julia
 # Define initial conditions
@@ -1145,12 +1145,12 @@ $$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(N(t_i) - \hat{N}(t_i, \{P\
 
 `"RE"`: Minimize the relative error between the solution and data.
 
-$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2$$
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\hat{N}(t_i, \{P\})}\right)^2$$
 
 
 `"L2_derivative"`: Minimize the L2 norm of the difference between the specific growth rate of the numerical solution of the desired model and the corresponding derivatives of the data.
 
-$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{dD(t_i)}{dt} - \frac{d\bar{N}(t_i, \{P\})}{dt}\right)^2$$
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{dD(t_i)}{dt} - \frac{d\hat{N}(t_i, \{P\})}{dt}\right)^2$$
 
 
 `"blank_weighted_L2"`: Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data.
@@ -1165,7 +1165,7 @@ $$\mathcal{L}(\{P\}) = \log\left(\frac{1}{n} \sum_{i=1}^n \left(N(t_i) - \hat{N}
 
 `"RE_log"`: Minimize the logarithm of the relative error between the solution and data.
 
-$$\mathcal{L}(\{P\})= \log\left(\frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2\right)$$
+$$\mathcal{L}(\{P\})= \log\left(\frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\hat{N}(t_i, \{P\})}\right)^2\right)$$
 
 
 `"L2_std_blank"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the data, normalized by the standard deviation of empirical blank data.
