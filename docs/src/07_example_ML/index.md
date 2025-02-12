@@ -333,7 +333,15 @@ plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_r
 
 
 
-In this example, we explore how **Kinbiont.jl** can be used to simulate data about a species exposed to various antibiotics, both individually and in combination. We then apply a decision tree regression model to predict the growth rate of the species based on the antibiotics present in the media.
+In this example, we explore how **Kinbiont.jl** can be used to simulate data about a species exposed to various antibiotics, both individually and in combination. 
+We then apply a decision tree regression model to predict the growth rate of the species based on the antibiotics present in the media.
+This procedure in theory permits to an experimetalist to retrive the "table of the effects" of the antibiotic combinations, this can be depicted with the following diagram: 
+
+```@raw html
+<div style="text-align: center; margin-bottom: 20px; margin: auto; max-width: 320px;">
+    <img alt="Kinbiont Decision Tree example" src="./assets/example_DT.png">
+</div>
+```
 
 
 To run this example, you will need the following Julia packages:
