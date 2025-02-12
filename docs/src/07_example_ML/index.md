@@ -642,7 +642,7 @@ dt_gr = Kinbiont.downstream_decision_tree_regression(
 ```
 
 
-Finally, we visualize the decision tree using t
+Finally, we visualize the decision tree
 ```julia
 wt = DecisionTree.wrap(dt_gr[1], (featurenames=feature_names,))
 p2 = Plots.plot(wt, 0.9, 0.2; size=(1500, 700), connect_labels=["yes", "no"])
