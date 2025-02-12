@@ -72,6 +72,6 @@ using Kinbiont
 - **SymbolicUtils**: 1.6.0
 - **Tables**: 1.11.1
 - **Zygote**: 0.6.70
-
-
+- **Catalyst**
+- **DiffEqParamEstim**
 

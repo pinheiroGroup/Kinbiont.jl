@@ -1,4 +1,4 @@
-# [Examples and Tutorial](@id examples)
+# [Examples of ML analysis](@id examples)
 
 This section provides some copy-and-paste examples of Kinbiont.jl
 
@@ -6,34 +6,12 @@ This section provides some copy-and-paste examples of Kinbiont.jl
 Pages = ["index.md"]
 Depth = 3
 ```
-To run all these example you need to call the following packages:
 
-
-```julia
-using Kinbiont
-using CSV
-using Plots
-using Distributions
-using Optimization
-using OptimizationNLopt
-using Tables
-using SymbolicRegression
-using DataFrames
-using Statistics
-using DelimitedFiles
-using Random
-using DecisionTree
-using AbstractTrees
-using MLJDecisionTreeInterface
-using TreeRecipe
-```
 ## Symbolic regression detection of laws
 
+In this section we present different example of how to use symbolic regression.
 
-This example demonstrates how to use **Kinbiont.jl** for simulating a growth model, fitting data with an ODE-based model, and performing symbolic regression to retrieve the relationship between an experimental feature and the effective growth rate.
-
-
-To run this example, you will need the following packages:
+To run these examples, you will need the following packages:
 
 ```julia
 using DifferentialEquations
@@ -43,9 +21,19 @@ using Plots
 using StatsBase
 using Distributions
 ```
+### Symbolic regression detection of laws: synthetic data example
 
-In this example, we simulate data for a single species. The growth rate depends on an experimental feature, and we assume the user does not know the exact relationship between the feature and the growth rate. We perform the experiment at different conditions and fit the data using a simple ODE model. Afterward, we apply **symbolic regression** to discover the relationship between the experimental feature and the effective growth rate.
+In this example, we simulate data for a single species. The growth rate depends on an experimental feature, and we assume the user does not know the exact relationship between this feature and the growth rate but it can manipulate and register the value of this feature.
+We conduct the experiment under different conditions and fit the data using a simple ODE model.
+Afterward, we apply symbolic regression between the experimental feature and the fitted growth rates the to discover the the relationship.
+This workflow can be represented by the following diagram:
 
+
+```@raw html
+<div style="text-align: center; margin: auto; max-width: 1000px;">
+    <img alt="Kinbiont flow chart on how select fit functions"src="../assets/experiment_SymR.png">
+</div>
+```
 
 The function `unknown_response` defines the relationship between the experimental feature and the growth rate, where the growth rate is altered as a function of the feature.
 
@@ -57,7 +45,7 @@ end
 ```
 
 
-We use the `baranyi_richards` ODE model in this example. First, we define the parameter ranges for the simulation:
+We use the `baranyi_richards` ODE model in this example. First, we define the parameter ranges and the inital guess  for the fit:
 
 ```julia
 ODE_models = "baranyi_richards"
@@ -87,10 +75,12 @@ noise_value = 0.02  # Noise for simulation
 ```
 
 
-We loop through different feature values, modify the growth rate according to the `unknown_response`, and run the simulation. We also add noise to the simulated data for realism.
+We loop through different feature values, modify the growth rate according to the `unknown_response`, and run the simulation. We also add noise to the simulated data.
 
 ```julia
+# plot to clean the display 
 plot(0, 0)
+# for over the generated feature values
 for f in feature_range
     # Modify the parameter for the current feature
     p_sim[1] = psim_1_0 * unknown_response(f)
@@ -131,14 +121,6 @@ for f in feature_range
     end
 end
 ```
-
-
-After fitting the ODE model to the data at each feature condition, we plot the feature value versus the effective growth rate:
-
-```julia
-scatter(results_fit[2, :], results_fit[4, :], xlabel="Feature value", ylabel="Growth rate")
-```
-
 
 We now perform symbolic regression to discover the relationship between the feature and the effective growth rate. We set up the options for symbolic regression and generate a feature matrix based on the `feature_range`.
 
@@ -186,9 +168,9 @@ function unknown_response(feature)
     return response
 end
 ```
-## Symbolic regression on real data
+### Symbolic regression detection of laws: detection of Monod law on real data
 
-In this example we replicate the detection of the Monod law on real data presented in the Kinbiont paper. First we set up the paths of the data and where to save the results
+In this example we replicate the detection of the Monod law on real data presented in the Kinbiont paper. First we set up the paths of the data and where to save the results:
 
 ```julia
 path_to_data = "your_path/data_examples/plate_data.csv"
@@ -197,7 +179,7 @@ path_to_calib = "your_path/data_examples/cal_curve_example.csv"
 path_to_results = "your_path//seg_res/"
 ```
 
-We fit the data with  segmentation and 1 change point. First, we declare the models
+We fit the data with  segmentation and 1 change point, this is done to discard from the fitting procedure the sub exponetial growth that appears during the stationary phase. First, we declare the models
 
 ```julia
 model1 = "HPM_exp"
@@ -218,7 +200,7 @@ list_ub = [ub_param1, ub_param2]
 n_change_points =1
 ```
 
-We perform  the fitting:
+We perform  the fitting, also applying a multiple scattering correction (the file to do that should be calibrated on your instrument) :
 
 ```julia
 fit_file = Kinbiont.segmentation_ODE_file(
@@ -331,30 +313,33 @@ plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_r
 
 ## Decision tree regression
 
+To run these examples, you will need the following Julia packages:
 
-
+```julia
+using Kinbiont
+using Plots
+using StatsBase
+using Distributions
+using Random
+# packages to plot the tree if you do not want a plot you can skip
+using AbstractTrees
+using MLJDecisionTreeInterface
+using TreeRecipe
+using DecisionTree
+```
+###  Decision tree regression: reconstruction of antibiotics effects table
 In this example, we explore how **Kinbiont.jl** can be used to simulate data about a species exposed to various antibiotics, both individually and in combination. 
 We then apply a decision tree regression model to predict the growth rate of the species based on the antibiotics present in the media.
-This procedure in theory permits to an experimetalist to retrive the "table of the effects" of the antibiotic combinations, this can be depicted with the following diagram: 
+This procedure in theory permits users to retrive the "table of the effects" of the antibiotic combinations, this can be depicted with the following diagram: 
 
 ```@raw html
-<div style="text-align: center; margin-bottom: 20px; margin: auto; max-width: 320px;">
-    <img alt="Kinbiont Decision Tree example" src="./assets/example_DT.png">
+<div style="text-align: center;  margin: auto; max-width: 1000px;">
+    <img alt="Kinbiont Decision Tree example" src="../assets/experiment_DT.png">
 </div>
 ```
 
 
-To run this example, you will need the following Julia packages:
 
-```julia
-using DifferentialEquations
-using CSV
-using SymbolicRegression
-using Plots
-using StatsBase
-using Distributions
-using DecisionTree
-```
 
 
 We define a transformation function that modifies the growth rate (`mu`) of the species depending on the antibiotics present in the media. This function uses a predefined concentration map:
@@ -392,7 +377,7 @@ The concentration map defines how the growth rate (`mu`) is modified for differe
 | 0            | 0            | 0            | 1.0             |
 
 
-We generate a random matrix representing the combinations of antibiotics present in each experiment. For each row, we apply the antibiotic transformation function to modify the growth rate.
+We generate a random binary matrix representing the combinations of antibiotics present in each experiment and we set simulation parameters.
 
 ```julia
 # Generate random antibiotic combinations
@@ -415,6 +400,21 @@ delta_t = 10.0
 noise_value = 0.03
 
 plot(0, 0)
+```
+We initialize the model, the guess, and the bounds to fit and the array to store the results:
+
+```julia
+# We initialize the array for the results
+results_fit = Any
+
+# We initialize the model, the guess, and the bounds to fit
+
+ODE_models = "baranyi_richards"
+
+ub_1 = [0.2, 5.1, 500.0, 5.0]
+lb_1 = [0.0001, 0.2, 0.00, 0.2]
+p1_guess = lb_1 .+ (ub_1 .- lb_1) ./ 2
+
 ```
 
 For each experiment, the antibiotic effect is applied, the data is simulated using **Kinbiont**, and noise is added to the data. The resulting data is then fitted to an ODE model (`baranyi_richards`).
@@ -443,7 +443,7 @@ for f in 1:size(random_matrix)[1]
         data_OD,
         string(random_matrix[f, 1]),
         "test_ODE",
-        "baranyi_richards",
+        ODE_models,
         p1_guess;
         lb=lb_1,
         ub=ub_1
@@ -493,14 +493,9 @@ p2 = Plots.plot(wt, 0.9, 0.2; size=(1400, 700), connect_labels=["yes", "no"])
 ```
 
 
-In this example, we simulated the effects of different antibiotic combinations on the growth rate of a species, fitted the data using the **baranyi_richards** model, and used decision tree regression to predict the growth rate based on the antibiotics present in the media. We also visualized the decision tree to gain insights into how the antibiotics impact the growth dynamics. Since this tree completely reconstruct the starting concentration map table the decision tree algorithm can help in identifying which combinations have the most significant effects.
+###  Detecting Species Interactions with Decision Tree
 
-
-
-
-##  Modeling Tree Species Interactions with ODEs and Decision Trees
-
-In this tutorial, we simulate a simple community of three tree species (N_1, N_2, and N_3) using Ordinary Differential Equations (ODEs) and analyze the community dynamics using decision tree regression, note that in this case we reduce the information aviable to the downstream analysis supposing that is possible only to measure the total biomass (N_1 + N_2 Z + N_3). We will vary the initial composition of the species, fit with an empirical ODE model with only one equation, and by applying a decsion tree regression on the parameters of this empirical model we study how initial conditions modify the population behavior.
+In this tutorial, we simulate a simple community of three tree species ($N_1, N_2, and N_3$) using Ordinary Differential Equations (ODEs) and analyze the community dynamics using decision tree regression, note that in this case we reduce the information aviable to the downstream analysis supposing that is possible only to measure the total biomass ($N_1 + N_2 + N_3$). We will vary the initial composition of the species, fit with an empirical ODE model with only one equation, and by applying a decsion tree regression on the parameters of this empirical model we study how initial conditions modify the population behavior.
 
 
 The tree species interact in a competitive environment where:
@@ -534,17 +529,13 @@ We simulate the community dynamics using random initial conditions for the speci
 # Define the dimensions of the matrix
 cols = 3
 n_experiment = 150
-
 # Generate a random matrix with 0s and 0.1s
 random_matrix = rand([0, 0.1], n_experiment, cols)
 labels = string.(1:1:n_experiment)
 random_matrix = hcat(labels, random_matrix)
-
-
 ```
 
-Next, we introduce some randomness into the data by adding uniform noise to the simulations to make it more realistic. This noise simulates small environmental fluctuations that might be observed in real data.
-
+We set up some parameters for the simulation:
 ```julia
 
 # Defining the parameter values for the simulation 
@@ -564,7 +555,7 @@ ub_1 = [0.5, 5.1, 16.0]
 lb_1 = [0.0001, 0.000001, 0.00]
 p1_guess = lb_1 .+ (ub_1 .- lb_1) ./ 2
 ```
-
+We make a for loop with the different initial conditions:
 
 ```julia
 
@@ -651,30 +642,28 @@ dt_gr = Kinbiont.downstream_decision_tree_regression(
 ```
 
 
-Finally, we visualize the decision tree using the `DecisionTree.wrap` function to help understand how the decision tree splits based on the initial conditions.
-
+Finally, we visualize the decision tree using t
 ```julia
 wt = DecisionTree.wrap(dt_gr[1], (featurenames=feature_names,))
 p2 = Plots.plot(wt, 0.9, 0.2; size=(1500, 700), connect_labels=["yes", "no"])
 ```
 
-This decision tree shows how the initial community composition (CI_1, CI_2, CI_3) influences the predicted model parameters.
+This decision tree shows how the initial community composition ($CI_1, CI_2, CI_3$) influences the predicted model parameters.
 
 
 ### Decision Tree Regression Analysis on real data
 
 
 
-In this example we analyze the already fitted data from:
+In this example we analyze the already fitted data from: High-throughput characterization of bacterial responses to complex mixtures of chemical pollutants in Nature Microbiology, https://doi.org/10.1038/s41564-024-01626-9.
 
 
-We read the data from CSV files:
-
+We read the results of the fits and the antibiotic present in each well from the data examples provided in the Kinbiont.jl github:
 ```julia
 Kinbiont_res_test = readdlm("your_path/data_examples/Results_for_ML.csv", ',')
 annotation_test = readdlm("your_path/data_examples/annotation_for_ML.csv", ',')
 ```
-
+If you want to replicate the fitting procedure for this dataset please look at this script https://github.com/pinheiroGroup/Kinbiont_utilities/blob/main/Fig_4_5/loop_chem_isolates_analysis_NL.jl . Note that this could require some time since the number of curves is about $10^4$. 
 
 We define some variables for analysis:
 

@@ -2,25 +2,22 @@
 
 In Kinbiont is possible to simulate and fit the bacterial growth with any Ordinary Differential Equation System.  We can broadly divide the classed of possible mathematical models in the following:
 
-1. [NL models for bacterial growth](#NL_list)
-2. [ODEs for bacterial growth](#ODE_list)
-3. [Stochastic models for bacterial growth](#stoch_model)
-4. [ODEs system for bacterial growth](#ODEs_system_list)
-5. [Cybernetic models for bacterial growth](#Cybernetic_list)
-6. [Reaction networks](#RN_list)
+```@contents
+Pages = ["index.md"]
+Depth = 2
+```
 
-When fitting, NL models and 1D ODE will assume that you are measuring only the biomass of the system (e.g., microplate reader experiments that register the Optical Density).
+
 
 
 
 ## NL models for bacterial growth
 
-
+In generale NL fitting is preferred to ODE fitting in the following cases:
+1.  Since is a lot faster when you have to analyze large dataset
+2. When you do not trust initial conditions (e.g., initial inocolum under the detection limit of the instrument). ODE fit needs to fix the intial condition of data on the first (or an average of the firts) time point of data and this could lead to errors.
 
 In this case, we are supposed to know the analytic formula of microbial growth; in particular, we have implemented some models from "Statistical evaluation of mathematical models for microbial growth" and added some piecewise models. They are:
-Note that in generale NL fitting is preferred to ODE fitting in the following cases:
-1.  Since is a lot faster when you have to analyze large dataset
-2. When you do not trust initial conditions (e.g., initial inocolum under the detection limit of the instrument). ODE fit needs to fix the intial condition of data on the first (or an average of the firts) time point of data and this could lead to errors/
 
 - **Exponential**  
 
@@ -121,7 +118,7 @@ For a general idea of the property of models consult the following table:
 | Piece-wise linear-logistic        | Yes        | Yes            | Yes                   |
 | Piece-wise exponential-logistic   | Yes        | Yes            | Yes                   |
 
-If undecided between different models plese use the model selection function.
+If undecided between different models please use the model selection function.
 
 
 ## ODEs for bacterial growth
@@ -251,7 +248,7 @@ where similarly to the HPM model, $N_1$ and $N_2$ refer to the populations of do
 $$\begin{cases}
   N(t) = N_1(t) + N_2(t), \\
   \frac{d N_1(t)}{dt} = - r_{\text{L}} \cdot N_1(t), \\
-  \frac{d N_2(t)}{dt} = r_{\text{L}} \cdot N_1(t) + \mu \cdot N_2(t) ,
+  \frac{d N_2(t)}{dt} = r_{\text{L}} \cdot N_1(t) + \mu \cdot N_2(t) \cdot \left(1 - \left(\frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)^m \right),
 \end{cases}$$
 
 where $\mu$ is the growth rate, and $N_{\text{max}}$ the total growth.
@@ -260,14 +257,15 @@ Note that these models assume that the cells are in two states: $N_1(t)$ dormant
 - **Heterogeneous Population Model with Inhibition**:
 
 $$\begin{cases}
-  N(t) = N_1(t) + N_2(t) \\
+  N(t) = N_1(t) + N_2(t)+ N_3(t)  \\
   \frac{d N_1(t)}{dt} = - r_{\text{L}} \cdot N_1(t) \\
-  \frac{d N_2(t)}{dt} = r_{\text{L}} \cdot N_1(t) + \mu \cdot N_2(t) \cdot \left(1 - \left(\frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)^m\right)
+  \frac{d N_2(t)}{dt} = r_{\text{L}} \cdot N_1(t) - r_{\text{I}} \cdot  N_2(t)\\
+  \frac{d N_3(t)}{dt} =  r_{\text{I}} \cdot  N_2(t)
 \end{cases}$$
 
 
-where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth,  $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) and $m$ a shape constant.     
-Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase) and $N_2(t)$ active cells, which are able to duplicate.At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(start) = OD(start)$, and $N_{2}(start) = 0.0$) .
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth,  $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) and $r_{\text{I}}$ a shape constant.     
+Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase), $N_2(t)$ active cells, which are able to duplicate, and  inactive cells $N_3(t)$. At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(\text{start}) = OD(\text{start})$, $N_{2}(\text{start}) = 0.0$, and $N_{3}(\text{start}) = 0.0$).
 
 - **Heterogeneous Population Model with Inhibition and Death**:
 
@@ -400,54 +398,10 @@ $\mu(N;N_\text{max},\mu_\text{max})  = \displaystyle{\mu_\text{max} \left(1-\fra
 
 
 
-
-## Error functions
-The user can choose to use different error functions to perfor the fitting. Each fitting API has its keyword argument to change the loss. The possible options are described in the following section.
-
-In the  equations of this list, the notation is the following: $n$ the number of time points $t_i$, $\hat{N}(t_i, \{P\})$ is the proposed numerical solution at time $t_i$ and using the parameters $\{P\}$, and $N(t_i)$ is the data value at $t_i$.
-
-`"L2"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the given data.
-
-$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2$$
+## ODEs system for bacterial growth
 
 
-`"RE"`: Minimize the relative error between the solution and data.
-
-$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2$$
-
-
-`"L2_derivative"`: Minimize the L2 norm of the difference between the specific growth rate of the numerical solution of the desired model and the corresponding derivatives of the data.
-
-$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{dD(t_i)}{dt} - \frac{d\bar{N}(t_i, \{P\})}{dt}\right)^2$$
-
-
-`"blank_weighted_L2"`: Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data.
-
-$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(1 - P(N(t_i) - \hat{N}(t_i, \{P\})|\text{noise})\right) \, \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2$$
-
-where $P(N(t_i) - \hat{N}(t_i, \{P\})|\text{noise})$ is the probability distribution of the empirical blank data.
-`"L2_log"`: Minimize the logarithm of the L2 norm of the difference between the numerical solution of the desired model and the given data.
-
-$$\mathcal{L}(\{P\}) = \log\left(\frac{1}{n} \sum_{i=1}^n \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2\right)$$
-
-
-`"RE_log"`: Minimize the logarithm of the relative error between the solution and data.
-
-$$\mathcal{L}(\{P\})= \log\left(\frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2\right)$$
-
-
-`"L2_std_blank"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the data, normalized by the standard deviation of empirical blank data.
-
-$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{N(t_i) - \hat{N}(t_i, \{P\})}{\text{std_blank}}\right)^2$$
-
-where $\text{std_blank}$ is the standard deviation of the empirical blank data.
-
-
-4. [ODEs system for bacterial growth](#ODEs_system_list)
-
-
-In this section, we present various Ordinary Differential Equation (ODE) models used to describe microbial and population dynamics. These models are fundamental in epidemiology, ecology, and biotechnology. The models implemented include standard epidemiological models like SIR and SIS, predator-prey models, and different chemostat models for microbial growth.
-
+In this section, we present some of the examples of ODEs multidimensional system harcoded in Kinbiont. Note that these are just examples since you can define custom models:
 
 - **SIR Model** (Susceptible-Infected-Recovered)  
 $$\begin{cases}
@@ -518,9 +472,51 @@ $$\begin{cases}
 $$q_s = r \frac{Q_s K_s}{K_s + s} + (1 - r) \frac{Q_s' K_s'}{K_s' + s}$$
   Parameters: Yield ($Y$), Biological inertia ($a_0$), Dilution rate ($D$), Nutrient uptake coefficients ($Q_s, Q_s'$), Saturation constants ($K_s, K_s'$), Half-saturation constant for $r$($K_r$).
 
-- **monod_ierusalimsky** (Including Biological Inertia)  
+- **Monod-Ierusalimsky** 
+This model describes microbial growth, substrate consumption, and product formation using Monod-Ierusalimsky kinetics.  
 
-### Model Reference Table  
+
+The specific growth rate $\mu$ follows the Monod-Ierusalimsky kinetics:  
+$$\mu = \mu_m \cdot \frac{s}{K_s + s} \cdot \frac{K_p}{K_p + p}$$
+where:  
+- The first fraction represents substrate-limited growth (Monod equation).  
+- The second fraction accounts for product inhibition (Ierusalimsky modification).  
+
+The effective biomass yield is given by:  
+$$Y = \frac{Y_{max} \cdot D}{D + m \cdot Y_{max}}$$
+
+Finally the  System Dynamics is specified by:  
+
+$$\frac{dx}{dt} = \mu x - D x$$
+
+where $\mu x$ represents microbial growth, and $-D x$ accounts for biomass washout due to dilution.  
+
+$$\frac{ds}{dt} = D (s_r - s) - \frac{\mu x}{Y} - m x$$  
+
+$$\frac{dp}{dt} = Y_p \mu x - D p$$
+
+where $Y_p$ is the product yield coefficient, and $-D p$ accounts for product washout.  
+
+The system  state variables are:  
+- Biomass concentration: $x = u_1$  
+- Substrate concentration: $s = u_2$  
+- Product concentration: $p = u_3$  
+
+
+The system dynamics are governed by the following parameters:  
+
+| Parameter | Description |
+|-----------|-------------|
+| $K_s$  | Substrate affinity constant |
+| $K_p$  | Product inhibition constant |
+| $\mu_m$ | Maximum specific growth rate |
+| $Y_{max}$ | Maximum yield coefficient |
+| $Y_p$  | Product yield coefficient |
+| $D$  | Dilution rate |
+| $s_r$  | Inflow substrate concentration |
+| $m$  | Maintenance coefficient |
+
+
 
 | **Model Name**                   | **Parameters List**                                 | **String to Call**                   |
 |-----------------------------------|----------------------------------------------------|--------------------------------------|
@@ -532,9 +528,68 @@ $$q_s = r \frac{Q_s K_s}{K_s + s} + (1 - r) \frac{Q_s' K_s'}{K_s' + s}$$
 | Monod Chemostat                  | $K_s, m, Y, \mu_m, D, S_{\text{in}}$          | "Monod_Chemostat"               |
 | Droop Model                       | $\mu_m, \rho_m, K_s, D, S_{\text{in}}, Q_0$   | "Droop"                         |
 | Synthetic Chemostat               | $Y, a_0, D, Q_s, Q_s', K_s, K_s', K_r$       | "Synthetic_Chemostat"           |
-| monod_ierusalimsky             | X       | "X"           |
+| Monod-Ierusalimsky            | $K_s, K_p, \mu, Y_{max}, Y_p", D, s_r, m$   | "Monod_Ierusalimsky"          |
 
-5. [Cybernetic models for bacterial growth](#Cybernetic_list)
+## Cybernetic models for bacterial growth
 
-6. [Reaction networks](#RN_list)
+In this case Kinbiont do not takes as input an ODEs function, but a data struct and it proceeds  to construct the ODEs system.
+Note that the same results in theory could be obtained by declaring a custom ODEs system that behave in the same way.
+The data struct is composed in the following way: 
 
+```julia
+model = Kinbiont_Cybernetic_Model(
+    Bio_mass_conc = 1.0,  # Initial biomass concentration
+    Substrate_concentrations = [3.0, 3.0],  # Concentrations of 2 substrates
+    Protein_concentrations = [0.0, 0.0],  # Initial protein concentrations
+    allocation_rule = threshold_switching_rule,  # Dynamic resource allocation rule
+    reaction = nothing,  # No specific reaction function provided
+    cost = nothing,  # No cost function
+    protein_thresholds = 0.01,  # Protein activation threshold
+    a = [0.1, 0.4],  # Synthesis rate constants for proteins
+    b = [0.00001, 0.000001],  # Degradation constants for proteins
+    V_S = [0.7, 0.1],  # Substrate utilization rates
+    k_S = [0.1, 0.11],  # Saturation constants for substrates
+    Y_S = [0.07, 0.11]  # Yield coefficients for biomass per substrate
+)
+```
+Then the ODEs system that will be constructed is the following:
+- **Substrate Consumption:**  
+$$\frac{dS_i}{dt} = -\frac{V_{S_i} P_i S_i}{k_{S_i} + S_i} \cdot u_1, \quad \forall i \in \{1, \dots, n\}$$
+- **Protein Synthesis:**  
+$$\frac{dP_i}{dt} = a_i \cdot \text{alloc}_i \cdot k_{S_i} - b_i P_i u_1, \quad \forall i \in \{1, \dots, n\}$$
+
+- **Biomass Growth:**  
+$$\frac{dN}{dt} = -\sum_{i=1}^{n} Y_{S_i} \frac{dS_i}{dt} \cdot N$$
+
+Where $n$ is the number of substrates, $V_{S_i}$ i-th substrate utilization rates, $k_{S_i}$ i-th saturation constants for substrates, $Y_{S_i}$ i-th yield coefficients for biomass per substrate, $a_{i}$  i-th synthesis rate for proteins and  $b_{i}$ i-th degradation constants for proteins . 
+
+
+    
+The `allocation_rule` in the cybernetic model defines how resources are allocated to different substrates, proteins, or other components of the system. You can create custom rules based on various factors such as substrate concentration, protein levels, or cost-benefit analysis. Below are some examples on how define a custom allocation rule:
+    
+```julia
+# Function for proportional allocation based on substrate concentrations
+function proportional_allocation_rule(a, b, V_S, k_S, Y_S, P, S, cost, protein_thresholds)
+# Normalize substrate concentrations to create allocation vector
+alloc = S ./ sum(S)
+return alloc
+end
+```
+This rule allocates resources to substrates proportionally based on their concentrations.
+For the moment all substrate follow a Monod-like concentration effect on growth rate, so please leave the option `reaction = nothing`. 
+
+## Reaction networks
+
+In the case the user want to input the system as a network of reaction, Kinbiont.jl relies on Catalyst.jl ( https://github.com/SciML/Catalyst.jl ) to generate the ODE problem to be fitted and solved.
+A network and its parameters should be declared as the following:
+```julia
+u0 = [:S => 301, :E => 100, :SE => 0, :P => 0]
+ps = [:kB => 0.00166, :kD => 0.0001, :kP => 0.1]
+
+model_Michaelis_Menten = @reaction_network begin
+    kB, S + E --> SE
+    kD, SE --> S + E
+    kP, SE --> P + E
+end 
+```
+For other examples on how declare a reaction network please consult: https://docs.sciml.ai/Catalyst/stable/. 

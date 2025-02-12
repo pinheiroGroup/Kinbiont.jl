@@ -1,13 +1,17 @@
 
-# [Examples and Tutorial](@id examples)
+# [Examples of Simulations](@id examples)
 
 This section provides some copy-and-paste examples of how perform simulations with Kinbiont.jl.
+
+```@contents
+Pages = ["index.md"]
+Depth = 3
+```
 
 To run all these examples, you need to call the following packages:
 
 ```julia
 using Kinbiont
-using CSV
 using Plots
 using Random
 ```
@@ -35,20 +39,7 @@ sim = Kinbiont.ODE_sim(model, n_start, tstart, tmax, delta_t, param_of_ode)
 Plots.scatter(sim, xlabel="Time", ylabel="Arb. Units", label=["Data" nothing], color=:blue, size=(300, 300))
 ```
 
-We add uniform noise to the data:
 
-```julia
-# Adding uniform random noise
-noise_uniform = rand(Uniform(-0.05, 0.05), length(sim.t))
-
-data_t = reduce(hcat, sim.t)
-data_o = reduce(hcat, sim.u)
-data_OD = vcat(data_t, data_o)
-data_OD[2, :] = data_OD[2, :] .+ noise_uniform
-
-# Plotting scatterplot of data with noise
-Plots.scatter!(data_OD[1, :], data_OD[2, :], xlabel="Time", ylabel="Arb. Units", label=["Data" nothing], color=:red, markersize=2, size=(300, 300))
-```
 
 ## Simulating Data with Stochastic Simulations
 
@@ -84,7 +75,7 @@ Simulation = ODEs_system_sim(
     [0.9, 0.1, 0.0], # Initial conditions: [S, I, R]
     0.0,            # Start time of the simulation
     30.0,           # End time of the simulation
-    1.0,            # Time step for Poisson approximation
+    1.0,            # Time step 
     [0.5, 0.3]      # Parameters of the ODE model: [Infection rate, Recovery rate]
 )
 ```
@@ -97,7 +88,7 @@ scatter(Simulation)  # Scatter plot of the simulation results
 
 ## Simulating ODEs System with Custom Model
 
-Define the Enzyme Aggregation Model (ODE System)
+Define the Enzyme Aggregation Model (ODE System) from: "Genome-Scale Reconstruction of Microbial Dynamic Phenotype: Successes and Challenges"
 
 ```julia
 function enzyme_aggregation(du, u, param, t)
@@ -182,7 +173,7 @@ Run the Simulation:
 
 ```julia
 Simulation = Kinbiont.Kinbiont_Reaction_network_sim(
-    "Michaelis_Menten",
+   model_Michaelis_Menten,
     u0,
     0.0, 10.0, 0.1, # Start time, end time, step size
     ps
@@ -194,9 +185,7 @@ Plot the Simulated Data:
 ```julia
 plot(Simulation)
 ```
-
-## Simulating Custom Reaction Network
-
+We can also consider other kinds of reactions for example.
 Glycolysis is a metabolic pathway that converts glucose into pyruvate, generating ATP and NADH in the process. The pathway consists of multiple enzymatic reactions involving various intermediates. This model simulates the glycolysis pathway using a reaction network.
 
 Define the Glycolysis Reaction Network:
@@ -285,8 +274,6 @@ model = Kinbiont_Cybernetic_Model(
 ```
 
 
-    
-### Defining Custom Allocation Rules
     
 The `allocation_rule` in the cybernetic model defines how resources are allocated to different substrates, proteins, or other components of the system. You can create custom rules based on various factors such as substrate concentration, protein levels, or cost-benefit analysis. Below are some examples of custom allocation rules you can define:
     
@@ -400,7 +387,7 @@ plot(simulation)
 
 ## Data Preprocessing
 
-Any curve can be processed with a calibration curve.
+Any curve can be processed with a calibration curve or with smoothing.
 
 We start by applying a rolling average smoothing to the data. In the example, a rolling window of size 7 is applied to the original data (`data_OD` generated in the previous examples). 
 

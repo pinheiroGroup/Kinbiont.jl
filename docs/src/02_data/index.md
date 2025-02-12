@@ -1,5 +1,10 @@
 # [Data formatting and outputs](@id data)
-## Data and annotation formatting
+```@contents
+Pages = ["index.md"]
+Depth = 4
+```
+
+## Data and annotation formatting for fitting one dimensional data
 
 
 Kinbiont can operate directly on data files or within a Julia notebook. The format of a single time series must be a `2 x n_time_points` matrix of `Float64`:
@@ -49,6 +54,27 @@ Raw_OD,Real_OD
 
 
 See the folder  `data_examples` for examples. 
+
+## Data and Annotation Formatting for Fitting Multidimensional Data  
+
+If the user wants to use the functions `fit_ODEs_System`, `RN_fit`, and `fit_Cybernetic_models`, the format of a single time series must be an `(m+1) \times n_{\text{time points}}` matrix of `Float64`, where \( m \) is the number of equations present in the system (e.g., the number of chemical species).  
+
+The first row is assumed to represent time, while the remaining rows correspond to the quantities being fitted. For example, if there are two equations, an input could be:  
+
+```
+ 0.0        2.0       4.0       6.0       8.0        10.0       12.0       14.0       16.0       18.0       20.0       22.0   …  
+ 0.0912154  0.107956  0.105468  0.101727  0.0931484   0.106318   0.103697   0.139821   0.173598   0.204888   0.251052   0.289018   0.31298  …  
+ 0.1        0.2       0.3       0.4       0.5        0.6        0.7        0.8        0.9        0.9        0.9        0.9        0.9   …  
+```
+
+These functions also allow users to exclude specific data points (e.g., if the data for the first species is not available). In such cases, the user should specify `set_of_equation_to_fit=[2]` in the fitting functions and provide the data in the following format:  
+
+```
+ 0.0        2.0       4.0       6.0       8.0        10.0       12.0       14.0       16.0       18.0       20.0       22.0   …  
+ 0.1        0.2       0.3       0.4       0.5        0.6        0.7        0.8        0.9        0.9        0.9        0.9        0.9   …  
+```
+
+
 
 ## Data and annotation formatting for downstream ML
 
@@ -104,9 +130,9 @@ See the folder  `data_examples` for examples.
 
 ## Outputs of Kinbiont
 
-Kinbiont has different data struct as output
+Kinbiont has different data struct as output. Here you will find a brief summary of the main function to fit, please consult API section for the description of all the function.
 
-- `Kinbiont_res_one_well_log_lin`
+- `fitting_one_well_Log_Lin`
 
 This structure stores results for a single well using a log-linear method.
 
@@ -116,9 +142,16 @@ This structure stores results for a single well using a log-linear method.
 1. `times:Any` - The times at which measurements were taken.
 1. `confidence_band:Any` - The confidence band of the fit.
 
-- `Kinbiont_res_one_well`
+- `fitting_one_well_ODE_constrained` and `fitting_one_well_custom_ODE`
 
 This structure stores results for a single well.
+
+1. `method:String` - The method used.
+1. `params:Vector{Any}` - Parameters obtained from the fitting process.
+1. `fit:Any` - The fitted function.
+1. `times:Any` - The times at which measurements were taken.
+
+- `ODE_Model_selection`
 
 1. `method:String` - The method used.
 1. `params:Vector{Any}` - Parameters obtained from the fitting process.
@@ -138,7 +171,7 @@ This structure stores results of the bootstrap fitting of a NL function.
 1. `mean_param:Any` - Mean of the parameters.
 1. `sd_param:Any` - Standard deviation of the parameters.
 
-- `Kinbiont_res_model_selection`
+- `ODE_Model_selection`
 
 This structure stores model selection results.
 
@@ -154,7 +187,7 @@ This structure stores model selection results.
 1. `full_param:Vector{Any}` - Full parameter set.
 
 
-- `Kinbiont_res_NL_model_selection`
+- `NL_model_selection`
 
 This structure stores non-linear model selection results.
 
@@ -165,7 +198,7 @@ This structure stores non-linear model selection results.
 1. `score_res:Any` - Score results.
 1. `top_loss:Any` - Top loss values.
 
-- `Kinbiont_res_sensitivity_NL`
+- `sensitivity_NL`
 
 This structure stores sensitivity analysis results using non-linear methods.
 
@@ -175,7 +208,7 @@ This structure stores sensitivity analysis results using non-linear methods.
 1. `times:Any` - The times at which measurements were taken.
 1. `combinations:Matrix{Any}` - The list of each of the starting hyperparameters  used in sensitivity analysis.
 
-- `Kinbiont_res_sensitivity`
+- `one_well_morris_sensitivity`
 
 This structure stores sensitivity analysis results.
 
@@ -183,7 +216,7 @@ This structure stores sensitivity analysis results.
 1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
 1. `combinations:Matrix{Any}` - The list of each of the starting hyperparameters  used in sensitivity analysis.
 
-- `Kinbiont_res_segmentation_ODE`
+- `segmentation_ODE`
 
 This structure stores segmentation results using ODE methods.
 
@@ -194,7 +227,7 @@ This structure stores segmentation results using ODE methods.
 1. `interval_cdp:Array{Any}` - Change point intervals.
 1. `score_of_the_models:Any` - Scores of the models.
 
-- `Kinbiont_res_segmentation_NL`
+- `segmentation_NL`
 
 This structure stores segmentation results using non-linear methods.
 
@@ -204,10 +237,24 @@ This structure stores segmentation results using non-linear methods.
 1. `times:Array{Float64}` - The times at which measurements were taken.
 1. `interval_cdp:Array{Any}` - Change point intervals.
 
+- `fit_ODEs_System`
 
+1. `method:String` - The method used.
+1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
+1. `fit:Array{Float64}` - The fitted functions in SciML format.
 
+- `fit_Cybernetic_models`
 
-- `Kinbiont_res_Log_Lin_files`
+1. `method:String` - The method used.
+1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
+1. `fit:Array{Float64}` - The fitted functions in SciML format.
+
+- `RN_fit`
+
+1. `method:String` - The method used.
+1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
+1. `fit:Array{Float64}` - The fitted functions in SciML format.
+
 
 This structure stores results for log-linear fits across multiple curves in one file.
 
@@ -227,6 +274,18 @@ This structure stores results of the fit for all curves in a single file.
 1. `data:Tuple{Any}` - The data used for fitting.
 
 - `Kinbiont_res_one_file_segmentation`
+
+This structure stores segmentation results  for all curves in a single file.
+
+1. `method:String` - The method used.
+1. `params:Matrix{Any}` - The matrix of the parameters obtained from the fitting process.
+1. `fits:Tuple{Any}` -  The fitted functions for each well.
+1. `data:Tuple{Any}` - The data used for fitting.
+1. `cp:Tuple{Any}` - Change points detected.
+1. `vector_AIC:Any` - AIC (or AICc) values of the best model for each well.
+ 
+
+ - `ODEs_system_fit`
 
 This structure stores segmentation results  for all curves in a single file.
 

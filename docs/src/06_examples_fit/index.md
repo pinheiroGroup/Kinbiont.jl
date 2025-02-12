@@ -1,13 +1,21 @@
-# [Examples and Tutorial](@id examples)
+# [Examples of fitting](@id examples)
 
-This section provides some copy-and-paste examples on how to fit kinetics data with Kinbiont.jl. A corse grain description on which function/method to fit can be done by using the following flow chart:
+This section provides some copy-and-paste examples on how to fit kinetics data with Kinbiont.jl. 
 
+```@contents
+Pages = ["index.md"]
+Depth = 4
+```
+
+A corse grain description on which function/method to fit can be used is described in the following flow chart:
 
 ```@raw html
-<div style="text-align: center; margin-bottom: 20px; margin: auto; max-width: 320px;">
-    <img alt="Kinbiont flow chart on how select fit functions" src="./assets/workflow_fit.png">
+<div style="text-align: center; margin: auto; max-width: 1000px;">
+    <img alt="Kinbiont flow chart on how select fit functions"src="../assets/workflow_fit.png">
 </div>
 ```
+
+
  To run all the examples in this page you need the following packages:
 ```julia
 using Kinbiont
@@ -18,10 +26,13 @@ using Optimization
 using OptimizationNLopt
 using Tables
 using Random
-
 ```
 
-## Simulating Data with ODEs
+
+
+## Fitting a single kinetics
+
+### Simulating Data with ODEs
 
 First we simulate the data to use them as example for the fitting:
 
@@ -59,7 +70,6 @@ Plots.scatter!(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", la
 
 ```
 
-## Fitting a single kinetics
 When data are store in a Matrix of Float64 with 2 rows it is possible to perfor various analyses
 ### Evaluation of the dynamics of specific growth rate
 The user can evaluate   of the specific growth rate  during all the curve. This can be done by running the following:
@@ -460,9 +470,9 @@ nl_fit = Kinbiont.NL_model_selection(data_OD, # dataset first row times second r
 nl_model, #  model to use
 p_guess;
 )
-
-
 ```
+
+
 
 
 The user can specify any parameter of the optimizer, for the bound in this case it is done via:
@@ -635,9 +645,6 @@ The ODE system is defined as:
 
 ```julia
 using Kinbiont
-using DifferentialEquations
-using CSV
-using SymbolicRegression
 using Plots
 using StatsBase
 using Distributions
@@ -650,7 +657,7 @@ function model_1(du, u, param, t)
 end
 ```
 
-We define initial conditions, true parameters, adn the bounds of the fit:
+We define initial conditions, true parameters,and the bounds of the fit:
 
 ```julia
 u0 = [0.1, 0.0, 0.0, 1.0]  # Initial conditions for [u1, u2, u3, u4]
@@ -672,7 +679,7 @@ Simulation = ODEs_system_sim(
     param    # True parameters
 )
 ```
-
+We add some uniform noise
 
 ```julia
 sol_time = reduce(hcat, Simulation.t)
@@ -684,7 +691,7 @@ sol_t_noise = permutedims(reduce(hcat, sol_t_noise))
 
 data = vcat(sol_time, sol_t_noise)
 ```
-We plot the data:
+We plot the data with noise:
 
 ```julia
 display(scatter(data[1, :], data[2, :], label="u1"))
@@ -715,7 +722,6 @@ plot!(fit[3], label="Fitted Model")
 
 ### Fitting reaction network
 
-## Overview
 
 We define a **Michaelis-Menten enzyme kinetics** reaction network using Catalyst (https://docs.sciml.ai/Catalyst/stable/) :
 
@@ -792,13 +798,6 @@ plot!(fit[4])
 We define a Kinbiont Cybernetic Model with specific parameters:
 
 ```julia
-using Kinbiont
-using DifferentialEquations
-using OptimizationBBO
-using NaNMath
-using Plots
-using Distributions
-using Optimization
 
 # Define the Cybernetic Model
 model = Kinbiont_Cybernetic_Model(
@@ -890,12 +889,30 @@ path_to_data = "your_path/data_examples/plate_data.csv"
 path_to_annotation ="your_path_to_annotation/annotation.csv"
 ```
 In the following examples we assume that these two variables have a value. You can use the file in the folder `data_exmples`.
+Note that if you use the following function you can use the package https://github.com/pinheiroGroup/KinbiontPlots.jl to display or save the plots of the fit for all the wells in the experiment. This can be done using the following function with input the data struct coming for any fit:
 
+```julia
+using KinbiontPlots
+
+plot_fit_of_file(
+    Kinbiont_results;
+    path_to_plot="NA", # path where to save Plots
+    display_plots=true,# display plots in julia or not
+    save_plots=false, # save the plot or not
+    x_size=500,
+    pt_smoothing_derivative = 7,
+    y_size =750,
+    guidefontsize=18,
+    tickfontsize=16,
+    legendfontsize=10,
+)
+
+```
 
 
 ### Log-Lin fitting
 
-If the paths are provided to ```fit_one_file_Log_Lin```, the user will obtain a matrix containing the results for each well:
+If the paths are provided  to fit you need just to call ```fit_one_file_Log_Lin``` to use all the default parameters:
 
 ```julia
 fit_log_lin = Kinbiont.fit_one_file_Log_Lin(
@@ -943,18 +960,8 @@ fit_od = Kinbiont.fit_file_ODE(
 )
 
 ```
-To plot the results of such fitting one can do the following:
 
-```julia
 
-well_to_plot = 13
-
-# plot data 
-Plot.scatter(fit_od[4][well_to_plot][:,1],fit_od[4][well_to_plot][:,2])
-# plot fits 
-Plot.scatter(fit_od[3][well_to_plot][1,:],fit_od[3][well_to_plot][2,:])
-
-```
 It is also possible to perform the model selection on an entire file. First we declare the list of the models:
 
 ```julia
@@ -1122,3 +1129,49 @@ NL_segmentation = Kinbiont.fit_NL_segmentation_file(
     path_to_annotation = path_to_annotation,# path to the annotation of the wells
 )
 ```
+
+
+
+
+## Error functions
+The user can choose to use different error functions to perfor the fitting. Each fitting API has its keyword argument to change the loss. The possible options are described in the following section.
+
+In the  equations of this list, the notation is the following: $n$ the number of time points $t_i$, $\hat{N}(t_i, \{P\})$ is the proposed numerical solution at time $t_i$ and using the parameters $\{P\}$, and $N(t_i)$ is the data value at $t_i$.
+
+`"L2"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the given data.
+
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2$$
+
+
+`"RE"`: Minimize the relative error between the solution and data.
+
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2$$
+
+
+`"L2_derivative"`: Minimize the L2 norm of the difference between the specific growth rate of the numerical solution of the desired model and the corresponding derivatives of the data.
+
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{dD(t_i)}{dt} - \frac{d\bar{N}(t_i, \{P\})}{dt}\right)^2$$
+
+
+`"blank_weighted_L2"`: Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data.
+
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(1 - P(N(t_i) - \hat{N}(t_i, \{P\})|\text{noise})\right) \, \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2$$
+
+where $P(N(t_i) - \hat{N}(t_i, \{P\})|\text{noise})$ is the probability distribution of the empirical blank data.
+`"L2_log"`: Minimize the logarithm of the L2 norm of the difference between the numerical solution of the desired model and the given data.
+
+$$\mathcal{L}(\{P\}) = \log\left(\frac{1}{n} \sum_{i=1}^n \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2\right)$$
+
+
+`"RE_log"`: Minimize the logarithm of the relative error between the solution and data.
+
+$$\mathcal{L}(\{P\})= \log\left(\frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\bar{N}(t_i, \{P\})}\right)^2\right)$$
+
+
+`"L2_std_blank"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the data, normalized by the standard deviation of empirical blank data.
+
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{N(t_i) - \hat{N}(t_i, \{P\})}{\text{std}_{\text{blank}}}\right)^2$$
+
+where $\text{std}_{\text{blank}}$ is the standard deviation of the empirical blank data.
+
+Note that for multidimesional ODEs system for the moment is only supported L2 distance other metrics are in work in progress.
