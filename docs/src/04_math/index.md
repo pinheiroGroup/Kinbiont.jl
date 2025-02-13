@@ -351,7 +351,7 @@ In the following table you can find a general description of the properties of t
 | Heterogeneous Population Model with Inhibition and Death | Yes | No | Yes | Yes | No | Yes |
 | Heterogeneous Population Model with Inhibition, Death and Resistance | Yes | No | Yes | Yes | No | Yes |
 
-If undecided between different model the model selection function should be used.
+If undecided between different models the model selection function should be used.
 
 ## Stochastic models for bacterial growth
 
