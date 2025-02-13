@@ -1,6 +1,4 @@
 using Kinbiont
-using DifferentialEquations
-using CSV
 using Plots
 using StatsBase
 using AbstractTrees
@@ -9,7 +7,7 @@ using TreeRecipe
 using DecisionTree
 using Distributions
 using Random
-
+ 
 # In this example, we will use Kinbiont to generate data about a single species that is exposed to different antibiotics, both alone and in different combinations.
 # We generate a simple function that modifies the growth rate of the species according to the antibiotics present in the media. We suppose that the user repeats the experiment, fits the data, and finally applies a decision tree algorithm using the antibiotics present in the media as features and the growth rate of the model as the quantity to predict.
 # We show how we can decompose the effect of the antibiotics on the kinetics.
