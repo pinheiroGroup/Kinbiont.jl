@@ -345,7 +345,7 @@ function fitting_one_well_Log_Lin(
     label_exp::String,
     model::String,
     param;
-    integrator=Tsit5(),
+    Integration_method=Tsit5(),
     pt_avg=1,
     pt_smooth_derivative=7,
     smoothing=false,
@@ -376,7 +376,7 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 
 # Key Arguments:
 
-- `integrator=Tsit5()`: SciML integrator used for solving the ODE. For piecewise models, consider using `KenCarp4(autodiff=true)`.
+- `Integration_method=Tsit5()`: SciML Integration_method used for solving the ODE. For piecewise models, consider using `KenCarp4(autodiff=true)`.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer for parameter estimation, from the BBO optimization library.
 - `type_of_smoothing="rolling_avg"`: Method for smoothing the data. Options include `"NO"`, `"rolling_avg"` (rolling average), and `"lowess"`.
 - `pt_avg=7`: Size of the rolling average window for smoothing.
@@ -398,7 +398,7 @@ This function uses an ordinary differential equation (ODE) model to fit the data
 
 - A data structure containing:
   1. `method`: A string describing the method used.
-  2. Parameters array: `["name of model", "well", "param_1", "param_2", ..., "param_n", "maximum specific GR using ODE", "maximum specific GR using data", "objective function value (i.e., loss of the solution)"]`, where `"param_1", "param_2", ..., "param_n"` are the ODE model fit parameters.
+  2. Parameters array: `["label_exp","name of model", "well", "param_1", "param_2", ..., "param_n", "maximum specific GR using ODE", "maximum specific GR using data", "objective function value (i.e., loss of the solution)"]`, where `"param_1", "param_2", ..., "param_n"` are the ODE model fit parameters.
   3. The numerical solution of the fitted ODE.
   4. Time coordinates corresponding to the fitted ODE.
 
@@ -411,7 +411,7 @@ function fitting_one_well_ODE_constrained(
     label_exp::String, #label of the experiment
     model::String, # ode model to use
     param;
-    integrator=Tsit5(), # selection of sciml integrator
+    Integration_method=Tsit5(), # selection of sciml Integration_method
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     smoothing=false, # the smoothing is done or not?
@@ -460,7 +460,7 @@ function fitting_one_well_ODE_constrained(
     ODE_prob = model_selector(model, u0, tspan)
 
     ## defining loss function
-    loss_function = select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
+    loss_function = select_loss_function(type_of_loss, data, ODE_prob, Integration_method, tsteps, blank_array)
     res = KinbiontSolve(loss_function,
         u0,
         param;
@@ -474,7 +474,7 @@ function fitting_one_well_ODE_constrained(
 
 
     #revalution of solution for plot an loss evaluation
-    remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
+    remade_solution = solve(remake(ODE_prob, p=res.u), Integration_method, saveat=tsteps)
     sol_time = reduce(hcat, remade_solution.t)
     sol_fin = reduce(hcat, remade_solution.u)
     sol_fin = sum(sol_fin, dims=1)
@@ -508,7 +508,7 @@ end
     model::Any,
     param,
     n_equation::Int;
-    integrator=Tsit5(),
+    Integration_method=Tsit5(),
     pt_avg=1,
     pt_smooth_derivative=0,
     smoothing=false,
@@ -540,7 +540,7 @@ This function fits a user-defined ordinary differential equation (ODE) model to 
 
 # Key Arguments:
 
-- `integrator=Tsit5()`: SciML integrator used for solving the ODE. For piecewise models, consider using `KenCarp4(autodiff=true)`.
+- `Integration_method=Tsit5()`: SciML Integration_method used for solving the ODE. For piecewise models, consider using `KenCarp4(autodiff=true)`.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer for parameter estimation, from the BBO optimization library.
 - `type_of_smoothing="lowess"`: Method for smoothing the data. Options include `"NO"`, `"rolling_avg"` (rolling average), and `"lowess"`.
 - `pt_avg=1`: Size of the rolling average window for smoothing.
@@ -562,7 +562,7 @@ This function fits a user-defined ordinary differential equation (ODE) model to 
 
 - A data structure containing:
   1. `method`: A string describing the method used.
-  2. Parameters array: `["name of model", "well", "param_1", "param_2", ..., "param_n", "maximum specific GR using ODE", "maximum specific GR using data", "objective function value (i.e., loss of the solution)"]`, where `"param_1", "param_2", ..., "param_n"` are the ODE model fit parameters.
+  2. Parameters array: `["Label_of_exp","name of model", "well", "param_1", "param_2", ..., "param_n", "maximum specific GR using ODE", "maximum specific GR using data", "objective function value (i.e., loss of the solution)"]`, where `"param_1", "param_2", ..., "param_n"` are the ODE model fit parameters.
   3. The numerical solution of the fitted ODE.
   4. Time coordinates corresponding to the fitted ODE.
 
@@ -574,7 +574,7 @@ function fitting_one_well_custom_ODE(
     model::Any, # ode model to use
     param,# initial guess param
     n_equation::Int; # number ode in the system
-    integrator=Tsit5(), # selection of sciml integrator
+    Integration_method=Tsit5(), # selection of sciml Integration_method
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=0,
     smoothing=false, # the smoothing is done or not?
@@ -620,7 +620,7 @@ function fitting_one_well_custom_ODE(
     ODE_prob = ODEProblem(model, u0, tspan, nothing)
 
     loss_function =
-        select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
+        select_loss_function(type_of_loss, data, ODE_prob, Integration_method, tsteps, blank_array)
 
     res = KinbiontSolve(loss_function,
         u0,
@@ -634,7 +634,7 @@ function fitting_one_well_custom_ODE(
     )
 
     #revalution of solution for plot an loss evaluation
-    remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
+    remade_solution = solve(remake(ODE_prob, p=res.u), Integration_method, saveat=tsteps)
     sol_time = reduce(hcat, remade_solution.t)
     sol_fin = reduce(hcat, remade_solution.u)
     sol_fin = sum(sol_fin, dims=1)
@@ -670,7 +670,7 @@ end
     param_array::Any;
     lb_param_array::Any=nothing,
     ub_param_array::Any=nothing,
-    integrator=Tsit5(),
+    Integration_method=Tsit5(),
     pt_avg=3,
     beta_smoothing_ms=2.0,
     smoothing=false,
@@ -706,7 +706,7 @@ This function performs automatic model selection for multiple ODE models fitted 
 
 - `lb_param_array::Any=nothing`: Lower bounds for the parameters, compatible with the models. Use `nothing` for no bounds.
 - `ub_param_array::Any=nothing`: Upper bounds for the parameters, compatible with the models. Use `nothing` for no bounds.
-- `integrator=Tsit5()`: SciML integrator used for solving the ODEs. Consider `KenCarp4(autodiff=true)` for piecewise models.
+- `Integration_method=Tsit5()`: SciML Integration_method used for solving the ODEs. Consider `KenCarp4(autodiff=true)` for piecewise models.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from the BBO optimization library.
 - `type_of_smoothing="rolling_avg"`: Method for smoothing the data. Options: `"NO"`, `"rolling_avg"` (rolling average), and `"lowess"`.
 - `pt_avg=3`: Size of the rolling average window for smoothing.
@@ -749,7 +749,7 @@ function ODE_Model_selection(
     param_array::Any;
     lb_param_array::Any=nothing, # lower bound param
     ub_param_array::Any=nothing, # upper bound param
-    integrator=Tsit5(), # selection of sciml integrator
+    Integration_method=Tsit5(), # selection of sciml Integration_method
     pt_avg=3, # number of the point to generate intial condition
     beta_smoothing_ms=2.0, # penality for AIC evaluation
     smoothing=false, # the smoothing is done or not?
@@ -825,7 +825,7 @@ function ODE_Model_selection(
             type_of_loss,
             data,
             ODE_prob,
-            integrator,
+            Integration_method,
             tsteps,
             blank_array,
         )
@@ -867,7 +867,7 @@ function ODE_Model_selection(
 
 
         #revalution of solution for plot an loss evaluation
-        remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
+        remade_solution = solve(remake(ODE_prob, p=res.u), Integration_method, saveat=tsteps)
         sol_time = reduce(hcat, remade_solution.t)
         sol_fin = reduce(hcat, remade_solution.u)
         sol_fin = sum(sol_fin, dims=1)
@@ -924,7 +924,7 @@ function ODE_Model_selection(
     tspan = (data[1, 1], data[1, end])
     u0 = generating_IC(data, model, smoothing, pt_avg)
     ODE_prob = model_selector(model, u0, tspan, param_min)
-    sim = solve(ODE_prob, integrator, saveat=tsteps)
+    sim = solve(ODE_prob, Integration_method, saveat=tsteps)
     sol_t = reduce(hcat, sim.u)
     sol_time = reduce(hcat, sim.t)
     sol_t = sum(sol_t, dims=1)
@@ -967,7 +967,7 @@ end
     lb_param::Vector{Float64},
     ub_param::Vector{Float64};
     N_step_morris=7,
-    integrator=Tsit5(),
+    Integration_method=Tsit5(),
     pt_avg=1,
     pt_smooth_derivative=7,
     write_res=false,
@@ -1002,7 +1002,7 @@ This function performs Morris sensitivity analysis to evaluate the sensitivity o
 
 - `N_step_morris=7`: Number of steps for the Morris sensitivity analysis.
 - `param=lb_param .+ (ub_param.-lb_param)./2`: Initial guess for the model parameters, calculated as the midpoint of the lower and upper bounds.
-- `integrator=Tsit5()`: SciML integrator used for solving the ODEs. Consider `KenCarp4(autodiff=true)` for piecewise models.
+- `Integration_method=Tsit5()`: SciML Integration_method used for solving the ODEs. Consider `KenCarp4(autodiff=true)` for piecewise models.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer used for fitting the model.
 - `type_of_smoothing="rolling_avg"`: Method for smoothing the data. Options include `"NO"`, `"rolling_avg"` (rolling average), and `"lowess"`.
 - `pt_avg=7`: Size of the rolling average window for smoothing.
@@ -1036,7 +1036,7 @@ function one_well_morris_sensitivity(
     lb_param::Vector{Float64}, # lower bound param
     ub_param::Vector{Float64}; # upper bound param
     N_step_morris=7,
-    integrator=Tsit5(), # selection of sciml integrator
+    Integration_method=Tsit5(), # selection of sciml Integration_method
     pt_avg=1, # numebr of the point to generate intial condition
     pt_smooth_derivative=7,
     write_res=false,
@@ -1090,7 +1090,7 @@ function one_well_morris_sensitivity(
     #  definition  ode symbolic problem
     ODE_prob = model_selector(model, u0, tspan)
     loss_function =
-        select_loss_function(type_of_loss, data, ODE_prob, integrator, tsteps, blank_array)
+        select_loss_function(type_of_loss, data, ODE_prob, Integration_method, tsteps, blank_array)
 
     param_combination =
         generation_of_combination_of_IC_morris(lb_param, ub_param, N_step_morris)
@@ -1113,7 +1113,7 @@ function one_well_morris_sensitivity(
             opt_params...)
 
         #revalution of solution for plot an loss evaluation
-        remade_solution = solve(remake(ODE_prob, p=res.u), integrator, saveat=tsteps)
+        remade_solution = solve(remake(ODE_prob, p=res.u), Integration_method, saveat=tsteps)
         sol_time = reduce(hcat, remade_solution.t)
         sol_fin = reduce(hcat, remade_solution.u)
         sol_fin = sum(sol_fin, dims=1)
@@ -1170,7 +1170,7 @@ end
     lb_param_array::Any=nothing,
     ub_param_array::Any=nothing,
     type_of_loss="L2",
-    integrator=Tsit5(),
+    Integration_method=Tsit5(),
     smoothing=false,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
@@ -1204,7 +1204,7 @@ This function fits an Ordinary Differential Equation (ODE) model to segmented ti
 
 - `lb_param_array::Any`: Lower bounds for the parameters for each model (compatible with the models).
 - `ub_param_array::Any`: Upper bounds for the parameters for each model (compatible with the models).
-- `integrator=Tsit5()`: SciML integrator used for solving the ODEs. Use `KenCarp4(autodiff=true)` for piecewise models.
+- `Integration_method=Tsit5()`: SciML Integration_method used for solving the ODEs. Use `KenCarp4(autodiff=true)` for piecewise models.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="lowess"`: Method for smoothing the data. Options include `"NO"`, `"rolling_avg"` (rolling average), and `"lowess"`.
 - `pt_avg=1`: Size of the rolling average window for smoothing.
@@ -1245,7 +1245,7 @@ function selection_ODE_fixed_intervals(
     lb_param_array::Any=nothing, # lower bound param
     ub_param_array::Any=nothing, # upper bound param
     type_of_loss="L2", # type of used loss
-    integrator=Tsit5(), # selection of sciml integrator
+    Integration_method=Tsit5(), # selection of sciml Integration_method
     smoothing=false,
     type_of_smoothing="lowess",
     thr_lowess=0.05,
@@ -1310,7 +1310,7 @@ function selection_ODE_fixed_intervals(
             ub_param_array=ub_param_array, # lower bound param
             lb_param_array=lb_param_array, # upper bound param
             optimizer=optimizer, # selection of optimization method
-            integrator=integrator, # selection of sciml integrator
+            Integration_method=Integration_method, # selection of sciml Integration_method
             pt_avg=pt_avg, # number of the point to generate intial condition
             beta_smoothing_ms=beta_smoothing_ms, # penality for AIC evaluation
             smoothing=smoothing, # the smoothing is done or not?
@@ -1421,7 +1421,7 @@ end
     ub_param_array::Any=nothing,
     detect_number_cpd=true,
     fixed_cpd=false,
-    integrator=Tsit5(),
+    Integration_method=Tsit5(),
     type_of_loss="L2",
     type_of_detection="slinding_win",
     type_of_curve="original",
@@ -1463,7 +1463,7 @@ This function performs model selection for ordinary differential equation (ODE) 
 
 - `lb_param_array::Any`: Lower bounds for the parameters for each model (compatible with the models).
 - `ub_param_array::Any`: Upper bounds for the parameters for each model (compatible with the models).
-- `integrator=Tsit5()`: SciML integrator used for solving the ODEs. Use `KenCarp4(autodiff=true)` for piecewise models.
+- `Integration_method=Tsit5()`: SciML Integration_method used for solving the ODEs. Use `KenCarp4(autodiff=true)` for piecewise models.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer from optimizationBBO.
 - `type_of_smoothing="lowess"`: Method of choice for smoothing the data. Options include `"NO"`, `"rolling_avg"` (rolling average), and `"lowess"`.
 - `pt_avg=1`: Size of the rolling average window for smoothing.
@@ -1514,7 +1514,7 @@ function segmentation_ODE(
     ub_param_array::Any=nothing, # upper bound param
     detect_number_cpd=true,
     fixed_cpd=false,
-    integrator=Tsit5(), # selection of sciml integrator
+    Integration_method=Tsit5(), # selection of sciml Integration_method
     type_of_loss="L2", # type of used loss
     type_of_detection="slinding_win",
     type_of_curve="original",
@@ -1555,7 +1555,7 @@ function segmentation_ODE(
             lb_param_array=lb_param_array, # lower bound param
             ub_param_array=ub_param_array, # upper bound param
             optimizer=optimizer, # selection of optimization method
-            integrator=integrator, # selection of sciml integrator
+            Integration_method=Integration_method, # selection of sciml Integration_method
             pt_avg=pt_avg, # number of the point to generate intial condition
             beta_smoothing_ms=beta_smoothing_ms, # penality for AIC evaluation
             smoothing=smoothing, # the smoothing is done or not?
@@ -1699,7 +1699,7 @@ function segmentation_ODE(
                 lb_param_array=lb_param_array, # lower bound param
                 type_of_loss=type_of_loss, # type of used loss
                 optimizer=optimizer, # selection of optimization method
-                integrator=integrator, # selection of sciml integrator
+                Integration_method=Integration_method, # selection of sciml Integration_method
                 smoothing=smoothing,
                 pt_avg=pt_avg,
                 pt_smooth_derivative=pt_smooth_derivative,
