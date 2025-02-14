@@ -257,6 +257,10 @@ This tutorial demonstrates setting up and simulating a cybernetic model in Kinbi
 Define the Cybernetic Model:
 
 ```julia
+
+# We import the Kinbiont_Cybernetic_Model class from the Kinbiont module
+import Kinbiont.Kinbiont_Cybernetic_Model
+
 model = Kinbiont_Cybernetic_Model(
     Bio_mass_conc = 1.0,  # Initial biomass concentration
     Substrate_concentrations = [3.0, 3.0],  # Concentrations of 2 substrates
