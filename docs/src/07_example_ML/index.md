@@ -1,6 +1,8 @@
 # [Examples of ML analysis](@id examples)
 
-This section provides some copy-and-paste examples of Kinbiont.jl
+This section provides some copy-and-paste examples of Kinbiont.jl.
+ These examples can be replicated by running the scripts in the [examples folder](https://github.com/pinheiroGroup/Kinbiont.jl/tree/main/Example_scripts). 
+In the [Notebook folder](https://github.com/pinheiroGroup/Kinbiont.jl/tree/main/Notebook_examples), you will find some of these examples and the results.
 
 ```@contents
 Pages = ["index.md"]
@@ -9,7 +11,7 @@ Depth = 3
 
 ## Symbolic regression detection of laws
 
-In this section we present different examples of how to use symbolic regression.
+In this section, we present different examples of how to use symbolic regression.
 
 To run these examples, you will need the following packages:
 
@@ -25,13 +27,13 @@ using Distributions
 
 In this example, we simulate data for a single species. The growth rate depends on an experimental feature, and we assume the user does not know the exact relationship between this feature and the growth rate but it can manipulate and register the value of this feature.
 We conduct the experiment under different conditions and fit the data using a simple ODE model.
-Afterward, we apply symbolic regression between the experimental feature and the fitted growth rates the to discover the relationship.
+Afterward, we apply symbolic regression between the experimental feature and the fitted growth rates to discover the relationship.
 This workflow can be represented by the following diagram:
 
 
 ```@raw html
 <div style="text-align: center; margin: auto; max-width: 1000px;">
-    <img alt="Kinbiont flow chart on how select fit functions"src="../assets/experiment_SymR.png">
+    <img alt="Kinbiont flow chart on how to select fit functions"src="../assets/experiment_SymR.png">
 </div>
 ```
 
@@ -45,7 +47,7 @@ end
 ```
 
 
-We use the `baranyi_richards` ODE model in this example. First, we define the parameter ranges and the inital guess  for the fit:
+We use the `baranyi_richards` ODE model in this example. First, we define the parameter ranges and the initial guess  for the fit:
 
 ```julia
 ODE_models = "baranyi_richards"
@@ -75,7 +77,7 @@ noise_value = 0.02  # Noise for simulation
 ```
 
 
-We loop through different feature values, modify the growth rate according to the `unknown_response`, and run the simulation. We also add noise to the simulated data.
+We loop through different feature values, modify the growth rate according to the `unknown_response,` and run the simulation. We also add noise to the simulated data.
 
 ```julia
 # plot to clean the display 
@@ -158,13 +160,13 @@ hline!(unique(gr_sy_reg[3][:, 1]), label=["Eq. 1" nothing], line=(3, :green, :da
 plot!(unique(results_fit[2, :]), unique(gr_sy_reg[3][:, 2]), label=["Eq. 2" nothing], line=(3, :red))
 plot!(unique(results_fit[2, :]), unique(gr_sy_reg[3][:, 3]), label=["Eq. 3" nothing], line=(3, :blue, :dashdot))
 ```
-The Hall of fame can be visulalized looking into
+The Hall of Fame can be visualized looking into
 ```
 gr_sy_reg[1]
 gr_sy_reg[2]
 ```
 
-The unkwon function can be definde in different ways, for example a quadratic function: 
+The unknown function can be defined in different ways, for example, a quadratic function: 
 
 ```julia
 function unknown_response(feature)
@@ -174,7 +176,7 @@ end
 ```
 ### Symbolic regression detection of laws: detection of Monod law on real data
 
-In this example we replicate the detection of the Monod law on real data presented in the Kinbiont paper. First we set up the paths of the data and where to save the results:
+In this example, we replicate the detection of the Monod law on real data presented in the Kinbiont paper. First, we set up the paths of the data and where to save the results:
 
 ```julia
 path_to_data = "your_path/data_examples/plate_data.csv"
@@ -263,7 +265,7 @@ res_first_seg_ML = res_first_seg[:, iii]
 res_first_seg_ML = hcat(res_first_seg[:, 1], res_first_seg_ML)
 ```
 
-We add x = 0.0, y = 0.0 to data to take in consideration  not growing wells:
+We add x = 0.0, y = 0.0 to data to take into consideration  not growing wells:
 
 ```julia
 
@@ -297,7 +299,7 @@ options = SymbolicRegression.Options(
 )
 ```
 
-We run the symbolic regression using dependent variable that is the 7th row of the Kinbiont results (i.e., the growth rate)
+We run the symbolic regression using the dependent variable which is the 7th row of the Kinbiont results (i.e., the growth rate)
 
 ```julia
 
@@ -334,7 +336,7 @@ using DecisionTree
 ###  Decision tree regression: reconstruction of antibiotics effects table
 In this example, we explore how **Kinbiont.jl** can be used to simulate data about a species exposed to various antibiotics, both individually and in combination. 
 We then apply a decision tree regression model to predict the growth rate of the species based on the antibiotics present in the media.
-This procedure in theory permits users to retrive the "table of the effects" of the antibiotic combinations, this can be depicted with the following diagram: 
+This procedure in theory, permits users to retrieve the "table of the effects" of the antibiotic combinations; this can be depicted with the following diagram: 
 
 ```@raw html
 <div style="text-align: center;  margin: auto; max-width: 1000px;">
@@ -675,7 +677,7 @@ We read the results of the fits and the antibiotic present in each well from the
 Kinbiont_res_test = readdlm("your_path/data_examples/Results_for_ML.csv", ',')
 annotation_test = readdlm("your_path/data_examples/annotation_for_ML.csv", ',')
 ```
-If you want to replicate the fitting procedure for this dataset please look at this script [script](https://github.com/pinheiroGroup/Kinbiont_utilities/blob/main/Fig_4_5/loop_chem_isolates_analysis_NL.jl). Note that this could require some time since the number of curves is about $10^4$. 
+If you want to replicate the fitting procedure for this dataset, please look at this script [script](https://github.com/pinheiroGroup/Kinbiont_utilities/blob/main/Fig_4_5/loop_chem_isolates_analysis_NL.jl). Note that this could require some time since the number of curves is about $10^4$. 
 
 We define some variables for analysis:
 
@@ -690,7 +692,7 @@ depth = -1
 # Set random seed for reproducibility
 seed = Random.seed!(1234)
 ```
-We perform decision tree regression only on "N. soli" strain and we  analyze the 9th row (i.e. growht rate) of the results:
+We perform decision tree regression only on "N. soli" strain, and we  analyze the 9th row (i.e. growth rate) of the results:
 
 ```julia
 
@@ -715,7 +717,7 @@ dt_gr = Kinbiont.downstream_decision_tree_regression(Kinbiont_results,
 We plot the tree
 ```julia
 # Wrap the decision tree model for visualization
-wt = DecisionTree.wrap(dt_gr[1], (featurenames = feature_names,))
+wt = DecisionTree.wrap(dt_gr[1])
 
 # Plot the decision tree
 p2 = Plots.plot(wt, 0.9, 0.2; size = (900, 400), connect_labels = ["yes", "no"])
