@@ -1,14 +1,12 @@
 # API 
 
 ## Pre-processing functions
-### Smoothing data
 [`Kinbiont.smoothing_data`](@ref)
 
 ```@docs
 Kinbiont.smoothing_data
 ```
 
-### Correction for multiple scattering
 [`Kinbiont.correction_OD_multiple_scattering`](@ref)
 
 ```@docs
@@ -17,7 +15,6 @@ Kinbiont.correction_OD_multiple_scattering
 
 ## Fitting one kinetics
 
-### Log-Lin fitting
 [`Kinbiont.fitting_one_well_Log_Lin`](@ref)
 
 ```@docs
@@ -29,8 +26,6 @@ Kinbiont.fitting_one_well_Log_Lin
 ```@docs
 Kinbiont.segment_gr_analysis
 ```
-### ODE fitting
-#### Fitting a harcoded model
 
 [`Kinbiont.fitting_one_well_ODE_constrained`](@ref)
 
@@ -38,21 +33,18 @@ Kinbiont.segment_gr_analysis
 Kinbiont.fitting_one_well_ODE_constrained
 ```
 
-#### Fitting a custom model
 
 [`Kinbiont.fitting_one_well_custom_ODE`](@ref)
 
 ```@docs
 Kinbiont.fitting_one_well_custom_ODE
 ```
-#### ODE model selection
 
 [`Kinbiont.ODE_Model_selection`](@ref)
 
 ```@docs
 Kinbiont.ODE_Model_selection
 ```
-#### ODE Morris sensitivity
 
 [`Kinbiont.one_well_morris_sensitivity`](@ref)
 
@@ -60,18 +52,11 @@ Kinbiont.ODE_Model_selection
 Kinbiont.one_well_morris_sensitivity
 ```
 
-### NL Fitting
-
 
 [`Kinbiont.fit_NL_model`](@ref)
 
 ```@docs
 Kinbiont.fit_NL_model
-```
-[`Kinbiont.fit_NL_model_with_sensitivity`](@ref)
-
-```@docs
-Kinbiont.fit_NL_model_with_sensitivity
 ```
 
 [`Kinbiont.fit_NL_model_bootstrap`](@ref)
@@ -80,16 +65,13 @@ Kinbiont.fit_NL_model_with_sensitivity
 Kinbiont.fit_NL_model_bootstrap
 ```
 
-#### NL Model selection
 [`Kinbiont.NL_model_selection`](@ref)
 
 ```@docs
 Kinbiont.NL_model_selection
 ```
 
-### Segmented fitting 
 
-#### ODE segmentation
 [`Kinbiont.selection_ODE_fixed_intervals`](@ref)
 
 ```@docs
@@ -100,7 +82,6 @@ Kinbiont.selection_ODE_fixed_intervals
 ```@docs
 Kinbiont.segmentation_ODE
 ```
-#### NL segmentation
 [`Kinbiont.selection_NL_fixed_interval`](@ref)
 
 ```@docs
@@ -111,7 +92,6 @@ Kinbiont.selection_NL_fixed_interval
 ```@docs
 Kinbiont.segmentation_NL
 ```
-#### ODEs system fitting
 
 [`Kinbiont.fit_ODEs_System`](@ref)
 
@@ -119,14 +99,12 @@ Kinbiont.segmentation_NL
 Kinbiont.fit_ODEs_System
 ```
 
-#### Reaction network fitting
 
 [`Kinbiont.RN_fit`](@ref)
 
 ```@docs
 Kinbiont.RN_fit
 ```
-#### Cybernetic model fitting
 
 [`Kinbiont.fit_Cybernetic_models`](@ref)
 
@@ -136,14 +114,12 @@ Kinbiont.fit_Cybernetic_models
 
 ## Fitting one a .csv file
 
-### Log-Lin fitting
 [`Kinbiont.fit_one_file_Log_Lin`](@ref)
 
 ```@docs
 Kinbiont.fit_one_file_Log_Lin
 ```
 
-### Analysis of segments
 [`Kinbiont.segment_gr_analysis_file`](@ref)
 
 ```@docs
@@ -151,7 +127,6 @@ Kinbiont.segment_gr_analysis_file
 ```
 
 
-### ODE fitting
 
 [`Kinbiont.fit_file_ODE`](@ref)
 
@@ -207,29 +182,24 @@ Kinbiont.downstream_symbolic_regression
 ```
 
 ## Simulations 
-### ODE simulations
 [`Kinbiont.ODE_sim`](@ref)
 
 ```@docs
 Kinbiont.ODE_sim
 ```
-### Stochastic simulations
 [`Kinbiont.stochastic_sim`](@ref)
 
 ```@docs
 Kinbiont.stochastic_sim
 ```
-### ODEs system 
 [`Kinbiont.ODEs_system_sim`](@ref)
 ```@docs
 Kinbiont.ODEs_system_sim
 ```
-### Cybernetic models 
 [`Kinbiont.Kinbiont_Cybernetic_Model_simulation`](@ref)
 ```@docs
 Kinbiont.Kinbiont_Cybernetic_Model_simulation
 ```
-### Reaction network via Catalyst.jl
 [`Kinbiont.Kinbiont_Reaction_network_sim`](@ref)
 ```@docs
 Kinbiont.Kinbiont_Reaction_network_sim
@@ -242,9 +212,4 @@ Kinbiont.Kinbiont_Reaction_network_sim
 Kinbiont.specific_gr_evaluation
 ```
 
- [`Kinbiont.Kinbiont_Cybernetic_Model`](@ref)
-
-```@docs
-Kinbiont_Cybernetic_Model
-```
 
