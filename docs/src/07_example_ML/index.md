@@ -28,7 +28,7 @@ using Distributions
 In this example, we simulate data for a single species. The growth rate depends on an experimental feature, and we assume the user does not know the exact relationship between this feature and the growth rate but it can manipulate and register the value of this feature.
 We conduct the experiment under different conditions and fit the data using a simple ODE model.
 Afterward, we apply symbolic regression between the experimental feature and the fitted growth rates to discover the relationship.
-This workflow can be represented by the following diagram:
+The following diagram can represent this workflow:
 
 
 ```@raw html
