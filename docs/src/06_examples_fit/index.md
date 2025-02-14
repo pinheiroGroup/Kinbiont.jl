@@ -13,12 +13,12 @@ A corse grain description on which function/method to fit can be used is describ
 
 ```@raw html
 <div style="text-align: center; margin: auto; max-width: 1000px;">
-    <img alt="Kinbiont flow chart on how select fit functions"src="../assets/workflow_fit.png">
+    <img alt="Kinbiont flow chart on how to select fit functions"src="../assets/workflow_fit.png">
 </div>
 ```
 
 
- To run all the examples in this page you need the following packages:
+ To run all the examples on this page, you need the following packages:
 ```julia
 using Kinbiont
 using CSV
@@ -26,6 +26,7 @@ using Plots
 using Distributions
 using Optimization
 using OptimizationNLopt
+using NLopt
 using Tables
 using Random
 ```
@@ -36,7 +37,7 @@ using Random
 
 ### Simulating Data with ODEs
 
-First we simulate the data to use them as example for the fitting:
+First, we simulate the data to use them example for the fitting:
 
 ```julia
 model = "triple_piecewise_adjusted_logistic"
@@ -48,7 +49,7 @@ delta_t = 15.0
 
 param_of_ode = [0.06, 1.0, 200, 0.5, 0.001, 450, -0.0002]
 ```
-Them we call the Kinbiont.jl API:
+Then we call the Kinbiont.jl API:
 
 ```julia
 sim = Kinbiont.ODE_sim(model, n_start, tstart, tmax, delta_t, param_of_ode)
@@ -72,9 +73,9 @@ Plots.scatter!(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", la
 
 ```
 
-When data are store in a Matrix of Float64 with 2 rows it is possible to perfor various analyses
+When data are stored in a Matrix of Float64 with 2 rows it is possible to perform various analyses
 ### Evaluation of the dynamics of specific growth rate
-The user can evaluate   of the specific growth rate  during all the curve. This can be done by running the following:
+The user can evaluate the specific growth rate during the whole curve. This can be done by running the following:
 
 
 ```julia
@@ -91,7 +92,7 @@ Plots.scatter(specific_gr_times,specific_gr_array, xlabel="Time", ylabel="Arb. U
 ```
 ### Log-Lin fitting
 
-To perform the log-linear fitting  (of data generated in the previous examples) it is suffucient to run. 
+To perform the log-linear fitting (of data generated in the previous example), it is sufficient to run
 
 ```julia
 res_log_lin = Kinbiont.fitting_one_well_Log_Lin(
@@ -109,7 +110,7 @@ res_log_lin = Kinbiont.fitting_one_well_Log_Lin(
 
 ###    Fitting ODE Models
 
-Before fitting, the model, the initial guess of parameters for the optimization and upper and lower bounds for the ODE parameters are defined :
+Before fitting the model, the initial guess of parameters for the optimization and upper and lower bounds for the ODE parameters are defined :
 ```julia
 
 
@@ -119,7 +120,7 @@ p_guess = [0.01, 0.001, 1.00, 1]
 ub_ahpm = p_guess.*4
 lb_ahpm = p_guess./4
 ```
-The actual fitting is accomplished through the ```fitting_one_well_ODE_constrained``` function.  In this case wed do not use the lb and ub they will be generated automatically.
+The actual fitting is accomplished through the ```fitting_one_well_ODE_constrained``` function.  In this case, we do not use the lb and ub. They will be generated automatically giving a warning
 ```julia
 # Performing ODE fitting
  results_ODE_fit = Kinbiont.fitting_one_well_ODE_constrained(
@@ -454,7 +455,7 @@ seg_fitting = Kinbiont.segmentation_ODE(
 With Kinbiont it is possible to fit any non-linear model this can be done by calling the function ```NL_model_selection``` in different ways.
 
 
-First we declare upper and lower bound and the model (note that in this case we use array of array because the input can be more than one model)
+First, we declare the upper and lower bound and the model (note that in this case, we usean  array of array because the input can be more than one model)
 
 ```julia
 nl_model = ["NL_Richards"]
@@ -477,7 +478,7 @@ p_guess;
 
 
 
-The user can specify any parameter of the optimizer, for the bound in this case it is done via:
+The user can specify any parameter of the optimizer, for the bound, in this case, it is done via:
 ```julia
 nl_fit =  Kinbiont.NL_model_selection(data_OD, # dataset first row times second row OD
     "test", 
@@ -522,7 +523,7 @@ Plots.plot!(nl_fit[4],nl_fit[3], xlabel="Time", ylabel="Arb. Units", label=["fit
 
 
 ### NL Model Selection
-To perform model selection we just specify an array with the list of all the used models:
+To perform model selection, we just specify an array with the list of all the used models:
 ```julia
 
 nl_ub_1 =  [2.0001 , 10.00000001, 500.00]
@@ -547,7 +548,7 @@ list_ub = [nl_ub_1,nl_ub_2,nl_ub_3,nl_ub_4]
 list_guess = [p1_guess,p2_guess,p3_guess,  p4_guess]
 
 ```
-and the we perform the fit:
+and then we perform the fit:
 ```julia
 
 results_ms = Kinbiont.NL_model_selection(
@@ -567,7 +568,7 @@ results_ms = Kinbiont.NL_model_selection(
 As the ODE case, for NL segmentation we can perform a segmente fit with manual selection of the change points or a using a change points detection algorithm to find them.
 Note that in the case of the NL fit, the fit of the segment goes backward and since it is not possible to specificy the bounduary condition of the fit the user can force the optimization problem to mantain the continuty between segment with the parameter  ```penality_CI=8.0```. 
 
-we specify the list of used models and parameters bounds:
+We specify the list of used models and parameters bounds:
 
 ```julia
 
@@ -608,7 +609,7 @@ seg_fitting = Kinbiont.selection_NL_fixed_interval(
     pt_smooth_derivative = 3
 )
 ```
-Another option could be to  run a cpd algorithm and perfom the fitting:
+Another option could be to  run a cpd algorithm and perform the fitting:
 
 
 
@@ -634,9 +635,9 @@ seg_fitting = Kinbiont.segmentation_NL(
 
 ### Fitting a ODEs System
 
-This example demonstrates how to fit an Ordinary Differential Equations (ODEs) syste using Kinbiont. The system models interactions between four variables, and we aim to estimate its parameters from noisy simulated data.
+This example demonstrates how to fit an Ordinary Differential Equations (ODEs) system using Kinbiont. The system models interactions between four variables, and we aim to estimate its parameters from noisy simulated data.
 
-First we define a custom model (if you want to use an harcoded model just put the corresponding sting in the model field for the simulation and the fit).
+First, we define a custom model (if you want to use a hardcoded model, just put the corresponding string in the model field for the simulation and the fit).
 The system consists of:
 - **u1**: A reactant influenced by u4.
 - **u2**: An intermediate product.
@@ -659,7 +660,7 @@ function model_1(du, u, param, t)
 end
 ```
 
-We define initial conditions, true parameters,and the bounds of the fit:
+We define initial conditions, true parameters, and the bounds of the fit:
 
 ```julia
 u0 = [0.1, 0.0, 0.0, 1.0]  # Initial conditions for [u1, u2, u3, u4]
@@ -846,7 +847,7 @@ data_to_fit = permutedims(data_to_fit)  # Convert to column-major order
 ```
 
 
-We define a new model where some parameters (`a`, `V_S`)  are unknown and need to be fitted, to do that we put them to nothing in the data struct:
+We define a new model where some parameters (`a`, `V_S`)  are unknown and need to be fitted, to do that, we put them to nothing in the data struct:
 
 ```julia
 # Define a new model with unknown parameters
@@ -882,17 +883,17 @@ results = fit_Cybernetic_models(
 
 ## Fitting a .csv file
 
-Instead fitting a single kinetics the user can supply a `.csv` file (formatted as described in the section), and Kinbiont will proceed to perform all the analysis on all the wells of the experiment. Note that the user can supply a annotation .csv in this case becomes possible to subtract the blanks and fit the average of replicates.
+Instead of fitting a single kinetics, the user can supply a `.csv` file (formatted as described in the section), and Kinbiont will proceed to perform the analysis on all the wells of the experiment. Note that the user can supply an annotation .csv. In this case, it becomes possible to subtract the blanks and fit the average of replicates.
 
 Note that this is aviable only for ODE with one dimensional data (OD or biomass). For use a `.csv` with multidimensional ODEs you need import the data and shape them in the format required by Kinbiont. 
-To use the following functions the user should input to Kinbiont variables that contains the string of the path to the .csv files:
+To use the following functions, the user should input Kinbiont variables that contain the string of the path to the .csv files:
 
 ```julia
 path_to_data = "your_path/data_examples/plate_data.csv"
 path_to_annotation ="your_path_to_annotation/annotation.csv"
 ```
-In the following examples we assume that these two variables have a value. You can use the file in the folder `data_exmples`.
-Note that if you use the following function you can use the package https://github.com/pinheiroGroup/KinbiontPlots.jl to display or save the plots of the fit for all the wells in the experiment. This can be done using the following function with input the data struct coming for any fit:
+In the following examples, we assume that these two variables have a value. You can use the file in the folder (data examples)[https://github.com/pinheiroGroup/Kinbiont.jl/tree/main/data_examples].
+Note that if you use the following function you can use the package https://github.com/pinheiroGroup/KinbiontPlots.jl to display or save the plots of the fit for all the wells in the experiment. This can be done using the following function with input of the data struct coming for any fit:
 
 ```julia
 using KinbiontPlots
@@ -915,7 +916,7 @@ plot_fit_of_file(
 
 ### Log-Lin fitting
 
-If the paths are provided  to fit you need just to call ```fit_one_file_Log_Lin``` to use all the default parameters:
+If the paths are provided  to fit, you need just to call ```fit_one_file_Log_Lin``` to use all the default parameters:
 
 ```julia
 fit_log_lin = Kinbiont.fit_one_file_Log_Lin(
@@ -965,7 +966,7 @@ fit_od = Kinbiont.fit_file_ODE(
 ```
 
 
-It is also possible to perform the model selection on an entire file. First we declare the list of the models:
+It is also possible to perform the model selection on an entire file. First, we declare the list of the models:
 
 ```julia
 model_1 = "baranyi_richards"
@@ -1006,7 +1007,7 @@ ms_file = Kinbiont.ODE_model_selection_file(
 
 
 The user can fit any NL model by calling the function ```fit_NL_model_selection_file```.
-As usual the user should declare the model and the bounds
+As usual, the user should declare the model and the bounds.
 
 
 We declare the model and the bounds:
@@ -1030,7 +1031,7 @@ fit_nl = Kinbiont.fit_NL_model_selection_file(
 )
 
 ```
-The user can perform a NL model selection. To do that we should start declaring the list of models and upper/lower bounds:
+The user can perform a NL model selection. To do that, we should start declaring the list of models and upper/lower bounds:
 
 
 ```julia
@@ -1061,7 +1062,7 @@ fit_nl = Kinbiont.fit_NL_model_selection_file(
 
 It is possible to apply the ODE segmentation to the an entire .csv file. Note that in this case all the change points will be detectec using a off-line change point algorithm.
 
-First we declare the models and upper/lower bounds:
+First, we declare the models and upper/lower bounds:
 ```julia
 model_1 = "baranyi_richards"
 
@@ -1105,7 +1106,7 @@ segmentation_file =  Kinbiont.segmentation_ODE_file(
 
 ### NL segmentation
 
-It is possible to apply the NL segmentation to the an entire .csv file. Note that in this case all the change points will be detectec using a off-line change point algorithm.
+It is possible to apply the NL segmentation to an entire .csv file. Note that in this case, all the change points will be detected using an offline change point algorithm.
 
 We start declaring models and upper/lower bounds:
 
@@ -1137,7 +1138,7 @@ NL_segmentation = Kinbiont.fit_NL_segmentation_file(
 
 
 ## Error functions
-The user can choose to use different error functions to perfor the fitting. Each fitting API has its keyword argument to change the loss. The possible options are described in the following section.
+The user can choose to use different error functions to perform the fitting. Each fitting API has its keyword argument to change the loss. The possible options are described in the following section.
 
 In the  equations of this list, the notation is the following: $n$ the number of time points $t_i$, $\hat{N}(t_i, \{P\})$ is the proposed numerical solution at time $t_i$ and using the parameters $\{P\}$, and $N(t_i)$ is the data value at $t_i$.
 
