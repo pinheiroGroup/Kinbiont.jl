@@ -454,7 +454,7 @@ function KinbiontSolve_test(loss_function, u0, param_g;
     end
 
     # Set bounds for optimization if needed
-    opt_params = check_bounds_opt(opt, param_g, opt_params...)
+    opt_params = check_bounds_opt_Cy(opt, param_g, opt_params...)
 
     # Define the optimization problem
     prob = OptimizationProblem(optf, param_g, u0; opt_params...)
@@ -469,7 +469,7 @@ function KinbiontSolve_test(loss_function, u0, param_g;
     return sol
 end
 
-function check_bounds_opt(opt,p_guess,
+function check_bounds_opt_Cy(opt,p_guess,
     opt_params...)
  
     if SciMLBase.requiresbounds(opt)
