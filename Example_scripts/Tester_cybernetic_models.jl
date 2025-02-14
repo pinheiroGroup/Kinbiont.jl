@@ -18,7 +18,29 @@ using Optimization
 # ------------------------------------------------------------------------------
 # Step 1: Define a Cybernetic Model with Known Parameters
 # ------------------------------------------------------------------------------
+function threshold_switching_rule(a, b, V_S, k_S, Y_S, P, S, cost, protein_thresholds)
+    n = length(S)
+    alloc = zeros(n)
+    # Sort substrates by descending utilization rate (V_S)
+    sorted_indices = sortperm(V_S, rev=true)
 
+    for i in sorted_indices
+        if S[i] > protein_thresholds
+            alloc[i] = 1.0    # Allocate all resources to this substrate
+            break
+        end
+    end
+
+    # If no substrate is above the threshold, fallback to equal allocation
+    if sum(alloc) == 0
+        alloc .= 1.0 / n
+    end
+
+    return alloc
+end
+
+
+import Kinbiont.Kinbiont_Cybernetic_Model
 # Define the Kinbiont Cybernetic Model with specific parameters
 model = Kinbiont_Cybernetic_Model(
     Bio_mass_conc = 1.0,  # Initial biomass concentration
