@@ -798,7 +798,8 @@ plot!(fit[4])
 We define a Kinbiont Cybernetic Model with specific parameters:
 
 ```julia
-
+# We import the Kinbiont_Cybernetic_Model class from the Kinbiont module
+import Kinbiont.Kinbiont_Cybernetic_Model
 # Define the Cybernetic Model
 model = Kinbiont_Cybernetic_Model(
     Bio_mass_conc = 1.01,  # Initial biomass concentration
