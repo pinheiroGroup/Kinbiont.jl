@@ -268,7 +268,7 @@ end
     model::String, 
     param;
     path_to_annotation::Any=missing,
-    integrator=Tsit5(), 
+    Integration_method=Tsit5(), 
     path_to_results="NA", 
     loss_type="RE", 
     smoothing=false, 
@@ -303,7 +303,7 @@ This function fits a ODE model to a csv file. The function assumes that the firs
 
 
 # Key Arguments:
-- `integrator =Tsit5()' sciML integrator. If using piecewise model please use  'KenCarp4(autodiff=true)'.
+- `Integration_method =Tsit5()' sciML Integration_method. If using piecewise model please use  'KenCarp4(autodiff=true)'.
 - `optimizer = BBO_adaptive_de_rand_1_bin_radiuslimited()` optimizer from optimization.jl.
 - `type_of_loss:="RE" `: Type of loss function to be used. Some options are "RE", "L2", "L2_derivative" and "blank_weighted_L2"), see documentation for the full list.
 - `average_replicate=false` Bool, perform or not the average of replicates. Works only if an annotation path is provided
@@ -348,7 +348,7 @@ function fit_file_ODE(
     model::String, # string of the used model
     param;
     path_to_annotation::Any=missing,# path to the annotation of the wells
-    integrator=Tsit5(), # selection of sciml integrator
+    Integration_method=Tsit5(), # selection of sciml Integration_method
     path_to_results="NA", # path where save results
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
@@ -478,7 +478,7 @@ function fit_file_ODE(
             label_exp, #label of the experiment
             model, # ode model to use 
             param; # upper bound param
-            integrator=integrator, # selection of sciml integrator
+            Integration_method=Integration_method, # selection of sciml Integration_method
             pt_avg=pt_avg, # numebr of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
             smoothing=smoothing, # the smoothing is done or not?
@@ -545,7 +545,7 @@ end
     param::Vector{Float64},
     n_equation::Int;
     path_to_annotation::Any=missing,
-    integrator=Tsit5(),
+    Integration_method=Tsit5(),
     path_to_results="NA", 
     loss_type="RE",
     smoothing=false, 
@@ -583,7 +583,7 @@ Fits a customizable Ordinary Differential Equation (ODE) model to a dataset from
 
 # Key Arguments:
 
-- `integrator=Tsit5()`: SciML integrator to use. For piecewise models, consider using `KenCarp4(autodiff=true)`.
+- `Integration_method=Tsit5()`: SciML Integration_method to use. For piecewise models, consider using `KenCarp4(autodiff=true)`.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer for parameter fitting from optimization.jl.
 - `loss_type="RE"`: Type of loss function. Options include `"RE"`, `"L2"`, `"L2_derivative"`, and `"blank_weighted_L2"`, see documentation for the full list.
 - `path_to_annotation::Any=missing`: Path to a .csv file with annotation data. Required if `avg_replicate=true`.
@@ -631,7 +631,7 @@ function fit_file_custom_ODE(
     param::Vector{Float64},# array of the array of the lower bound of the parameters
     n_equation::Int;
     path_to_annotation::Any=missing,# path to the annotation of the wells
-    integrator=Tsit5(), # selection of sciml integrator
+    Integration_method=Tsit5(), # selection of sciml Integration_method
     path_to_results="NA", # path where save results
     loss_type="RE", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
@@ -754,7 +754,7 @@ function fit_file_custom_ODE(
             model, # ode model to use 
             param, # lower bound param
             n_equation; # number ode in the system
-            integrator=integrator, # selection of sciml integrator
+            Integration_method=Integration_method, # selection of sciml Integration_method
             pt_avg=pt_avg, # number of the point to generate intial condition
             pt_smooth_derivative=pt_smooth_derivative,
             smoothing=smoothing, # the smoothing is done or not?
@@ -820,7 +820,7 @@ end
     lb_param_array::Any=nothing, 
     ub_param_array::Any=nothing, 
     path_to_annotation::Any=missing,
-    integrator=Tsit5(), 
+    Integration_method=Tsit5(), 
     path_to_results="NA", 
     loss_type="L2", 
     type_of_smoothing="lowess",
@@ -862,7 +862,7 @@ This function performs model selection for ordinary differential equations (ODEs
 - `lb_param_array::Any=nothing`: Lower bounds for the model parameters. Must be compatible with the models.
 - `ub_param_array::Any=nothing`: Upper bounds for the model parameters. Must be compatible with the models.
 - `path_to_annotation::Any=missing`: Path to the .csv  file with annotation data. Required if `avg_replicate=true`.
-- `integrator=Tsit5()`: SciML integrator to use. For piecewise models, consider using `KenCarp4(autodiff=true)`.
+- `Integration_method=Tsit5()`: SciML Integration_method to use. For piecewise models, consider using `KenCarp4(autodiff=true)`.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer used for parameter fitting from optimization.jl.
 - `loss_type="L2"`: Type of loss function. Options include `"L2"`, `"RE"`, `"L2_derivative"`, and `"blank_weighted_L2"`, see documentation for the full list.
 - `path_to_results="NA"`: Path to the folder where results will be saved.
@@ -911,7 +911,7 @@ function ODE_model_selection_file(
     lb_param_array::Any=nothing, # lower bound param
     ub_param_array::Any=nothing, # upper bound param
     path_to_annotation::Any=missing,# path to the annotation of the wells
-    integrator=Tsit5(), # selection of sciml integrator
+    Integration_method=Tsit5(), # selection of sciml Integration_method
     path_to_results="NA", # path where save results
     loss_type="L2", # string of the type of the used loss
     smoothing=false, # 1 do smoothing of data with rolling average
@@ -1041,7 +1041,7 @@ function ODE_model_selection_file(
             param_array;
             lb_param_array=lb_param_array, # lower bound param
             ub_param_array=ub_param_array, # upper bound param
-            integrator=integrator, # selection of sciml integrator
+            Integration_method=Integration_method, # selection of sciml Integration_method
             pt_avg=pt_avg, # number of the point to generate intial condition
             beta_smoothing_ms=beta_smoothing_ms, # penality for AIC evaluation
             smoothing=smoothing, # the smoothing is done or not?
@@ -1119,7 +1119,7 @@ end
     path_to_annotation::Any=missing,
     detect_number_cpd=true,
     fixed_cpd=false,
-    integrator=Tsit5(), 
+    Integration_method=Tsit5(), 
     type_of_loss="L2", 
     type_of_detection="sliding_win",
     type_of_curve="original",
@@ -1171,7 +1171,7 @@ This function performs model selection for ordinary differential equation (ODE) 
 - `path_to_annotation::Any=missing`: Path to the .csv file with annotation data. Required if `avg_replicate=true`.
 - `detect_number_cpd=true`: Boolean flag indicating whether to detect the optimal number of change points. If `true`, all combinations from length 1 to `n_max_change_points` are tested, and the best is selected based on AICc.
 - `fixed_cpd=false`: Boolean flag indicating whether to use a fixed number of change points. If `true`, the fitting will use exactly `n_max_change_points`.
-- `integrator=Tsit5()`: SciML integrator to use. For piecewise models, consider using `KenCarp4(autodiff=true)`.
+- `Integration_method=Tsit5()`: SciML Integration_method to use. For piecewise models, consider using `KenCarp4(autodiff=true)`.
 - `optimizer=BBO_adaptive_de_rand_1_bin_radiuslimited()`: Optimizer used for parameter fitting from optimization.jl.
 - `type_of_loss="L2"`: Type of loss function. Options include `"L2"`, `"RE"`, `"L2_derivative"`, and `"blank_weighted_L2"`, see documentation for the full list.
 - `path_to_results="NA"`: Path to the folder where results will be saved.
@@ -1229,7 +1229,7 @@ function segmentation_ODE_file(
     path_to_annotation::Any=missing,# path to the annotation of the wells
     detect_number_cpd=true,
     fixed_cpd=false,
-    integrator=Tsit5(), # selection of sciml integrator
+    Integration_method=Tsit5(), # selection of sciml Integration_method
     type_of_loss="L2", # type of used loss 
     type_of_detection="sliding_win",
     type_of_curve="original",
@@ -1363,7 +1363,7 @@ function segmentation_ODE_file(
             ub_param_array=ub_param_array, # upper bound param
             detect_number_cpd=detect_number_cpd,
             fixed_cpd=fixed_cpd,
-            integrator=integrator, # selection of sciml integrator
+            Integration_method=Integration_method, # selection of sciml Integration_method
             type_of_loss=type_of_loss, # type of used loss
             type_of_detection=type_of_detection,
             type_of_curve=type_of_curve,

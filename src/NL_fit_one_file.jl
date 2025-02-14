@@ -1035,7 +1035,7 @@ function fit_NL_segmentation_file(
             lb_param_array=lb_param_array, # lower bound param
             ub_param_array=ub_param_array, # upper bound param
             type_of_loss=loss_type, # type of used loss
-            method_of_fitting=method_of_fitting, # selection of sciml integrator
+            method_of_fitting=method_of_fitting, # selection of sciml Integration_method
             type_of_detection=type_of_detection,
             type_of_curve=type_of_curve,
             smoothing=smoothing,

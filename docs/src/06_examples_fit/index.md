@@ -1,14 +1,22 @@
-# [Examples and Tutorial](@id examples)
+# [Examples of fitting](@id examples)
 
-This section provides some copy-and-paste examples of Kinbiont.jl
+This section provides some copy-and-paste examples on how to fit kinetics data with Kinbiont.jl. 
 
 ```@contents
 Pages = ["index.md"]
-Depth = 3
+Depth = 4
 ```
-To run all these example you need to call the following packages:
+
+A corse grain description on which function/method to fit can be used is described in the following flow chart:
+
+```@raw html
+<div style="text-align: center; margin: auto; max-width: 1000px;">
+    <img alt="Kinbiont flow chart on how select fit functions"src="../assets/workflow_fit.png">
+</div>
+```
 
 
+ To run all the examples in this page you need the following packages:
 ```julia
 using Kinbiont
 using CSV
@@ -17,29 +25,16 @@ using Distributions
 using Optimization
 using OptimizationNLopt
 using Tables
-using SymbolicRegression
-using DataFrames
-using Statistics
-using DelimitedFiles
 using Random
-using DecisionTree
-using AbstractTrees
-using MLJDecisionTreeInterface
-using TreeRecipe
 ```
-## Simulating/Loading single kinetics data
-### Loading  data from a .csv
-It is possible to load single curves using CSV package in Julia and format them to be compatible with Kinbiont. In this example we suppose that the .csv file is formatted as required in Kinbiont documentation.
 
-```julia
-df_data  =CSV.file("your_path/data_examples/plate_data.csv")
-names_of_cols = propertynames(df_data)  
 
-data_OD = Matrix(hcat(df_data[names_of_cols[1]],df_data[names_of_cols[2]]))
-```
+
+## Fitting a single kinetics
+
 ### Simulating Data with ODEs
 
-To simulate data using Ordinary Differential Equations (ODEs), first we declare the model and the parameters of the simulation :
+First we simulate the data to use them as example for the fitting:
 
 ```julia
 model = "triple_piecewise_adjusted_logistic"
@@ -75,48 +70,6 @@ Plots.scatter!(data_OD[1,:],data_OD[2,:], xlabel="Time", ylabel="Arb. Units", la
 
 ```
 
-### Simulating Data with stochastic simulations
-
-To simulate data using  stochastic models:
-
-```julia
-sim = Kinbiont.stochastic_sim("Monod", #string of the model
-   1, # number of starting cells
-   10000.1, # starting # molecules (in "biomass units") of the limiting nutrients
-    0.0, # start time of the sim
-    2000.0, # final time of the sim
-    0.1, # delta t for poisson approx
-    11.1,
-    10.1, # monod constant
-    0.06, # massimum possible growth rate
-   10.0, # lag time
-    0.0000001,# nutrient consumed per division (conc)
-    1000.0 #volume
-)
-Plots.plot(sim[3],sim[1], xlabel="Time",ylabel="# of indivuals")
-Plots.plot(sim[3],sim[2], xlabel="Time",ylabel="nutrients/volume")
-
-data_OD = Matrix(transpose(hcat(sim[3],sim[1])))
-```
-
-## Data Preprocessing
-We start applying a rolling average smoothing to the data. In the example, a rolling window of size 7 is applied to the original data (```data_OD``` generated in the previous examples). 
-```julia
-data_ODsmooth = Kinbiont.smoothing_data(data_OD, 7)
-data_ODsmooth = Matrix(data_ODsmooth)
-
-# Plotting scatterplot of smoothed data
-Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Smoothed data " nothing], markersize=2, color=:blue, size=(300, 300))
-```
-Furthermore, to address potential external influences, a correction for multiple scattering is applied to the smoothed data. This correction is executed through the ```correction_OD_multiple_scattering``` function, requiring an external file (```calibration_curve.csv```).  it is  optional in the provided example. 
-```julia
-
-data_ODsmooth = Kinbiont.correction_OD_multiple_scattering(data_ODsmooth, "/your_path/data_examples/cal_curve_examples.csv")
-# Plotting scatterplot of preprocessed data
-Plots.scatter(data_ODsmooth[1, :], data_ODsmooth[2, :], xlabel="Time", ylabel="Arb. Units", label=["Pre-processed data" nothing], markersize=2, color=:blue, size=(300, 300))
-```
-
-## Fitting a single kinetics
 When data are store in a Matrix of Float64 with 2 rows it is possible to perfor various analyses
 ### Evaluation of the dynamics of specific growth rate
 The user can evaluate   of the specific growth rate  during all the curve. This can be done by running the following:
@@ -129,7 +82,7 @@ specific_gr_array = Kinbiont.specific_gr_evaluation(data_OD,pt_win )
 specific_gr_times = [
     (data_OD[1, r] + data_OD[1, 	(r+pt_smoopt_winthing_derivative)]) / 2 for
     r = 1:1:(eachindex(data_OD[2, :])[end].- pt_win)
- 	]
+ 	]
 Plots.scatter(specific_gr_times,specific_gr_array, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],  color=:blue, size = (300,300))
 
 
@@ -517,9 +470,9 @@ nl_fit = Kinbiont.NL_model_selection(data_OD, # dataset first row times second r
 nl_model, #  model to use
 p_guess;
 )
-
-
 ```
+
+
 
 
 The user can specify any parameter of the optimizer, for the bound in this case it is done via:
@@ -676,10 +629,259 @@ seg_fitting = Kinbiont.segmentation_NL(
 
 
 ```
+
+### Fitting a ODEs System
+
+This example demonstrates how to fit an Ordinary Differential Equations (ODEs) syste using Kinbiont. The system models interactions between four variables, and we aim to estimate its parameters from noisy simulated data.
+
+First we define a custom model (if you want to use an harcoded model just put the corresponding sting in the model field for the simulation and the fit).
+The system consists of:
+- **u1**: A reactant influenced by u4.
+- **u2**: An intermediate product.
+- **u3**: A final product.
+- **u4**: A resource that decreases as the reaction proceeds.
+
+The ODE system is defined as:
+
+```julia
+using Kinbiont
+using Plots
+using StatsBase
+using Distributions
+
+function model_1(du, u, param, t)
+    du[1] = param[1] * u[1] * u[4]                  # Reactant conversion
+    du[2] = param[4] * du[1] - param[3] * u[2] - param[2] * u[2]  # Intermediate balance
+    du[3] = param[3] * u[2] - param[2] * u[3]       # Final product formation
+    du[4] = -du[1]                                  # Resource consumption
+end
+```
+
+We define initial conditions, true parameters,and the bounds of the fit:
+
+```julia
+u0 = [0.1, 0.0, 0.0, 1.0]  # Initial conditions for [u1, u2, u3, u4]
+param = [0.1, 0.01, 0.5, 0.42]  # True parameter values
+
+lb1 = [0.01, 0.0001, 0.0, 0.01]  # Lower bounds
+ub1 = [0.2, 0.3, 1.1, 1.0]       # Upper bounds
+param_guess = lb1 .+ (ub1 .- lb1) ./ 2  # Initial parameter guess
+```
+We simulate the data
+
+```julia
+Simulation = ODEs_system_sim(
+    model_1, # ODE function
+    u0,      # Initial conditions
+    0.0,     # Start time
+    50.0,    # End time
+    1.0,     # Time step for Poisson approximation
+    param    # True parameters
+)
+```
+We add some uniform noise
+
+```julia
+sol_time = reduce(hcat, Simulation.t)
+sol_t = reduce(hcat, Simulation.u)
+
+# Adding uniform random noise
+sol_t_noise = [sol_t[i, :] .+ rand(Uniform(-0.05, 0.05), size(sol_t)[2]) for i in 1:size(sol_t)[1]]
+sol_t_noise = permutedims(reduce(hcat, sol_t_noise))
+
+data = vcat(sol_time, sol_t_noise)
+```
+We plot the data with noise:
+
+```julia
+display(scatter(data[1, :], data[2, :], label="u1"))
+display(scatter!(data[1, :], data[3, :], label="u2"))
+display(scatter!(data[1, :], data[4, :], label="u3"))
+display(scatter!(data[1, :], data[5, :], label="u4"))
+```
+
+We Fit the Model Using Kinbiont
+
+```julia
+fit = fit_ODEs_System(
+    data,
+    "test",     # Label for dataset
+    model_1,    # ODE model
+    param_guess, # Initial parameter guess
+    u0;         # Initial conditions
+    lb=lb1,     # Lower bounds
+    ub=ub1      # Upper bounds
+)
+```
+
+We plot the fitted model
+```julia
+plot!(fit[3], label="Fitted Model")
+```
+
+
+### Fitting reaction network
+
+
+We define a **Michaelis-Menten enzyme kinetics** reaction network using [Catalyst](https://docs.sciml.ai/Catalyst/stable/) :
+
+```julia
+# Define initial conditions
+u0 = [:S => 301, :E => 100, :SE => 0, :P => 0]
+
+# Define kinetic parameters
+ps = [:kB => 0.00166, :kD => 0.0001, :kP => 0.1]
+
+# Define the Michaelis-Menten reaction network
+model_Michaelis_Menten = @reaction_network begin
+    kB, S + E --> SE
+    kD, SE --> S + E
+    kP, SE --> P + E
+end
+```
+
+We simulate the reaction system over a time range (`t=0` to `t=10`) using Kinbiont's reaction network simulation function:
+
+```julia
+# Run simulation
+Simulation = Kinbiont.Kinbiont_Reaction_network_sim(
+    "Michaelis_Menten",
+    u0,
+    0.0, 10.0, 0.1, # Start time, end time, step size
+    ps
+)
+
+# Plot the simulation results
+plot(Simulation)
+```
+
+We introduce synthetic noise to the simulated data to mimic experimental uncertainty:
+
+```julia
+# Extract time-series data from the simulation
+sol_time = reduce(hcat, Simulation.t)
+sol_t = reduce(hcat, Simulation.u)
+
+# Add noise to the dataset
+noise = rand(Uniform(-0.01, 0.05), size(sol_t))
+sol_t_noise = sol_t .+ noise
+
+# Prepare noisy data for fitting
+data = vcat(sol_time, permutedims(sol_t_noise))
+```
+
+We plot the data
+
+```julia
+# Scatter plot of noisy data
+scatter(data[1, :], data[2, :], label="S")
+scatter!(data[1, :], data[3, :], label="E")
+scatter!(data[1, :], data[4, :], label="SE")
+scatter!(data[1, :], data[5, :], label="P")
+```
+
+We use `RN_fit` to estimate the reaction parameters from the noisy dataset:
+
+```julia
+# Fit the model to noisy data
+fit = RN_fit(data, model_Michaelis_Menten, u0, ps)
+
+# Overlay the fitted model on the original plot
+plot!(fit[4])
+```
+
+
+### Fitting a cybernetic models
+
+
+
+We define a Kinbiont Cybernetic Model with specific parameters:
+
+```julia
+
+# Define the Cybernetic Model
+model = Kinbiont_Cybernetic_Model(
+    Bio_mass_conc = 1.01,  # Initial biomass concentration
+    Substrate_concentrations = [5.0, 5.0],  # Concentrations of 2 substrates
+    Protein_concentrations = [0.0, 0.0],  # Initial protein concentrations
+    allocation_rule = threshold_switching_rule,  # Dynamic resource allocation rule
+    reaction = nothing,  # No specific reaction function provided
+    cost = nothing,  # No cost function
+    protein_thresholds = 0.01,  # Protein activation threshold
+    a = [0.1, 0.4],  # Synthesis rate constants for proteins
+    b = [0.00001, 0.000001],  # Degradation constants for proteins
+    V_S = [0.7, 0.1],  # Substrate utilization rates
+    k_S = [0.1, 0.11],  # Saturation constants for substrates
+    Y_S = [0.07, 0.11]  # Yield coefficients for biomass per substrate
+)
+```
+
+
+We simulate the model over time (from `t=0` to `t=100`) using the `Tsit5` solver:
+
+```julia
+# Simulate the model
+simulation = Kinbiont_Cybernetic_Model_simulation(model, 0.0, 100.0, 0.1; Integration_method = Tsit5())
+
+# Plot the results
+plot(simulation)
+```
+
+
+We extract the simulation data (biomass, substrate, and protein concentrations over time) for fitting:
+
+```julia
+# Extract time-series data from the simulation
+prob = simulation.prob
+
+data_to_fit = hcat(prob.t, reduce(hcat, prob.u)[1,:])
+data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[2,:])
+data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[3,:])
+data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[4,:])
+data_to_fit = hcat(data_to_fit, reduce(hcat, prob.u)[5,:])
+data_to_fit = permutedims(data_to_fit)  # Convert to column-major order
+```
+
+
+We define a new model where some parameters (`a`, `V_S`)  are unknown and need to be fitted, to do that we put them to nothing in the data struct:
+
+```julia
+# Define a new model with unknown parameters
+model_fit = Kinbiont_Cybernetic_Model(
+    Bio_mass_conc = 1.01,  # Initial biomass concentration
+    Substrate_concentrations = [2.0, 5.0],  # Initial substrate concentrations
+    Protein_concentrations = [0.0, 0.0],  # No initial protein concentrations
+    allocation_rule = proportional_allocation_rule,  # Different allocation rule
+    reaction = nothing,  # No specific reaction function
+    cost = nothing,  # No cost function
+    protein_thresholds = 0.01,  # Protein activation threshold
+    a = [nothing, 0.1],  # One synthesis rate is unknown
+    b = [0.00001, 0.000001],  # Known degradation constants
+    V_S = [nothing, 0.4],  # One substrate utilization rate is unknown
+    k_S = [0.1, 0.11],  # Saturation constants
+    Y_S = [0.07, 0.11]  # Yield coefficients
+)
+```
+
+Using `fit_Cybernetic_models`, we fit the model parameters to experimental data:
+
+```julia
+# Fit the model to experimental data
+results = fit_Cybernetic_models(
+    data_to_fit,  # Experimental data
+    "test",  # Dataset name
+    model_fit,  # Model with unknown parameters
+    [0.01, 0.1];  # Initial guesses for unknown parameters (a and V_S)
+    set_of_equations_to_fit = nothing  # No additional constraints
+)
+```
+
+
 ## Fitting a .csv file
 
 Instead fitting a single kinetics the user can supply a `.csv` file (formatted as described in the section), and Kinbiont will proceed to perform all the analysis on all the wells of the experiment. Note that the user can supply a annotation .csv in this case becomes possible to subtract the blanks and fit the average of replicates.
 
+Note that this is aviable only for ODE with one dimensional data (OD or biomass). For use a `.csv` with multidimensional ODEs you need import the data and shape them in the format required by Kinbiont. 
 To use the following functions the user should input to Kinbiont variables that contains the string of the path to the .csv files:
 
 ```julia
@@ -687,12 +889,30 @@ path_to_data = "your_path/data_examples/plate_data.csv"
 path_to_annotation ="your_path_to_annotation/annotation.csv"
 ```
 In the following examples we assume that these two variables have a value. You can use the file in the folder `data_exmples`.
+Note that if you use the following function you can use the package https://github.com/pinheiroGroup/KinbiontPlots.jl to display or save the plots of the fit for all the wells in the experiment. This can be done using the following function with input the data struct coming for any fit:
 
+```julia
+using KinbiontPlots
+
+plot_fit_of_file(
+    Kinbiont_results;
+    path_to_plot="NA", # path where to save Plots
+    display_plots=true,# display plots in julia or not
+    save_plots=false, # save the plot or not
+    x_size=500,
+    pt_smoothing_derivative = 7,
+    y_size =750,
+    guidefontsize=18,
+    tickfontsize=16,
+    legendfontsize=10,
+)
+
+```
 
 
 ### Log-Lin fitting
 
-If the paths are provided to ```fit_one_file_Log_Lin```, the user will obtain a matrix containing the results for each well:
+If the paths are provided  to fit you need just to call ```fit_one_file_Log_Lin``` to use all the default parameters:
 
 ```julia
 fit_log_lin = Kinbiont.fit_one_file_Log_Lin(
@@ -740,18 +960,8 @@ fit_od = Kinbiont.fit_file_ODE(
 )
 
 ```
-To plot the results of such fitting one can do the following:
 
-```julia
 
-well_to_plot = 13
-
-# plot data 
-Plot.scatter(fit_od[4][well_to_plot][:,1],fit_od[4][well_to_plot][:,2])
-# plot fits 
-Plot.scatter(fit_od[3][well_to_plot][1,:],fit_od[3][well_to_plot][2,:])
-
-```
 It is also possible to perform the model selection on an entire file. First we declare the list of the models:
 
 ```julia
@@ -920,205 +1130,48 @@ NL_segmentation = Kinbiont.fit_NL_segmentation_file(
 )
 ```
 
-## Downstream ML anlyses
-
-### Symbolic regression
-
-This example demonstrates how to use the `Kinbiont` and `SymbolicRegression` packages to analyze kinetics data.
-
-Set up paths to your data, annotation, calibration curve, and result directories (see examples):
-
-```julia
-path_to_data = "your_path/data_examples/plate_data.csv"
-path_to_annotation = "your_path/data_examples/annotation.csv"
-path_to_calib = "your_path/data_examples/cal_curve_example.csv"
-path_to_results = "your_path//seg_res/"
-```
-
-We fit the data with  segmentation and 1 change point. First, we declare the models
-
-```julia
-model1 = "HPM_exp"
-lb_param1 = [0.00001, 0.000001]
-ub_param1 = [0.5, 1.5]
-param_guess1 = [0.01, 0.01]
-
-model2 = "logistic"
-lb_param2 = [0.00001, 0.000001]
-ub_param2 = [0.5, 2.5]
-param_guess2 = [0.01, 1.01]
-
-list_of_models = [model1, model2]
-list_guess = [param_guess1, param_guess2]
-list_lb = [lb_param1, lb_param2]
-list_ub = [ub_param1, ub_param2]
-
-n_change_points =1
-```
-
-We perform  the fitting:
-
-```julia
-fit_file = Kinbiont.segmentation_ODE_file(
-    "seg_exp_1", # Label of the experiment
-    path_to_data, # Path to the folder to analyze
-    list_of_models, # ODE models to use
-    list_guess, # Parameter guesses
-    n_change_points;
-    path_to_annotation=path_to_annotation, # Path to the annotation of the wells
-    detect_number_cpd=false,
-    fixed_cpd=false,
-    path_to_calib=path_to_calib,
-    multiple_scattering_correction=false, # If true, use calibration curve for data correction
-    type_of_curve="deriv",
-    pt_smooth_derivative=10,
-    type_of_smoothing="lowess",
-    verbose=true,
-    write_res=false,
-    path_to_results=path_to_results,
-    win_size=12, # Number of points to generate initial condition
-    smoothing=true,
-    lb_param_array=list_lb, # Lower bounds for parameters
-    ub_param_array=list_ub, # Upper bounds for parameters
-    maxiters=200000
-)
-```
-We load the annotation and  select results of a specific strain
-
-```julia
-annotation_test = CSV.File(path_to_annotation, header=false)
-names_of_annotation = propertynames(annotation_test)
-feature_matrix = hcat(annotation_test[:Column1], annotation_test[:Column3])
-
-# Selecting strain S5
-index_strain = findall(annotation_test[:Column2] .== "S5")
-index_cc = findall(annotation_test[:Column3] .> 0.01)
-to_keep = intersect(index_strain, index_cc)
-feature_matrix = feature_matrix[to_keep, :]
-wells_to_use = feature_matrix[:, 1]
-index_res = Any
-
-```
-
-We give same order to the well to analyze and the features (can be skipped)
-```julia
-for i in wells_to_use
-    if i == wells_to_use[1]
-        index_res = findfirst(res_first_seg[:, 1:end] .== i)
-    else
-        index_res = hcat(index_res, findfirst(res_first_seg[:, 1:end] .== i))
-    end
-end
-
-iii = [index_res[1, i][2] for i in eachindex(index_res[1, :])]
-res_first_seg_ML = res_first_seg[:, iii]
-res_first_seg_ML = hcat(res_first_seg[:, 1], res_first_seg_ML)
-```
-
-We add x = 0.0, y = 0.0 to data to take in consideration  not growing wells:
-
-```julia
-
-feature_matrix =vcat(feature_matrix,["zero" 0.0])
-res_first_seg_ML=hcat(res_first_seg_ML , reduce(vcat,["zero" ,"zero", "zero", 0.0 ,  0.0 ,0.0 ,0.0 ,0.0 ,0.0 ]))
-
-
-```
-
-We Declare the options of symbolic regression:
-
-```julia
-
-options = SymbolicRegression.Options(
-    binary_operators=[+, /, *, -],
-    unary_operators=[],
-    constraints=nothing,
-    elementwise_loss=nothing,
-    loss_function=nothing,
-    tournament_selection_n=12,
-    tournament_selection_p=0.86,
-    topn=12,
-    complexity_of_operators=nothing,
-    complexity_of_constants=nothing,
-    complexity_of_variables=nothing,
-    parsimony=0.05,
-    dimensional_constraint_penalty=nothing,
-    alpha=0.100000,
-    maxsize=10,
-    maxdepth=nothing
-)
-```
-
-We run the symbolic regression using dependent variable that is the 7th row of the Kinbiont results (i.e., the growth rate)
-
-```julia
-
-gr_sy_reg = Kinbiont.downstream_symbolic_regression(res_first_seg_ML, feature_matrix, 7; options=options)
-
-scatter(feature_matrix[:, 2], res_first_seg_ML[7, 2:end], xlabel="Amino Acid concentration μM", ylabel="Growth rate [1/Min]", label=["Data" nothing])
-hline!(unique(gr_sy_reg[3][:, 1]), label=["Eq. 1" nothing], line=(3, :green, :dash))
-plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_reg[3][:, 2]), label=["Eq. 2" nothing], line=(3, :red))
-plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_reg[3][:, 3]), label=["Eq. 3" nothing], line=(3, :blue, :dashdot))
-plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_reg[3][:, 4]), label=["Eq. 4" nothing], line=(2, :black))
-plot!(unique(convert.(Float64, feature_matrix[gr_sy_reg[4], 2])), unique(gr_sy_reg[3][:, 5]), label=["Eq. 5" nothing], line=(2, :black))
-
-```
-
-### Decision Tree Regression Analysis
 
 
 
+## Error functions
+The user can choose to use different error functions to perfor the fitting. Each fitting API has its keyword argument to change the loss. The possible options are described in the following section.
+
+In the  equations of this list, the notation is the following: $n$ the number of time points $t_i$, $\hat{N}(t_i, \{P\})$ is the proposed numerical solution at time $t_i$ and using the parameters $\{P\}$, and $N(t_i)$ is the data value at $t_i$.
+
+`"L2"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the given data.
+
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2$$
 
 
+`"RE"`: Minimize the relative error between the solution and data.
 
-We read the data from CSV files:
-
-```julia
-Kinbiont_res_test = readdlm("your_path/data_examples/Results_for_ML.csv", ',')
-annotation_test = readdlm("your_path/data_examples/annotation_for_ML.csv", ',')
-```
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\hat{N}(t_i, \{P\})}\right)^2$$
 
 
-We define some variables for analysis:
+`"L2_derivative"`: Minimize the L2 norm of the difference between the specific growth rate of the numerical solution of the desired model and the corresponding derivatives of the data.
 
-```julia
-ordered_strain = annotation_test[:, end]
-n_folds = 10
-feature_names = unique(annotation_test[1, 2:end])[2:(end-1)]
-
-depth = -1 
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{dD(t_i)}{dt} - \frac{d\hat{N}(t_i, \{P\})}{dt}\right)^2$$
 
 
-# Set random seed for reproducibility
-seed = Random.seed!(1234)
-```
-We perform decision tree regression only on "N. soli" strain and we  analyze the 9th row (i.e. growht rate) of the results:
+`"blank_weighted_L2"`: Minimize a weighted version of the L2 norm, where the difference between the solution and data is weighted based on a distribution obtained from empirical blank data.
 
-```julia
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(1 - P(N(t_i) - \hat{N}(t_i, \{P\})|\text{noise})\right) \, \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2$$
+
+where $P(N(t_i) - \hat{N}(t_i, \{P\})|\text{noise})$ is the probability distribution of the empirical blank data.
+`"L2_log"`: Minimize the logarithm of the L2 norm of the difference between the numerical solution of the desired model and the given data.
+
+$$\mathcal{L}(\{P\}) = \log\left(\frac{1}{n} \sum_{i=1}^n \left(N(t_i) - \hat{N}(t_i, \{P\})\right)^2\right)$$
 
 
-index_strain = findall("N. soli".== ordered_strain)
-feature_matrix = annotation_test[index_strain, 2:(end-1)]
-Kinbiont_results = Kinbiont_res_test[:, index_strain]
+`"RE_log"`: Minimize the logarithm of the relative error between the solution and data.
 
-dt_gr = Kinbiont.downstream_decision_tree_regression(Kinbiont_results,
-        feature_matrix,
-        9;# row to learn
-        do_pruning=false,
-        pruning_accuracy=1.00,
-        verbose=true,
-        do_cross_validation=true,
-        max_depth=depth,
-        n_folds_cv=n_folds,
-        seed=seed
-    )
-```
+$$\mathcal{L}(\{P\})= \log\left(\frac{1}{n} \sum_{i=1}^n 0.5 \, \left(1 - \frac{D(t_i)}{\hat{N}(t_i, \{P\})}\right)^2\right)$$
 
-We plot the tree
-```julia
-# Wrap the decision tree model for visualization
-wt = DecisionTree.wrap(dt_gr[1], (featurenames = feature_names,))
 
-# Plot the decision tree
-p2 = Plots.plot(wt, 0.9, 0.2; size = (900, 400), connect_labels = ["yes", "no"])
-```
+`"L2_std_blank"`: Minimize the L2 norm of the difference between the numerical solution of the desired model and the data, normalized by the standard deviation of empirical blank data.
+
+$$\mathcal{L}(\{P\}) = \frac{1}{n} \sum_{i=1}^n \left(\frac{N(t_i) - \hat{N}(t_i, \{P\})}{\text{std}_{\text{blank}}}\right)^2$$
+
+where $\text{std}_{\text{blank}}$ is the standard deviation of the empirical blank data.
+
+Note that for multidimesional ODEs system for the moment is only supported L2 distance other metrics are in work in progress.

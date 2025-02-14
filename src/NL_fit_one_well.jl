@@ -1239,7 +1239,7 @@ function selection_NL_fixed_interval(
     lb_param_array::Any = nothing, # lower bound param
     ub_param_array::Any = nothing, # upper bound param  
     type_of_loss="L2", # type of used loss
-    method_of_fitting="NA", # selection of sciml integrator
+    method_of_fitting="NA", # selection of sciml Integration_method
     smoothing=false,
     size_bootstrap=0.7,
     nrep=100,
@@ -1497,7 +1497,7 @@ function segmentation_NL(
     lb_param_array::Any=nothing, # lower bound param
     ub_param_array::Any=nothing, # upper bound param   
     type_of_loss="L2_fixed_CI", # type of used loss
-    method_of_fitting="NA", # selection of sciml integrator
+    method_of_fitting="NA", # selection of sciml Integration_method
     type_of_detection="sliding_win",
     type_of_curve="original",
     smoothing=false,
@@ -1617,7 +1617,7 @@ function segmentation_NL(
             ub_param_array =ub_param_array, # upper bound param
             type_of_loss=type_of_loss, # type of used loss
             optimizer=optimizer, # selection of optimization method
-            method_of_fitting=method_of_fitting, # selection of sciml integrator
+            method_of_fitting=method_of_fitting, # selection of sciml Integration_method
             smoothing=smoothing,
             type_of_smoothing=type_of_smoothing,
             thr_lowess=thr_lowess,

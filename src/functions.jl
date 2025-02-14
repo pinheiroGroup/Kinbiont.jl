@@ -19,7 +19,11 @@ include("NL_loss_list.jl");
 include("cpd_functions.jl");
 include("ML_downstream.jl");
 include("data_struct_Kinbiont.jl");
-
+include("ODEs_system_functions.jl");
+include("ODEs_system_models.jl");
+include("Reaction_Net_functions.jl");
+include("Reaction_Net_models.jl");
+include("Generalized_Cybernetic_Models.jl");
 
 function model_selector(model::String, u0, tspan, param=nothing)
 
@@ -417,7 +421,7 @@ end
     tmax::Float64,
     delta_t::Float64, 
     param_of_ode::Vector{Float64};
-    integrator=KenCarp4(),
+    Integration_method=KenCarp4(),
     )
 
 
@@ -432,7 +436,7 @@ This function solve the harcoded ODE Kinbiont.jl models.
 - `param_of_ode::Vector{Float64}`: The parameters of the ODE model.
      
 # Key argument:
-- `integrator=KenCarp4() `: The chosen solver from the SciML ecosystem for ODE integration, default KenCarp4 algorithm. 
+- `Integration_method=KenCarp4() `: The chosen solver from the SciML ecosystem for ODE integration, default KenCarp4 algorithm. 
 
 # Output:
     
@@ -445,7 +449,7 @@ function ODE_sim(
     tmax::Float64, # final time of the sim
     delta_t::Float64, # delta t for poisson approx
     param_of_ode::Vector{Float64}; # parameters of the ODE model
-    integrator=KenCarp4(), # which sciml solver of ode
+    Integration_method=KenCarp4(), # which sciml solver of ode
 )
 
     # defining time stepping
@@ -453,7 +457,7 @@ function ODE_sim(
     tspan = (tstart, tmax)
     u0 = n_start
     ODE_prob = model_selector(model, u0, tspan, param_of_ode)
-    sim = solve(ODE_prob, integrator, saveat=t_steps)
+    sim = solve(ODE_prob, Integration_method, saveat=t_steps)
 
     return sim
 end
@@ -464,7 +468,7 @@ function ODE_sim_for_iterate(
     model::String, #string of the model
     n_start::Vector{Float64}, # starting condition
     array_time::Vector{Float64},
-    integrator::Any, # which sciml solver of ode
+    Integration_method::Any, # which sciml solver of ode
     param_of_ode::Any, # parameters of the ODE model
 )
 
@@ -473,7 +477,7 @@ function ODE_sim_for_iterate(
     tspan = (array_time[1], array_time[end])
     u0 = n_start
     ODE_prob = model_selector(model, u0, tspan, param_of_ode)
-    sim = solve(ODE_prob, integrator, saveat=t_steps)
+    sim = solve(ODE_prob, Integration_method, saveat=t_steps)
 
     return sim
 end
