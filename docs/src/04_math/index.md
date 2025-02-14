@@ -1,6 +1,6 @@
 # [The mathematical models](@id models)
 
-In Kinbiont is possible to simulate and fit the bacterial growth with any Ordinary Differential Equations System.  We can broadly divide the classed of possible mathematical models in the following:
+In Kinbiont is possible to simulate and fit the bacterial growth with any Ordinary Differential Equations System.  We can broadly divide the classes of possible mathematical models into the following:
 
 ```@contents
 Pages = ["index.md"]
@@ -13,9 +13,9 @@ In this section we show some of the harcoded models of Kinbiont.jl but note that
 
 ## NL models for bacterial growth
 
-In generale NL fitting is preferred to ODE fitting in the following cases:
-1.  Since is faster when you have to analyze large dataset
-2. When you do not trust initial conditions (e.g., initial inocolum under the detection limit of the instrument). ODE fit needs to fix the intial condition of data on the first (or an average of the firts) time point of data and this could lead to errors.
+In general, NL fitting is preferred to ODE fitting in the following cases:
+1.  Since it is faster when you have to analyze a large dataset
+2. When you do not trust initial conditions (e.g., initial inoculum under the detection limit of the instrument). ODE fit needs to fix the initial condition of data on the first (or an average of the first) time point of data, and this could lead to errors.
 
 In this case, we are supposed to know the analytic formula of microbial growth; in particular, we have implemented some models from "Statistical evaluation of mathematical models for microbial growth" and added some piecewise models. They are:
 
@@ -103,7 +103,7 @@ To call these models use the string present in this table, the parameters will b
 
 
 
-For a general idea of the property of models consult the following table:
+For a general idea of the properties of models, consult the following table:
 
 
 | **Model Name**                   | **Has Lag?** | **Is Piecewise?** | **Has Stationary Phase?** |
@@ -118,7 +118,7 @@ For a general idea of the property of models consult the following table:
 | Piece-wise linear-logistic        | Yes        | Yes            | Yes                   |
 | Piece-wise exponential-logistic   | Yes        | Yes            | Yes                   |
 
-If undecided between different models please use the model selection function.
+If undecided between different models, please use the model selection function.
 
 
 ## ODEs for bacterial growth
@@ -289,7 +289,7 @@ N(t) = N_1(t) + N_2(t) + N_3(t), \\
 \frac{d N_3(t)}{dt} = - r_{\text{D}} \cdot N_3(t) \left(1 - \frac{N_3(t)}{N_{\text{res}}}\right) + r_{\text{I}} \cdot N_2(t), \quad \text{with} \quad N_3(t) \leq N_{\text{res}}
 \end{cases}$$
 
-where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the  rate of which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$),  $r_{\text{D}}$ is the  rate of which cell are die, and $N_{\text{res}}$ it the number of cell that will be inactive but do not die.
+where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the  rate of which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$),  $r_{\text{D}}$ is the  rate of which cell are die, and $N_{\text{res}}$ it the number of cells that will be inactive but do not die.
 
 
 
@@ -323,7 +323,7 @@ To call these models use the string present in this table, the parameters will b
 | Heterogeneous Population Model with Inhibition, Death and Resistance | `label_exp`, `well`, `model`, `gr`, `exit_lag_rate`, `inactivation_rate`, `death_rate`, `n_res`, `shape`, `th_max_gr`, `emp_max_gr`, `loss` | `"aHPM_3_death_resistance"`             |
 
 
-In the following table you can find a general description of the properties of the harcoded ODE models of Kinbiont:
+In the following table, you can find a general description of the properties of the hardcoded ODE models of Kinbiont:
 
 
 | **Model Name**                               | **Has Lag?** | **Is Piecewise?** | **Has Stationary Phase?** | **Has Inhibition?** | **Is Monotonic?** | **Supposes Multiple States?** |
@@ -351,12 +351,12 @@ In the following table you can find a general description of the properties of t
 | Heterogeneous Population Model with Inhibition and Death | Yes | No | Yes | Yes | No | Yes |
 | Heterogeneous Population Model with Inhibition, Death and Resistance | Yes | No | Yes | Yes | No | Yes |
 
-If undecided between different models the model selection function should be used.
+If undecided between different models, the model selection function should be used.
 
 ## Stochastic models for bacterial growth
 
 
-In the stochastic version of the growth models, the growth rate of each population component (denoted as $\mu_i$) is evaluated based on the concentration of the limiting nutrient and then the number of birth event is evaluated with the Poisson approximation. The user is required to specify the starting amount of nutrients and the volume of the solution. Various kinetic growth models are considered. **Note that these models can be used only during simulations.**
+In the stochastic version of the growth models, the growth rate of each population component (denoted as $\mu_i$) is evaluated based on the concentration of the limiting nutrient, and then the number of birth events is evaluated with the Poisson approximation. The user is required to specify the starting amount of nutrients and the volume of the solution. Various kinetic growth models are considered. **Note that these models can be used only during simulations.**
 In the following, we use $\nu$ to represent the limiting nutrient concentration throughout, $\mu_\text{max}$ denotes the maximum possible growth rate, $k_1$ (for $i=1,2$) is a numerical constant whose specific meaning depends on the model, $N$ indicates the number of present cells, and $N_\text{max}$ is the carrying capacity in the Verhulst model.
 
 - Monod Model:
@@ -401,7 +401,7 @@ $\mu(N;N_\text{max},\mu_\text{max})  = \displaystyle{\mu_\text{max} \left(1-\fra
 ## ODEs system for bacterial growth
 
 
-In this section, we present some of the examples of ODEs multidimensional system harcoded in Kinbiont. Note that these are just examples since you can define custom models:
+In this section, we present some examples of ODEs multidimensional system hardcoded in Kinbiont. Note that these are just examples since you can define custom models:
 
 - **SIR Model** (Susceptible-Infected-Recovered)  
 $$\begin{cases}
@@ -485,7 +485,7 @@ where:
 The effective biomass yield is given by:  
 $$Y = \frac{Y_{max} \cdot D}{D + m \cdot Y_{max}}$$
 
-Finally the  System Dynamics is specified by:  
+Finally, the  System Dynamics is specified by:  
 
 $$\frac{dx}{dt} = \mu x - D x$$
 
@@ -532,8 +532,8 @@ The system dynamics are governed by the following parameters:
 
 ## Cybernetic models for bacterial growth
 
-In this case Kinbiont do not takes as input an ODEs function, but a data struct and it proceeds  to construct the ODEs system.
-Note that the same results in theory could be obtained by declaring a custom ODEs system that behave in the same way.
+In this case, Kinbiont does not take as input an ODE function but a data structure, and it proceeds to construct the ODE system.
+Note that the same results in theory could be obtained by declaring a custom ODEs system that behaves in the same way.
 The data struct is composed in the following way: 
 
 ```julia
@@ -561,11 +561,11 @@ $$\frac{dP_i}{dt} = a_i \cdot \text{alloc}_i \cdot k_{S_i} - b_i P_i u_1, \quad 
 - **Biomass Growth:**  
 $$\frac{dN}{dt} = -\sum_{i=1}^{n} Y_{S_i} \frac{dS_i}{dt} \cdot N$$
 
-Where $n$ is the number of substrates, $V_{S_i}$ i-th substrate utilization rates, $k_{S_i}$ i-th saturation constants for substrates, $Y_{S_i}$ i-th yield coefficients for biomass per substrate, $a_{i}$  i-th synthesis rate for proteins and  $b_{i}$ i-th degradation constants for proteins . 
+Where $n$ is the number of substrates, $V_{S_i}$ i-th substrate utilization rates, $k_{S_i}$ i-th saturation constants for substrates, $Y_{S_i}$ i-th yield coefficients for biomass per substrate, $a_{i}$  i-th synthesis rate for proteins and  $b_{i}$ i-th degradation constants for proteins. 
 
 
     
-The `allocation_rule` in the cybernetic model defines how resources are allocated to different substrates, proteins, or other components of the system. You can create custom rules based on various factors such as substrate concentration, protein levels, or cost-benefit analysis. Below are some examples on how define a custom allocation rule:
+The `allocation_rule` in the cybernetic model defines how resources are allocated to different substrates, proteins, or other components of the system. You can create custom rules based on various factors such as substrate concentration, protein levels, or cost-benefit analysis. Below are some examples of how to define a custom allocation rule:
     
 ```julia
 # Function for proportional allocation based on substrate concentrations
