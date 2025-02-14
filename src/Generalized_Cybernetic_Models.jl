@@ -1,6 +1,5 @@
 # Define a generalized Cybernetic Model structure
 """
-
     struct Kinbiont_Cybernetic_Model
 
 A structure representing a cybernetic model for microbial growth and substrate utilization, incorporating different resource allocation rules.
@@ -528,7 +527,6 @@ Fits a cybernetic model to experimental data by optimizing the model parameters 
   1. The optimized parameter values.
   2. The final loss value indicating the goodness of fit.
 """
-
 function fit_Cybernetic_models(data::Matrix{Float64}, 
     label_exp::String, 
     model::Any, 
