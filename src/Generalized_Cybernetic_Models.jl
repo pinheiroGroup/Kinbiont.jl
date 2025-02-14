@@ -570,8 +570,9 @@ function fit_Cybernetic_models(data::Matrix{Float64},
    return Cybernetic_Model_fit_results
 
 end    
-
-
-
+export proportional_allocation_rule
+export threshold_switching_rule
+export cost_benefit_allocation_rule
+export Kinbiont_Cybernetic_Model
 export fit_Cybernetic_models
 export Kinbiont_Cybernetic_Model_simulation
