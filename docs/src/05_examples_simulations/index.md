@@ -186,7 +186,7 @@ Plot the Simulated Data:
 ```julia
 plot(Simulation)
 ```
-We can also consider other kinds of reactions for example.
+We can also consider other kinds of reactions, for example.
 Glycolysis is a metabolic pathway that converts glucose into pyruvate, generating ATP and NADH in the process. The pathway consists of multiple enzymatic reactions involving various intermediates. This model simulates the glycolysis pathway using a reaction network.
 
 Define the Glycolysis Reaction Network:
@@ -289,7 +289,7 @@ This rule allocates resources to substrates proportionally based on their concen
 ```julia
 # Function for proportional allocation based on substrate concentrations
 function proportional_allocation_rule(a, b, V_S, k_S, Y_S, P, S, cost, protein_thresholds)
-# Normalize substrate concentrations to create allocation vector
+# Normalize substrate concentrations to create an allocation vector
 alloc = S ./ sum(S)
 return alloc
 end
@@ -324,7 +324,7 @@ end
 
 **Cost-Benefit Allocation Rule**
 
-In this rule, resources are allocated based on the benefit-to-cost ratio of each substrate. Substrates with a higher benefit-to-cost ratio receive more resources.
+In this rule, resources are allocated based on each substrate's benefit-to-cost ratio. Substrates with a higher benefit-to-cost ratio receive more resources.
 
 ```julia
 function cost_benefit_allocation_rule(a, b, V_S, k_S, Y_S, P, S, cost, protein_thresholds)
@@ -357,7 +357,7 @@ function feedback_controlled_allocation_rule(a, b, V_S, k_S, Y_S, P, S, cost, pr
 end
 ```
 
-To add a new custom allocation rules just declare it as the example before and use it in the `Kinbiont_Cybernetic_Model` data struct. For example:
+To add a new custom allocation rule, just declare it as the example before and use it in the `Kinbiont_Cybernetic_Model` data struct. For example:
 
 ```julia
 model = Kinbiont_Cybernetic_Model(
