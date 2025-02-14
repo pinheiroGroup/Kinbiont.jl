@@ -95,7 +95,7 @@ downstream_symbolic_regression(Kinbiont_results,
 )
 ```
 
-The first matrix is the standard output of any of the Kinbiont fits functions. In this case, each row represents a parameter and each column a growth curve.
+The first matrix is the standard output of any of the Kinbiont fit functions. In this case, each row represents a parameter, and each column a growth curve.
 
 For example:
 
@@ -113,7 +113,7 @@ loss,            0.0013005418069932683,   0.0013349159149782007
 
 Note the first row is dedicated to the label of the experiment and will not be used by the functions. It is necessary that the second row (i.e., `well`) reports a unique ID for each curve. The functions will ask which is the target row of the regression (i.e., `row_to_learn`); please do not use the first row. The first column is dedicated to the names of the columns and will be discarded from the ML analysis.
 
-Instead, the feature matrix specifies the conditions associated with each unique ID of the previous matrix. Only the wells where there is a macth  between the first column of the feature matrix and the second row of the fitting results will be used. For example, suppose you have two different antibiotics each with two different concentrations, then the matrix could be:
+Instead, the feature matrix specifies the conditions associated with each unique ID of the previous matrix. Only the wells where there is a match  between the first column of the feature matrix and the second row of the fitting results will be used. For example, suppose you have two different antibiotics, each with two different concentrations. Then the matrix could be:
 
 ```
 ID_exp,   abx_1,   abx_2
@@ -130,7 +130,7 @@ See the folder  `data_examples` for examples.
 
 ## Outputs of Kinbiont
 
-Kinbiont has different data struct as output. Here you will find a brief summary of the main function to fit, please consult API section for the description of all the function.
+Kinbiont has different data structures as output. Here, you will find a brief summary of the main function; please consult the API section for the description of all the functions.
 
 - `fitting_one_well_Log_Lin`
 
