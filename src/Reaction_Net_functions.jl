@@ -1,5 +1,4 @@
 using Catalyst
-using DiffEqBase 
 using DiffEqParamEstim
 prob_generator_t = (prob,fixed_param) -> remake(prob, u0 = u0, p = replace_in_array2(fixed_param))
 
