@@ -94,7 +94,6 @@ Fits a reaction network model to experimental data by optimizing the parameters 
 - Optimized parameter values that best fit the experimental data.
 - The fitted model.
 """
-
 function RN_fit(data, 
     rn,
     u0,
