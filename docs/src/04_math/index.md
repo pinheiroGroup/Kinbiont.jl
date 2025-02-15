@@ -1,6 +1,6 @@
 # [The mathematical models](@id models)
 
-In Kinbiont is possible to simulate and fit the bacterial growth with any Ordinary Differential Equations System.  We can broadly divide the classes of possible mathematical models into the following:
+In Kinbiont it is possible to simulate and fit the bacterial growth with any ordinary differential equations system.  We can broadly divide the classes of possible mathematical models into the following:
 
 ```@contents
 Pages = ["index.md"]
