@@ -173,95 +173,95 @@ where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $\lambda$ is 
 
 - **Piece-wise Adjusted Logistic**:
 
-$$\frac{d N(t)}{dt} = 
+$\frac{d N(t)}{dt} = 
   \begin{cases} 
   \text{const.} \, N(t) & t < t_{\text{L}} \\ 
   \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \, N(t) & t \geq t_{\text{L}}
-\end{cases}$$
+\end{cases}$
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time, $m$ is shape constant, and $c$ the growth  rate during the lag phase (can be 0).
 - **Triple Piece-wise Adjusted Logistic**:
 
-$$\frac{d N(t)}{dt} = 
+$\frac{d N(t)}{dt} = 
   \begin{cases} 
   c_1 \cdot N(t) & \text{for } t < t_{\text{L}}, \\ 
   \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \cdot N(t) & \text{for } t_{\text{L}} \leq t < t_{\text{stat}}, \\ 
   c_2 \cdot N(t) & \text{for } t \geq t_{\text{stat}},
-\end{cases}$$
+\end{cases}$
 
  where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time, $m$ is a shape constant,  $c_1$ the growth rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
 - **Triple Piece-wise**:
 
-$$\frac{d N(t)}{dt} = 
+$\frac{d N(t)}{dt} = 
   \begin{cases} 
   c_1 \cdot N(t) & \text{for } t < t_{\text{L}}, \\ 
   \mu \cdot N(t) & \text{for } t_{\text{L}} \leq t < t_{\text{stat}},\\ 
   c_2 \cdot \left(1 - \log \left( \frac{N(t)}{N_{\text{max}}} \right)\right) & \text{for } t \geq t_{\text{stat}},
-\end{cases}$$
+\end{cases}$
 
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time, $c_1$ the growth rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
 
 - **Triple Piece-wise Exponential**:
 
-$$\frac{d N(t)}{dt} = 
+$\frac{d N(t)}{dt} = 
   \begin{cases} 
   c_1 \cdot N(t) & \text{for } t < t_{\text{L}}, \\ 
   \mu \cdot N(t) & \text{for } t_{\text{L}} \leq t < t_{\text{stat}}, \\ 
   c_2 \cdot N(t) & \text{for } t \geq t_{\text{stat}},
-\end{cases}$$
+\end{cases}$
 
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time, $c_1$ the growth  rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
 - **Four Piece-wise Exponential**:
 
-$$\frac{d N(t)}{dt} = 
+$\frac{d N(t)}{dt} = 
   \begin{cases} 
   c_1 \cdot N(t) & \text{for } t < t_1, \\ 
   \mu \cdot N(t) & \text{for } t_1 \leq t < t_2, \\ 
   c_2 \cdot N(t) & \text{for } t_2 \leq t < t_3,\\ 
   c_3 \cdot N(t) & \text{for } t \geq t_3,
-\end{cases}$$
+\end{cases}$
 
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_1$ is the lag time, $c_1$ the growth rate during the lag phase (can be 0), $t_2 $ the time when growth occurs after the exponential phase, $c_2$ the growth rate during this phase, $t_3$ the start of stationary phase and, $c_3$ the growth  rate during the stationary phase.
 
 - **Heterogeneous Population Model (HPM)**:
-$$\begin{cases}
+$\begin{cases}
   N(t) = N_1(t) + N_2(t), \\
   \frac{d N_1(t)}{dt} = - r_{\text{L}} \cdot N_1(t), \\
   \frac{d N_2(t)}{dt} = r_{\text{L}} \cdot N_1(t) + \mu \cdot N_2(t) \cdot \left(1 - \frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right),
-\end{cases}$$
+\end{cases}$
 
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, and $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$).     
 Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase) and $N_2(t)$ active cells, which are able to duplicate. At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(start) = OD(start)$, and $N_{2}(start) = 0.0$) .
 
 - **Exponential Heterogeneous Population Model**:
 
-$$\begin{cases}
+$\begin{cases}
   N(t) = N_1(t) + N_2(t) \\
   \frac{d N_1(t)}{dt} = - \text{r}_{\text{L}} \, N_1(t) \\
   \frac{d N_2(t)}{dt} = \text{r}_{\text{L}} \, N_1(t) + \mu \, N_2(t) 
-\end{cases}$$
+\end{cases}$
 
 where similarly to the HPM model, $N_1$ and $N_2$ refer to the populations of dormant and active cells, respectively. $\mu$ is the growth rate, and the lag rate $r_\text{L}$ denotes the transition between the $N_1$ and $N_2$ populations.     Here, we also assume that all cells are in the dormant state at the start (i.e., $N_{1}(t = 0) = \text{OD}(t = 0)$, and $N_{2}(t = 0) = 0$).
 
 
 - **Adjusted Heterogeneous Population Model**:
 
-$$\begin{cases}
+$\begin{cases}
   N(t) = N_1(t) + N_2(t), \\
   \frac{d N_1(t)}{dt} = - r_{\text{L}} \cdot N_1(t), \\
   \frac{d N_2(t)}{dt} = r_{\text{L}} \cdot N_1(t) + \mu \cdot N_2(t) \cdot \left(1 - \left(\frac{N_1(t) + N_2(t)}{N_{\text{max}}}\right)^m \right),
-\end{cases}$$
+\end{cases}$
 
 where $\mu$ is the growth rate, and $N_{\text{max}}$ the total growth.
 Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase) and $N_2(t)$ active cells, which are able to duplicate.At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(start) = OD(start)$, and $N_{2}(start) = 0.0$) .
 
 - **Heterogeneous Population Model with Inhibition**:
 
-$$\begin{cases}
+$\begin{cases}
   N(t) = N_1(t) + N_2(t)+ N_3(t)  \\
   \frac{d N_1(t)}{dt} = - r_{\text{L}} \cdot N_1(t) \\
   \frac{d N_2(t)}{dt} = r_{\text{L}} \cdot N_1(t) - r_{\text{I}} \cdot  N_2(t)\\
   \frac{d N_3(t)}{dt} =  r_{\text{I}} \cdot  N_2(t)
-\end{cases}$$
+\end{cases}$
 
 
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth,  $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) and $r_{\text{I}}$ is a shape constant.     
@@ -269,11 +269,11 @@ Note that these models assume that the cells are in two states: $N_1(t)$ dormant
 
 - **Heterogeneous Population Model with Inhibition and Death**:
 
-$$\begin{cases} N(t) = N_1(t) + N_2(t) + N_3(t), \\
+$\begin{cases} N(t) = N_1(t) + N_2(t) + N_3(t), \\
 \frac{d N_1(t)}{dt} = - r_{\text{L}} \cdot N_1(t), \\
 \frac{d N_2(t)}{dt} = r_{\text{L}} \cdot N_1(t) + \mu \cdot N_2(t) - r_{\text{I}} \cdot N_2(t), \\
 \frac{d N_3(t)}{dt} = - r_{\text{D}} \cdot N_3(t) + r_{\text{I}} \cdot N_2(t), 
-\end{cases}$$
+\end{cases}$
 
 where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the rate at which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$), and $r_{\text{D}}$ is the rate at which cell are die.
 
@@ -282,12 +282,12 @@ Note that these models assume that the cells are in three states: $N_1(t)$ dorma
 
 - **Heterogeneous Population Model with Inhibition, Death and Resistance**:
 
-$$\begin{cases}
+$\begin{cases}
 N(t) = N_1(t) + N_2(t) + N_3(t), \\
 \frac{d N_1(t)}{dt} = - r_{\text{L}} \cdot N_1(t), \\
 \frac{d N_2(t)}{dt} = r_{\text{L}} \cdot N_1(t) + \mu \cdot N_2(t) - r_{\text{I}} \cdot N_2(t), \\
 \frac{d N_3(t)}{dt} = - r_{\text{D}} \cdot N_3(t) \left(1 - \frac{N_3(t)}{N_{\text{res}}}\right) + r_{\text{I}} \cdot N_2(t), \quad \text{with} \quad N_3(t) \leq N_{\text{res}}
-\end{cases}$$
+\end{cases}$
 
 where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the rate at which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$),  $r_{\text{D}}$ is the rate at which cell are die, and $N_{\text{res}}$ it the number of cells that will be inactive but do not die.
 
@@ -326,7 +326,7 @@ To call these models use the string present in this table, the parameters will b
 In the following table, you can find a general description of the properties of the hardcoded ODE models of Kinbiont:
 
 
-| **Model Name**                               | ** Does it have a lag?** | **Is it piecewise?** | **Does it have a stationary phase?** | ** Does have inhibition?** | **Is it monotonic?** | **Does it assume multiple states?** |
+| **Model Name**                               | **Does it have a lag?** | **Is it piecewise?** | **Does it have a stationary phase?** | **Does have inhibition?** | **Is it monotonic?** | **Does it assume multiple states?** |
 |----------------------------------------------|-------------|------------------|--------------------------|-------------------|----------------|----------------------------|
 | Exponential ODE                              | No          | No               | No                       | No                | Yes            | No                         |
 | Hyper Gompertz                               | No          | No               | Yes                      | No                | Yes            | No                         |
@@ -404,72 +404,72 @@ $\mu(N;N_\text{max},\mu_\text{max})  = \displaystyle{\mu_\text{max} \left(1-\fra
 In this section, we present some examples of ODEs multidimensional system hardcoded in Kinbiont. Note that these are just examples since you can define custom models:
 
 - **SIR Model** (Susceptible-Infected-Recovered)  
-$$\begin{cases}
+$\begin{cases}
     \frac{dS}{dt} = -\beta S I \\
     \frac{dI}{dt} = \beta S I - \gamma I \\
     \frac{dR}{dt} = \gamma I
-  \end{cases}$$
+  \end{cases}$
   Parameters: Infection rate ($\beta$), Recovery rate ($\gamma$).
 
 - **SIR with Birth and Death (SIR_BD)**  
-$$\begin{cases}
+$\begin{cases}
     \frac{dS}{dt} = -\beta S I + b S - d S \\
     \frac{dI}{dt} = \beta S I - \gamma I - d I \\
     \frac{dR}{dt} = \gamma I - d R
-  \end{cases}$$
+  \end{cases}$
   Parameters: Infection rate ($\beta$), Recovery rate ($\gamma$), Birth rate ($b$), Death rate ($d$).
 
 - **SIS Model** (Susceptible-Infected-Susceptible)  
-$$\begin{cases}
+$\begin{cases}
     \frac{dS}{dt} = -\beta S I + \gamma I \\
     \frac{dI}{dt} = \beta S I - \gamma I
-  \end{cases}$$
+  \end{cases}$
   Parameters: Infection rate ($\beta$), Recovery rate ($\gamma$).
 
 - **Lotka-Volterra Predator-Prey Model**  
-$$\begin{cases}
+$\begin{cases}
     \frac{dP}{dt} = \alpha P - \beta P C \\
     \frac{dC}{dt} = -\delta C + \gamma C P
-  \end{cases}$$
+  \end{cases}$
   Parameters: Prey birth rate ($\alpha$), Predation rate ($\beta$), Predator death rate ($\delta$), Predator reproduction rate ($\gamma$).
 
 - **Lotka-Volterra with Substrate Limitation**  
-$$\begin{cases}
+$\begin{cases}
     \frac{dP}{dt} = \alpha P \frac{S}{S + K} - \beta P C \\
     \frac{dC}{dt} = -\delta C + \gamma C P \\
     \frac{dS}{dt} = -\alpha P \frac{S}{S + K}
-  \end{cases}$$
+  \end{cases}$
   Parameters: Growth rate ($\alpha$), Half-saturation ($K$), Predation rate ($\beta$), Predator mortality ($\delta$), Predator efficiency ($\gamma$).
 
 - **Monod Chemostat Model** (Microbial Growth in a Chemostat)  
-$$\begin{cases}
+$\begin{cases}
     \frac{dX}{dt} = \mu X - D X \\
     \frac{dS}{dt} = D (S_{\text{in}} - S) - \frac{\mu X}{Y} - m X
-  \end{cases}$$
+  \end{cases}$
   where  
-$$\mu = \mu_m \frac{S}{K_s + S}$$
+$\mu = \mu_m \frac{S}{K_s + S}$
   Parameters: Substrate affinity ($K_s$), Maintenance coefficient ($m$), Yield coefficient ($Y$), Max growth rate ($\mu_m$), Dilution rate ($D$), Substrate inflow ($S_{\text{in}}$).
 
 - **Droop Model** (Nutrient Quota Model)  
-$$\begin{cases}
+$\begin{cases}
     \frac{dX}{dt} = \mu X - D X \\
     \frac{dS}{dt} = \rho X - D S + D S_{\text{in}} \\
     \frac{dQ}{dt} = \rho - \mu Q
-  \end{cases}$$
+  \end{cases}$
   where  
-$$\mu = \mu_m \left(1 - \frac{Q_0}{Q}\right)$$
+$\mu = \mu_m \left(1 - \frac{Q_0}{Q}\right)$
   and  
-$$\rho = \rho_m \frac{S}{K_s + S}$$
+$\rho = \rho_m \frac{S}{K_s + S}$
   Parameters: Growth rate ($\mu_m$), Nutrient uptake rate ($\rho_m$), Half-saturation ($K_s$), Dilution rate ($D$), Minimum quota ($Q_0$), Substrate inflow ($S_{\text{in}}$).
 
 - **Synthetic Chemostat Model** (Including Biological Inertia)  
-$$\begin{cases}
+$\begin{cases}
     \frac{dx}{dt} = Y q_s - a_0 r x - D x \\
     \frac{ds}{dt} = D (s_r - s) - q_s x \\
     \frac{dr}{dt} = (Y q_s - a_0 r) \left(\frac{s}{K_r + s} - r\right)
-  \end{cases}$$
+  \end{cases}$
   where  
-$$q_s = r \frac{Q_s K_s}{K_s + s} + (1 - r) \frac{Q_s' K_s'}{K_s' + s}$$
+$q_s = r \frac{Q_s K_s}{K_s + s} + (1 - r) \frac{Q_s' K_s'}{K_s' + s}$
   Parameters: Yield ($Y$), Biological inertia ($a_0$), Dilution rate ($D$), Nutrient uptake coefficients ($Q_s, Q_s'$), Saturation constants ($K_s, K_s'$), Half-saturation constant for $r$($K_r$).
 
 - **Monod-Ierusalimsky** 
@@ -477,23 +477,23 @@ This model describes microbial growth, substrate consumption, and product format
 
 
 The specific growth rate $\mu$ follows the Monod-Ierusalimsky kinetics:  
-$$\mu = \mu_m \cdot \frac{s}{K_s + s} \cdot \frac{K_p}{K_p + p}$$
+$\mu = \mu_m \cdot \frac{s}{K_s + s} \cdot \frac{K_p}{K_p + p}$
 where:  
 - The first fraction represents substrate-limited growth (Monod equation).  
 - The second fraction accounts for product inhibition (Ierusalimsky modification).  
 
 The effective biomass yield is given by:  
-$$Y = \frac{Y_{max} \cdot D}{D + m \cdot Y_{max}}$$
+$Y = \frac{Y_{max} \cdot D}{D + m \cdot Y_{max}}$
 
 Finally, the  System Dynamics is specified by:  
 
-$$\frac{dx}{dt} = \mu x - D x$$
+$\frac{dx}{dt} = \mu x - D x$
 
 where $\mu x$ represents microbial growth, and $-D x$ accounts for biomass washout due to dilution.  
 
-$$\frac{ds}{dt} = D (s_r - s) - \frac{\mu x}{Y} - m x$$  
+$\frac{ds}{dt} = D (s_r - s) - \frac{\mu x}{Y} - m x$  
 
-$$\frac{dp}{dt} = Y_p \mu x - D p$$
+$\frac{dp}{dt} = Y_p \mu x - D p$
 
 where $Y_p$ is the product yield coefficient, and $-D p$ accounts for product washout.  
 
