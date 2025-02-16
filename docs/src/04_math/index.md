@@ -39,7 +39,7 @@ In this case, we are supposed to know the analytic formula of microbial growth; 
 
 - **Richards model**  
 
-  $$N(t) = \frac{N_{\text{max}}}{[1 + \nu \cdot e^{-\mu \cdot (t - t^{\text{L}})}]^{\frac{1}{\nu}}}$$
+  $$N(t) = \frac{N_{\text{max}}}{[1 + \nu \cdot e^{-\mu \cdot (t - t_{\text{L}})}]^{\frac{1}{\nu}}}$$
 
   where $\mu$ is the growth rate, $N_{\text{max}}$ is the total growth, $t_{\text{L}}$ is the lag time, and $\nu$ is a shape constant.
 
