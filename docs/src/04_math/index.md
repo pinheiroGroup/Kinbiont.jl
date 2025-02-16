@@ -63,11 +63,13 @@ In this case, we are supposed to know the analytic formula of microbial growth; 
 
 - **Piece-Wise Linear-Logistic**  
 
-  $N(t) = 
+  $$
+  N(t) = 
   \begin{cases} 
   N_0, & t < t_{\text{L}} \\
   \frac{N_{\text{max}}}{1 + \left( \frac{N_{\text{max}}}{N_0} - 1 \right) \exp\left( - \mu \cdot (t - t_{\text{L}}) \right)}, & t_{\text{L}} \leq t 
-  \end{cases}$
+  \end{cases}
+  $$
 
   where $N_0$ is the starting condition, $N_{\text{max}}$ is the total growth, $\mu$ is the growth rate, and $t_{\text{L}}$ is the lag time.
 
