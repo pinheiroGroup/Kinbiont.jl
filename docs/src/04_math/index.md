@@ -73,11 +73,11 @@ In this case, we are supposed to know the analytic formula of microbial growth; 
 
 - **Piece-wise Exponential-Logistic** 
 
-  $$N(t) = 
+  $N(t) = 
   \begin{cases} 
   N_0 \exp{(\mu_0 \cdot t)}, & t < t_{\text{L}} \\ 
   \frac{N_{\text{max}}}{1 + \left( \frac{N_{\text{max}}}{N_0 \exp{(\mu_0 \cdot t_{\text{L}})}} - 1 \right) \exp\left( - \mu \cdot (t - t_{\text{L}}) \right)}, & t_{\text{L}} \leq t 
-  \end{cases}$$
+  \end{cases}$
 
   where $N_0$ is the starting condition, $N_{\text{max}}$ is the total growth, $\mu$ is the growth rate, $t_{\text{L}}$ is the lag time, and $\mu_0$ is the growth rate during the lag phase.
 
@@ -106,7 +106,7 @@ To call these models use the string present in this table, the parameters will b
 For a general idea of the properties of models, consult the following table:
 
 
-| **Model Name**                   | **Has Lag?** | **Is Piecewise?** | **Has Stationary Phase?** |
+| **Model Name**                   | **Does it have a lag?** | **Is it piecewise?** | **Does it have a stationary phase?** |
 | --------------------------------- | ---------- | -------------- | ------------------- |
 | Exponential                       | No         | No             | No                    |
 | Gompertz                          | Yes        | No             | Yes                   |
@@ -173,11 +173,11 @@ where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $\lambda$ is 
 
 - **Piece-wise Adjusted Logistic**:
 
-$\frac{d N(t)}{dt} = 
+$$\frac{d N(t)}{dt} = 
   \begin{cases} 
   \text{const.} \, N(t) & t < t_{\text{L}} \\ 
   \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \, N(t) & t \geq t_{\text{L}}
-\end{cases}$
+\end{cases}$$
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time, $m$ is shape constant, and $c$ the growth  rate during the lag phase (can be 0).
 - **Triple Piece-wise Adjusted Logistic**:
 
