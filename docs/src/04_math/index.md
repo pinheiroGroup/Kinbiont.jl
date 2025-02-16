@@ -7,7 +7,7 @@ Pages = ["index.md"]
 Depth = 2
 ```
 
-In this section we show some of the harcoded models of Kinbiont.jl but note that you can input any custom model both has analytic functio both as ODE.
+In this section we show some of the hardcoded models of Kinbiont.jl but note that you can also input any custom model, both as an analytic function or as an ODE.
 
 
 
@@ -96,8 +96,8 @@ To call these models use the string present in this table, the parameters will b
 | Weibull                         | $N_{\text{max}}, N_0,\mu,\nu$                | `"NL_Weibull"`                     |
 | Morgan                          | $N_{\text{max}}, N_0,K,\nu$                | `"NL_Morgan"`                      |
 | Bertalanffy                     | $N_{\text{max}}, N_0,\mu,\nu$                | `"NL_Bertalanffy"`                 |
-| piece-wise linear-logistic      | $N_0, N_{\text{max}},\mu, t_\text{L}$  | `"NL_piecewise_lin_logistic"`      |
-| piece-wise exponential-logistic | $N_0, N_{\text{max}},\mu, t_\text{L}, t_\text{L},\mu_0$ | `"NL_piecewise_exp_logistic"` |
+| Piece-wise linear-logistic      | $N_0, N_{\text{max}},\mu, t_\text{L}$  | `"NL_piecewise_lin_logistic"`      |
+| Piece-wise exponential-logistic | $N_0, N_{\text{max}},\mu, t_\text{L},\mu_0$ | `"NL_piecewise_exp_logistic"` |
 
 
 
@@ -118,7 +118,7 @@ For a general idea of the properties of models, consult the following table:
 | Piece-wise linear-logistic        | Yes        | Yes            | Yes                   |
 | Piece-wise exponential-logistic   | Yes        | Yes            | Yes                   |
 
-If undecided between different models, please use the model selection function.
+If you are undecided between different models, please use the model selection function.
 
 
 ## ODEs for bacterial growth
@@ -169,7 +169,7 @@ where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $\lambda$ is 
 - **Baranyi Roberts**:
 
 $$\frac{d N(t)}{dt} = \frac{t^n}{t^n + \lambda^n} \, \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \, N(t)$$
-where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $\lambda$ is the lag time,  $n$ and $m$  are shape constants.
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $\lambda$ is the lag time, $n$ and $m$  are shape constants.
 
 - **Piece-wise Adjusted Logistic**:
 
@@ -178,7 +178,7 @@ $$\frac{d N(t)}{dt} =
   \text{const.} \, N(t) & t < t_{\text{L}} \\ 
   \mu \left( 1 - \left( \frac{N(t)}{N_{\text{max}}} \right)^m \right) \, N(t) & t \geq t_{\text{L}}
 \end{cases}$$
-where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time,    $m$  is shape constant, and $c$ the growth  rate during the lag phase (can be 0).
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time, $m$ is shape constant, and $c$ the growth  rate during the lag phase (can be 0).
 - **Triple Piece-wise Adjusted Logistic**:
 
 $$\frac{d N(t)}{dt} = 
@@ -188,7 +188,7 @@ $$\frac{d N(t)}{dt} =
   c_2 \cdot N(t) & \text{for } t \geq t_{\text{stat}},
 \end{cases}$$
 
- where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time,    $m$  is a shape constant,  $c_1$ the growth rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
+ where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time, $m$ is a shape constant,  $c_1$ the growth rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
 - **Triple Piece-wise**:
 
 $$\frac{d N(t)}{dt} = 
@@ -198,7 +198,7 @@ $$\frac{d N(t)}{dt} =
   c_2 \cdot \left(1 - \log \left( \frac{N(t)}{N_{\text{max}}} \right)\right) & \text{for } t \geq t_{\text{stat}},
 \end{cases}$$
 
-where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time,       $c_1$ the growth rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time, $c_1$ the growth rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
 
 - **Triple Piece-wise Exponential**:
 
@@ -209,7 +209,7 @@ $$\frac{d N(t)}{dt} =
   c_2 \cdot N(t) & \text{for } t \geq t_{\text{stat}},
 \end{cases}$$
 
-where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time,    $c_1$ the growth  rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time, $c_1$ the growth  rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
 - **Four Piece-wise Exponential**:
 
 $$\frac{d N(t)}{dt} = 
@@ -220,7 +220,7 @@ $$\frac{d N(t)}{dt} =
   c_3 \cdot N(t) & \text{for } t \geq t_3,
 \end{cases}$$
 
-where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_1$ is the lag time,    $c_1$ the growth rate during the lag phase (can be 0), $t_2 $ the time when a growth after exponential growths,  $c_2$ the growth rate during this phase, $t_3$ the start of stationary phase and, $c_3$ the growth  rate during the stationary phase.
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_1$ is the lag time, $c_1$ the growth rate during the lag phase (can be 0), $t_2 $ the time when growth occurs after the exponential phase, $c_2$ the growth rate during this phase, $t_3$ the start of stationary phase and, $c_3$ the growth  rate during the stationary phase.
 
 - **Heterogeneous Population Model (HPM)**:
 $$\begin{cases}
@@ -264,7 +264,7 @@ $$\begin{cases}
 \end{cases}$$
 
 
-where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth,  $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) and $r_{\text{I}}$ a shape constant.     
+where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth,  $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) and $r_{\text{I}}$ is a shape constant.     
 Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase), $N_2(t)$ active cells, which are able to duplicate, and  inactive cells $N_3(t)$. At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(\text{start}) = OD(\text{start})$, $N_{2}(\text{start}) = 0.0$, and $N_{3}(\text{start}) = 0.0$).
 
 - **Heterogeneous Population Model with Inhibition and Death**:
@@ -275,7 +275,7 @@ $$\begin{cases} N(t) = N_1(t) + N_2(t) + N_3(t), \\
 \frac{d N_3(t)}{dt} = - r_{\text{D}} \cdot N_3(t) + r_{\text{I}} \cdot N_2(t), 
 \end{cases}$$
 
-where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the  rate of which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$), and $r_{\text{D}}$ is the  rate of which cell are die.
+where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the rate at which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$), and $r_{\text{D}}$ is the rate at which cell are die.
 
 
 Note that these models assume that the cells are in three states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase), $N_2(t)$ active cells, which are able to duplicate, and inactive cells $N_3(t)$ that die at a rate $r_{\text{D}}$. At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(\text{start}) = OD(\text{start})$, $N_{2}(\text{start}) = 0.0$, and $N_{3}(\text{start}) = 0.0$).
@@ -289,7 +289,7 @@ N(t) = N_1(t) + N_2(t) + N_3(t), \\
 \frac{d N_3(t)}{dt} = - r_{\text{D}} \cdot N_3(t) \left(1 - \frac{N_3(t)}{N_{\text{res}}}\right) + r_{\text{I}} \cdot N_2(t), \quad \text{with} \quad N_3(t) \leq N_{\text{res}}
 \end{cases}$$
 
-where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the  rate of which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$),  $r_{\text{D}}$ is the  rate of which cell are die, and $N_{\text{res}}$ it the number of cells that will be inactive but do not die.
+where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the rate at which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$),  $r_{\text{D}}$ is the rate at which cell are die, and $N_{\text{res}}$ it the number of cells that will be inactive but do not die.
 
 
 
@@ -326,7 +326,7 @@ To call these models use the string present in this table, the parameters will b
 In the following table, you can find a general description of the properties of the hardcoded ODE models of Kinbiont:
 
 
-| **Model Name**                               | **Has Lag?** | **Is Piecewise?** | **Has Stationary Phase?** | **Has Inhibition?** | **Is Monotonic?** | **Supposes Multiple States?** |
+| **Model Name**                               | ** Does it have a lag?** | **Is it piecewise?** | **Does it have a stationary phase?** | ** Does have inhibition?** | **Is it monotonic?** | **Does it assume multiple states?** |
 |----------------------------------------------|-------------|------------------|--------------------------|-------------------|----------------|----------------------------|
 | Exponential ODE                              | No          | No               | No                       | No                | Yes            | No                         |
 | Hyper Gompertz                               | No          | No               | Yes                      | No                | Yes            | No                         |
