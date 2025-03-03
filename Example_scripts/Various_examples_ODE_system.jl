@@ -201,7 +201,7 @@ Simulation =  ODEs_system_sim(
 scatter(Simulation)
 
 
-### from  Abacterial size law revealed by a coarse grained model of cell physiolog
+### from  A bacterial size law revealed by a coarse grained model of cell physiology
 
 
 
