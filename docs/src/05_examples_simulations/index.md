@@ -1,5 +1,5 @@
 
-# [Examples of Simulations](@id examples)
+# [Examples of Simulations](@id examples_sim)
 
 This section provides some copy-and-paste examples of how to perform simulations with Kinbiont.jl. These examples can be replicated by running the scripts in the [examples folder](https://github.com/pinheiroGroup/Kinbiont.jl/tree/main/Example_scripts). 
 In the [Notebook folder](https://github.com/pinheiroGroup/Kinbiont.jl/tree/main/Notebook_examples), you will find some of these examples and the results.
