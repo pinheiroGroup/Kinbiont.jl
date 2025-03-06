@@ -1,4 +1,4 @@
-# [Examples of ML analysis](@id examples)
+# [Examples of ML analysis](@id examples_ML)
 
 This section provides some copy-and-paste examples of Kinbiont.jl.
  These examples can be replicated by running the scripts in the [examples folder](https://github.com/pinheiroGroup/Kinbiont.jl/tree/main/Example_scripts). 
