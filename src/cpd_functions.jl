@@ -1,6 +1,8 @@
 using Combinatorics
 using Peaks
 using ChangePointDetection
+using Statistics
+using LinearAlgebra
 
 function getpoints_mod(profile; number_of_bin=100)
     points_list = ()
@@ -34,6 +36,143 @@ function getpoints_mod(profile; number_of_bin=100)
 end
 
 """
+    fast_binary_segmentation(data::Matrix{Float64}, n_max_cp::Int; cost_func=:rss, min_segment_length=3)
+
+Efficient change point detection using binary segmentation with dynamic programming.
+
+# Arguments:
+- `data::Matrix{Float64}`: A matrix containing the data for change point detection. First row is time, second row is values.
+- `n_max_cp::Int`: Maximum number of change points to detect.
+
+# Key Arguments:
+- `cost_func=:rss`: Cost function to use for segmentation (:rss for residual sum of squares, :l1 for L1 norm)
+- `min_segment_length=3`: Minimum length of segments to consider
+
+# Output:
+- A tuple containing the indices of detected change points and their corresponding times and values.
+"""
+function fast_binary_segmentation(
+    data::Matrix{Float64}, 
+    n_max_cp::Int; 
+    cost_func=:rss,
+    min_segment_length=3
+)
+    # Extract time and value vectors for cleaner code
+    times = data[1, :]
+    values = data[2, :]
+    n = length(values)
+    
+    # Initialize change point storage
+    change_points = Int[]
+    change_point_scores = Float64[]
+    
+    # Precompute cumulative sums for efficient cost calculation
+    sums = cumsum(values)
+    sq_sums = cumsum(values.^2)
+    
+    # Function to calculate cost of a segment
+    function segment_cost(start_idx, end_idx)
+        if cost_func == :rss
+            # RSS cost - efficient implementation using precomputed sums
+            segment_length = end_idx - start_idx + 1
+            
+            if segment_length < min_segment_length
+                return Inf
+            end
+            
+            # Calculate segment mean
+            segment_sum = start_idx > 1 ? sums[end_idx] - sums[start_idx-1] : sums[end_idx]
+            segment_mean = segment_sum / segment_length
+            
+            # Calculate RSS
+            segment_sq_sum = start_idx > 1 ? sq_sums[end_idx] - sq_sums[start_idx-1] : sq_sums[end_idx]
+            return segment_sq_sum - 2 * segment_mean * segment_sum + segment_length * segment_mean^2
+        elseif cost_func == :l1
+            # L1 cost - median-based
+            if end_idx - start_idx + 1 < min_segment_length
+                return Inf
+            end
+            
+            segment_median = median(values[start_idx:end_idx])
+            return sum(abs.(values[start_idx:end_idx] .- segment_median))
+        end
+    end
+    
+    # Initial split evaluation over the whole sequence
+    function evaluate_split(start_idx, end_idx)
+        best_score = -Inf
+        best_point = -1
+        
+        # Try all possible split points
+        for split_idx in (start_idx+min_segment_length-1):(end_idx-min_segment_length)
+            # Cost without split
+            cost_whole = segment_cost(start_idx, end_idx)
+            
+            # Cost with split
+            cost_left = segment_cost(start_idx, split_idx)
+            cost_right = segment_cost(split_idx+1, end_idx)
+            cost_split = cost_left + cost_right
+            
+            # Improvement score from splitting
+            score = cost_whole - cost_split
+            
+            if score > best_score
+                best_score = score
+                best_point = split_idx
+            end
+        end
+        
+        return best_point, best_score
+    end
+    
+    # Recursively apply binary segmentation
+    segments = [(1, n)]
+    
+    for _ in 1:n_max_cp
+        best_split_score = -Inf
+        best_split_point = -1
+        best_segment_idx = -1
+        
+        # Evaluate splits for each current segment
+        for (i, (start_idx, end_idx)) in enumerate(segments)
+            if end_idx - start_idx + 1 >= 2 * min_segment_length
+                split_point, split_score = evaluate_split(start_idx, end_idx)
+                
+                if split_score > best_split_score
+                    best_split_score = split_score
+                    best_split_point = split_point
+                    best_segment_idx = i
+                end
+            end
+        end
+        
+        # If we can't find a meaningful split, stop
+        if best_split_score <= 0 || best_split_point == -1
+            break
+        end
+        
+        # Add the change point
+        push!(change_points, best_split_point)
+        push!(change_point_scores, best_split_score)
+        
+        # Update segments
+        start_idx, end_idx = segments[best_segment_idx]
+        segments[best_segment_idx] = (start_idx, best_split_point)
+        insert!(segments, best_segment_idx + 1, (best_split_point + 1, end_idx))
+    end
+    
+    # Sort change points
+    sorted_indices = sortperm(change_points)
+    sorted_change_points = change_points[sorted_indices]
+    
+    # Get times and values at change points
+    times_at_change_points = times[sorted_change_points]
+    values_at_change_points = values[sorted_change_points]
+    
+    return sorted_change_points, times_at_change_points, values_at_change_points
+end
+
+"""
     cpd_local_detection(
     data::Matrix{Float64},
     n_max_cp::Int;
@@ -43,6 +182,8 @@ end
     size_win=2,
     method="peaks_prominence",
     number_of_bin=40,
+    cost_func=:rss,
+    min_segment_length=3
     )
 
 Performs change point detection analysis using the specified algorithm on the provided data matrix.
@@ -57,6 +198,7 @@ Performs change point detection analysis using the specified algorithm on the pr
 - `type_of_detection="lsdd"`: Algorithm for detecting change points. Options include:
   - `"lsdd"`: Least Squares Density Difference.
   - `"piecewise"`: Piecewise linear fitting on the specific growth rate (requires `pt_derivative` > 0).
+  - `"fast_bs"`: Fast binary segmentation algorithm (much more efficient for large datasets).
 - `type_of_curve="original"`: Specifies the curve on which to perform change point detection. Options include:
   - `"original"`: Use the original time series data.
   - `"deriv"`: Use the specific growth rate time series.
@@ -68,6 +210,10 @@ Performs change point detection analysis using the specified algorithm on the pr
   - `"peaks_prominence"`: Orders peaks by prominence.
   - `"thr_scan"`: Uses a threshold to select peaks.
 - `number_of_bin=40`: Number of bins used to generate the threshold if `method="thr_scan"`.
+- `cost_func=:rss`: Cost function to use for fast_bs algorithm. Options include:
+  - `:rss`: Residual sum of squares (mean-based cost function).
+  - `:l1`: L1 norm (median-based cost function, more robust to outliers).
+- `min_segment_length=3`: Minimum segment length for fast_bs algorithm.
 
 # Output:
 
@@ -83,13 +229,30 @@ function cpd_local_detection(
     size_win=2,
     method="peaks_prominence",
     number_of_bin=40,
+    cost_func=:rss,
+    min_segment_length=3
 )
-
-
-
-
-
-    if type_of_detection == "lsdd" && type_of_curve == "deriv"
+    if type_of_detection == "fast_bs"
+        # Prepare data for binary segmentation based on curve type
+        if type_of_curve == "deriv"
+            deriv = specific_gr_evaluation(data, pt_derivative)
+            specific_gr_times = [
+                (data[1, r] + data[1, (r+pt_derivative)]) / 2 for
+                r = 1:1:(eachindex(data[2, :])[end].-pt_derivative)
+            ]
+            input_data = Matrix(transpose(hcat(specific_gr_times, deriv)))
+        else
+            input_data = data
+        end
+        
+        # Run the fast binary segmentation algorithm
+        list_of_cpds = fast_binary_segmentation(
+            input_data,
+            n_max_cp;
+            cost_func=cost_func,
+            min_segment_length=min_segment_length
+        )
+    elseif type_of_detection == "lsdd" && type_of_curve == "deriv"
         list_of_cpds = cpd_lsdd_profile(
             data,
             n_max_cp;
@@ -110,7 +273,6 @@ function cpd_local_detection(
             number_of_bin=number_of_bin,
         )
     else
-        type_of_detection != "lsdd"
         list_of_cpds = detect_list_change_points(
             data,
             n_max_cp;
@@ -353,3 +515,4 @@ export detect_list_change_points
 export peaks_detection
 export curve_dissimilitary_lin_fitting
 export generation_of_combination_of_cpds
+export fast_binary_segmentation

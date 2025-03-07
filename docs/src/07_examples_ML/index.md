@@ -336,7 +336,7 @@ using DecisionTree
 ###  Decision tree regression: reconstruction of antibiotics effects table
 In this example, we explore how **Kinbiont.jl** can be used to simulate data about a species exposed to various antibiotics, both individually and in combination. 
 We then apply a decision tree regression model to predict the growth rate of the species based on the antibiotics present in the media.
-This procedure in theory, permits users to retrieve the "table of the effects" of the antibiotic combinations; this can be depicted with the following diagram: 
+This procedure in theory permits users to retrieve the "table of the effects" of the antibiotic combinations; this can be depicted with the following diagram: 
 
 ```@raw html
 <div style="text-align: center;  margin: auto; max-width: 1000px;">
@@ -497,7 +497,7 @@ dt_gr = Kinbiont.downstream_decision_tree_regression(results_fit,
 ```
 The result (tree, cross validation R^2 and importance score) are stored into dt_gr[1],dt_gr[2] and dt_gr[3]
 
-For a basic visualization of the tree you can digit
+For a basic visualization of the tree you can type
 ```julia
 
 # Visualizing the decision tree
@@ -508,7 +508,7 @@ p2 = Plots.plot(wt, 0.9, 0.2; size=(1400, 700), connect_labels=["yes", "no"])
 
 ###  Detecting Species Interactions with Decision Tree
 
-In this tutorial, we simulate a simple community of three tree species ($N_1, N_2, and N_3$) using Ordinary Differential Equations (ODEs) and analyze the community dynamics using decision tree regression, note that in this case we reduce the information aviable to the downstream analysis supposing that is possible only to measure the total biomass ($N_1 + N_2 + N_3$). We will vary the initial composition of the species, fit with an empirical ODE model with only one equation, and by applying a decsion tree regression on the parameters of this empirical model we study how initial conditions modify the population behavior.
+In this tutorial, we simulate a simple community of three tree species ($N_1, N_2, and N_3$) using Ordinary Differential Equations (ODEs) and analyze the community dynamics using decision tree regression, note that in this case we reduce the information available to the downstream analysis supposing that is possible only to measure the total biomass ($N_1 + N_2 + N_3$). We will vary the initial composition of the species, fit with an empirical ODE model with only one equation, and by applying a decision tree regression on the parameters of this empirical model we study how initial conditions modify the population behavior.
 
 
 The tree species interact in a competitive environment where:
