@@ -10,8 +10,8 @@ LP = [12,32,52,5,15,25,35,45,55,27,8,9,19,29,10,20,30]
 LB = [4,14,24,34,44,54,16,36,56,18,28,39,49,59,40,50,60]
 
 # load data
-data = CSV.read("E:/Lavoro/Kinbiont_utilities-main/CoCultures_ODEs_system/data/DATA_Gut_Microbiome_CoC.csv", DataFrame)
-# convet time column from in elapsed time frome the start in hours, the delta time in the data is 15 minutes
+data = CSV.read("../data_examples/DATA_Gut_Microbiome_CoC.csv", DataFrame)
+# convet time column from in elapsed time from the start in hours, the delta time in the data is 15 minutes
 
 delta_time = 15/60
 time_seq = 0:delta_time:(size(data,1)-1)*delta_time
