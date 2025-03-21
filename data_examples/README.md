@@ -1,5 +1,5 @@
 # Kinbiont data examples
-In this folder, it is possible to find all datasets used in the documentation, examples and notebook of this repository
+In this folder, it is possible to find all datasets used in the documentation, examples and notebook of this repository.
 The data are the following:
 - **DATA_Gut_Microbiome_CoC.csv** - Data of gut microbiome isolate from "Construction and Modeling of a Coculture Microplate for Real-Time Measurement of Microbial Interactions".
 - **Results_for_ML.csv** - Dataframe with the fit results of the dataset "High-throughput characterization of bacterial responses to complex mixtures of chemical pollutants".
