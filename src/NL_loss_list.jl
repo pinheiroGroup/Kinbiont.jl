@@ -89,6 +89,18 @@ function NL_L2_fixed_end(data, model_function, pen, u, p)
     return residuals_tot
 end
 
+function NL_relative_error(data, model_function, u, p)
+    model = model_function(u, data[1, :])
+    n_data = length(data[1, :])
+    
+    # Calculate relative error: |data - model| / |data|
+    # Add small epsilon to avoid division by zero
+    epsilon = 1e-10
+    relative_errors = abs.((data[2, :] .- model)) ./ (abs.(data[2, :]) .+ epsilon)
+    
+    return sum(relative_errors) / n_data
+end
+
 function select_loss_function_NL(loss_name, data, pen, model_function)
     loss_functions = Dict(
         "L2" => NL_L2,
@@ -98,7 +110,8 @@ function select_loss_function_NL(loss_name, data, pen, model_function)
         "L2_fixed_CI" => NL_L2_fixed_CI,
         "RE_fixed_CI" => NL_RE_fixed_CI,
         "L2_fixed_end" => NL_L2_fixed_end,
-        "RE_fixed_end" => NL_RE_fixed_end)
+        "RE_fixed_end" => NL_RE_fixed_end,
+        "relative_error" => NL_relative_error)
 
 
 
@@ -118,4 +131,5 @@ export NL_RE_fixed_CI
 export NL_L2_fixed_CI
 export NL_RE_fixed_end
 export NL_L2_fixed_end
+export NL_relative_error
 export select_loss_function_NL

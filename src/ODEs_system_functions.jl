@@ -107,6 +107,31 @@ function define_loss_function_odes_system(data, set_of_equation_to_fit, ODE_prob
 
     end
 
+    function loss_relative_error(data, index_of_eqs, index_of_data, ODE_prob, Integration_method, p, tsteps)
+        sol = solve(
+            ODE_prob,
+            Integration_method,
+            p=p,
+            saveat=tsteps,
+            verbose=false,
+            abstol=1e-10,
+            reltol=1e-10,
+        )
+        sol_t = reduce(hcat, sol.u)
+        #sol_t = sum(sol_t, dims=1)
+    
+        if size(sol_t)[2] == size(data)[2]
+            # Calculate relative error: |data - model| / |data|
+            # Add small epsilon to avoid division by zero
+            epsilon = 1e-10
+            relative_errors = abs.((data[index_of_data, :] .- sol_t[index_of_eqs, :])) ./ (abs.(data[index_of_data, :]) .+ epsilon)
+            lossa = NaNMath.sum(relative_errors) / length(data[2, :])
+        else
+            lossa = 10.0^9 * length(data[2, :])
+        end
+    
+        return lossa, sol
+    end
 
 
     function loss_L2_ODE_Sys(data, index_of_eqs, index_of_data, ODE_prob, Integration_method, p, tsteps)

@@ -195,8 +195,31 @@ function loss_L2_std_blank(data, ODE_prob, Integration_method, p, tsteps, blank_
     return lossa, sol
 end
 
+function loss_relative_error(data, ODE_prob, Integration_method, p, tsteps)
+    sol = solve(
+        ODE_prob,
+        Integration_method,
+        p=p,
+        saveat=tsteps,
+        verbose=false,
+        abstol=1e-10,
+        reltol=1e-10,
+    )
+    sol_t = reduce(hcat, sol.u)
+    sol_t = sum(sol_t, dims=1)
 
+    if size(sol_t)[2] == size(data)[2]
+        # Calculate relative error: |data - model| / |data|
+        # Add small epsilon to avoid division by zero
+        epsilon = 1e-10
+        relative_errors = abs.((data[2, :] .- sol_t[1, 1:end])) ./ (abs.(data[2, :]) .+ epsilon)
+        lossa = NaNMath.sum(relative_errors) / length(data[2, :])
+    else
+        lossa = 10.0^9 * length(data[2, :])
+    end
 
+    return lossa, sol
+end
 
 
 
@@ -209,7 +232,8 @@ function select_loss_function(loss_name, data, ODE_prob, Integration_method, tst
         "L2_derivative" => loss_L2_derivative,
         "L2_std_blank" => loss_L2_std_blank,
         "L2_log" => loss_L2_log,
-        "RE_log" => loss_RE_log,)
+        "RE_log" => loss_RE_log,
+        "relative_error" => loss_relative_error,)
 
     if loss_name == "blank_weighted_L2" || loss_name == "L2_std_blank"
         return (p) ->
@@ -226,4 +250,5 @@ export loss_L2_log
 export loss_RE
 export loss_RE_log
 export loss_L2_std_blank
+export loss_relative_error
 export select_loss_function
