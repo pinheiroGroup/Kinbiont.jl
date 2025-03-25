@@ -19,8 +19,8 @@ jobs:
         with:
           version: '1'
       - uses: julia-actions/cache@v2
-      # - name: Install dependencies
-      #   run: julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+      - name: Install dependencies
+         run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
       #- name: Update dependencies
       #  run: julia --project=docs -e 'using Pkg; Pkg.update()'
       - name: Build and deploy
