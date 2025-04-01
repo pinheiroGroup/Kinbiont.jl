@@ -1,3 +1,4 @@
+using NonlinearSolve
 using OrdinaryDiffEq
 using Missings
 using Statistics
