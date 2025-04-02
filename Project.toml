@@ -4,7 +4,6 @@ authors = ["Fabrizio Angaroni", "Edgar Zanella Alvarenga"]
 version = "1.1.7"
 
 [deps]
-julia = "1.10"
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 BetaML = "024491cd-cc6b-443e-8034-08ea7eb7db2b"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -44,6 +43,7 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 
 [compat]
+julia = "1.10"
 AbstractTrees = "0.4.5"
 BetaML = "0.12.1"
 CSV = "0.10.15"
