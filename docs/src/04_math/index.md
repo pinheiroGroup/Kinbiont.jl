@@ -464,59 +464,10 @@ $\mu = \mu_m \left(1 - \frac{Q_0}{Q}\right)$
 $\rho = \rho_m \frac{S}{K_s + S}$
   Parameters: Growth rate ($\mu_m$), Nutrient uptake rate ($\rho_m$), Half-saturation ($K_s$), Dilution rate ($D$), Minimum quota ($Q_0$), Substrate inflow ($S_{\text{in}}$).
 
-- **Synthetic Chemostat Model** (Including Biological Inertia)  
-$\begin{cases}
-    \frac{dx}{dt} = Y q_s - a_0 r x - D x \\
-    \frac{ds}{dt} = D (s_r - s) - q_s x \\
-    \frac{dr}{dt} = (Y q_s - a_0 r) \left(\frac{s}{K_r + s} - r\right)
-  \end{cases}$
-  where  
-$q_s = r \frac{Q_s K_s}{K_s + s} + (1 - r) \frac{Q_s' K_s'}{K_s' + s}$
-  Parameters: Yield ($Y$), Biological inertia ($a_0$), Dilution rate ($D$), Nutrient uptake coefficients ($Q_s, Q_s'$), Saturation constants ($K_s, K_s'$), Half-saturation constant for $r$($K_r$).
-
-- **Monod-Ierusalimsky** 
-This model describes microbial growth, substrate consumption, and product formation using Monod-Ierusalimsky kinetics.  
 
 
-The specific growth rate $\mu$ follows the Monod-Ierusalimsky kinetics:  
-$\mu = \mu_m \cdot \frac{s}{K_s + s} \cdot \frac{K_p}{K_p + p}$
-where:  
-- The first fraction represents substrate-limited growth (Monod equation).  
-- The second fraction accounts for product inhibition (Ierusalimsky modification).  
-
-The effective biomass yield is given by:  
-$Y = \frac{Y_{max} \cdot D}{D + m \cdot Y_{max}}$
-
-Finally, the  System Dynamics is specified by:  
-
-$\frac{dx}{dt} = \mu x - D x$
-
-where $\mu x$ represents microbial growth, and $-D x$ accounts for biomass washout due to dilution.  
-
-$\frac{ds}{dt} = D (s_r - s) - \frac{\mu x}{Y} - m x$  
-
-$\frac{dp}{dt} = Y_p \mu x - D p$
-
-where $Y_p$ is the product yield coefficient, and $-D p$ accounts for product washout.  
-
-The system  state variables are:  
-- Biomass concentration: $x = u_1$  
-- Substrate concentration: $s = u_2$  
-- Product concentration: $p = u_3$  
 
 
-The system dynamics are governed by the following parameters:  
-
-| Parameter | Description |
-|-----------|-------------|
-| $K_s$  | Substrate affinity constant |
-| $K_p$  | Product inhibition constant |
-| $\mu_m$ | Maximum specific growth rate |
-| $Y_{max}$ | Maximum yield coefficient |
-| $Y_p$  | Product yield coefficient |
-| $D$  | Dilution rate |
-| $s_r$  | Inflow substrate concentration |
-| $m$  | Maintenance coefficient |
 
 
 
@@ -529,8 +480,6 @@ The system dynamics are governed by the following parameters:
 | Lotka-Volterra with Substrate     | $\alpha, \beta, \delta, \gamma, K$            | `Lotka_Volterra_with_substrate`                  |
 | Monod Chemostat                  | $K_s, m, Y, \mu_m, D, S_{\text{in}}$          | `Monod_Chemostat`               |
 | Droop Model                       | $\mu_m, \rho_m, K_s, D, S_{\text{in}}, Q_0$   | `Droop`                         |
-| Synthetic Chemostat               | $Y, a_0, D, Q_s, Q_s', K_s, K_s', K_r$       | `Synthetic_Chemostat`           |
-| Monod-Ierusalimsky            | $K_s, K_p, \mu, Y_{max}, Y_p", D, s_r, m$   | `Monod_Ierusalimsky`          |
 
 ## Cybernetic models for bacterial growth
 
