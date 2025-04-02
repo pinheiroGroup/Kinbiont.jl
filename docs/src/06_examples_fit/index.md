@@ -13,7 +13,7 @@ A corse grain description on which function/method to fit can be used is describ
 
 ```@raw html
 <div style="text-align: center; margin: auto; max-width: 1000px;">
-    <img alt="Kinbiont flow chart on how to select fit functions"src="../assets/workflow_fit.png">
+    <img alt="Kinbiont flow chart on how to select fit functions"src="../assets/workflow_fit_kinbiont.png">
 </div>
 ```
 
