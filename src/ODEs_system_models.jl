@@ -146,40 +146,44 @@ function droop_model(du, u, param, t)
     # Intracellular quota dynamics
     du[3] = rho - mu * Q
 end
-
-
-
-
-
-
-# Define the Synthetic Chemostat Model ODE system with P and U components
-function synthetic_chemostat_model(du, u, param, t)
-    # Extract state variables
-    x = u[1]      # Biomass concentration (x)
-    s = u[2]      # Substrate concentration (s)
-    r = u[3]      # biological inertia
-
-    # Extract parameters
-    D = param[1]     # Dilution rate (D)
-    s_r = param[2]   # Inflow substrate concentration (s_r)
-    Q_s = param[3]   # Q_s (nutrient uptake rate coefficient)
-    Q_s_prime = param[4]  # Q_s' (second nutrient uptake coefficient)
-    K_s = param[5]   # K_s (half-saturation constant)
-    K_s_prime = param[6]  # K_s' (half-saturation constant)
-    Y = param[7]     # Yield coefficient (Y)
-    a_0 = param[8]   # Biological inertia constant (a_0)
-    K_r = param[9]   # Half-saturation constant for r (K_r)
-
-    # Calculate q_s (nutrient uptake rate)
-    q_s = r * Q_s * K_s / (K_s + s) + (1 - r) * Q_s_prime * K_s_prime / (K_s_prime + s)
-
-    # Define the ODEs
-    du[1] = Y * q_s - a_0 * r * x - D * x        # d(x)/dt (biomass dynamics)
-    du[2] = D * (s_r - s) - q_s * x               # d(s)/dt (substrate dynamics)
-    du[3] = (Y * q_s - a_0 * r) * (s / (K_r + s) - r)  # d(r)/dt (r dynamics)
-
-    return du
+function Synthetic_chemostat_model(du, u, p, t)
+    S, N, R = u  # state variables: Substrate, Biomass, Reporter
+    
+    D, sr,  k_r, k_s, k_s_prime, Q, Q_prime, Y, a_0 = p  # Parameters
+    
+    # Calculate the substrate consumption rate q_s
+    q_s_value = R * (Q * S) / (k_s + S) + (1 - R) * (Q_prime * S) / (k_s_prime + S)
+    
+    # Growth rate μ
+    μ_value = Y * q_s_value - a_0 * R
+    
+    # Differential equations
+    du[1] = D * (sr - S) - q_s_value * N  # dS/dt
+    du[2] = μ_value * N - D * N  # dN/dt
+    du[3] = μ_value * (S / (k_r + S) - R)  # dR/dt
 end
+
+# Define the Synthetic Batch Model ODEs
+function  Synthetic_batch_model(du, u, p, t)
+    S, N, R = u  # state variables: Substrate, Biomass, Reporter
+    
+    k_r, k_s, k_s_prime, Q, Q_prime, Y, a_0 = p  # Parameters
+    
+    # Calculate the substrate consumption rate q_s
+    q_s_value = R * (Q * S) / (k_s + S) + (1 - R) * (Q_prime * S) / (k_s_prime + S)
+    
+    # Growth rate μ
+    μ_value = Y * q_s_value - a_0 * R
+    
+    # Differential equations
+    du[1] = -q_s_value * N  # dS/dt
+    du[2] = μ_value * N  # dN/dt
+    du[3] = μ_value * (S / (k_r + S) - R)  # dR/dt
+end
+
+
+
+
 
 # Monod Chemostat Model
 
@@ -190,7 +194,16 @@ ODEs_system_list = [
         monod_chemostat,    # The ODE function
         ["Ks", "m", "Ymax", "mum", "D", "sr"]  # Parameters list
     ),
-
+    Kinbiont_ODEs_system(
+        "Synthetic_Chemostat",  # Model name
+        Synthetic_chemostat_model,    # The ODE function
+        ["D", "sr", "Kr", "Ks", "ks'", "Q", "Q'", "Y", "a_0"]  # Parameters list
+    ),
+    Kinbiont_ODEs_system(
+        "Synthetic_batch",  # Model name
+        Synthetic_batch_model,    # The ODE function
+        [ "Kr", "Ks", "ks'", "Q", "Q'", "Y", "a_0"]  # Parameters list
+    ),
     # Monod Ierusalimsky Model
     Kinbiont_ODEs_system(
         "Monod_Ierusalimsky",  # Model name
@@ -205,13 +218,7 @@ ODEs_system_list = [
         ["mum", "rho_m", "Ks", "D", "Sin", "Q0"]  # Parameters list
     ),
 
-
-    # Synthetic Chemostat Model
     Kinbiont_ODEs_system(
-        "Synthetic_Chemostat",  # Model name
-        synthetic_chemostat_model,  # The ODE function
-        ["D", "s_r", "Q_s", "Q_s_prime", "K_s", "K_s_prime", "Y", "a_0", "K_r"]  # Parameters list
-    ), Kinbiont_ODEs_system(
         "SIR",
         SIR,
         ["Infection_rate", "recovery_rate"]
@@ -249,7 +256,8 @@ export SIR_B
 export SIS  
 export Lotka_Volterra  
 export Lotka_Volterra_with_substrate  
-export synthetic_chemostat_model
 export droop_model
 export monod_ierusalimsky
 export monod_chemostat
+export Synthetic_batch_model
+export Synthetic_chemostat_model
