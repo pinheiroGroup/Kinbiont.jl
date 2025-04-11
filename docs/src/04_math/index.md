@@ -404,91 +404,59 @@ In this section, we present some examples of multidimensional ordinary different
 
 - **SIR Model (Susceptible-Infected-Recovered)**
 
-  $$
-  \frac{dS}{dt} = -\beta S I
-  $$
+  $\frac{dS}{dt} = -\beta S I$
 
-  $$
-  \frac{dI}{dt} = \beta S I - \gamma I
-  $$
+  $\frac{dI}{dt} = \beta S I - \gamma I$
 
-  $$
-  \frac{dR}{dt} = \gamma I
-  $$
+  $\frac{dR}{dt} = \gamma I$
 
   where, the infection rate is $\beta$, and recovery rate is ($\gamma$). The state variables are $S(t)$ susceptible number, $I(t)$ infected, $R(t)$ recovered.
 
 - **SIR model with birth and death**
 
-  $$
-  \frac{dS}{dt} = -\beta S I + b S - d S
-  $$
+  $\frac{dS}{dt} = -\beta S I + b S - d S$
 
-  $$
-  \frac{dI}{dt} = \beta S I - \gamma I - d I
-  $$
+  $\frac{dI}{dt} = \beta S I - \gamma I - d I$
 
-  $$
-  \frac{dR}{dt} = \gamma I - d R
-  $$
+  $\frac{dR}{dt} = \gamma I - d R$
 
   where the parameters are infection rate ($\beta$), recovery rate ($\gamma$), birth rate ($b$), and death rate ($d$), the state variables are $S(t)$ susceptible number, $I(t)$ infected, $R(t)$ recovered.
 
 - **SIS Model (Susceptible-Infected-Susceptible)**
 
-  $$
-  \frac{dS}{dt} = -\beta S I + \gamma I
-  $$
+  $\frac{dS}{dt} = -\beta S I + \gamma I$
 
-  $$
-  \frac{dI}{dt} = \beta S I - \gamma I
-  $$
+  $\frac{dI}{dt} = \beta S I - \gamma I$
 
   where the parameters are infection rate ($\beta$), recovery rate ($\gamma$), the state variables are $S(t)$ susceptible and $I(t)$ infected number.
 
 - **Lotka-Volterra predator-prey Model**
 
-  $$
-  \frac{dP}{dt} = \alpha P - \beta P C
-  $$
+  $\frac{dP}{dt} = \alpha P - \beta P C$
 
-  $$
-  \frac{dC}{dt} = -\delta C + \gamma C P
-  $$
+  $\frac{dC}{dt} = -\delta C + \gamma C P$
 
   where the parameters are prey birth rate ($\alpha$), predation rate ($\beta$), predator death rate ($\delta$), predator efficiency ($\gamma$), the state variables are $P(t)$ prey and $C(t)$ predator number.
 
 - **Lotka-Volterra with substrate limitation**
 
-  $$
-  \frac{dP}{dt} = \alpha P \frac{S}{S + K} - \beta P C
-  $$
+  $\frac{dP}{dt} = \alpha P \frac{S}{S + K} - \beta P C$
 
-  $$
-  \frac{dC}{dt} = -\delta C + \gamma C P
-  $$
+  $\frac{dC}{dt} = -\delta C + \gamma C P$
 
-  $$
-  \frac{dS}{dt} = -\alpha P \frac{S}{S + K}
-  $$
+  $\frac{dS}{dt} = -\alpha P \frac{S}{S + K}$
 
   where the parameters are growth rate ($\alpha$), half-saturation constant ($K$), predation rate ($\beta$), predator mortality ($\delta$), predator efficiency ($\gamma$), the state variables are $P(t)$ prey, $C(t)$ predator number, and $S(t)$ the substrate.
 
 - **Monod chemostat model**
 
-  $$
-  \frac{dX}{dt} = \mu X - D X
-  $$
+  $\frac{dX}{dt} = \mu X - D X$
 
-  $$
-  \frac{dS}{dt} = D (S_{\text{in}} - S) - \frac{\mu X}{Y} - m X
-  $$
+  $\frac{dS}{dt} = D (S_{\text{in}} - S) - \frac{\mu X}{Y} - m X$
 
   where
 
-  $$
-  \mu = \mu_m \frac{S}{K_s + S}
-  $$
+  $\mu = \mu_m \frac{S}{K_s + S}$
 
   where the parameters are substrate affinity ($K_s$), maintenance coefficient ($m$), yield coefficient ($Y$), maximum growth rate ($\mu_m$), dilution rate ($D$), inflow substrate concentration ($S_{\text{in}}$), the state variables are $X(t)$ the biomass and $S(t)$ the substrate concentrations.
 
@@ -498,27 +466,17 @@ In this section, we present some examples of multidimensional ordinary different
 
   Then the bacteria growth can be described by the following system of equations:
 
-  $$
-  \frac{dS}{dt} = D(s_r-S) - q_s \cdot N
-  $$
+  $\frac{dS}{dt} = D(s_r-S) - q_s \cdot N$
 
-  $$
-  \frac{dN}{dt} = \mu \cdot N - D \cdot N
-  $$
+  $\frac{dN}{dt} = \mu \cdot N - D \cdot N$
 
-  $$
-  \frac{dR}{dt} = \mu \cdot \left(\frac{S}{k_r + S} - R\right)
-  $$
+  $\frac{dR}{dt} = \mu \cdot \left(\frac{S}{k_r + S} - R\right)$
 
   Where:
 
-  $$
-  q_s = R \cdot \frac{QS}{k_s + S} = (1 - R) \cdot \frac{Q' S}{k'_s + S}
-  $$
+  $q_s = R \cdot \frac{QS}{k_s + S} = (1 - R) \cdot \frac{Q' S}{k'_s + S}$
 
-  $$
-  \mu = Y \cdot q_s - a_0 \cdot R
-  $$
+  $\mu = Y \cdot q_s - a_0 \cdot R$
 
   The state variables are:
   - $N(t)$ biomass concentration at time $t$,
@@ -540,27 +498,17 @@ In this section, we present some examples of multidimensional ordinary different
 
   A modification of the previous model without dilution and nutrient inflow to simulate batch cultures:
 
-  $$
-  \frac{dS}{dt} = -q_s \cdot N
-  $$
+  $\frac{dS}{dt} = -q_s \cdot N$
 
-  $$
-  \frac{dN}{dt} = \mu \cdot N
-  $$
+  $\frac{dN}{dt} = \mu \cdot N$
 
-  $$
-  \frac{dR}{dt} = \mu \cdot\left(\frac{S}{k_r+S} - R\right)
-  $$
+  $\frac{dR}{dt} = \mu \cdot\left(\frac{S}{k_r+S} - R\right)$
 
   where
 
-  $$
-  q_s = R \cdot \frac{QS}{k_s + S} = (1 - R) \cdot \frac{Q' S}{k'_s + S}
-  $$
+  $q_s = R \cdot \frac{QS}{k_s + S} = (1 - R) \cdot \frac{Q' S}{k'_s + S}$
 
-  $$
-  \mu = Y \cdot q_s - a_0 \cdot R
-  $$
+  $\mu = Y \cdot q_s - a_0 \cdot R$
 
 
 
@@ -600,12 +548,12 @@ model = Kinbiont_Cybernetic_Model(
 ```
 Then the ODEs system that will be constructed is the following:
 - **Substrate Consumption:**  
-$$\frac{dS_i}{dt} = -\frac{V_{S_i} P_i S_i}{k_{S_i} + S_i} \cdot u_1, \quad \forall i \in \{1, \dots, n\}$$
+$\frac{dS_i}{dt} = -\frac{V_{S_i} P_i S_i}{k_{S_i} + S_i} \cdot u_1, \quad \forall i \in \{1, \dots, n\}$
 - **Protein Synthesis:**  
-$$\frac{dP_i}{dt} = a_i \cdot \text{alloc}_i \cdot k_{S_i} - b_i P_i u_1, \quad \forall i \in \{1, \dots, n\}$$
+$\frac{dP_i}{dt} = a_i \cdot \text{alloc}_i \cdot k_{S_i} - b_i P_i u_1, \quad \forall i \in \{1, \dots, n\}$
 
 - **Biomass Growth:**  
-$$\frac{dN}{dt} = -\sum_{i=1}^{n} Y_{S_i} \frac{dS_i}{dt} \cdot N$$
+$\frac{dN}{dt} = -\sum_{i=1}^{n} Y_{S_i} \frac{dS_i}{dt} \cdot N$
 
 Where $n$ is the number of substrates, $V_{S_i}$ i-th substrate utilization rates, $k_{S_i}$ i-th saturation constants for substrates, $Y_{S_i}$ i-th yield coefficients for biomass per substrate, $a_{i}$  i-th synthesis rate for proteins and  $b_{i}$ i-th degradation constants for proteins. 
 
@@ -638,4 +586,4 @@ model_Michaelis_Menten = @reaction_network begin
     kP, SE --> P + E
 end 
 ```
-For other examples on how declare a reaction network please consult:[Catalyst.jl documentation](https://docs.sciml.ai/Catalyst/stable/).
+For other examples on how to declare a reaction network, please consult:[Catalyst.jl documentation](https://docs.sciml.ai/Catalyst/stable/).
