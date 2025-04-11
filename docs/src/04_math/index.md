@@ -398,72 +398,169 @@ $\mu(N;N_\text{max},\mu_\text{max})  = \displaystyle{\mu_\text{max} \left(1-\fra
 
 
 
-## ODEs system for bacterial growth
+## ODE Systems
 
+In this section, we present some examples of multidimensional ordinary differential equation (ODE) systems that are hardcoded within \alg{}. These serve as templates, but users can freely define and implement custom models.
 
-In this section, we present some examples of ODEs multidimensional system hardcoded in Kinbiont. Note that these are just examples since you can define custom models:
+- **SIR Model (Susceptible-Infected-Recovered)**
 
-- **SIR Model** (Susceptible-Infected-Recovered)  
-$\begin{cases}
-    \frac{dS}{dt} = -\beta S I \\
-    \frac{dI}{dt} = \beta S I - \gamma I \\
-    \frac{dR}{dt} = \gamma I
-  \end{cases}$
-  Parameters: Infection rate ($\beta$), Recovery rate ($\gamma$).
+  $$
+  \frac{dS}{dt} = -\beta S I
+  $$
 
-- **SIR with Birth and Death (SIR_BD)**  
-$\begin{cases}
-    \frac{dS}{dt} = -\beta S I + b S - d S \\
-    \frac{dI}{dt} = \beta S I - \gamma I - d I \\
-    \frac{dR}{dt} = \gamma I - d R
-  \end{cases}$
-  Parameters: Infection rate ($\beta$), Recovery rate ($\gamma$), Birth rate ($b$), Death rate ($d$).
+  $$
+  \frac{dI}{dt} = \beta S I - \gamma I
+  $$
 
-- **SIS Model** (Susceptible-Infected-Susceptible)  
-$\begin{cases}
-    \frac{dS}{dt} = -\beta S I + \gamma I \\
-    \frac{dI}{dt} = \beta S I - \gamma I
-  \end{cases}$
-  Parameters: Infection rate ($\beta$), Recovery rate ($\gamma$).
+  $$
+  \frac{dR}{dt} = \gamma I
+  $$
 
-- **Lotka-Volterra Predator-Prey Model**  
-$\begin{cases}
-    \frac{dP}{dt} = \alpha P - \beta P C \\
-    \frac{dC}{dt} = -\delta C + \gamma C P
-  \end{cases}$
-  Parameters: Prey birth rate ($\alpha$), Predation rate ($\beta$), Predator death rate ($\delta$), Predator reproduction rate ($\gamma$).
+  where, the infection rate is $\beta$, and recovery rate is ($\gamma$). The state variables are $S(t)$ susceptible number, $I(t)$ infected, $R(t)$ recovered.
 
-- **Lotka-Volterra with Substrate Limitation**  
-$\begin{cases}
-    \frac{dP}{dt} = \alpha P \frac{S}{S + K} - \beta P C \\
-    \frac{dC}{dt} = -\delta C + \gamma C P \\
-    \frac{dS}{dt} = -\alpha P \frac{S}{S + K}
-  \end{cases}$
-  Parameters: Growth rate ($\alpha$), Half-saturation ($K$), Predation rate ($\beta$), Predator mortality ($\delta$), Predator efficiency ($\gamma$).
+- **SIR model with birth and death**
 
-- **Monod Chemostat Model** (Microbial Growth in a Chemostat)  
-$\begin{cases}
-    \frac{dX}{dt} = \mu X - D X \\
-    \frac{dS}{dt} = D (S_{\text{in}} - S) - \frac{\mu X}{Y} - m X
-  \end{cases}$
-  where  
-$\mu = \mu_m \frac{S}{K_s + S}$
-  Parameters: Substrate affinity ($K_s$), Maintenance coefficient ($m$), Yield coefficient ($Y$), Max growth rate ($\mu_m$), Dilution rate ($D$), Substrate inflow ($S_{\text{in}}$).
+  $$
+  \frac{dS}{dt} = -\beta S I + b S - d S
+  $$
 
-- **Droop Model** (Nutrient Quota Model)  
-$\begin{cases}
-    \frac{dX}{dt} = \mu X - D X \\
-    \frac{dS}{dt} = \rho X - D S + D S_{\text{in}} \\
-    \frac{dQ}{dt} = \rho - \mu Q
-  \end{cases}$
-  where  
-$\mu = \mu_m \left(1 - \frac{Q_0}{Q}\right)$
-  and  
-$\rho = \rho_m \frac{S}{K_s + S}$
-  Parameters: Growth rate ($\mu_m$), Nutrient uptake rate ($\rho_m$), Half-saturation ($K_s$), Dilution rate ($D$), Minimum quota ($Q_0$), Substrate inflow ($S_{\text{in}}$).
+  $$
+  \frac{dI}{dt} = \beta S I - \gamma I - d I
+  $$
 
+  $$
+  \frac{dR}{dt} = \gamma I - d R
+  $$
 
+  where the parameters are infection rate ($\beta$), recovery rate ($\gamma$), birth rate ($b$), and death rate ($d$), the state variables are $S(t)$ susceptible number, $I(t)$ infected, $R(t)$ recovered.
 
+- **SIS Model (Susceptible-Infected-Susceptible)**
+
+  $$
+  \frac{dS}{dt} = -\beta S I + \gamma I
+  $$
+
+  $$
+  \frac{dI}{dt} = \beta S I - \gamma I
+  $$
+
+  where the parameters are infection rate ($\beta$), recovery rate ($\gamma$), the state variables are $S(t)$ susceptible and $I(t)$ infected number.
+
+- **Lotka-Volterra predator-prey Model**
+
+  $$
+  \frac{dP}{dt} = \alpha P - \beta P C
+  $$
+
+  $$
+  \frac{dC}{dt} = -\delta C + \gamma C P
+  $$
+
+  where the parameters are prey birth rate ($\alpha$), predation rate ($\beta$), predator death rate ($\delta$), predator efficiency ($\gamma$), the state variables are $P(t)$ prey and $C(t)$ predator number.
+
+- **Lotka-Volterra with substrate limitation**
+
+  $$
+  \frac{dP}{dt} = \alpha P \frac{S}{S + K} - \beta P C
+  $$
+
+  $$
+  \frac{dC}{dt} = -\delta C + \gamma C P
+  $$
+
+  $$
+  \frac{dS}{dt} = -\alpha P \frac{S}{S + K}
+  $$
+
+  where the parameters are growth rate ($\alpha$), half-saturation constant ($K$), predation rate ($\beta$), predator mortality ($\delta$), predator efficiency ($\gamma$), the state variables are $P(t)$ prey, $C(t)$ predator number, and $S(t)$ the substrate.
+
+- **Monod chemostat model**
+
+  $$
+  \frac{dX}{dt} = \mu X - D X
+  $$
+
+  $$
+  \frac{dS}{dt} = D (S_{\text{in}} - S) - \frac{\mu X}{Y} - m X
+  $$
+
+  where
+
+  $$
+  \mu = \mu_m \frac{S}{K_s + S}
+  $$
+
+  where the parameters are substrate affinity ($K_s$), maintenance coefficient ($m$), yield coefficient ($Y$), maximum growth rate ($\mu_m$), dilution rate ($D$), inflow substrate concentration ($S_{\text{in}}$), the state variables are $X(t)$ the biomass and $S(t)$ the substrate concentrations.
+
+- **Synthetic Chemostat Model**
+
+  The synthetic chemostat model describes the dynamics of biomass, substrate concentration, and a reporter variable ($R$) representing the status of the macromolecular cell composition. The hypothesis underlying this model is that the macromolecular composition can be divided into two sectors, P and U, bound by the conservation condition $P + U = 1$. This division allows the sum of $P$ and $U$ to be represented as a linear function of a scalar variable $R$ and three constant vectors.
+
+  Then the bacteria growth can be described by the following system of equations:
+
+  $$
+  \frac{dS}{dt} = D(s_r-S) - q_s \cdot N
+  $$
+
+  $$
+  \frac{dN}{dt} = \mu \cdot N - D \cdot N
+  $$
+
+  $$
+  \frac{dR}{dt} = \mu \cdot \left(\frac{S}{k_r + S} - R\right)
+  $$
+
+  Where:
+
+  $$
+  q_s = R \cdot \frac{QS}{k_s + S} = (1 - R) \cdot \frac{Q' S}{k'_s + S}
+  $$
+
+  $$
+  \mu = Y \cdot q_s - a_0 \cdot R
+  $$
+
+  The state variables are:
+  - $N(t)$ biomass concentration at time $t$,
+  - $S(t)$ substrate concentration at time $t$,
+  - $R(t)$, the reporter variable that tracks the macromolecular status of the cell.
+
+  The parameters of the synthetic chemostat model are as follows:
+  - $D$: Dilution rate, which represents the rate at which the medium is replaced in the chemostat.
+  - $s_r$: Inflow concentration of the substrate, representing the steady-state concentration of substrate that is constantly supplied.
+  - $q_s$: Substrate consumption rate by the biomass.
+  - $\mu$: The growth rate of the biomass.
+  - $k_r$: The half-saturation constant for the growth rate.
+  - $k_s$, $k'_s$: The half-saturation constants for substrate consumption.
+  - $Q$, $Q'$: Scaling factors for the substrate consumption rate.
+  - $Y$: Yield coefficient for biomass production.
+  - $a_0$: A constant that penalizes the reporter variable $R$.
+
+- **Synthetic batch model**
+
+  A modification of the previous model without dilution and nutrient inflow to simulate batch cultures:
+
+  $$
+  \frac{dS}{dt} = -q_s \cdot N
+  $$
+
+  $$
+  \frac{dN}{dt} = \mu \cdot N
+  $$
+
+  $$
+  \frac{dR}{dt} = \mu \cdot\left(\frac{S}{k_r+S} - R\right)
+  $$
+
+  where
+
+  $$
+  q_s = R \cdot \frac{QS}{k_s + S} = (1 - R) \cdot \frac{Q' S}{k'_s + S}
+  $$
+
+  $$
+  \mu = Y \cdot q_s - a_0 \cdot R
+  $$
 
 
 
