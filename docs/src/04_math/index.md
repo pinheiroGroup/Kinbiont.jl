@@ -14,7 +14,7 @@ In this section we show some of the hardcoded models of Kinbiont.jl but note tha
 ## NL models for bacterial growth
 
 In general, NL fitting is preferred to ODE fitting in the following cases:
-1.  Since it is faster when you have to analyze a large dataset
+1. Since it is faster when you have to analyze a large dataset
 2. When you do not trust initial conditions (e.g., initial inoculum under the detection limit of the instrument). ODE fit needs to fix the initial condition of data on the first (or an average of the first) time point of data, and this could lead to errors.
 
 In this case, we are supposed to know the analytic formula of microbial growth; in particular, we have implemented some models from "Statistical evaluation of mathematical models for microbial growth" and added some piecewise models. They are:
@@ -275,7 +275,7 @@ $\begin{cases} N(t) = N_1(t) + N_2(t) + N_3(t), \\
 \frac{d N_3(t)}{dt} = - r_{\text{D}} \cdot N_3(t) + r_{\text{I}} \cdot N_2(t), 
 \end{cases}$
 
-where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the rate at which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$), and $r_{\text{D}}$ is the rate at which cell are die.
+where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_{\text{I}}$ is the rate at which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$), and $r_{\text{D}}$ is the rate at which cell are die.
 
 
 Note that these models assume that the cells are in three states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase), $N_2(t)$ active cells, which are able to duplicate, and inactive cells $N_3(t)$ that die at a rate $r_{\text{D}}$. At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(\text{start}) = OD(\text{start})$, $N_{2}(\text{start}) = 0.0$, and $N_{3}(\text{start}) = 0.0$).
@@ -289,7 +289,7 @@ N(t) = N_1(t) + N_2(t) + N_3(t), \\
 \frac{d N_3(t)}{dt} = - r_{\text{D}} \cdot N_3(t) \left(1 - \frac{N_3(t)}{N_{\text{res}}}\right) + r_{\text{I}} \cdot N_2(t), \quad \text{with} \quad N_3(t) \leq N_{\text{res}}
 \end{cases}$
 
-where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_\text{inhibition}$ is the rate at which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$),  $r_{\text{D}}$ is the rate at which cell are die, and $N_{\text{res}}$ it the number of cells that will be inactive but do not die.
+where $\mu$ is the growth rate, $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$) ,  $r_{\text{I}}$ is the rate at which cell are inhibited (i.e. the rate of transition between $N_2(t)$ and $N_3(t)$),  $r_{\text{D}}$ is the rate at which cell are die, and $N_{\text{res}}$ is the number of cells that will be inactive but do not die.
 
 
 
