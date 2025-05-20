@@ -30,7 +30,7 @@ using Kinbiont
 
 With any package manager run (example with Pkg.jl)
 ```
-Pkg.add(Kinbiont)
+Pkg.add("Kinbiont")
 ```
 and then in your script use:
 
