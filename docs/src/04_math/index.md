@@ -136,10 +136,11 @@ where $\mu$ is the growth rate.
 - **Hyper Gompertz**:
 
 $$\frac{d N(t)}{dt} = \mu N_{\text{max} \log \left( \frac{N_{\text{max}}}{N(t)} \right)^{(1+n)}$$
+
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth and $n$ a shape constant.
 - **Hyper Logistic**:
 
-$$\frac{d N(t)}{dt} = \frac{\mu}{N_{\text{max}}} \, N(t)^{(1-n)} (N_{\text{max} - N(t) })^{(1+n)}$$
+$$\frac{d N(t)}{dt} = \frac{\mu}{N_{\text{max}}} \, N(t)^{(1-n)} (N_{\text{max}} - N(t))^{(1+n)}$$
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth and $n$ a shape constant.
 
 - **Bertalanffy-Richards**:
