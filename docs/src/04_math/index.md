@@ -145,7 +145,7 @@ $$\frac{d N(t)}{dt} = \frac{\mu}{N_{\text{max}}}  N(t)^{(1-n)} (N_{\text{max}} -
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth and $n$ a shape constant.
 
 - **Bertalanffy-Richards**:
-$$\frac{d N(t)}{dt} =  \frac{\mu}{N_\text{max}^n } \cdot  \left ( N_\text{max}^n - N^n(t) \right)$$
+$$\frac{d N(t)}{dt} =  \frac{\mu N(t)}{N_\text{max}^n } \cdot  \left ( N_\text{max}^n - N^n(t) \right)$$
 
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, and $n$ a shape constant.
 
