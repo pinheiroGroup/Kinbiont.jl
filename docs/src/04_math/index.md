@@ -197,7 +197,7 @@ $\frac{d N(t)}{dt} =
   \begin{cases} 
   c_1 \cdot N(t) & \text{for } t < t_{\text{L}}, \\ 
   \mu \cdot N(t) & \text{for } t_{\text{L}} \leq t < t_{\text{stat}},\\ 
-  c_2 \cdot \left(1 - \log \left( \frac{N(t)}{N_{\text{max}}} \right)\right) & \text{for } t \geq t_{\text{stat}},
+  c_2 \cdot \left(1 -  \left( \frac{N(t)}{N_{\text{max}}} \right)\right) N_{\text{max}} & \text{for } t \geq t_{\text{stat}},
 \end{cases}$
 
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, $t_\text{L}$ is the lag time, $c_1$ the growth rate during the lag phase (can be 0), $t_{\text{stat}} $ the time when stationary phase starts, and $c_2$ the growth rate during the stationary phase.
