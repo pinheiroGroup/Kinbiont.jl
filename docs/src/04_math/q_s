@@ -135,11 +135,11 @@ where $\mu$ is the growth rate.
 
 - **Hyper Gompertz**:
 
-$$\frac{d N(t)}{dt} = \mu \, \log \left( \frac{N_{\text{max}}}{N(t)} \right)^{(1-n)}$$
+$$\frac{d N(t)}{dt} = \mu N_{\text{max} \log \left( \frac{N_{\text{max}}}{N(t)} \right)^{(1+n)}$$
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth and $n$ a shape constant.
 - **Hyper Logistic**:
 
-$$\frac{d N(t)}{dt} = \frac{\mu}{N_{\text{max}}} \, N(t)^{(1-n)} (N(t) - N_{\text{max}})^{(1+n)}$$
+$$\frac{d N(t)}{dt} = \frac{\mu}{N_{\text{max}}} \, N(t)^{(1-n)} (N_{\text{max} - N(t) })^{(1+n)}$$
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth and $n$ a shape constant.
 
 - **Bertalanffy-Richards**:
@@ -230,7 +230,7 @@ $\begin{cases}
 \end{cases}$
 
 where $\mu$ is the growth rate, $N_{\text{max}}$ the total growth, and $r_\text{L}$ is the lag rate (i.e. the rate of transition between $N_1(t)$ and $N_2(t)$).     
-Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase) and $N_2(t)$ active cells, which are able to duplicate. At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(start) = OD(start)$, and $N_{2}(start) = 0.0$) .
+Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase) and $N_2(t)$ active cells, which are able to duplicate. At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(	ext{start}) = OD(	ext{start})$, and $N_{2}(	ext{start}) = 0.0$) .
 
 - **Exponential Heterogeneous Population Model**:
 
@@ -252,7 +252,7 @@ $\begin{cases}
 \end{cases}$
 
 where $\mu$ is the growth rate, and $N_{\text{max}}$ the total growth.
-Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase) and $N_2(t)$ active cells, which are able to duplicate.At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(start) = OD(start)$, and $N_{2}(start) = 0.0$) .
+Note that these models assume that the cells are in two states: $N_1(t)$ dormant cells (the cells are not able to reproduce because they are in the lag phase) and $N_2(t)$ active cells, which are able to duplicate. At the start, all the cells are assumed in the dormant state (i.e., $N_{1}(	ext{start}) = OD(	ext{start})$, and $N_{2}(	ext{start}) = 0.0$) .
 
 - **Heterogeneous Population Model with Inhibition**:
 
@@ -474,7 +474,7 @@ In this section, we present some examples of multidimensional ordinary different
 
   Where:
 
-  $q_s = R \cdot \frac{QS}{k_s + S} = (1 - R) \cdot \frac{Q' S}{k'_s + S}$
+  $q_s = R \cdot \frac{QS}{k_s + S} + (1 - R) \cdot \frac{Q' S}{k'_s + S}$
 
   $\mu = Y \cdot q_s - a_0 \cdot R$
 
@@ -506,7 +506,7 @@ In this section, we present some examples of multidimensional ordinary different
 
   where
 
-  $q_s = R \cdot \frac{QS}{k_s + S} = (1 - R) \cdot \frac{Q' S}{k'_s + S}$
+  $q_s = R \cdot \frac{QS}{k_s + S} + (1 - R) \cdot \frac{Q' S}{k'_s + S}$
 
   $\mu = Y \cdot q_s - a_0 \cdot R$
 
