@@ -14,11 +14,9 @@ Kinbiont provides a comprehensive, model-based analysis pipeline, covering all a
 For documentation please consult [Documentation](https://pinheirogroup.github.io/Kinbiont.jl/). 
 
 # Publication
-
-[Kinbiont paper](https://www.nature.com/articles/s41467-025-61592-6).
+Please cite the [Kinbiont paper](https://www.nature.com/articles/s41467-025-61592-6).
 
 Angaroni F., Peruzzi A., Alvarenga E. Z., Pinheiro F., Translating microbial kinetics into quantitative responses and testable hypotheses using Kinbiont, 2025, Nature Communication, 6440, 16, 1, https://doi.org/10.1038/s41467-025-61592-6
-DO  - 10.1038/s41467-025-61592-6
 
 
 Data and scripts to reproduce the paper results at [Kinbiont utilities](https://github.com/pinheiroGroup/Kinbiont_utilities)
