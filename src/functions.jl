@@ -25,6 +25,17 @@ include("ODEs_system_models.jl");
 include("Reaction_Net_functions.jl");
 include("Reaction_Net_models.jl");
 include("Generalized_Cybernetic_Models.jl");
+include("Data_reader.jl")
+include("Fitting.jl")
+include("gaussian_smoothing_utils.jl")
+include("Kinbiont_model.jl")
+include("mannKendallTest.jl")
+include("New_pre_processing_API.jl")
+include("Kinbiont_model.jl")
+include("Fitting.jl")
+include("time_series_clustering_utils.jl")
+include("testDataDrivenDiffEqODE.jl")
+
 
 function model_selector(model::String, u0, tspan, param=nothing)
 
