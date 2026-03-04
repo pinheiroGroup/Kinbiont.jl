@@ -41,7 +41,7 @@ function Kinbiont_data_generic_fitting(data_vector,
     end
 
     if Type_of_model == "ODE"
-        res_ODE_model_selection = Kinbiont_ODE_model_generic_fit(
+        res = Kinbiont_ODE_model_generic_fit(
             data_vector,
             times,
             model_string,
@@ -54,7 +54,7 @@ function Kinbiont_data_generic_fitting(data_vector,
     end
  
     if Type_of_model == "NL"
-        res_NL_model_selection = Kinbiont_NL_model_generic_fit(
+        res = Kinbiont_NL_model_generic_fit(
             data_vector,
             times,
             model_string,
@@ -68,7 +68,7 @@ function Kinbiont_data_generic_fitting(data_vector,
     end
 
     if Type_of_model == "log_lin"
-        res_NL_model_selection = Kinbiont_generic_log_lin(
+        res = Kinbiont_generic_log_lin(
             data_vector,
             times,
             Kinbiont_options_fit,
@@ -99,6 +99,7 @@ function Kinbiont_data_generic_fitting(data_vector,
         println("\n=== Parameter map ===")
         println(params)
     end
+    return res
 end
 
 # to be tested (DDDE: DataDrivenDiffEq.jl)
