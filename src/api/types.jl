@@ -274,3 +274,9 @@ end
 Base.length(r::GrowthFitResults) = length(r.results)
 Base.iterate(r::GrowthFitResults, args...) = iterate(r.results, args...)
 Base.getindex(r::GrowthFitResults, i) = r.results[i]
+
+export GrowthData
+export FitOptions
+export AbstractGrowthModel, NLModel, ODEModel, LogLinModel
+export ModelSpec
+export CurveFitResult, GrowthFitResults
