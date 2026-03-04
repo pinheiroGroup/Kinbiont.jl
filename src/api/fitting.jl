@@ -92,7 +92,7 @@ function _fit_curve(
         _fit_single(data_mat, label, model, p0, lb, ub, opts)
     end
 
-    best_idx = argmin(r -> r.aic, candidates)
+    best_idx = argmin([r.aic for r in candidates])   # Int index
     best = candidates[best_idx]
 
     return CurveFitResult(
