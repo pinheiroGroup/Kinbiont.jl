@@ -43,15 +43,13 @@ curves       = Matrix{Float64}(undef, n_curves, n_tp)
 labels       = String[]
 blank_val    = 0.05   # simulated blank OD
 
-i = 1
-for (cond_name, params) in conditions
+for (ci, (cond_name, params)) in enumerate(conditions)
     for rep in 1:n_replicates
+        row   = (ci - 1) * n_replicates + rep
         sim   = ODE_sim("logistic", [0.05], tstart, tmax, delta_t, params)
         noise = rand(Uniform(-0.02, 0.02), n_tp)
-        # Add blank offset to simulate raw plate reader data
-        curves[i, :] = reduce(hcat, sim.u)[1, :] .+ noise .+ blank_val
+        curves[row, :] = reduce(hcat, sim.u)[1, :] .+ noise .+ blank_val
         push!(labels, "$(cond_name)_rep$(rep)")
-        i += 1
     end
 end
 
