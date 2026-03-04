@@ -1,0 +1,276 @@
+# =============================================================================
+# Unified Matrix API — Type Definitions
+# =============================================================================
+# Three public structs that form the entire API surface:
+#   GrowthData   — the data (immutable, matrix-centric)
+#   FitOptions   — all configuration with sensible defaults (@kwdef)
+#   ModelSpec    — which models to fit and their initial parameters
+#
+# Plus the model trait types (NLModel, ODEModel, LogLinModel) used for
+# dispatch, and the result types returned by fit() and preprocess().
+# =============================================================================
+
+using OptimizationBBO: BBO_adaptive_de_rand_1_bin_radiuslimited
+using OrdinaryDiffEq: Tsit5
+
+# ---------------------------------------------------------------------------
+# 1. Data container
+# ---------------------------------------------------------------------------
+
+"""
+    GrowthData(curves, times, labels[, clusters])
+
+Immutable container for a set of growth curves measured at common time points.
+
+# Fields
+- `curves::Matrix{Float64}`: `n_curves × n_timepoints` matrix; each row is one curve.
+- `times::Vector{Float64}`: time points shared by all curves (length `n_timepoints`).
+- `labels::Vector{String}`: identifier for each curve (length `n_curves`).
+- `clusters::Union{Nothing, Vector{Int}}`: cluster assignment per curve, populated
+  by [`preprocess`](@ref). `nothing` until clustering is performed.
+"""
+struct GrowthData
+    curves::Matrix{Float64}
+    times::Vector{Float64}
+    labels::Vector{String}
+    clusters::Union{Nothing, Vector{Int}}
+
+    function GrowthData(curves, times, labels, clusters=nothing)
+        n_curves, n_tp = size(curves)
+        length(times)  == n_tp     || error("times length $(length(times)) ≠ n_timepoints $n_tp")
+        length(labels) == n_curves || error("labels length $(length(labels)) ≠ n_curves $n_curves")
+        clusters === nothing || length(clusters) == n_curves ||
+            error("clusters length $(length(clusters)) ≠ n_curves $n_curves")
+        new(curves, times, labels, clusters)
+    end
+end
+
+# ---------------------------------------------------------------------------
+# 2. All configuration in one place, every field has a default
+# ---------------------------------------------------------------------------
+
+"""
+    FitOptions(; kwargs...)
+
+All configuration for preprocessing and fitting in a single struct.
+Every field has a sensible default so users only override what they need.
+
+# Preprocessing fields
+- `smooth::Bool = false`: apply smoothing before fitting.
+- `smooth_method::Symbol = :lowess`: `:lowess`, `:rolling_avg`, or `:none`.
+- `smooth_pt_avg::Int = 7`: window size for `:rolling_avg`.
+- `lowess_frac::Float64 = 0.05`: bandwidth fraction for `:lowess`.
+- `blank_subtraction::Bool = false`: subtract a blank value from all curves.
+- `blank_value::Float64 = 0.0`: constant blank to subtract when `blank_subtraction=true`.
+- `correct_negatives::Bool = false`: handle negative values after blank subtraction.
+- `negative_method::Symbol = :remove`: `:remove`, `:thr_correction`, or `:blank_correction`.
+- `negative_threshold::Float64 = 0.01`: floor value used by `:thr_correction`.
+- `scattering_correction::Bool = false`: apply multiple-scattering OD correction.
+- `calibration_file::String = ""`: path to calibration CSV (required when `scattering_correction=true`).
+- `scattering_method::Symbol = :interpolation`: `:interpolation` or `:exp_fit`.
+
+# Clustering fields
+- `cluster::Bool = false`: cluster curves after preprocessing.
+- `n_clusters::Int = 3`: number of clusters (k for k-means).
+- `cluster_trend_test::Bool = true`: use Mann-Kendall test to label flat-curve clusters.
+
+# Fitting fields
+- `loss::String = "RE"`: loss function — `"RE"`, `"L2"`, `"L2_derivative"`, etc.
+- `optimizer`: BBO optimizer instance (default: `BBO_adaptive_de_rand_1_bin_radiuslimited()`).
+- `integrator`: ODE integrator (default: `Tsit5()`).
+- `multistart::Bool = false`: enable multistart optimization.
+- `n_restart::Int = 50`: number of restarts when `multistart=true`.
+- `aic_correction::Bool = true`: use AICc (corrected AIC) for model selection.
+- `pt_smooth_derivative::Int = 7`: window for specific-growth-rate evaluation.
+- `auto_diff_method`: autodiff backend passed to Optimization.jl (`nothing` = no autodiff).
+- `cons`: constraint function for Optimization.jl (`nothing` = unconstrained).
+"""
+@kwdef struct FitOptions
+    # --- preprocessing ---
+    smooth::Bool                = false
+    smooth_method::Symbol       = :lowess
+    smooth_pt_avg::Int          = 7
+    lowess_frac::Float64        = 0.05
+    blank_subtraction::Bool     = false
+    blank_value::Float64        = 0.0
+    correct_negatives::Bool     = false
+    negative_method::Symbol     = :remove
+    negative_threshold::Float64 = 0.01
+    scattering_correction::Bool = false
+    calibration_file::String    = ""
+    scattering_method::Symbol   = :interpolation
+
+    # --- clustering ---
+    cluster::Bool               = false
+    n_clusters::Int             = 3
+    cluster_trend_test::Bool    = true
+
+    # --- fitting ---
+    loss::String                = "RE"
+    optimizer                   = BBO_adaptive_de_rand_1_bin_radiuslimited()
+    integrator                  = Tsit5()
+    multistart::Bool            = false
+    n_restart::Int              = 50
+    aic_correction::Bool        = true
+    pt_smooth_derivative::Int   = 7
+    auto_diff_method            = nothing
+    cons                        = nothing
+end
+
+# ---------------------------------------------------------------------------
+# 3. Model trait types — dispatch replaces string matching
+# ---------------------------------------------------------------------------
+
+"""
+Abstract base for all growth models. Concrete subtypes: [`NLModel`](@ref),
+[`ODEModel`](@ref), [`LogLinModel`](@ref).
+"""
+abstract type AbstractGrowthModel end
+
+"""
+    NLModel(name, func, param_names[, guess])
+
+A non-linear (closed-form) growth model.
+
+# Fields
+- `name::String`: unique identifier, used in results.
+- `func::Function`: model function with signature `(p, t) -> y` or `(p, times) -> ys`.
+- `param_names::Vector{String}`: human-readable name for each parameter.
+- `guess::Union{Function,Nothing}`: `(data::Matrix{Float64}) -> Vector{Float64}` returning
+  a starting guess; `nothing` means the guess must be supplied in [`ModelSpec`](@ref).
+"""
+struct NLModel <: AbstractGrowthModel
+    name::String
+    func::Function
+    param_names::Vector{String}
+    guess::Union{Function, Nothing}
+end
+
+NLModel(name, func, param_names) = NLModel(name, func, param_names, nothing)
+
+"""
+    ODEModel(name, func, param_names, n_eq[, guess])
+
+An ODE growth model in SciML in-place form `f!(du, u, p, t)`.
+
+# Fields
+- `name::String`: unique identifier, used in results.
+- `func::Function`: ODE function with signature `f!(du, u, p, t)`.
+- `param_names::Vector{String}`: human-readable name for each parameter.
+- `n_eq::Int`: number of state equations (replaces the error-prone detection loop).
+- `guess::Union{Function,Nothing}`: `(data::Matrix{Float64}) -> Vector{Float64}` returning
+  a starting guess; `nothing` means the guess must be supplied in [`ModelSpec`](@ref).
+"""
+struct ODEModel <: AbstractGrowthModel
+    name::String
+    func::Function
+    param_names::Vector{String}
+    n_eq::Int
+    guess::Union{Function, Nothing}
+end
+
+ODEModel(name, func, param_names, n_eq) = ODEModel(name, func, param_names, n_eq, nothing)
+
+"""
+    LogLinModel()
+
+Sentinel type for log-linear (exponential phase) fitting. No parameters or
+model function required — the fitting procedure is fully determined by
+[`FitOptions`](@ref) fields `pt_smooth_derivative`, etc.
+"""
+struct LogLinModel <: AbstractGrowthModel end
+
+# ---------------------------------------------------------------------------
+# 4. Model specification passed to fit()
+# ---------------------------------------------------------------------------
+
+"""
+    ModelSpec(models, params[; lower, upper])
+
+Specifies which models to try and their initial parameters.
+[`fit`](@ref) evaluates every model and selects the best by AICc.
+
+# Fields
+- `models::Vector{<:AbstractGrowthModel}`: candidate models (from [`MODEL_REGISTRY`](@ref)
+  or custom).
+- `params::Vector{Vector{Float64}}`: initial parameter guess per model.
+  Use an empty vector `Float64[]` for [`LogLinModel`](@ref).
+- `lower::Union{Nothing,Vector{Union{Nothing,Vector{Float64}}}}`: per-model lower bounds;
+  `nothing` or a slot set to `nothing` means no lower bound for that model.
+- `upper::Union{Nothing,Vector{Union{Nothing,Vector{Float64}}}}`: per-model upper bounds.
+
+# Example
+```julia
+spec = ModelSpec(
+    [MODEL_REGISTRY["logistic"], MODEL_REGISTRY["gompertz"]],
+    [[0.01, 0.5, 1.2],           [0.01, 0.5, 1.2, 0.5]],
+)
+```
+"""
+struct ModelSpec
+    models::Vector{<:AbstractGrowthModel}
+    params::Vector{Vector{Float64}}
+    lower::Union{Nothing, Vector{Union{Nothing, Vector{Float64}}}}
+    upper::Union{Nothing, Vector{Union{Nothing, Vector{Float64}}}}
+
+    function ModelSpec(models, params; lower=nothing, upper=nothing)
+        length(models) == length(params) ||
+            error("models and params must have the same length")
+        lower === nothing || length(lower) == length(models) ||
+            error("lower bounds must have the same length as models")
+        upper === nothing || length(upper) == length(models) ||
+            error("upper bounds must have the same length as models")
+        new(models, params, lower, upper)
+    end
+end
+
+# Positional convenience constructor (no keyword args)
+ModelSpec(models, params, lower, upper) = ModelSpec(models, params; lower=lower, upper=upper)
+
+# ---------------------------------------------------------------------------
+# 5. Result types
+# ---------------------------------------------------------------------------
+
+"""
+    CurveFitResult
+
+Fitting result for a single growth curve.
+
+# Fields
+- `label::String`: curve identifier from [`GrowthData`](@ref).
+- `best_model::AbstractGrowthModel`: the model selected by AICc.
+- `best_params::Vector{Any}`: fitted parameter vector for the best model.
+- `best_aic::Float64`: AICc of the best model.
+- `fitted_curve::Vector{Float64}`: model values at each time point.
+- `times::Vector{Float64}`: time points (same as input data).
+- `loss::Float64`: final objective value.
+- `all_results::Vector{NamedTuple}`: raw result for every candidate model tried.
+"""
+struct CurveFitResult
+    label::String
+    best_model::AbstractGrowthModel
+    best_params::Vector{Any}
+    best_aic::Float64
+    fitted_curve::Vector{Float64}
+    times::Vector{Float64}
+    loss::Float64
+    all_results::Vector{<:NamedTuple}
+end
+
+"""
+    GrowthFitResults
+
+Top-level result returned by [`fit`](@ref).
+
+# Fields
+- `data::GrowthData`: the (possibly preprocessed) data that was fitted.
+- `results::Vector{CurveFitResult}`: one entry per curve.
+"""
+struct GrowthFitResults
+    data::GrowthData
+    results::Vector{CurveFitResult}
+end
+
+Base.length(r::GrowthFitResults) = length(r.results)
+Base.iterate(r::GrowthFitResults, args...) = iterate(r.results, args...)
+Base.getindex(r::GrowthFitResults, i) = r.results[i]
