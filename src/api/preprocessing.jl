@@ -8,12 +8,12 @@
 # pre_processing_functions.jl, and uses:
 #   - StatsBase.zscore   for z-score normalisation (replaces custom zscore_vector)
 #   - Clustering.kmeans  for k-means clustering (replaces custom implementation)
-#   - HypothesisTests.MannKendallTest for trend detection (replaces mannKendallTest.jl)
+#   - linear slope t-test (Statistics stdlib) for flat-curve trend detection
 # =============================================================================
 
 using Clustering: kmeans, assignments
 using StatsBase: zscore
-using HypothesisTests: MannKendallTest, pvalue
+using Distributions: Normal, cdf
 
 # ---------------------------------------------------------------------------
 # Public entry point
@@ -210,18 +210,32 @@ function _zscore_rows(curves::Matrix{Float64})::Matrix{Float64}
     return out
 end
 
-# Assign a dedicated cluster id to curves with no significant trend (Mann-Kendall p ≥ 0.05)
+# Assign a dedicated cluster id to curves with no significant linear trend.
+# Uses a t-test on the OLS slope (p ≥ 0.05 → flat), implemented with Statistics
+# stdlib only — no extra package required.
 function _apply_trend_labels(
     curves::Matrix{Float64},
     times::Vector{Float64},
     labels::Vector{Int},
     k::Int,
 )::Vector{Int}
-    flat_id = k + 1   # one extra cluster for genuinely flat curves
+    flat_id   = k + 1
     new_labels = copy(labels)
+    n          = length(times)
+    t_centered = times .- mean(times)
+    ss_t       = sum(t_centered .^ 2)
+
     for i in axes(curves, 1)
-        p = pvalue(MannKendallTest(curves[i, :]))   # HypothesisTests
-        if p >= 0.05
+        y         = curves[i, :]
+        slope     = sum(t_centered .* y) / ss_t
+        y_hat     = mean(y) .+ slope .* t_centered
+        residuals = y .- y_hat
+        s2        = sum(residuals .^ 2) / (n - 2)
+        se_slope  = sqrt(s2 / ss_t)
+        t_stat    = slope / se_slope
+        # Two-tailed p-value via normal approximation (good for n > 10)
+        p_approx  = 2 * (1 - cdf(Normal(), abs(t_stat)))
+        if p_approx >= 0.05
             new_labels[i] = flat_id
         end
     end

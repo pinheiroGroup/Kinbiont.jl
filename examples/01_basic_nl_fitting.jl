@@ -61,7 +61,7 @@ spec = ModelSpec(
 opts = FitOptions(loss = "RE")
 
 # 4. Fit — one call, all curves, AICc model selection built in
-results = fit(data, spec, opts)
+results = kinbiont_fit(data, spec, opts)
 
 # ---------------------------------------------------------------------------
 # Inspect results

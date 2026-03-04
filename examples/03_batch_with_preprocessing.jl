@@ -125,7 +125,7 @@ spec = ModelSpec(
 # and use the already-preprocessed data we computed above.
 fit_only_opts = FitOptions(loss = "RE")   # no preprocessing — data is already clean
 
-results = fit(preprocessed, spec, fit_only_opts)
+results = kinbiont_fit(preprocessed, spec, fit_only_opts)
 
 # ---------------------------------------------------------------------------
 # Results summary

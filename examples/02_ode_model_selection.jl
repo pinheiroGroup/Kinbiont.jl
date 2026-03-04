@@ -89,7 +89,7 @@ data = GrowthData(curves, times, labels)
 # Single call — all curves × all models × AICc selection
 # ---------------------------------------------------------------------------
 
-results = fit(data, spec, opts)
+results = kinbiont_fit(data, spec, opts)
 
 # ---------------------------------------------------------------------------
 # Summary

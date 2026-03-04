@@ -29,7 +29,7 @@ end
 # ---------------------------------------------------------------------------
 
 """
-    fit(data::GrowthData, spec::ModelSpec[, opts::FitOptions]) -> GrowthFitResults
+    kinbiont_fit(data::GrowthData, spec::ModelSpec[, opts::FitOptions]) -> GrowthFitResults
 
 Fit every curve in `data` to every model in `spec` and select the best fit per
 curve using AICc. Returns a [`GrowthFitResults`](@ref) containing one
@@ -44,14 +44,14 @@ data  = GrowthData(my_matrix, times, labels)
 spec  = ModelSpec([MODEL_REGISTRY["NL_logistic"]], [[1.2, 0.5, 0.01]])
 opts  = FitOptions(smooth=true, loss="RE")
 
-results = fit(data, spec, opts)
+results = kinbiont_fit(data, spec, opts)
 
 for r in results
     println(r.label, " → ", r.best_model.name, "  AICc=", round(r.best_aic; digits=2))
 end
 ```
 """
-function fit(
+function kinbiont_fit(
     data::GrowthData,
     spec::ModelSpec,
     opts::FitOptions = FitOptions(),
@@ -284,4 +284,4 @@ function _validate_spec(data::GrowthData, spec::ModelSpec)
     )
 end
 
-export fit
+export kinbiont_fit
