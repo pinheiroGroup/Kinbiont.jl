@@ -96,3 +96,13 @@ nl_result = fit_NL_model(
 
 println("  method: ", nl_result[1])
 println("  loss:   ", nl_result[2][end])
+
+# ---------------------------------------------------------------------------
+# Save results to CSV
+# ---------------------------------------------------------------------------
+
+files = save_results(results, "output/example_01"; prefix = "basic_nl")
+println("\n=== Saved files ===")
+for (k, v) in pairs(files)
+    println("  $k → $v")
+end
