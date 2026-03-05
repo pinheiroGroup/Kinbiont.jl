@@ -14,6 +14,10 @@
 using CSV
 using DataFrames
 
+# LogLinModel has no .name field — provide a fallback
+_model_name(m::AbstractGrowthModel) = m.name
+_model_name(::LogLinModel) = "log_lin"
+
 """
     save_results(results::GrowthFitResults, dir::String; prefix="kinbiont")
 
@@ -67,7 +71,7 @@ function _save_summary(results::GrowthFitResults, path::String)
             results.data.clusters[findfirst(==(r.label), results.data.labels)]
             for r in results.results
         ],
-        best_model = [r.best_model.name for r in results.results],
+        best_model = [_model_name(r.best_model) for r in results.results],
         n_params   = [length(r.best_params) for r in results.results],
         aic        = [r.best_aic for r in results.results],
         loss       = [r.loss for r in results.results],
@@ -141,7 +145,7 @@ function _save_all_models(results::GrowthFitResults, path::String)
                 :model_name => c.model_name,
                 :aic        => c.aic,
                 :loss       => c.loss,
-                :is_best    => c.model_name == r.best_model.name,
+                :is_best    => c.model_name == _model_name(r.best_model),
             )
             for k in 1:n_max_params
                 row[Symbol("param_$k")] = k <= length(c.params) ? c.params[k] : missing

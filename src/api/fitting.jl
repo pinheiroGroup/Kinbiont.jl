@@ -107,6 +107,9 @@ function _fit_curve(
     )
 end
 
+# LogLinModel takes no parameters — always return empty vector
+_resolve_p0(::Vector{Float64}, ::LogLinModel, ::Matrix{Float64}) = Float64[]
+
 # Use model's built-in guess if p0 is empty and a guess function exists
 function _resolve_p0(
     p0::Vector{Float64},
@@ -245,10 +248,12 @@ function _fit_single(
         pt_smoothing_derivative = opts.pt_smooth_derivative,
     )
 
-    # raw is a Kinbiont_res_one_well_log_lin struct
-    fit_times    = Vector{Float64}(raw.times)
-    fitted_curve = Vector{Float64}(raw.fit)
-    params_raw   = raw.params
+    # raw is a Tuple: (method, params, fit_matrix, smoothed_data, confidence_band)
+    # fit_matrix is n×2: columns are [times, log_fitted_values]
+    params_raw   = raw[2]
+    fit_matrix   = raw[3]
+    fit_times    = Vector{Float64}(fit_matrix[:, 1])
+    fitted_curve = Vector{Float64}(fit_matrix[:, 2])
     # Log-lin loss is the residual of the linear regression
     loss_val     = 1.0 - Float64(params_raw[end])   # 1 - R²
     n_params     = 2   # slope + intercept
