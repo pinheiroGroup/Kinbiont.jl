@@ -45,6 +45,29 @@ struct GrowthData
     end
 end
 
+"""
+    GrowthData(path::String)
+
+Load growth curves from a CSV file and return a `GrowthData`.
+
+The file must follow the Kinbiont column convention:
+- **First column**: time points (numeric).
+- **Remaining columns**: one curve per column; the column header becomes the curve label.
+
+# Example
+```julia
+data = GrowthData("/path/to/experiment.csv")
+```
+"""
+function GrowthData(path::String)
+    tbl    = CSV.File(path)
+    cols   = propertynames(tbl)
+    times  = Float64.(tbl[cols[1]])
+    labels = String.(cols[2:end])
+    curves = Matrix{Float64}(reduce(hcat, [Float64.(tbl[c]) for c in cols[2:end]])')
+    return GrowthData(curves, times, labels)
+end
+
 # ---------------------------------------------------------------------------
 # 2. All configuration in one place, every field has a default
 # ---------------------------------------------------------------------------

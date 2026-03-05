@@ -19,6 +19,26 @@
     @test_throws ErrorException GrowthData(curves, times, labels, [1, 2])
 end
 
+@testset "GrowthData from CSV path" begin
+    # Write a minimal CSV in the Kinbiont column format:
+    # first column = time, remaining columns = curves (header = label)
+    tmp = tempname() * ".csv"
+    open(tmp, "w") do io
+        println(io, "time,well_A,well_B")
+        println(io, "0.0,0.05,0.06")
+        println(io, "1.0,0.10,0.12")
+        println(io, "2.0,0.20,0.22")
+    end
+
+    gd = GrowthData(tmp)
+    @test gd.times  == [0.0, 1.0, 2.0]
+    @test gd.labels == ["well_A", "well_B"]
+    @test size(gd.curves) == (2, 3)          # 2 curves × 3 timepoints
+    @test gd.curves[1, :] ≈ [0.05, 0.10, 0.20]
+    @test gd.curves[2, :] ≈ [0.06, 0.12, 0.22]
+    @test gd.clusters === nothing
+end
+
 @testset "FitOptions defaults" begin
     opts = FitOptions()
     @test opts.loss       == "RE"
