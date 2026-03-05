@@ -84,6 +84,9 @@ Every field has a sensible default so users only override what they need.
 - `pt_smooth_derivative::Int = 7`: window for specific-growth-rate evaluation.
 - `auto_diff_method`: autodiff backend passed to Optimization.jl (`nothing` = no autodiff).
 - `cons`: constraint function for Optimization.jl (`nothing` = unconstrained).
+- `opt_params::NamedTuple`: extra keyword arguments forwarded verbatim to
+  `OptimizationProblem` / `solve` — e.g. `(maxiters=1_000_000, abstol=1e-9)`.
+  Accepts anything the underlying Optimization.jl solver understands.
 """
 @kwdef struct FitOptions
     # --- preprocessing ---
@@ -115,6 +118,7 @@ Every field has a sensible default so users only override what they need.
     pt_smooth_derivative::Int   = 7
     auto_diff_method            = nothing
     cons                        = nothing
+    opt_params::NamedTuple      = (;)
 end
 
 # ---------------------------------------------------------------------------

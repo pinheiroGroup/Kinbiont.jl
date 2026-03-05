@@ -138,7 +138,7 @@ function _fit_single(
     opts::FitOptions,
 )::_CandidateResult
 
-    opt_params = _build_opt_params(lb, ub)
+    opt_params = _build_opt_params(lb, ub, opts.opt_params)
 
     raw = fit_NL_model(
         data_mat,
@@ -188,7 +188,7 @@ function _fit_single(
     opts::FitOptions,
 )::_CandidateResult
 
-    opt_params = _build_opt_params(lb, ub)
+    opt_params = _build_opt_params(lb, ub, opts.opt_params)
 
     raw = fitting_one_well_custom_ODE(
         data_mat,
@@ -274,11 +274,17 @@ end
 # Helpers
 # ---------------------------------------------------------------------------
 
-function _build_opt_params(lb, ub)
-    lb === nothing && ub === nothing && return ()
-    lb === nothing && return (ub = ub,)
-    ub === nothing && return (lb = lb,)
-    return (lb = lb, ub = ub)
+function _build_opt_params(lb, ub, extra::NamedTuple = (;))
+    bounds = if lb === nothing && ub === nothing
+        (;)
+    elseif lb === nothing
+        (ub = ub,)
+    elseif ub === nothing
+        (lb = lb,)
+    else
+        (lb = lb, ub = ub)
+    end
+    return merge(bounds, extra)
 end
 
 function _validate_spec(data::GrowthData, spec::ModelSpec)

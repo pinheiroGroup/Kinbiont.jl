@@ -21,15 +21,22 @@ end
 
 @testset "FitOptions defaults" begin
     opts = FitOptions()
-    @test opts.loss   == "RE"
-    @test opts.smooth == false
-    @test opts.cluster == false
+    @test opts.loss       == "RE"
+    @test opts.smooth     == false
+    @test opts.cluster    == false
+    @test opts.opt_params == (;)
 end
 
 @testset "FitOptions keyword override" begin
     opts = FitOptions(loss="L2")
     @test opts.loss == "L2"
     @test opts.smooth == false
+end
+
+@testset "FitOptions opt_params passthrough" begin
+    opts = FitOptions(opt_params=(maxiters=100_000, abstol=1e-8))
+    @test opts.opt_params.maxiters == 100_000
+    @test opts.opt_params.abstol   == 1e-8
 end
 
 @testset "ModelSpec validation" begin
