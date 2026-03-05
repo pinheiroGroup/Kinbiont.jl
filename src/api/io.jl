@@ -58,27 +58,6 @@ end
 
 function _save_summary(results::GrowthFitResults, path::String)
     n_max_params = maximum(length(r.best_params) for r in results.results)
-    param_cols   = [Symbol("param_$k") for k in 1:n_max_params]
-
-    rows = map(results.results) do r
-        cluster = results.data.clusters === nothing ? missing :
-                  results.data.clusters[findfirst(==(r.label), results.data.labels)]
-
-        param_vals = Vector{Any}(missing, n_max_params)
-        for (k, v) in enumerate(r.best_params)
-            param_vals[k] = v
-        end
-
-        (
-            label      = r.label,
-            cluster    = cluster,
-            best_model = r.best_model.name,
-            n_params   = length(r.best_params),
-            aic        = r.best_aic,
-            loss       = r.loss,
-            param_vals...,   # spread into param_1, param_2, …
-        )
-    end
 
     # Build DataFrame with explicit param columns so missing pads correctly
     df = DataFrame(
