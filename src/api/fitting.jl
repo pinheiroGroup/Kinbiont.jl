@@ -230,6 +230,131 @@ function _fit_single(
     )
 end
 
+# ---------------------------------------------------------------------------
+# DDDEModel — Data-Driven Differential Equation discovery (pure-Julia STLSQ)
+# ---------------------------------------------------------------------------
+
+# DDDEModel takes no initial parameters
+_resolve_p0(::Vector{Float64}, ::DDDEModel, ::Matrix{Float64}) = Float64[]
+
+function _fit_single(
+    data_mat::Matrix{Float64},
+    label::String,
+    model::DDDEModel,
+    _p0::Vector{Float64},
+    _lb,
+    _ub,
+    opts::FitOptions,
+)::_CandidateResult
+
+    t = Vector{Float64}(data_mat[1, :])
+    y = Vector{Float64}(data_mat[2, :])
+    N = length(t)
+    d = model.max_degree
+
+    # 1) Numerical derivative via forward/central/backward differences
+    dydt = _ddde_finite_differences(t, y)
+
+    # 2) Polynomial feature matrix: Θ[i, k+1] = y[i]^k for k = 0..d
+    Θ = [y[i]^k for i in 1:N, k in 0:d]
+
+    # 3) Sparse regression: find ξ such that dŷ/dt = Θ * ξ is sparse
+    lambdas = exp10.(model.lambda_min:model.lambda_step:model.lambda_max)
+    xi, rss = _ddde_stlsq(Θ, dydt, lambdas)
+
+    # 4) Forward-Euler integration of the discovered ODE for the fitted curve
+    fitted = _ddde_euler_integrate(t, y[1], xi)
+
+    # 5) AICc: n_params = number of non-zero discovered terms
+    n_active = max(count(!iszero, xi), 1)
+    loss_val = rss / N
+    aic = AICc_evaluation2(n_active, 2.0, t, max(loss_val, 1e-12);
+                           correction = opts.aic_correction)
+
+    return (
+        model_name   = "DDDE",
+        params       = Vector{Any}(xi),
+        fitted_curve = fitted,
+        times        = t,
+        loss         = loss_val,
+        aic          = Float64(aic),
+    )
+end
+
+# Finite-difference derivative estimate (forward / central / backward)
+function _ddde_finite_differences(t::Vector{Float64}, y::Vector{Float64})::Vector{Float64}
+    N    = length(t)
+    dydt = similar(y)
+    dydt[1] = (y[2] - y[1]) / (t[2] - t[1])
+    for i in 2:(N-1)
+        dydt[i] = (y[i+1] - y[i-1]) / (t[i+1] - t[i-1])
+    end
+    dydt[N] = (y[N] - y[N-1]) / (t[N] - t[N-1])
+    return dydt
+end
+
+# Sequentially Thresholded Least Squares (STLSQ) over a lambda grid.
+# Selects the coefficient vector that minimises AIC(log-likelihood form)
+# to balance sparsity against fit quality.
+function _ddde_stlsq(
+    Θ::Matrix{Float64},
+    dydt::Vector{Float64},
+    lambdas::Vector{Float64},
+)::Tuple{Vector{Float64}, Float64}
+    N       = size(Θ, 1)
+    n_feat  = size(Θ, 2)
+    best_xi  = zeros(n_feat)
+    best_aic = Inf
+
+    for λ in lambdas
+        xi = try
+            Θ \ dydt
+        catch
+            continue
+        end
+        for _ in 1:20
+            small  = abs.(xi) .< λ
+            xi[small] .= 0.0
+            active = .!small
+            any(active) || break
+            xi[active] = Θ[:, active] \ dydt
+            xi[.!active] .= 0.0
+        end
+        k = count(!iszero, xi)
+        k == 0 && continue
+        rss = sum((Θ * xi .- dydt) .^ 2)
+        aic = N * log(max(rss / N, 1e-30)) + 2.0 * k
+        if aic < best_aic
+            best_aic = aic
+            best_xi  = copy(xi)
+        end
+    end
+
+    rss_best = sum((Θ * best_xi .- dydt) .^ 2)
+    return best_xi, rss_best
+end
+
+# Forward-Euler integration of the polynomial ODE: du/dt = Σ ξ[k+1] * u^k
+function _ddde_euler_integrate(
+    t::Vector{Float64},
+    u0::Float64,
+    xi::Vector{Float64},
+)::Vector{Float64}
+    N = length(t)
+    d = length(xi) - 1
+    u    = zeros(Float64, N)
+    u[1] = u0
+    for i in 2:N
+        dt     = t[i] - t[i-1]
+        u_prev = u[i-1]
+        rhs    = sum(xi[k+1] * u_prev^k for k in 0:d)
+        u[i]   = isfinite(rhs) ? u_prev + dt * rhs : u_prev
+    end
+    return u
+end
+
+# ---------------------------------------------------------------------------
+
 function _fit_single(
     data_mat::Matrix{Float64},
     label::String,

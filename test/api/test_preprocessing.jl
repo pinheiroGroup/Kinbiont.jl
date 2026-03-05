@@ -37,4 +37,24 @@
         # output length matches input (pipeline pads if needed)
         @test size(processed.curves) == size(data.curves)
     end
+
+    @testset "Smoothing (gaussian) keeps original times when no grid given" begin
+        opts = FitOptions(smooth=true, smooth_method=:gaussian, gaussian_h_mult=2.0)
+        processed = preprocess(data, opts)
+        @test size(processed.curves) == size(data.curves)
+        @test processed.times == data.times
+    end
+
+    @testset "Gaussian smoothing with custom time grid changes times and columns" begin
+        new_times = collect(0.0:0.5:9.0)   # finer grid → 19 points vs original 10
+        opts = FitOptions(
+            smooth=true,
+            smooth_method=:gaussian,
+            gaussian_time_grid=new_times,
+        )
+        processed = preprocess(data, opts)
+        @test processed.times == new_times
+        @test size(processed.curves, 1) == size(data.curves, 1)   # same n_curves
+        @test size(processed.curves, 2) == length(new_times)
+    end
 end

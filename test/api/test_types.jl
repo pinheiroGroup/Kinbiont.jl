@@ -39,6 +39,21 @@ end
     @test opts.opt_params.abstol   == 1e-8
 end
 
+@testset "DDDEModel construction" begin
+    m = DDDEModel()
+    @test m isa AbstractGrowthModel
+    @test m.max_degree  == 4
+    @test m.lambda_min  == -5.0
+    @test m.lambda_max  == -1.0
+    @test m.lambda_step == 0.5
+
+    m2 = DDDEModel(max_degree=3, lambda_min=-4.0, lambda_max=-2.0, lambda_step=1.0)
+    @test m2.max_degree  == 3
+    @test m2.lambda_min  == -4.0
+    @test m2.lambda_max  == -2.0
+    @test m2.lambda_step == 1.0
+end
+
 @testset "ModelSpec validation" begin
     m1 = MODEL_REGISTRY["NL_logistic"]
     m2 = MODEL_REGISTRY["logistic"]

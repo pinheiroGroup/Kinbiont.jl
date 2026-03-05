@@ -57,9 +57,14 @@ Every field has a sensible default so users only override what they need.
 
 # Preprocessing fields
 - `smooth::Bool = false`: apply smoothing before fitting.
-- `smooth_method::Symbol = :lowess`: `:lowess`, `:rolling_avg`, or `:none`.
+- `smooth_method::Symbol = :lowess`: `:lowess`, `:rolling_avg`, `:gaussian`, or `:none`.
 - `smooth_pt_avg::Int = 7`: window size for `:rolling_avg`.
 - `lowess_frac::Float64 = 0.05`: bandwidth fraction for `:lowess`.
+- `gaussian_h_mult::Float64 = 2.0`: bandwidth multiplier for Gaussian smoothing
+  (bandwidth = `gaussian_h_mult × median(Δt)`).
+- `gaussian_time_grid::Union{Nothing,Vector{Float64}} = nothing`: optional target
+  time grid for Gaussian smoothing; when set, smoothed curves are evaluated at
+  these times (interpolation). `nothing` keeps the original time grid.
 - `blank_subtraction::Bool = false`: subtract a blank value from all curves.
 - `blank_value::Float64 = 0.0`: constant blank to subtract when `blank_subtraction=true`.
 - `correct_negatives::Bool = false`: handle negative values after blank subtraction.
@@ -94,6 +99,8 @@ Every field has a sensible default so users only override what they need.
     smooth_method::Symbol       = :lowess
     smooth_pt_avg::Int          = 7
     lowess_frac::Float64        = 0.05
+    gaussian_h_mult::Float64    = 2.0
+    gaussian_time_grid::Union{Nothing, Vector{Float64}} = nothing
     blank_subtraction::Bool     = false
     blank_value::Float64        = 0.0
     correct_negatives::Bool     = false
@@ -183,6 +190,38 @@ model function required — the fitting procedure is fully determined by
 [`FitOptions`](@ref) fields `pt_smooth_derivative`, etc.
 """
 struct LogLinModel <: AbstractGrowthModel end
+
+"""
+    DDDEModel(; max_degree=4, lambda_min=-5.0, lambda_max=-1.0, lambda_step=0.5)
+
+Data-Driven Differential Equation (DDDE) discovery model. Uses sparse regression
+(STLSQ) on a polynomial basis to identify the governing ODE directly from the
+data, without assuming a fixed model form.
+
+!!! note "Optional dependency"
+    Fitting with `DDDEModel` requires `DataDrivenDiffEq`, `DataDrivenSparse`, and
+    `ModelingToolkit` to be installed and loaded in the active Julia environment.
+    These are not listed as Kinbiont dependencies — add them with `Pkg.add(...)`.
+
+# Fields
+- `max_degree::Int = 4`: maximum polynomial degree in the candidate basis.
+- `lambda_min::Float64 = -5.0`: log₁₀ of the minimum STLSQ sparsity threshold.
+- `lambda_max::Float64 = -1.0`: log₁₀ of the maximum STLSQ sparsity threshold.
+- `lambda_step::Float64 = 0.5`: step in log₁₀ space between threshold values.
+"""
+struct DDDEModel <: AbstractGrowthModel
+    max_degree::Int
+    lambda_min::Float64
+    lambda_max::Float64
+    lambda_step::Float64
+end
+
+DDDEModel(;
+    max_degree  = 4,
+    lambda_min  = -5.0,
+    lambda_max  = -1.0,
+    lambda_step = 0.5,
+) = DDDEModel(max_degree, lambda_min, lambda_max, lambda_step)
 
 # ---------------------------------------------------------------------------
 # 4. Model specification passed to fit()
@@ -281,6 +320,6 @@ Base.getindex(r::GrowthFitResults, i) = r.results[i]
 
 export GrowthData
 export FitOptions
-export AbstractGrowthModel, NLModel, ODEModel, LogLinModel
+export AbstractGrowthModel, NLModel, ODEModel, LogLinModel, DDDEModel
 export ModelSpec
 export CurveFitResult, GrowthFitResults

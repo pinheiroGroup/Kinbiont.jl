@@ -41,15 +41,16 @@ processed = preprocess(raw_data, opts)
 """
 function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     curves = data.curves   # n_curves × n_tp, never mutated in place
+    times  = data.times
 
-    curves = _apply_scattering_correction(curves, data.times, opts)
+    curves = _apply_scattering_correction(curves, times, opts)
     curves = _apply_blank_subtraction(curves, opts)
-    curves = _apply_negative_correction(curves, data.times, opts)
-    curves = _apply_smoothing(curves, data.times, opts)
+    curves = _apply_negative_correction(curves, times, opts)
+    curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
-    clusters = opts.cluster ? _cluster(curves, data.times, opts) : nothing
+    clusters = opts.cluster ? _cluster(curves, times, opts) : nothing
 
-    return GrowthData(curves, data.times, data.labels, clusters)
+    return GrowthData(curves, times, data.labels, clusters)
 end
 
 # ---------------------------------------------------------------------------
@@ -123,15 +124,20 @@ end
 
 # ---------------------------------------------------------------------------
 # Step 4 — Smoothing
+# Returns (smoothed_curves, times); times may change when :gaussian + time_grid
 # ---------------------------------------------------------------------------
 
 function _apply_smoothing(
     curves::Matrix{Float64},
     times::Vector{Float64},
     opts::FitOptions,
-)::Matrix{Float64}
-    opts.smooth || return curves
-    opts.smooth_method == :none && return curves
+)::Tuple{Matrix{Float64}, Vector{Float64}}
+    opts.smooth || return curves, times
+    opts.smooth_method == :none && return curves, times
+
+    if opts.smooth_method == :gaussian
+        return _apply_gaussian_smoothing(curves, times, opts)
+    end
 
     smoothing_str = _smoothing_symbol_to_string(opts.smooth_method)
     smoothed = similar(curves)
@@ -139,8 +145,8 @@ function _apply_smoothing(
         curve_mat = Matrix(transpose(hcat(times, curves[i, :])))
         result = smoothing_data(
             curve_mat;
-            method = smoothing_str,
-            pt_avg = opts.smooth_pt_avg,
+            method     = smoothing_str,
+            pt_avg     = opts.smooth_pt_avg,
             thr_lowess = opts.lowess_frac,
         )
         # rolling_avg reduces length; pad with original tail if needed
@@ -152,14 +158,94 @@ function _apply_smoothing(
             smoothed[i, n_out+1:end] = curves[i, n_out+1:end]
         end
     end
-    return smoothed
+    return smoothed, times
 end
 
 _smoothing_symbol_to_string(s::Symbol) = Dict(
-    :lowess     => "lowess",
+    :lowess      => "lowess",
     :rolling_avg => "rolling_avg",
-    :none       => "NO",
+    :none        => "NO",
 )[s]
+
+# ---------------------------------------------------------------------------
+# Gaussian kernel smoothing (no external dependencies)
+# ---------------------------------------------------------------------------
+
+"""
+    _gaussian_kernel(u) -> Float64
+
+Un-normalised Gaussian kernel evaluated at standardised distance `u = (t - tᵢ)/h`.
+"""
+_gaussian_kernel(u::Float64) = exp(-0.5 * u * u)
+
+"""
+    _gaussian_bandwidth(t; h_mult) -> Float64
+
+Estimate bandwidth as `h_mult × median(Δt)` over the finite, sorted time points.
+Falls back to 1.0 when fewer than three points are available or the median step
+is non-positive.
+"""
+function _gaussian_bandwidth(t::Vector{Float64}; h_mult::Float64 = 2.0)
+    t_finite = filter(isfinite, t)
+    length(t_finite) < 3 && return 1.0
+    dt = median(diff(sort(t_finite)))
+    (isfinite(dt) && dt > 0.0) || return 1.0
+    return h_mult * dt
+end
+
+"""
+    _gaussian_smooth_curve(t, y, tq; h_mult) -> Vector{Float64}
+
+Nadaraya–Watson kernel smoother with a Gaussian kernel. Evaluates the smoothed
+curve at the query points `tq`. Non-finite values in `(t, y)` are excluded.
+Falls back to the nearest observed value when the total kernel weight is < 1e-12.
+"""
+function _gaussian_smooth_curve(
+    t::Vector{Float64},
+    y::Vector{Float64},
+    tq::Vector{Float64};
+    h_mult::Float64 = 2.0,
+)::Vector{Float64}
+    mask = isfinite.(t) .& isfinite.(y)
+    t2 = t[mask]
+    y2 = max.(y[mask], 1e-9)     # clamp to small positive (matches New-api)
+
+    length(t2) == 0 && return fill(0.0, length(tq))
+    length(t2) == 1 && return fill(y2[1], length(tq))
+
+    h    = _gaussian_bandwidth(t2; h_mult)
+    invh = 1.0 / h
+    yhat = Vector{Float64}(undef, length(tq))
+
+    for (j, x) in enumerate(tq)
+        ww = _gaussian_kernel.((x .- t2) .* invh)
+        s  = sum(ww)
+        if s <= 1e-12
+            # nearest-point fallback
+            yhat[j] = y2[argmin(abs.(t2 .- x))]
+        else
+            yhat[j] = sum(ww .* y2) / s
+        end
+    end
+    return yhat
+end
+
+function _apply_gaussian_smoothing(
+    curves::Matrix{Float64},
+    times::Vector{Float64},
+    opts::FitOptions,
+)::Tuple{Matrix{Float64}, Vector{Float64}}
+    tq      = something(opts.gaussian_time_grid, times)   # query grid
+    n_curves = size(curves, 1)
+    smoothed = Matrix{Float64}(undef, n_curves, length(tq))
+
+    for i in axes(curves, 1)
+        smoothed[i, :] = _gaussian_smooth_curve(
+            times, curves[i, :], tq; h_mult = opts.gaussian_h_mult
+        )
+    end
+    return smoothed, tq
+end
 
 # ---------------------------------------------------------------------------
 # Step 5 — K-means clustering on z-scored curves

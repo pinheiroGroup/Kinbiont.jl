@@ -53,4 +53,18 @@
         @test res[1].fitted_curve isa Vector{Float64}
         @test length(res[1].fitted_curve) <= length(times)
     end
+
+    @testset "DDDE model" begin
+        spec = ModelSpec([DDDEModel()], [Float64[]])
+        res  = kinbiont_fit(data, spec)
+
+        @test res[1].best_model isa DDDEModel
+        @test res[1].fitted_curve isa Vector{Float64}
+        @test length(res[1].fitted_curve) == length(times)
+        @test res[1].loss isa Float64
+        @test res[1].loss >= 0
+        @test isfinite(res[1].best_aic)
+        # params are the discovered polynomial coefficients
+        @test length(res[1].best_params) == DDDEModel().max_degree + 1
+    end
 end
