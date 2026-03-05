@@ -27,10 +27,12 @@ Returns a **new** `GrowthData`; the input is never modified.
 
 Steps applied in order (each is a no-op when the corresponding option is `false`):
 1. Multiple-scattering OD correction (`opts.scattering_correction`)
-2. Blank subtraction (`opts.blank_subtraction`)
-3. Negative-value correction (`opts.correct_negatives`)
-4. Smoothing (`opts.smooth`)
-5. K-means clustering on z-scored curves (`opts.cluster`)
+2. K-means clustering on z-scored curves (`opts.cluster`) — intentionally
+   performed **before** blank subtraction so that blank/non-growing wells are
+   still distinguishable by their raw signal.
+3. Blank subtraction (`opts.blank_subtraction`)
+4. Negative-value correction (`opts.correct_negatives`)
+5. Smoothing (`opts.smooth`)
 
 # Example
 ```julia
@@ -44,11 +46,15 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     times  = data.times
 
     curves = _apply_scattering_correction(curves, times, opts)
+
+    # Clustering is performed on scattering-corrected but otherwise raw data so
+    # that blank subtraction does not hide the distinction between growing and
+    # non-growing wells (which is precisely what clustering is meant to find).
+    clusters = opts.cluster ? _cluster(curves, times, opts) : nothing
+
     curves = _apply_blank_subtraction(curves, opts)
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
-
-    clusters = opts.cluster ? _cluster(curves, times, opts) : nothing
 
     return GrowthData(curves, times, data.labels, clusters)
 end

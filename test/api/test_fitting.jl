@@ -54,6 +54,31 @@
         @test length(res[1].fitted_curve) <= length(times)
     end
 
+    @testset "Clustering skips fitting (with spec)" begin
+        opts = FitOptions(cluster=true, n_clusters=2, cluster_trend_test=false)
+        spec = ModelSpec([MODEL_REGISTRY["NL_logistic"]], [[1.5, 0.3, 0.0]])
+        res  = kinbiont_fit(data, spec, opts)
+
+        # fitting is skipped: results vector is empty
+        @test length(res.results) == 0
+        # but cluster assignments are populated
+        @test res.data.clusters isa Vector{Int}
+        @test length(res.data.clusters) == size(curves, 1)
+    end
+
+    @testset "Clustering-only overload (no spec)" begin
+        opts = FitOptions(cluster=true, n_clusters=2, cluster_trend_test=false)
+        res  = kinbiont_fit(data, opts)
+
+        @test length(res.results) == 0
+        @test res.data.clusters isa Vector{Int}
+        @test length(res.data.clusters) == size(curves, 1)
+    end
+
+    @testset "No-spec overload errors without cluster=true" begin
+        @test_throws ErrorException kinbiont_fit(data, FitOptions())
+    end
+
     @testset "DDDE model" begin
         spec = ModelSpec([DDDEModel()], [Float64[]])
         res  = kinbiont_fit(data, spec)

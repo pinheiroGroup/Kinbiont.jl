@@ -57,8 +57,15 @@ function kinbiont_fit(
     opts::FitOptions = FitOptions(),
 )::GrowthFitResults
 
-    _validate_spec(data, spec)
     processed = preprocess(data, opts)
+
+    # When clustering is the goal, the cluster assignments stored in
+    # processed.clusters are the result; model fitting is skipped entirely.
+    if opts.cluster
+        return GrowthFitResults(processed, CurveFitResult[])
+    end
+
+    _validate_spec(data, spec)
 
     results = map(axes(processed.curves, 1)) do i
         curve = processed.curves[i, :]
@@ -67,6 +74,23 @@ function kinbiont_fit(
     end
 
     return GrowthFitResults(processed, results)
+end
+
+"""
+    kinbiont_fit(data::GrowthData, opts::FitOptions) -> GrowthFitResults
+
+Clustering-only overload — no `ModelSpec` required.
+Runs preprocessing and clustering (`opts.cluster` must be `true`) and
+returns a `GrowthFitResults` whose `data.clusters` holds the assignments.
+Model fitting is not performed.
+"""
+function kinbiont_fit(data::GrowthData, opts::FitOptions)::GrowthFitResults
+    opts.cluster || error(
+        "kinbiont_fit without a ModelSpec requires opts.cluster = true. " *
+        "Pass a ModelSpec to perform model fitting."
+    )
+    processed = preprocess(data, opts)
+    return GrowthFitResults(processed, CurveFitResult[])
 end
 
 # ---------------------------------------------------------------------------
