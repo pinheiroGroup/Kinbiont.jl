@@ -255,11 +255,49 @@ function _fit_single(
 end
 
 # ---------------------------------------------------------------------------
-# DDDEModel — Data-Driven Differential Equation discovery (pure-Julia STLSQ)
+# DDDEModel — Data-Driven Differential Equation discovery
 # ---------------------------------------------------------------------------
 
 # DDDEModel takes no initial parameters
 _resolve_p0(::Vector{Float64}, ::DDDEModel, ::Matrix{Float64}) = Float64[]
+
+# ---------------------------------------------------------------------------
+# Backend hook — overridden by KinbiontDataDrivenExt when
+# DataDrivenDiffEq + DataDrivenSparse + ModelingToolkit are all loaded.
+#
+# Returns a NamedTuple with:
+#   xi          :: Vector{Float64}  — polynomial coefficients (length max_degree+1)
+#   rss         :: Float64          — residual sum of squares on the derivatives
+#   n_active    :: Int              — number of non-zero discovered terms
+#   params_out  :: Vector{Any}      — params field for CurveFitResult
+#   aic_override:: Union{Float64,Nothing} — pre-computed AICc (nothing → use Kinbiont's)
+# ---------------------------------------------------------------------------
+function _ddde_backend(
+    t::Vector{Float64},
+    y::Vector{Float64},
+    model::DDDEModel,
+)
+    # Delegate to KinbiontDataDrivenExt when it is loaded (all three of
+    # DataDrivenDiffEq, DataDrivenSparse, ModelingToolkit are available).
+    ext = Base.get_extension(@__MODULE__, :KinbiontDataDrivenExt)
+    if ext !== nothing
+        return ext._ddde_backend_dde(t, y, model)
+    end
+
+    # Pure-Julia STLSQ fallback (no optional dependencies required)
+    dydt    = _ddde_finite_differences(t, y)
+    N       = length(t)
+    Θ       = [y[i]^k for i in 1:N, k in 0:model.max_degree]
+    lambdas = exp10.(model.lambda_min:model.lambda_step:model.lambda_max)
+    xi, rss = _ddde_stlsq(Θ, dydt, lambdas)
+    return (
+        xi           = xi,
+        rss          = rss,
+        n_active     = max(count(!iszero, xi), 1),
+        params_out   = Vector{Any}(xi),
+        aic_override = nothing,
+    )
+end
 
 function _fit_single(
     data_mat::Matrix{Float64},
@@ -274,34 +312,25 @@ function _fit_single(
     t = Vector{Float64}(data_mat[1, :])
     y = Vector{Float64}(data_mat[2, :])
     N = length(t)
-    d = model.max_degree
 
-    # 1) Numerical derivative via forward/central/backward differences
-    dydt = _ddde_finite_differences(t, y)
+    backend  = _ddde_backend(t, y, model)
+    fitted   = _ddde_euler_integrate(t, y[1], backend.xi)
+    loss_val = backend.rss / N
 
-    # 2) Polynomial feature matrix: Θ[i, k+1] = y[i]^k for k = 0..d
-    Θ = [y[i]^k for i in 1:N, k in 0:d]
-
-    # 3) Sparse regression: find ξ such that dŷ/dt = Θ * ξ is sparse
-    lambdas = exp10.(model.lambda_min:model.lambda_step:model.lambda_max)
-    xi, rss = _ddde_stlsq(Θ, dydt, lambdas)
-
-    # 4) Forward-Euler integration of the discovered ODE for the fitted curve
-    fitted = _ddde_euler_integrate(t, y[1], xi)
-
-    # 5) AICc: n_params = number of non-zero discovered terms
-    n_active = max(count(!iszero, xi), 1)
-    loss_val = rss / N
-    aic = AICc_evaluation2(n_active, 2.0, t, max(loss_val, 1e-12);
-                           correction = opts.aic_correction)
+    aic = if backend.aic_override !== nothing
+        backend.aic_override
+    else
+        Float64(AICc_evaluation2(backend.n_active, 2.0, t, max(loss_val, 1e-12);
+                                 correction = opts.aic_correction))
+    end
 
     return (
         model_name   = "DDDE",
-        params       = Vector{Any}(xi),
+        params       = backend.params_out,
         fitted_curve = fitted,
         times        = t,
         loss         = loss_val,
-        aic          = Float64(aic),
+        aic          = aic,
     )
 end
 

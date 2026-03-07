@@ -84,6 +84,14 @@ Tables = "1.12.0"
 Zygote = "0.6.76"
 Random = "1.11.0"
 
+[weakdeps]
+DataDrivenDiffEq  = "2445eb08-9709-466a-b3fc-47e12bd697a2"
+DataDrivenSparse  = "5b588203-7d8b-4fab-a537-c31a7f73f46b"
+ModelingToolkit   = "961ee093-0014-501f-94e3-6117800e7a78"
+
+[extensions]
+KinbiontDataDrivenExt = ["DataDrivenDiffEq", "DataDrivenSparse", "ModelingToolkit"]
+
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
