@@ -54,7 +54,7 @@
     # Empty DB should return no recommendations
     empty_db = ModelFingerprintDB(String[], AbstractGrowthModel[],
                                   Matrix{Float64}(undef, 0, 15),
-                                  db.feature_names)
+                                  db.feature_names, Vector{Float64}[])
     @test recommend_models(y, t, empty_db; top_k=3) == String[]
 
     # Feature extraction is stable on monotone, flat, and noisy curves

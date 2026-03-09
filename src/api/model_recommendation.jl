@@ -28,12 +28,15 @@ Built by [`build_model_fingerprint_db`](@ref) and consumed by
 - `model_objects::Vector{AbstractGrowthModel}`: corresponding model objects.
 - `features::Matrix{Float64}`: `n_rows × 15` L2-normalised feature matrix.
 - `feature_names::Vector{String}`: human-readable name for each of the 15 features.
+- `params::Vector{Vector{Float64}}`: parameter vector used to generate each row's simulation.
+  Used by [`suggest_p0`](@ref) to seed the optimiser with a nearest-neighbour initial guess.
 """
 struct ModelFingerprintDB
     model_names  ::Vector{String}
     model_objects::Vector{AbstractGrowthModel}
     features     ::Matrix{Float64}   # n_rows × N_FEATURES, L2-normalised
     feature_names::Vector{String}
+    params       ::Vector{Vector{Float64}}   # parameter vector per row
 end
 
 const _FEATURE_NAMES = [
@@ -363,6 +366,7 @@ function build_model_fingerprint_db(;
     all_names    = String[]
     all_objects  = AbstractGrowthModel[]
     all_features = Vector{Float64}[]
+    all_params   = Vector{Float64}[]
 
     model_list = models isa Dict ? values(models) : models
 
@@ -407,17 +411,19 @@ function build_model_fingerprint_db(;
             push!(all_names,    model.name)
             push!(all_objects,  model)
             push!(all_features, feat)
+            push!(all_params,   p)
         end
     end
 
     if isempty(all_features)
         return ModelFingerprintDB(String[], AbstractGrowthModel[],
-                                  Matrix{Float64}(undef, 0, 15), _FEATURE_NAMES)
+                                  Matrix{Float64}(undef, 0, 15), _FEATURE_NAMES,
+                                  Vector{Float64}[])
     end
 
     feat_matrix = Matrix{Float64}(reduce(hcat, all_features)')  # n_rows × 15
 
-    return ModelFingerprintDB(all_names, all_objects, feat_matrix, _FEATURE_NAMES)
+    return ModelFingerprintDB(all_names, all_objects, feat_matrix, _FEATURE_NAMES, all_params)
 end
 
 # ---------------------------------------------------------------------------
@@ -456,7 +462,50 @@ function recommend_models(
 end
 
 # ---------------------------------------------------------------------------
-# Public: smart_fit
+# Public: suggest_p0
+# ---------------------------------------------------------------------------
+
+"""
+    suggest_p0(curve, times, db, model_name) -> Vector{Float64}
+
+Return a nearest-neighbour initial parameter guess for `model_name` by finding
+the DB row for that model whose feature vector is most similar (cosine similarity)
+to the query curve's feature vector, then returning the parameter vector that
+was used to simulate that row.
+
+Falls back to the midpoint of parameter bounds if the DB has no rows for the
+requested model or if the DB was built without parameter storage.
+"""
+function suggest_p0(
+    curve::Vector{Float64},
+    times::Vector{Float64},
+    db::ModelFingerprintDB,
+    model_name::String,
+)::Vector{Float64}
+    isempty(db.params) && return Float64[]
+
+    q      = _extract_features(times, curve)
+    qn     = _norm2(q)
+    q_norm = qn > 1e-12 ? q ./ qn : q
+
+    sims = db.features * q_norm   # cosine similarity for every row
+
+    # Find the best-matching row that belongs to this model
+    best_i = 0
+    best_s = -Inf
+    for (i, name) in enumerate(db.model_names)
+        if name == model_name && sims[i] > best_s
+            best_s = sims[i]
+            best_i = i
+        end
+    end
+
+    best_i == 0 && return Float64[]   # model not in DB
+    return copy(db.params[best_i])
+end
+
+# ---------------------------------------------------------------------------
+# Internal: _default_p0  (fallback when no DB is available)
 # ---------------------------------------------------------------------------
 
 function _default_p0(model::AbstractGrowthModel, data::GrowthData)::Vector{Float64}
@@ -465,7 +514,6 @@ function _default_p0(model::AbstractGrowthModel, data::GrowthData)::Vector{Float
         data_mat = Matrix(transpose(hcat(data.times, data.curves[1, :])))
         return try model.guess(data_mat) catch; Float64[] end
     elseif model isa ODEModel
-        # Use midpoint of parameter bounds as initial guess
         tmax_d = isempty(data.times) ? 24.0 : Float64(maximum(data.times))
         lb, ub = try
             _model_param_bounds(model, tmax_d, length(data.times))
@@ -477,11 +525,19 @@ function _default_p0(model::AbstractGrowthModel, data::GrowthData)::Vector{Float
     return Float64[]
 end
 
+# ---------------------------------------------------------------------------
+# Public: smart_fit
+# ---------------------------------------------------------------------------
+
 """
     smart_fit(data, db[, opts]; top_k=3) -> GrowthFitResults
 
 Recommend models for each curve in `data` using `db`, take the union of
 recommendations, and fit them via [`kinbiont_fit`](@ref).
+
+Initial parameters are seeded from the nearest-neighbour fingerprint row
+via [`suggest_p0`](@ref), giving the optimiser a warm start close to a
+parameter set that already produced a similar curve shape.
 """
 function smart_fit(
     data::GrowthData,
@@ -490,6 +546,8 @@ function smart_fit(
     top_k::Int = 3,
 )::GrowthFitResults
     all_names = String[]
+    # Use the first curve as the representative query for p0 suggestion
+    query_curve = data.curves[1, :]
     for i in axes(data.curves, 1)
         recs = recommend_models(data.curves[i, :], data.times, db; top_k)
         append!(all_names, recs)
@@ -499,8 +557,11 @@ function smart_fit(
     isempty(all_names) && error("smart_fit: no models recommended (DB may be empty)")
 
     models = [MODEL_REGISTRY[n] for n in all_names]
-    params = [_default_p0(MODEL_REGISTRY[n], data) for n in all_names]
-    spec   = ModelSpec(models, params)
+    params = map(all_names) do name
+        p = suggest_p0(query_curve, data.times, db, name)
+        isempty(p) ? _default_p0(MODEL_REGISTRY[name], data) : p
+    end
+    spec = ModelSpec(models, params)
     return kinbiont_fit(data, spec, opts)
 end
 
@@ -511,4 +572,5 @@ end
 export ModelFingerprintDB
 export build_model_fingerprint_db
 export recommend_models
+export suggest_p0
 export smart_fit
