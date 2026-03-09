@@ -143,10 +143,19 @@ db_path = joinpath(tempdir(), "kinbiont_db_$(basename(folder)).jls")
 
 db = if isfile(db_path)
     print("$RUN Loading cached fingerprint DB …\r")
-    db = deserialize(db_path)
-    println("$DONE Fingerprint DB loaded  — $(length(unique(db.model_names))) models, $(length(db.model_names)) fingerprints  (from cache)")
-    db
+    candidate = deserialize(db_path)
+    if !(candidate isa ModelFingerprintDB) || !isdefined(candidate, :params) || isempty(candidate.params)
+        println("$WARN Cached DB is outdated (no param storage) — rebuilding …")
+        nothing
+    else
+        println("$DONE Fingerprint DB loaded  — $(length(unique(candidate.model_names))) models, $(length(candidate.model_names)) fingerprints  (from cache)")
+        candidate
+    end
 else
+    nothing
+end
+
+db = if isnothing(db)
     print("$RUN Building fingerprint DB  (sampling all models — this takes ~1–2 min) …\r")
     Random.seed!(42)
     db = build_model_fingerprint_db(
@@ -160,18 +169,39 @@ else
     db
 end
 
-# ── 5. Recommend models ────────────────────────────────────────────────────────
-print("$RUN Recommending models …\r")
-all_recs = unique(vcat([
-    recommend_models(fit_data.curves[i, :], fit_data.times, db; top_k=5)
-    for i in axes(fit_data.curves, 1)
-]...))
-# aHPM is always included in the fitting competition regardless of its recommendation rank.
-# Reason: it is a mechanistic superset of logistic-family models and produces nearly
-# identical shape features, so cosine similarity consistently underranks it even when
-# it is the mechanistically correct model.
-"aHPM" in all_recs || pushfirst!(all_recs, "aHPM")
-println("$DONE Model recommendation done — $(length(all_recs)) model(s): $(join(all_recs, ", "))")
+# ── 5. Select models ───────────────────────────────────────────────────────────
+println("""
+\nWhich models to fit?
+  [1] Recommended  — top-5 per curve via fingerprint DB + aHPM always included
+  [2] Manual list  — enter model names (DB still used for initial parameter guessing)
+""")
+print("Choice [1/2]: ")
+model_choice = strip(readline())
+
+all_recs = if model_choice == "2"
+    println("Enter model name(s) separated by spaces or commas")
+    println("  (e.g.  aHPM   or   aHPM, logistic, baranyi_roberts)")
+    println("  Available: $(join(sort(collect(keys(MODEL_REGISTRY))), ", "))\n")
+    print("> ")
+    raw_models   = strip(readline())
+    entered      = String.(split(raw_models, r"[\s,]+"; keepempty=false))
+    valid_models = filter(n -> haskey(MODEL_REGISTRY, n), entered)
+    bad_models   = filter(n -> !haskey(MODEL_REGISTRY, n), entered)
+    isempty(bad_models) || println("$WARN  Unknown model(s) ignored: $(join(bad_models, ", "))")
+    isempty(valid_models) && error("No valid model names entered.")
+    println("$DONE Using manual model list: $(join(valid_models, ", "))")
+    valid_models
+else
+    print("$RUN Recommending models …\r")
+    recs = unique(vcat([
+        recommend_models(fit_data.curves[i, :], fit_data.times, db; top_k=5)
+        for i in axes(fit_data.curves, 1)
+    ]...))
+    # aHPM is always included regardless of recommendation rank.
+    "aHPM" in recs || pushfirst!(recs, "aHPM")
+    println("$DONE Model recommendation done — $(length(recs)) model(s): $(join(recs, ", "))")
+    recs
+end
 
 # ── 6. Fit options ─────────────────────────────────────────────────────────────
 # Used when fitting the truncated (already blank-subtracted) data.
@@ -187,7 +217,7 @@ fit_opts = FitOptions(
 )
 
 # ── 7. Per-well fitting with stationary phase detection ───────────────────────
-println("\n       $(length(wells_to_fit)) well(s) × $(length(all_recs)) model(s) (aHPM always included)\n")
+println("\n       $(length(wells_to_fit)) well(s) × $(length(all_recs)) model(s) — p0 from fingerprint DB nearest neighbour\n")
 
 # Collected per-well results
 best_curve_results = CurveFitResult[]
@@ -232,7 +262,8 @@ for (wi, well) in enumerate(wells_to_fit)
         pad = rpad("  ($mi/$(length(all_recs))) $name", 55)
         print("$RUN $pad\r")
         model  = MODEL_REGISTRY[name]
-        p0     = Kinbiont._default_p0(model, well_data)
+        p0_nn  = suggest_p0(y_trunc, t_trunc, db, name)
+        p0     = isempty(p0_nn) ? Kinbiont._default_p0(model, well_data) : p0_nn
         spec_i = ModelSpec([model], [p0])
         t0     = time()
         r      = kinbiont_fit(well_data, spec_i, fit_opts)
