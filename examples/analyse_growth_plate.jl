@@ -48,7 +48,13 @@ function find_stationary_phase(
 
     for i in maximum_index:(length(sgr) - win_size)
         if all(sgr[i:(i + win_size - 1)] .< thr)
-            cutoff_idx = i + index_od[1] - 1   # map back to original indices
+            # Map back to original index, then snap forward to the OD peak
+            # within the next win_size points.  The SGR window detects when
+            # growth rate drops to near-zero, but OD can still be rising for
+            # a few more timepoints before the true plateau is reached.
+            base_idx   = i + index_od[1] - 1
+            search_end = min(base_idx + win_size, length(od))
+            cutoff_idx = base_idx + argmax(od[base_idx:search_end]) - 1
             return times[min(cutoff_idx, length(times))]
         end
     end
