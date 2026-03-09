@@ -7,6 +7,7 @@ version = "1.1.8"
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 BetaML = "024491cd-cc6b-443e-8034-08ea7eb7db2b"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+Clustering = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
 Catalyst = "479239e8-5488-4da2-87a7-35f2df7eef83"
 ChangePointDetection = "68f453bf-a161-50e8-aafe-8ad75c8d6944"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
@@ -47,6 +48,7 @@ julia = "1.10"
 AbstractTrees = "0.4.5"
 BetaML = "0.12.1"
 CSV = "0.10.15"
+Clustering = "0.15"
 Catalyst = "14.4.1"
 ChangePointDetection = "1.2.0"
 Combinatorics = "1.0.2"
@@ -57,6 +59,7 @@ DiffEqParamEstim = "2.2.0"
 DifferentialEquations = "7.16.1"
 Distributions = "0.25.118"
 Documenter = "1.10.1"
+
 Interpolations = "0.13.6"
 Lowess = "0.1.0"
 LsqFit = "0.15.0"
@@ -80,3 +83,17 @@ SymbolicUtils = "3.25.1"
 Tables = "1.12.0"
 Zygote = "0.6.76"
 Random = "1.11.0"
+
+[weakdeps]
+DataDrivenDiffEq  = "2445eb08-9709-466a-b3fc-47e12bd697a2"
+DataDrivenSparse  = "5b588203-7d8b-4fab-a537-c31a7f73f46b"
+ModelingToolkit   = "961ee093-0014-501f-94e3-6117800e7a78"
+
+[extensions]
+KinbiontDataDrivenExt = ["DataDrivenDiffEq", "DataDrivenSparse", "ModelingToolkit"]
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
