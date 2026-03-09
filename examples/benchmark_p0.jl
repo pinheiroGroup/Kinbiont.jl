@@ -138,7 +138,7 @@ well_data = GrowthData(reshape(y_trunc, 1, :), t_trunc, [well])
 db_path = joinpath(tempdir(), "kinbiont_db_$(basename(folder)).jls")
 db = if isfile(db_path)
     candidate = deserialize(db_path)
-    if !(candidate isa ModelFingerprintDB) || !isdefined(candidate, :params) || isempty(candidate.params)
+    if !(candidate isa ModelFingerprintDB) || !isdefined(candidate, :params) || isempty(candidate.params) || !isdefined(candidate, :curve_matrix)
         println("\n  Cached DB outdated — rebuilding …"); nothing
     else
         println("  DB: $(length(unique(candidate.model_names))) models, " *

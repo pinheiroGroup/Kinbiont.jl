@@ -144,7 +144,7 @@ db_path = joinpath(tempdir(), "kinbiont_db_$(basename(folder)).jls")
 db = if isfile(db_path)
     print("$RUN Loading cached fingerprint DB …\r")
     candidate = deserialize(db_path)
-    if !(candidate isa ModelFingerprintDB) || !isdefined(candidate, :params) || isempty(candidate.params)
+    if !(candidate isa ModelFingerprintDB) || !isdefined(candidate, :params) || isempty(candidate.params) || !isdefined(candidate, :curve_matrix)
         println("$WARN Cached DB is outdated (no param storage) — rebuilding …")
         nothing
     else
@@ -155,7 +155,7 @@ else
     nothing
 end
 
-db = if isnothing(db)
+if isnothing(db)
     print("$RUN Building fingerprint DB  (sampling all models — this takes ~1–2 min) …\r")
     Random.seed!(42)
     db = build_model_fingerprint_db(
@@ -166,7 +166,6 @@ db = if isnothing(db)
     )
     serialize(db_path, db)
     println("$DONE Fingerprint DB built   — $(length(unique(db.model_names))) models, $(length(db.model_names)) fingerprints  (cached to $db_path)")
-    db
 end
 
 # ── 5. Select models ───────────────────────────────────────────────────────────
