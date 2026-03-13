@@ -146,8 +146,22 @@ function _apply_smoothing(
     end
 
     smoothing_str = _smoothing_symbol_to_string(opts.smooth_method)
-    smoothed = similar(curves)
-    for i in axes(curves, 1)
+    n_curves = size(curves, 1)
+
+    # Process first curve to determine output length (smoothing may shorten data)
+    curve_mat1 = Matrix(transpose(hcat(times, curves[1, :])))
+    result1 = smoothing_data(
+        curve_mat1;
+        method     = smoothing_str,
+        pt_avg     = opts.smooth_pt_avg,
+        thr_lowess = opts.lowess_frac,
+    )
+    n_out     = size(result1, 2)
+    new_times = Vector{Float64}(result1[1, :])
+    smoothed  = Matrix{Float64}(undef, n_curves, n_out)
+    smoothed[1, :] = result1[2, :]
+
+    for i in 2:n_curves
         curve_mat = Matrix(transpose(hcat(times, curves[i, :])))
         result = smoothing_data(
             curve_mat;
@@ -155,16 +169,17 @@ function _apply_smoothing(
             pt_avg     = opts.smooth_pt_avg,
             thr_lowess = opts.lowess_frac,
         )
-        # rolling_avg reduces length; pad with original tail if needed
-        n_out = size(result, 2)
-        if n_out == length(times)
+        ni = size(result, 2)
+        if ni == n_out
             smoothed[i, :] = result[2, :]
         else
-            smoothed[i, 1:n_out] = result[2, :]
-            smoothed[i, n_out+1:end] = curves[i, n_out+1:end]
+            # Unexpected length difference — fall back to first n_out values or padding
+            m = min(ni, n_out)
+            smoothed[i, 1:m]       = result[2, 1:m]
+            smoothed[i, m+1:n_out] .= result[2, end]
         end
     end
-    return smoothed, times
+    return smoothed, new_times
 end
 
 _smoothing_symbol_to_string(s::Symbol) = Dict(
@@ -332,6 +347,55 @@ function _apply_trend_labels(
         end
     end
     return new_labels
+end
+
+# ---------------------------------------------------------------------------
+# Stationary phase cutoff detection
+# ---------------------------------------------------------------------------
+
+"""
+    _find_stationary_cutoff(data_mat, opts) -> Int
+
+Given a `2×n` data matrix `[times; od_values]` and a `FitOptions`, return the
+column index at which the stationary phase begins. Returns `size(data_mat, 2)`
+(full length) when no stationary phase is detected.
+
+The algorithm:
+1. Restrict to time points where OD > `opts.stationary_thr_od`.
+2. Compute the specific growth rate (SGR) over the restricted data.
+3. Find the first window of `opts.stationary_win_size` consecutive points after
+   the SGR maximum where all SGR values are below
+   `maximum(SGR) × opts.stationary_percentile_thr`.
+4. Snap the cutoff forward to the OD peak within the next
+   `opts.stationary_win_size` time points (the OD may still rise after the SGR
+   threshold is crossed).
+"""
+function _find_stationary_cutoff(data_mat::Matrix{Float64}, opts::FitOptions)::Int
+    n = size(data_mat, 2)
+    index_od = findall(data_mat[2, :] .> opts.stationary_thr_od)
+    isempty(index_od) && return n
+
+    data_t = data_mat[:, index_od]
+    sgr = specific_gr_evaluation(data_t, opts.stationary_pt_smooth_derivative)
+    thr = maximum(sgr) * opts.stationary_percentile_thr
+    max_idx = argmax(sgr)
+    win = opts.stationary_win_size
+
+    # Guard: if fewer than win_size points exceed the threshold, the curve is
+    # flat / not growing — skip detection and use the full dataset (matches the
+    # behaviour of the legacy find_stationary_phase).
+    length(findall(sgr .> thr)) > win || return n
+
+    for i in max_idx:(length(sgr) - win)
+        if all(sgr[i:(i + win - 1)] .< thr)
+            base_idx   = i + index_od[1] - 1
+            search_end = min(base_idx + win, n)
+            peak_offset = argmax(data_mat[2, base_idx:search_end])
+            return base_idx + peak_offset - 1
+        end
+    end
+
+    return n
 end
 
 export preprocess
