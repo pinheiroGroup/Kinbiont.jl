@@ -97,6 +97,17 @@ Every field has a sensible default so users only override what they need.
 - `calibration_file::String = ""`: path to calibration CSV (required when `scattering_correction=true`).
 - `scattering_method::Symbol = :interpolation`: `:interpolation` or `:exp_fit`.
 
+# Stationary phase fields
+- `cut_stationary_phase::Bool = false`: truncate each curve at the onset of stationary
+  phase before fitting. Uses a specific-growth-rate threshold to locate the cutoff,
+  then snaps it to the OD peak within the next `stationary_win_size` time points.
+- `stationary_percentile_thr::Float64 = 0.05`: SGR drops below this fraction of its
+  maximum to trigger the cutoff.
+- `stationary_pt_smooth_derivative::Int = 10`: smoothing window for SGR evaluation.
+- `stationary_win_size::Int = 5`: look-ahead window for OD-peak snapping.
+- `stationary_thr_od::Float64 = 0.02`: minimum OD value; time points below this are
+  excluded before detecting stationary phase.
+
 # Clustering fields
 - `cluster::Bool = false`: cluster curves after preprocessing.
 - `n_clusters::Int = 3`: number of clusters (k for k-means).
@@ -132,6 +143,13 @@ Every field has a sensible default so users only override what they need.
     scattering_correction::Bool = false
     calibration_file::String    = ""
     scattering_method::Symbol   = :interpolation
+
+    # --- stationary phase detection ---
+    cut_stationary_phase::Bool             = false
+    stationary_percentile_thr::Float64     = 0.05
+    stationary_pt_smooth_derivative::Int   = 10
+    stationary_win_size::Int               = 5
+    stationary_thr_od::Float64             = 0.02
 
     # --- clustering ---
     cluster::Bool               = false
