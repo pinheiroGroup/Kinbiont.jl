@@ -20,9 +20,7 @@ jobs:
           version: '1'
       - uses: julia-actions/cache@v2
       - name: Install dependencies
-        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
-      #- name: Update dependencies
-      #  run: julia --project=docs -e 'using Pkg; Pkg.update()'
+        run: julia --project=. -e 'using Pkg; Pkg.add(name="DynamicQuantities", version="1.11.0"); Pkg.instantiate()'
       - name: Build and deploy
         run: julia --project=. --color=yes docs/make_local.jl
       - name: Setup Pages

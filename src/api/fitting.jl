@@ -108,6 +108,11 @@ function _fit_curve(
     # Legacy functions expect a 2×n matrix [times; values]
     data_mat = Matrix(transpose(hcat(times, curve)))
 
+    if opts.cut_stationary_phase
+        cutoff = _find_stationary_cutoff(data_mat, opts)
+        data_mat = data_mat[:, 1:cutoff]
+    end
+
     candidates = map(eachindex(spec.models)) do k
         model  = spec.models[k]
         p0     = _resolve_p0(spec.params[k], model, data_mat)

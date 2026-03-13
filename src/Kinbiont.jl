@@ -7,4 +7,5 @@ module Kinbiont
   include("api/preprocessing.jl")
   include("api/fitting.jl")
   include("api/io.jl")
+  include("api/model_recommendation.jl")
 end
