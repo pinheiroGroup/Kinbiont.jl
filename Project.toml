@@ -1,7 +1,7 @@
 name = "Kinbiont"
 uuid = "3b7c519f-be5e-4159-a208-6486ce96bb37"
 authors = ["Fabrizio Angaroni", "Edgar Zanella Alvarenga"]
-version = "1.2.0"
+version = "1.2.1"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
@@ -17,6 +17,7 @@ DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 DiffEqParamEstim = "1130ab10-4a5a-5621-a13d-e4788d82bd4c"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+DynamicQuantities = "06fc5a27-2a28-4c7c-a15d-362465fb6821"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 Lowess = "a2847a04-7795-4581-bff1-964344ea125d"
@@ -58,6 +59,7 @@ DelimitedFiles = "1.9.1"
 DiffEqParamEstim = "2.2.0"
 DifferentialEquations = "7.16.1"
 Distributions = "0.25.118"
+DynamicQuantities = "~1.11"
 Documenter = "1.10.1"
 
 Interpolations = "0.13.6"
