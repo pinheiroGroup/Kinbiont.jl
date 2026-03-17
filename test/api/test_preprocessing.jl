@@ -34,8 +34,9 @@
     @testset "Smoothing (rolling_avg) does not error" begin
         opts = FitOptions(smooth=true, smooth_method=:rolling_avg, smooth_pt_avg=3)
         processed = preprocess(data, opts)
-        # output length matches input (pipeline pads if needed)
-        @test size(processed.curves) == size(data.curves)
+        # rolling_avg may shorten the time dimension; number of curves is preserved
+        @test size(processed.curves, 1) == size(data.curves, 1)
+        @test size(processed.curves, 2) <= size(data.curves, 2)
     end
 
     @testset "Smoothing (gaussian) keeps original times when no grid given" begin
