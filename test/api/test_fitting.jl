@@ -92,4 +92,25 @@
         # params are the discovered polynomial coefficients
         @test length(res[1].best_params) == DDDEModel().max_degree + 1
     end
+
+    # 5.5 — preprocessing integration: smooth=true is applied before fitting
+    @testset "Preprocessing integrated into fit (smooth=true)" begin
+        Random.seed!(42)
+        spec = ModelSpec([MODEL_REGISTRY["NL_logistic"]], [[1.5, 0.3, 0.0]])
+
+        # Run without smoothing
+        res_raw    = kinbiont_fit(data, spec, FitOptions(smooth=false, loss="RE"))
+        # Run with Gaussian smoothing
+        res_smooth = kinbiont_fit(data, spec, FitOptions(smooth=true,
+                                                          smooth_method=:gaussian,
+                                                          loss="RE"))
+
+        # Both should produce valid CurveFitResults
+        @test res_raw[1]    isa CurveFitResult
+        @test res_smooth[1] isa CurveFitResult
+        @test isfinite(res_raw[1].best_aic)
+        @test isfinite(res_smooth[1].best_aic)
+        # Smoothing changes the input data, so fitted curves differ
+        @test res_raw[1].fitted_curve != res_smooth[1].fitted_curve
+    end
 end
