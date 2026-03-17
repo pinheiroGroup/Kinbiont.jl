@@ -1,6 +1,7 @@
 # Kinbiont.jl
 
 
+[![CI](https://github.com/pinheiroGroup/Kinbiont.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/pinheiroGroup/Kinbiont.jl/actions/workflows/CI.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15488336.svg)](https://doi.org/10.5281/zenodo.15488336)
 
 
