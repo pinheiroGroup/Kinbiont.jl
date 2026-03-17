@@ -58,3 +58,50 @@
         @test size(processed.curves, 2) == length(new_times)
     end
 end
+
+# 2.3 — negative_value_correction (old-API utility)
+@testset "negative_value_correction" begin
+    times = collect(0.0:1.0:9.0)
+    od    = [-0.05, 0.0, 0.05, 0.1, 0.2, 0.4, 0.8, 1.0, 1.2, 1.3]
+    data_mat = Matrix(transpose(hcat(times, od)))   # 2×10 old-API format
+
+    corrected = negative_value_correction(data_mat, Float64[];
+                                          method="thr_correction", thr_negative=0.01)
+    @test all(corrected[2, :] .>= 0.0)
+    @test size(corrected, 1) == 2
+end
+
+# 2.4 — specific_gr_evaluation on exponential data
+@testset "specific_gr_evaluation" begin
+    gr_true = 0.5
+    t  = collect(0.0:0.5:10.0)
+    od = 0.05 .* exp.(gr_true .* t)
+    data_mat = Matrix(transpose(hcat(t, od)))   # 2×N old-API format
+
+    sgr = specific_gr_evaluation(data_mat, 7)
+
+    @test length(sgr) > 0
+    @test all(isfinite.(sgr))
+    # mean SGR should be close to the true growth rate
+    @test abs(mean(sgr) - gr_true) < 0.15
+end
+
+# 2.6 — stationary phase cutting (exercised through kinbiont_fit)
+@testset "Stationary phase cutting via kinbiont_fit" begin
+    Random.seed!(42)
+    # Dense logistic curve that clearly reaches a plateau by t=20
+    sim   = ODE_sim("logistic", [0.05], 0.0, 30.0, 0.3, [0.5, 1.5])
+    times = collect(0.0:0.3:30.0)
+    curve = sim[1, :]
+    data  = GrowthData(reshape(curve, 1, :), times, ["A"])
+
+    spec      = ModelSpec([MODEL_REGISTRY["NL_logistic"]], [[1.5, 0.3, 0.0]])
+    opts_cut  = FitOptions(cut_stationary_phase=true, loss="RE")
+    opts_full = FitOptions(cut_stationary_phase=false, loss="RE")
+
+    res_cut  = kinbiont_fit(data, spec, opts_cut)
+    res_full = kinbiont_fit(data, spec, opts_full)
+
+    # With cutting, the fitted curve should cover fewer time points
+    @test length(res_cut[1].times) < length(res_full[1].times)
+end

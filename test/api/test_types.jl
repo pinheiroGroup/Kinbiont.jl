@@ -91,3 +91,38 @@ end
     # upper bounds length mismatch
     @test_throws ErrorException ModelSpec([m1], [[1.0, 0.3, 0.0]]; upper=[[10.0], [10.0]])
 end
+
+# 1.5 — Custom model trait constructors
+@testset "Custom model constructors (NLModel, ODEModel, LogLinModel)" begin
+
+    @testset "NLModel without guess" begin
+        f(p, t) = p[1] ./ (1 .+ exp.(-p[2] .* t))
+        m = NLModel("my_nl", f, ["K", "gr"])
+        @test m isa AbstractGrowthModel
+        @test m.name == "my_nl"
+        @test m.param_names == ["K", "gr"]
+        @test m.guess === nothing
+    end
+
+    @testset "NLModel with guess function" begin
+        f(p, t) = p[1] .* exp.(p[2] .* t)
+        g(data) = [data[2, end], 0.3]
+        m = NLModel("my_exp_nl", f, ["A", "gr"], g)
+        @test m.guess === g
+    end
+
+    @testset "ODEModel" begin
+        f!(du, u, p, t) = (du[1] = p[1] * u[1] * (1 - u[1] / p[2]))
+        m = ODEModel("my_ode", f!, ["gr", "K"], 1)
+        @test m isa AbstractGrowthModel
+        @test m.name == "my_ode"
+        @test m.n_eq == 1
+        @test m.guess === nothing
+    end
+
+    @testset "LogLinModel" begin
+        m = LogLinModel()
+        @test m isa AbstractGrowthModel
+        @test m isa LogLinModel
+    end
+end
