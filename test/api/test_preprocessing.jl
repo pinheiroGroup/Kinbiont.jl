@@ -18,6 +18,28 @@
         @test processed.curves ≈ data.curves .- 0.05
     end
 
+    @testset "Auto blank detection from labels" begin
+        blank_od  = 0.08
+        # Build a dataset with two blank wells (label "b") and three signal wells
+        n_tp      = length(times)
+        blank_row = fill(blank_od, n_tp)
+        all_curves = vcat(curves, blank_row', blank_row')
+        all_labels = ["c1","c2","c3","c4","c5","b","b"]
+        data_with_blanks = GrowthData(all_curves, times, all_labels)
+
+        opts = FitOptions(blank_subtraction=true, blank_from_labels=true)
+        processed = preprocess(data_with_blanks, opts)
+        # every curve should be shifted by the mean blank (= blank_od)
+        @test processed.curves ≈ data_with_blanks.curves .- blank_od
+    end
+
+    @testset "Auto blank: warns and uses 0.0 when no 'b' labels" begin
+        opts = FitOptions(blank_subtraction=true, blank_from_labels=true)
+        @test_warn r"no wells labelled" preprocess(data, opts)
+        processed = preprocess(data, opts)
+        @test processed.curves ≈ data.curves   # subtracting 0.0
+    end
+
     @testset "Clustering assigns cluster ids" begin
         opts = FitOptions(cluster=true, n_clusters=2, cluster_trend_test=false)
         processed = preprocess(data, opts)

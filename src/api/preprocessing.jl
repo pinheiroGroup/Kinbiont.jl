@@ -52,7 +52,7 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     # non-growing wells (which is precisely what clustering is meant to find).
     clusters = opts.cluster ? _cluster(curves, times, opts) : nothing
 
-    curves = _apply_blank_subtraction(curves, opts)
+    curves = _apply_blank_subtraction(curves, data.labels, opts)
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
@@ -90,10 +90,33 @@ end
 
 function _apply_blank_subtraction(
     curves::Matrix{Float64},
+    labels::Vector{String},
     opts::FitOptions,
 )::Matrix{Float64}
     opts.blank_subtraction || return curves
-    return curves .- opts.blank_value
+
+    if opts.blank_from_labels
+        blank_val = _blank_from_labels(curves, labels)
+    else
+        blank_val = opts.blank_value
+    end
+
+    return curves .- blank_val
+end
+
+"""
+    _blank_from_labels(curves, labels) -> Float64
+
+Compute the mean OD across all timepoints and all wells whose label is `"b"`.
+Warns and returns 0.0 when no blank wells are found.
+"""
+function _blank_from_labels(curves::Matrix{Float64}, labels::Vector{String})::Float64
+    blank_idx = findall(==("b"), labels)
+    if isempty(blank_idx)
+        @warn "blank_from_labels=true but no wells labelled \"b\" found; blank value set to 0.0"
+        return 0.0
+    end
+    return mean(curves[blank_idx, :])
 end
 
 # ---------------------------------------------------------------------------
