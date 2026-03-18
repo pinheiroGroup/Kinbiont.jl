@@ -286,11 +286,15 @@ prototypes, compute the mean of `data.curves[data.clusters .== k, :]` for each `
 `wcss` is the total SSE from the k-means step (0.0 when all curves were classified
 as constant).
 
-Three modes (evaluated in priority order):
+Modes (evaluated in priority order):
 1. `cluster_prescreen_constant=true`: quantile-ratio pre-screening identifies
    non-growing wells before k-means, which then runs on dynamic curves only.
 2. `cluster_trend_test=true`: OLS slope t-test post-hoc re-labels flat curves.
 3. Neither: plain k-means on all curves.
+
+When `cluster_exp_prototype=true`, an additional exponential shape cluster is
+added after k-means: each curve is tested against pre-built z-scored exponential
+prototypes and re-labelled if it is closer to them than to any k-means centroid.
 """
 function _cluster(
     curves::Matrix{Float64},
@@ -314,10 +318,23 @@ function _cluster(
         wcss   = result.totalcost
     end
 
+    if opts.cluster_exp_prototype
+        exp_label      = _exp_prototype_label(opts)
+        exp_protos     = _build_exp_prototypes(times)
+        centroids_norm = _compute_centroids(zscored_all, labels, opts.n_clusters)
+        labels         = _apply_exp_prototype_labels(zscored_all, labels, exp_protos,
+                                                     centroids_norm, exp_label)
+    end
+
     # Centroids in z-normalised space (shape prototypes, scale-independent).
     centroids = _compute_centroids(zscored_all, labels, opts.n_clusters)
     return labels, centroids, wcss
 end
+
+# The exponential prototype occupies label n_clusters-1 when constant
+# pre-screening is active (reserving n_clusters for constant), otherwise n_clusters.
+_exp_prototype_label(opts::FitOptions) =
+    opts.cluster_prescreen_constant ? opts.n_clusters - 1 : opts.n_clusters
 
 # ---------------------------------------------------------------------------
 # Constant pre-screening helpers
@@ -403,6 +420,65 @@ function _compute_centroids(
         centroids[k, :] = vec(mean(curves[idxs, :], dims=1))
     end
     return centroids
+end
+
+# ---------------------------------------------------------------------------
+# Exponential prototype helpers
+# ---------------------------------------------------------------------------
+
+"""
+    _build_exp_prototypes(times) -> Vector{Vector{Float64}}
+
+Build z-scored exponential shape prototypes using bases 2⁶..2¹⁶.
+Each prototype is `(b^τ - 1)/(b - 1)` evaluated at normalised time τ ∈ [0,1],
+then z-score normalised so distances are shape-only comparisons.
+"""
+function _build_exp_prototypes(times::Vector{Float64})::Vector{Vector{Float64}}
+    tmin, tmax = minimum(times), maximum(times)
+    dt = max(tmax - tmin, 1e-12)
+    tau = (times .- tmin) ./ dt
+
+    protos = Vector{Vector{Float64}}()
+    for exp_b in (2^6, 2^7, 2^8, 2^9, 2^10, 2^11, 2^12, 2^13, 2^14, 2^15, 2^16)
+        bf = Float64(exp_b)
+        y  = [(bf^t - 1.0) / (bf - 1.0) for t in tau]
+        push!(protos, _zscore_vec(y))
+    end
+    return protos
+end
+
+@inline function _zscore_vec(x::Vector{Float64})::Vector{Float64}
+    mu = mean(x); s = std(x; corrected=false)
+    s < 1e-12 ? zeros(length(x)) : (x .- mu) ./ s
+end
+
+"""
+    _apply_exp_prototype_labels(zscored, labels, exp_protos, centroids_norm, exp_label)
+
+For each curve, compare its squared distance to the nearest exponential prototype
+against the distance to the nearest k-means centroid. If the exponential is closer,
+reassign the curve to `exp_label`.
+"""
+function _apply_exp_prototype_labels(
+    zscored::Matrix{Float64},
+    labels::Vector{Int},
+    exp_protos::Vector{Vector{Float64}},
+    centroids_norm::Matrix{Float64},
+    exp_label::Int,
+)::Vector{Int}
+    new_labels = copy(labels)
+    for i in axes(zscored, 1)
+        xi = @view zscored[i, :]
+        # distance to nearest exponential prototype
+        d_exp = minimum(sum((xi .- p) .^ 2) for p in exp_protos)
+        # distance to assigned k-means centroid
+        lbl   = labels[i]
+        d_km  = sum((xi .- @view centroids_norm[lbl, :]) .^ 2)
+        if d_exp < d_km
+            new_labels[i] = exp_label
+        end
+    end
+    return new_labels
 end
 
 # Z-score each row (curve) over its time points; handle constant rows gracefully

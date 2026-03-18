@@ -140,6 +140,13 @@ Every field has a sensible default so users only override what they need.
   tail in constant pre-screening.
 - `cluster_q_high::Float64 = 0.95`: upper quantile used to estimate the signal
   tail in constant pre-screening.
+- `cluster_exp_prototype::Bool = false`: add a dedicated "exponential" cluster
+  (label `n_clusters - 1` when used together with constant pre-screening, or
+  `n_clusters` when used alone). For each curve, the distance to the nearest
+  exponential shape prototype (z-scored, bases 2⁶..2¹⁶) is compared to the
+  distance to the nearest k-means centroid; the exponential label wins when
+  it is closer. Requires `n_clusters ≥ 3` when combined with constant pre-screening
+  (`n_clusters - 1` for exponential, `n_clusters` for constant), or ≥ 2 otherwise.
 
 After clustering, `processed.wcss` holds the within-cluster sum of squares. Run
 `preprocess` for `n_clusters = 2, 3, 4, ...` and plot `wcss` vs `n_clusters` to
@@ -191,6 +198,7 @@ find the elbow and choose the optimal number of clusters.
     cluster_tol_const::Float64       = 1.5
     cluster_q_low::Float64           = 0.05
     cluster_q_high::Float64          = 0.95
+    cluster_exp_prototype::Bool      = false
 
     # --- fitting ---
     loss::String                = "RE"
