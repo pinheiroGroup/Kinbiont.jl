@@ -39,6 +39,16 @@
         @test size(processed.curves, 2) <= size(data.curves, 2)
     end
 
+    @testset "Smoothing (boxcar) preserves shape and time grid" begin
+        opts = FitOptions(smooth=true, smooth_method=:boxcar, boxcar_window=3)
+        processed = preprocess(data, opts)
+        # boxcar is length-preserving: shape and times identical to input
+        @test size(processed.curves) == size(data.curves)
+        @test processed.times == data.times
+        # smoothing must change at least some values
+        @test processed.curves != data.curves
+    end
+
     @testset "Smoothing (gaussian) keeps original times when no grid given" begin
         opts = FitOptions(smooth=true, smooth_method=:gaussian, gaussian_h_mult=2.0)
         processed = preprocess(data, opts)
