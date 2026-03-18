@@ -110,8 +110,12 @@ Every field has a sensible default so users only override what they need.
 
 # Clustering fields
 - `cluster::Bool = false`: cluster curves after preprocessing.
-- `n_clusters::Int = 3`: number of clusters (k for k-means).
-- `cluster_trend_test::Bool = true`: use Mann-Kendall test to label flat-curve clusters.
+- `n_clusters::Int = 3`: total number of cluster labels (1..`n_clusters`). Labels are
+  always within this range regardless of other options.
+- `cluster_trend_test::Bool = true`: reserve label `n_clusters` for flat/non-growing
+  curves (identified by an OLS slope t-test, p ≥ 0.05). K-means then runs with
+  `n_clusters - 1` dynamic groups, so all labels remain in `1..n_clusters`.
+  Requires `n_clusters ≥ 2`.
 
 # Fitting fields
 - `loss::String = "RE"`: loss function — `"RE"`, `"L2"`, `"L2_derivative"`, etc.

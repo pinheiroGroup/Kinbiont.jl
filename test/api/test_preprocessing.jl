@@ -25,6 +25,14 @@
         @test length(processed.clusters) == size(data.curves, 1)
     end
 
+    @testset "Clustering labels always within 1..n_clusters (cluster_trend_test=true)" begin
+        n_k = 3
+        opts = FitOptions(cluster=true, n_clusters=n_k, cluster_trend_test=true)
+        processed = preprocess(data, opts)
+        @test processed.clusters isa Vector{Int}
+        @test all(1 .<= processed.clusters .<= n_k)
+    end
+
     @testset "Pure function — original data not mutated" begin
         original_copy = copy(data.curves)
         _ = preprocess(data, FitOptions(blank_subtraction=true, blank_value=0.1))

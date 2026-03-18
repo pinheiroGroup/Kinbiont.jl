@@ -276,27 +276,29 @@ end
     _cluster(curves, times, opts) -> Vector{Int}
 
 Cluster growth curves using k-means on z-score-normalised data.
-Flat / non-growing curves are identified via a Mann-Kendall trend test and
-may be assigned to their own cluster regardless of geometric distance.
+
+When `opts.cluster_trend_test` is `true`, flat/non-growing curves are
+identified via an OLS slope t-test and pinned to label `opts.n_clusters`
+(the highest label). To keep labels within `1..n_clusters`, k-means is
+run with `n_clusters - 1` groups in this mode, reserving the last slot for
+flat curves. At least 2 clusters are required when `cluster_trend_test=true`.
 """
 function _cluster(
     curves::Matrix{Float64},
     times::Vector{Float64},
     opts::FitOptions,
 )::Vector{Int}
-    n_curves = size(curves, 1)
-
-    # Z-score each curve independently (StatsBase.zscore over columns = time axis)
-    # zscore(x, 2) normalises each row (curve) across time points
     zscored = _zscore_rows(curves)
 
-    # k-means needs features × samples layout
-    result = kmeans(zscored', opts.n_clusters)
-    labels = assignments(result)   # Vector{Int}, length n_curves
-
-    # Optionally re-label structurally flat curves using Mann-Kendall
     if opts.cluster_trend_test
+        # Reserve label n_clusters for flat curves; k-means gets n_clusters-1 groups.
+        k_dynamic = max(1, opts.n_clusters - 1)
+        result = kmeans(zscored', k_dynamic)
+        labels = assignments(result)
         labels = _apply_trend_labels(curves, times, labels, opts.n_clusters)
+    else
+        result = kmeans(zscored', opts.n_clusters)
+        labels = assignments(result)
     end
 
     return labels
@@ -320,13 +322,13 @@ end
 # Assign a dedicated cluster id to curves with no significant linear trend.
 # Uses a t-test on the OLS slope (p ≥ 0.05 → flat), implemented with Statistics
 # stdlib only — no extra package required.
+# `flat_id` is passed in by the caller; it must already be within 1..n_clusters.
 function _apply_trend_labels(
     curves::Matrix{Float64},
     times::Vector{Float64},
     labels::Vector{Int},
-    k::Int,
+    flat_id::Int,
 )::Vector{Int}
-    flat_id   = k + 1
     new_labels = copy(labels)
     n          = length(times)
     t_centered = times .- mean(times)
