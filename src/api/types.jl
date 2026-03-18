@@ -29,8 +29,10 @@ Immutable container for a set of growth curves measured at common time points.
 - `clusters::Union{Nothing, Vector{Int}}`: cluster assignment per curve (1-based, within
   `1..n_clusters`), populated by [`preprocess`](@ref). `nothing` until clustering is run.
 - `centroids::Union{Nothing, Matrix{Float64}}`: `n_clusters × n_timepoints` matrix of
-  per-cluster mean curves in original (non-normalised) space, populated alongside
-  `clusters`. Row `k` is the prototype for curves assigned to cluster `k`.
+  per-cluster shape centroids in **z-normalised space**, populated alongside `clusters`.
+  Row `k` is the mean of the z-scored curves assigned to cluster `k` — a scale-independent
+  shape prototype. To obtain original-space prototypes, compute
+  `mean(data.curves[data.clusters .== k, :], dims=1)` for each `k`.
 """
 struct GrowthData
     curves::Matrix{Float64}

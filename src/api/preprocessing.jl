@@ -275,11 +275,13 @@ end
 """
     _cluster(curves, times, opts) -> (labels::Vector{Int}, centroids::Matrix{Float64})
 
-Cluster growth curves and return per-curve labels plus per-cluster mean curves.
+Cluster growth curves and return per-curve labels plus per-cluster shape centroids.
 
 Labels are always in `1..opts.n_clusters`. `centroids` is an
-`n_clusters × n_timepoints` matrix in original (non-normalised) space; row `k`
-is the mean of all curves assigned to cluster `k`.
+`n_clusters × n_timepoints` matrix in **z-normalised space**: each row is the
+mean of the z-scored curves assigned to that cluster. This captures the *shape*
+of each cluster independently of absolute OD magnitude. To recover original-space
+prototypes, compute the mean of `data.curves[data.clusters .== k, :]` for each `k`.
 
 Three modes (evaluated in priority order):
 1. `cluster_prescreen_constant=true`: quantile-ratio pre-screening identifies
@@ -292,22 +294,23 @@ function _cluster(
     times::Vector{Float64},
     opts::FitOptions,
 )::Tuple{Vector{Int}, Matrix{Float64}}
+    # Z-score all curves once; used for both k-means and centroid computation.
+    zscored_all = _zscore_rows(curves)
+
     if opts.cluster_prescreen_constant
-        labels = _cluster_with_prescreen(curves, opts)
+        labels = _cluster_with_prescreen(curves, zscored_all, opts)
     elseif opts.cluster_trend_test
-        # Reserve label n_clusters for flat curves; k-means gets n_clusters-1 groups.
         k_dynamic = max(1, opts.n_clusters - 1)
-        zscored = _zscore_rows(curves)
-        result  = kmeans(zscored', k_dynamic)
-        labels  = assignments(result)
-        labels  = _apply_trend_labels(curves, times, labels, opts.n_clusters)
+        result = kmeans(zscored_all', k_dynamic)
+        labels = assignments(result)
+        labels = _apply_trend_labels(curves, times, labels, opts.n_clusters)
     else
-        zscored = _zscore_rows(curves)
-        result  = kmeans(zscored', opts.n_clusters)
-        labels  = assignments(result)
+        result = kmeans(zscored_all', opts.n_clusters)
+        labels = assignments(result)
     end
 
-    centroids = _compute_centroids(curves, labels, opts.n_clusters)
+    # Centroids in z-normalised space (shape prototypes, scale-independent).
+    centroids = _compute_centroids(zscored_all, labels, opts.n_clusters)
     return labels, centroids
 end
 
@@ -340,22 +343,27 @@ function _prescreen_constant(curves::Matrix{Float64}, opts::FitOptions)::BitVect
 end
 
 """
-    _cluster_with_prescreen(curves, opts) -> Vector{Int}
+    _cluster_with_prescreen(curves, zscored_all, opts) -> Vector{Int}
 
-Pre-screen constant curves, then run k-means on the dynamic subset.
-Constant curves receive label `n_clusters`; dynamic curves get labels `1..n_clusters-1`.
+Pre-screen constant curves using original-space quantile ratio, then run k-means
+on the z-normalised dynamic subset. Constant curves receive label `n_clusters`;
+dynamic curves get labels `1..n_clusters-1`.
 """
-function _cluster_with_prescreen(curves::Matrix{Float64}, opts::FitOptions)::Vector{Int}
+function _cluster_with_prescreen(
+    curves::Matrix{Float64},
+    zscored_all::Matrix{Float64},
+    opts::FitOptions,
+)::Vector{Int}
     W           = size(curves, 1)
-    const_mask  = _prescreen_constant(curves, opts)
+    const_mask  = _prescreen_constant(curves, opts)   # quantile test on raw curves
     dynamic_idx = findall(.!const_mask)
-    labels      = fill(opts.n_clusters, W)   # default: constant
+    labels      = fill(opts.n_clusters, W)
 
     if !isempty(dynamic_idx) && opts.n_clusters > 1
-        k_dynamic   = opts.n_clusters - 1
-        zscored     = _zscore_rows(curves[dynamic_idx, :])
-        result      = kmeans(zscored', k_dynamic)
-        km_labels   = assignments(result)
+        k_dynamic = opts.n_clusters - 1
+        # k-means runs on z-normalised dynamic curves
+        result    = kmeans(zscored_all[dynamic_idx, :]', k_dynamic)
+        km_labels = assignments(result)
         for (pos, idx) in enumerate(dynamic_idx)
             labels[idx] = km_labels[pos]
         end

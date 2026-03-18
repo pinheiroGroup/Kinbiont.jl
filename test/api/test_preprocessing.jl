@@ -18,7 +18,7 @@
         @test processed.curves ≈ data.curves .- 0.05
     end
 
-    @testset "Clustering assigns cluster ids and centroids" begin
+    @testset "Clustering assigns cluster ids and centroids (z-normalised)" begin
         n_k  = 2
         opts = FitOptions(cluster=true, n_clusters=n_k, cluster_trend_test=false)
         processed = preprocess(data, opts)
@@ -27,6 +27,12 @@
         # centroid matrix: one row per cluster, one column per timepoint
         @test processed.centroids isa Matrix{Float64}
         @test size(processed.centroids) == (n_k, length(data.times))
+        # centroids are in z-normalised space: each non-empty row has ~zero mean
+        for k in 1:n_k
+            if any(==(k), processed.clusters)
+                @test abs(mean(processed.centroids[k, :])) < 0.1
+            end
+        end
     end
 
     @testset "Clustering labels always within 1..n_clusters (cluster_trend_test=true)" begin
