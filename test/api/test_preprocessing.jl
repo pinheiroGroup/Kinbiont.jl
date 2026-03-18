@@ -18,11 +18,15 @@
         @test processed.curves ≈ data.curves .- 0.05
     end
 
-    @testset "Clustering assigns cluster ids" begin
-        opts = FitOptions(cluster=true, n_clusters=2, cluster_trend_test=false)
+    @testset "Clustering assigns cluster ids and centroids" begin
+        n_k  = 2
+        opts = FitOptions(cluster=true, n_clusters=n_k, cluster_trend_test=false)
         processed = preprocess(data, opts)
-        @test processed.clusters isa Vector{Int}
+        @test processed.clusters  isa Vector{Int}
         @test length(processed.clusters) == size(data.curves, 1)
+        # centroid matrix: one row per cluster, one column per timepoint
+        @test processed.centroids isa Matrix{Float64}
+        @test size(processed.centroids) == (n_k, length(data.times))
     end
 
     @testset "Clustering labels always within 1..n_clusters (cluster_trend_test=true)" begin
@@ -31,6 +35,24 @@
         processed = preprocess(data, opts)
         @test processed.clusters isa Vector{Int}
         @test all(1 .<= processed.clusters .<= n_k)
+        @test size(processed.centroids) == (n_k, length(data.times))
+    end
+
+    @testset "Constant pre-screening keeps labels within 1..n_clusters" begin
+        # Mix flat and growing curves so pre-screening has something to detect
+        flat_curves = hcat(fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),
+                           fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),
+                           fill(0.1, 3), fill(0.1, 3), fill(0.1, 3), fill(0.1, 3))
+        mixed = vcat(data.curves, flat_curves)
+        mixed_data = GrowthData(mixed, data.times, ["c$i" for i in 1:8])
+        n_k  = 3
+        opts = FitOptions(cluster=true, n_clusters=n_k,
+                          cluster_prescreen_constant=true, cluster_trend_test=false)
+        processed = preprocess(mixed_data, opts)
+        @test all(1 .<= processed.clusters .<= n_k)
+        @test size(processed.centroids) == (n_k, length(data.times))
+        # flat curves should be assigned to the last label
+        @test all(processed.clusters[6:8] .== n_k)
     end
 
     @testset "Pure function — original data not mutated" begin

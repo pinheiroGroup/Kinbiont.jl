@@ -50,13 +50,13 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     # Clustering is performed on scattering-corrected but otherwise raw data so
     # that blank subtraction does not hide the distinction between growing and
     # non-growing wells (which is precisely what clustering is meant to find).
-    clusters = opts.cluster ? _cluster(curves, times, opts) : nothing
+    clusters, centroids = opts.cluster ? _cluster(curves, times, opts) : (nothing, nothing)
 
     curves = _apply_blank_subtraction(curves, opts)
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
-    return GrowthData(curves, times, data.labels, clusters)
+    return GrowthData(curves, times, data.labels, clusters, centroids)
 end
 
 # ---------------------------------------------------------------------------
@@ -273,35 +273,120 @@ end
 # ---------------------------------------------------------------------------
 
 """
-    _cluster(curves, times, opts) -> Vector{Int}
+    _cluster(curves, times, opts) -> (labels::Vector{Int}, centroids::Matrix{Float64})
 
-Cluster growth curves using k-means on z-score-normalised data.
+Cluster growth curves and return per-curve labels plus per-cluster mean curves.
 
-When `opts.cluster_trend_test` is `true`, flat/non-growing curves are
-identified via an OLS slope t-test and pinned to label `opts.n_clusters`
-(the highest label). To keep labels within `1..n_clusters`, k-means is
-run with `n_clusters - 1` groups in this mode, reserving the last slot for
-flat curves. At least 2 clusters are required when `cluster_trend_test=true`.
+Labels are always in `1..opts.n_clusters`. `centroids` is an
+`n_clusters × n_timepoints` matrix in original (non-normalised) space; row `k`
+is the mean of all curves assigned to cluster `k`.
+
+Three modes (evaluated in priority order):
+1. `cluster_prescreen_constant=true`: quantile-ratio pre-screening identifies
+   non-growing wells before k-means, which then runs on dynamic curves only.
+2. `cluster_trend_test=true`: OLS slope t-test post-hoc re-labels flat curves.
+3. Neither: plain k-means on all curves.
 """
 function _cluster(
     curves::Matrix{Float64},
     times::Vector{Float64},
     opts::FitOptions,
-)::Vector{Int}
-    zscored = _zscore_rows(curves)
-
-    if opts.cluster_trend_test
+)::Tuple{Vector{Int}, Matrix{Float64}}
+    if opts.cluster_prescreen_constant
+        labels = _cluster_with_prescreen(curves, opts)
+    elseif opts.cluster_trend_test
         # Reserve label n_clusters for flat curves; k-means gets n_clusters-1 groups.
         k_dynamic = max(1, opts.n_clusters - 1)
-        result = kmeans(zscored', k_dynamic)
-        labels = assignments(result)
-        labels = _apply_trend_labels(curves, times, labels, opts.n_clusters)
+        zscored = _zscore_rows(curves)
+        result  = kmeans(zscored', k_dynamic)
+        labels  = assignments(result)
+        labels  = _apply_trend_labels(curves, times, labels, opts.n_clusters)
     else
-        result = kmeans(zscored', opts.n_clusters)
-        labels = assignments(result)
+        zscored = _zscore_rows(curves)
+        result  = kmeans(zscored', opts.n_clusters)
+        labels  = assignments(result)
+    end
+
+    centroids = _compute_centroids(curves, labels, opts.n_clusters)
+    return labels, centroids
+end
+
+# ---------------------------------------------------------------------------
+# Constant pre-screening helpers
+# ---------------------------------------------------------------------------
+
+"""
+    _prescreen_constant(curves, opts) -> BitVector
+
+Identify non-growing (constant) curves using a quantile-ratio criterion.
+Curve `i` is flagged when its `q_high` quantile ≤ `tol_const × q_low` quantile,
+meaning its signal never grows meaningfully above its baseline.
+"""
+function _prescreen_constant(curves::Matrix{Float64}, opts::FitOptions)::BitVector
+    W = size(curves, 1)
+    const_mask = falses(W)
+    for i in 1:W
+        row = curves[i, :]
+        lm  = quantile(row, opts.cluster_q_low)
+        hm  = quantile(row, opts.cluster_q_high)
+        const_mask[i] = if lm > 0
+            hm <= opts.cluster_tol_const * lm
+        else
+            # baseline is at or below zero — flat if the total range is negligible
+            abs(hm - lm) < 1e-6 * (abs(lm) + 1.0)
+        end
+    end
+    return const_mask
+end
+
+"""
+    _cluster_with_prescreen(curves, opts) -> Vector{Int}
+
+Pre-screen constant curves, then run k-means on the dynamic subset.
+Constant curves receive label `n_clusters`; dynamic curves get labels `1..n_clusters-1`.
+"""
+function _cluster_with_prescreen(curves::Matrix{Float64}, opts::FitOptions)::Vector{Int}
+    W           = size(curves, 1)
+    const_mask  = _prescreen_constant(curves, opts)
+    dynamic_idx = findall(.!const_mask)
+    labels      = fill(opts.n_clusters, W)   # default: constant
+
+    if !isempty(dynamic_idx) && opts.n_clusters > 1
+        k_dynamic   = opts.n_clusters - 1
+        zscored     = _zscore_rows(curves[dynamic_idx, :])
+        result      = kmeans(zscored', k_dynamic)
+        km_labels   = assignments(result)
+        for (pos, idx) in enumerate(dynamic_idx)
+            labels[idx] = km_labels[pos]
+        end
     end
 
     return labels
+end
+
+# ---------------------------------------------------------------------------
+# Centroid computation
+# ---------------------------------------------------------------------------
+
+"""
+    _compute_centroids(curves, labels, n_clusters) -> Matrix{Float64}
+
+Compute the mean curve (in original space) for each cluster.
+Returns an `n_clusters × n_timepoints` matrix; empty clusters produce a zero row.
+"""
+function _compute_centroids(
+    curves::Matrix{Float64},
+    labels::Vector{Int},
+    n_clusters::Int,
+)::Matrix{Float64}
+    n_tp      = size(curves, 2)
+    centroids = zeros(Float64, n_clusters, n_tp)
+    for k in 1:n_clusters
+        idxs = findall(==(k), labels)
+        isempty(idxs) && continue
+        centroids[k, :] = vec(mean(curves[idxs, :], dims=1))
+    end
+    return centroids
 end
 
 # Z-score each row (curve) over its time points; handle constant rows gracefully
