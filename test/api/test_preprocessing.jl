@@ -18,7 +18,7 @@
         @test processed.curves ≈ data.curves .- 0.05
     end
 
-    @testset "Clustering assigns cluster ids and centroids (z-normalised)" begin
+    @testset "Clustering assigns cluster ids, centroids and WCSS" begin
         n_k  = 2
         opts = FitOptions(cluster=true, n_clusters=n_k, cluster_trend_test=false)
         processed = preprocess(data, opts)
@@ -33,6 +33,18 @@
                 @test abs(mean(processed.centroids[k, :])) < 0.1
             end
         end
+        # WCSS is a non-negative scalar
+        @test processed.wcss isa Float64
+        @test processed.wcss >= 0.0
+    end
+
+    @testset "WCSS decreases as n_clusters increases" begin
+        # More clusters → lower total SSE (elbow-plot property)
+        wcss_vals = map(2:4) do k
+            opts = FitOptions(cluster=true, n_clusters=k, cluster_trend_test=false)
+            preprocess(data, opts).wcss
+        end
+        @test issorted(wcss_vals, rev=true)
     end
 
     @testset "Clustering labels always within 1..n_clusters (cluster_trend_test=true)" begin

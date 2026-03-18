@@ -33,6 +33,9 @@ Immutable container for a set of growth curves measured at common time points.
   Row `k` is the mean of the z-scored curves assigned to cluster `k` — a scale-independent
   shape prototype. To obtain original-space prototypes, compute
   `mean(data.curves[data.clusters .== k, :], dims=1)` for each `k`.
+- `wcss::Union{Nothing, Float64}`: within-cluster sum of squares (total SSE) returned
+  by k-means, populated alongside `clusters`. Use this to construct an elbow plot and
+  choose `n_clusters`. `nothing` when clustering was not performed.
 """
 struct GrowthData
     curves::Matrix{Float64}
@@ -40,14 +43,15 @@ struct GrowthData
     labels::Vector{String}
     clusters::Union{Nothing, Vector{Int}}
     centroids::Union{Nothing, Matrix{Float64}}
+    wcss::Union{Nothing, Float64}
 
-    function GrowthData(curves, times, labels, clusters=nothing, centroids=nothing)
+    function GrowthData(curves, times, labels, clusters=nothing, centroids=nothing, wcss=nothing)
         n_curves, n_tp = size(curves)
         length(times)  == n_tp     || error("times length $(length(times)) ≠ n_timepoints $n_tp")
         length(labels) == n_curves || error("labels length $(length(labels)) ≠ n_curves $n_curves")
         clusters === nothing || length(clusters) == n_curves ||
             error("clusters length $(length(clusters)) ≠ n_curves $n_curves")
-        new(curves, times, labels, clusters, centroids)
+        new(curves, times, labels, clusters, centroids, wcss)
     end
 end
 
@@ -136,6 +140,10 @@ Every field has a sensible default so users only override what they need.
   tail in constant pre-screening.
 - `cluster_q_high::Float64 = 0.95`: upper quantile used to estimate the signal
   tail in constant pre-screening.
+
+After clustering, `processed.wcss` holds the within-cluster sum of squares. Run
+`preprocess` for `n_clusters = 2, 3, 4, ...` and plot `wcss` vs `n_clusters` to
+find the elbow and choose the optimal number of clusters.
 
 # Fitting fields
 - `loss::String = "RE"`: loss function — `"RE"`, `"L2"`, `"L2_derivative"`, etc.

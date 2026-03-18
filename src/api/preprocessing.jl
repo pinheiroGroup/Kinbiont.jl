@@ -50,13 +50,13 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     # Clustering is performed on scattering-corrected but otherwise raw data so
     # that blank subtraction does not hide the distinction between growing and
     # non-growing wells (which is precisely what clustering is meant to find).
-    clusters, centroids = opts.cluster ? _cluster(curves, times, opts) : (nothing, nothing)
+    clusters, centroids, wcss = opts.cluster ? _cluster(curves, times, opts) : (nothing, nothing, nothing)
 
     curves = _apply_blank_subtraction(curves, opts)
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
-    return GrowthData(curves, times, data.labels, clusters, centroids)
+    return GrowthData(curves, times, data.labels, clusters, centroids, wcss)
 end
 
 # ---------------------------------------------------------------------------
@@ -273,15 +273,18 @@ end
 # ---------------------------------------------------------------------------
 
 """
-    _cluster(curves, times, opts) -> (labels::Vector{Int}, centroids::Matrix{Float64})
+    _cluster(curves, times, opts) -> (labels, centroids, wcss)
 
-Cluster growth curves and return per-curve labels plus per-cluster shape centroids.
+Cluster growth curves and return per-curve labels, per-cluster shape centroids,
+and the within-cluster sum of squares (WCSS / total SSE from k-means).
 
 Labels are always in `1..opts.n_clusters`. `centroids` is an
 `n_clusters × n_timepoints` matrix in **z-normalised space**: each row is the
 mean of the z-scored curves assigned to that cluster. This captures the *shape*
 of each cluster independently of absolute OD magnitude. To recover original-space
 prototypes, compute the mean of `data.curves[data.clusters .== k, :]` for each `k`.
+`wcss` is the total SSE from the k-means step (0.0 when all curves were classified
+as constant).
 
 Three modes (evaluated in priority order):
 1. `cluster_prescreen_constant=true`: quantile-ratio pre-screening identifies
@@ -293,25 +296,27 @@ function _cluster(
     curves::Matrix{Float64},
     times::Vector{Float64},
     opts::FitOptions,
-)::Tuple{Vector{Int}, Matrix{Float64}}
+)::Tuple{Vector{Int}, Matrix{Float64}, Float64}
     # Z-score all curves once; used for both k-means and centroid computation.
     zscored_all = _zscore_rows(curves)
 
     if opts.cluster_prescreen_constant
-        labels = _cluster_with_prescreen(curves, zscored_all, opts)
+        labels, wcss = _cluster_with_prescreen(curves, zscored_all, opts)
     elseif opts.cluster_trend_test
         k_dynamic = max(1, opts.n_clusters - 1)
         result = kmeans(zscored_all', k_dynamic)
         labels = assignments(result)
+        wcss   = result.totalcost
         labels = _apply_trend_labels(curves, times, labels, opts.n_clusters)
     else
         result = kmeans(zscored_all', opts.n_clusters)
         labels = assignments(result)
+        wcss   = result.totalcost
     end
 
     # Centroids in z-normalised space (shape prototypes, scale-independent).
     centroids = _compute_centroids(zscored_all, labels, opts.n_clusters)
-    return labels, centroids
+    return labels, centroids, wcss
 end
 
 # ---------------------------------------------------------------------------
@@ -343,33 +348,36 @@ function _prescreen_constant(curves::Matrix{Float64}, opts::FitOptions)::BitVect
 end
 
 """
-    _cluster_with_prescreen(curves, zscored_all, opts) -> Vector{Int}
+    _cluster_with_prescreen(curves, zscored_all, opts) -> (Vector{Int}, Float64)
 
 Pre-screen constant curves using original-space quantile ratio, then run k-means
 on the z-normalised dynamic subset. Constant curves receive label `n_clusters`;
 dynamic curves get labels `1..n_clusters-1`.
+Returns labels and the WCSS from the k-means step (0.0 when all curves are constant).
 """
 function _cluster_with_prescreen(
     curves::Matrix{Float64},
     zscored_all::Matrix{Float64},
     opts::FitOptions,
-)::Vector{Int}
+)::Tuple{Vector{Int}, Float64}
     W           = size(curves, 1)
     const_mask  = _prescreen_constant(curves, opts)   # quantile test on raw curves
     dynamic_idx = findall(.!const_mask)
-    labels      = fill(opts.n_clusters, W)
+    labels      = fill(opts.n_clusters, W)   # default: constant
+    wcss        = 0.0
 
     if !isempty(dynamic_idx) && opts.n_clusters > 1
         k_dynamic = opts.n_clusters - 1
         # k-means runs on z-normalised dynamic curves
         result    = kmeans(zscored_all[dynamic_idx, :]', k_dynamic)
         km_labels = assignments(result)
+        wcss      = result.totalcost
         for (pos, idx) in enumerate(dynamic_idx)
             labels[idx] = km_labels[pos]
         end
     end
 
-    return labels
+    return labels, wcss
 end
 
 # ---------------------------------------------------------------------------
