@@ -88,6 +88,10 @@ Every field has a sensible default so users only override what they need.
 - `gaussian_time_grid::Union{Nothing,Vector{Float64}} = nothing`: optional target
   time grid for Gaussian smoothing; when set, smoothed curves are evaluated at
   these times (interpolation). `nothing` keeps the original time grid.
+- `average_replicates::Bool = false`: before any other preprocessing step, average all
+  curves that share the same label into a single curve. Wells labelled `"b"` (blank) or
+  `"X"` (discard) are excluded and dropped from the output. Useful when the same
+  biological condition was measured in multiple wells.
 - `blank_subtraction::Bool = false`: subtract a blank value from all curves.
 - `blank_value::Float64 = 0.0`: constant blank to subtract when `blank_subtraction=true`.
 - `correct_negatives::Bool = false`: handle negative values after blank subtraction.
@@ -135,6 +139,7 @@ Every field has a sensible default so users only override what they need.
     lowess_frac::Float64        = 0.05
     gaussian_h_mult::Float64    = 2.0
     gaussian_time_grid::Union{Nothing, Vector{Float64}} = nothing
+    average_replicates::Bool    = false
     blank_subtraction::Bool     = false
     blank_value::Float64        = 0.0
     correct_negatives::Bool     = false

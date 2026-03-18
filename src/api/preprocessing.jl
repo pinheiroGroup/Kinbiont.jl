@@ -44,6 +44,10 @@ processed = preprocess(raw_data, opts)
 function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     curves = data.curves   # n_curves × n_tp, never mutated in place
     times  = data.times
+    labels = data.labels
+
+    # Replicate averaging collapses curves with identical labels before any other step
+    curves, labels = _apply_replicate_averaging(curves, labels, opts)
 
     curves = _apply_scattering_correction(curves, times, opts)
 
@@ -56,7 +60,41 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
-    return GrowthData(curves, times, data.labels, clusters)
+    return GrowthData(curves, times, labels, clusters)
+end
+
+# ---------------------------------------------------------------------------
+# Step 0 — Replicate averaging
+# ---------------------------------------------------------------------------
+
+"""
+    _apply_replicate_averaging(curves, labels, opts) -> (Matrix{Float64}, Vector{String})
+
+When `opts.average_replicates=true`, average all curves that share the same label
+into a single row. Wells labelled `"b"` (blank) or `"X"` (discard) are excluded
+from averaging and dropped from the output — they are not biologically meaningful
+replicates. Returns the merged curves matrix and the deduplicated label vector.
+
+When `opts.average_replicates=false`, returns the inputs unchanged.
+"""
+function _apply_replicate_averaging(
+    curves::Matrix{Float64},
+    labels::Vector{String},
+    opts::FitOptions,
+)::Tuple{Matrix{Float64}, Vector{String}}
+    opts.average_replicates || return curves, labels
+
+    skip = ("b", "X")
+    unique_labels = unique(l for l in labels if l ∉ skip)
+    isempty(unique_labels) && return curves[Int[], :], String[]
+
+    n_tp  = size(curves, 2)
+    out   = Matrix{Float64}(undef, length(unique_labels), n_tp)
+    for (i, lbl) in enumerate(unique_labels)
+        idx = findall(==(lbl), labels)
+        out[i, :] = vec(mean(curves[idx, :], dims=1))
+    end
+    return out, unique_labels
 end
 
 # ---------------------------------------------------------------------------
