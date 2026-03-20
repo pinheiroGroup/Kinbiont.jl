@@ -140,6 +140,14 @@ Every field has a sensible default so users only override what they need.
   tail in constant pre-screening.
 - `cluster_q_high::Float64 = 0.95`: upper quantile used to estimate the signal
   tail in constant pre-screening.
+- `cluster_engine::Symbol = :clustering_jl`: which k-means implementation to use.
+  `:clustering_jl` (default) uses `Clustering.kmeans` from Clustering.jl — faster
+  and more stable. `:parallel_julia` uses a pure-Julia multi-threaded implementation
+  that runs `cluster_n_init` random restarts in a single-threaded outer loop with
+  `Base.Threads.@threads` parallelising the per-point assignment and centroid-update
+  steps. Useful when Clustering.jl is unavailable or for benchmarking purposes.
+- `cluster_n_init::Int = 3`: number of random restarts for `:parallel_julia` engine.
+  Ignored when `cluster_engine = :clustering_jl`.
 
 After clustering, `processed.wcss` holds the within-cluster sum of squares. Run
 `preprocess` for `n_clusters = 2, 3, 4, ...` and plot `wcss` vs `n_clusters` to
@@ -191,6 +199,8 @@ find the elbow and choose the optimal number of clusters.
     cluster_tol_const::Float64       = 1.5
     cluster_q_low::Float64           = 0.05
     cluster_q_high::Float64          = 0.95
+    cluster_engine::Symbol           = :clustering_jl
+    cluster_n_init::Int              = 3
 
     # --- fitting ---
     loss::String                = "RE"

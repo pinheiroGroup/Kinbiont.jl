@@ -6,8 +6,9 @@
 # Pure function — always returns a new GrowthData, never mutates the input.
 # Delegates all actual computation to the existing functions already in
 # pre_processing_functions.jl, and uses:
-#   - StatsBase.zscore   for z-score normalisation (replaces custom zscore_vector)
-#   - Clustering.kmeans  for k-means clustering (replaces custom implementation)
+#   - StatsBase.zscore       for z-score normalisation
+#   - Clustering.kmeans      for k-means (default, cluster_engine=:clustering_jl)
+#   - _km_parallel           for k-means (opt-in, cluster_engine=:parallel_julia)
 #   - linear slope t-test (Statistics stdlib) for flat-curve trend detection
 # =============================================================================
 
@@ -303,15 +304,11 @@ function _cluster(
     if opts.cluster_prescreen_constant
         labels, wcss = _cluster_with_prescreen(curves, zscored_all, opts)
     elseif opts.cluster_trend_test
-        k_dynamic = max(1, opts.n_clusters - 1)
-        result = kmeans(zscored_all', k_dynamic)
-        labels = assignments(result)
-        wcss   = result.totalcost
-        labels = _apply_trend_labels(curves, times, labels, opts.n_clusters)
+        k_dynamic      = max(1, opts.n_clusters - 1)
+        labels, wcss   = _run_kmeans(zscored_all, k_dynamic, opts)
+        labels         = _apply_trend_labels(curves, times, labels, opts.n_clusters)
     else
-        result = kmeans(zscored_all', opts.n_clusters)
-        labels = assignments(result)
-        wcss   = result.totalcost
+        labels, wcss   = _run_kmeans(zscored_all, opts.n_clusters, opts)
     end
 
     # Centroids in z-normalised space (shape prototypes, scale-independent).
@@ -369,9 +366,7 @@ function _cluster_with_prescreen(
     if !isempty(dynamic_idx) && opts.n_clusters > 1
         k_dynamic = opts.n_clusters - 1
         # k-means runs on z-normalised dynamic curves
-        result    = kmeans(zscored_all[dynamic_idx, :]', k_dynamic)
-        km_labels = assignments(result)
-        wcss      = result.totalcost
+        km_labels, wcss = _run_kmeans(zscored_all[dynamic_idx, :], k_dynamic, opts)
         for (pos, idx) in enumerate(dynamic_idx)
             labels[idx] = km_labels[pos]
         end
@@ -499,6 +494,115 @@ function _find_stationary_cutoff(data_mat::Matrix{Float64}, opts::FitOptions)::I
     end
 
     return n
+end
+
+# ---------------------------------------------------------------------------
+# Optional parallel k-means engine  (cluster_engine = :parallel_julia)
+# ---------------------------------------------------------------------------
+# A pure-Julia multi-threaded k-means implementation.  Assignment and centroid-
+# update steps use Base.Threads.@threads; the outer restart loop is sequential.
+# The interface mirrors Clustering.kmeans: returns (labels, totalcost).
+
+@inline function _km_sqdist(u, v)
+    s = 0.0
+    @inbounds @simd for j in eachindex(u, v)
+        d = u[j] - v[j]; s += d * d
+    end
+    s
+end
+
+function _km_init_random(X::Matrix{Float64}, k::Int, rng::AbstractRNG)
+    [copy(X[rand(rng, 1:size(X, 1)), :]) for _ in 1:k]
+end
+
+function _km_assign!(labels::Vector{Int}, X::Matrix{Float64},
+                     centroids::Vector{Vector{Float64}})::Float64
+    n = size(X, 1); k = length(centroids)
+    inertia = zeros(Float64, Threads.nthreads())
+    Threads.@threads for i in 1:n
+        xi = @view X[i, :]
+        best_k = 1
+        best_d = _km_sqdist(xi, centroids[1])
+        @inbounds for j in 2:k
+            d = _km_sqdist(xi, centroids[j])
+            if d < best_d; best_d = d; best_k = j; end
+        end
+        labels[i] = best_k
+        inertia[Threads.threadid()] += best_d
+    end
+    sum(inertia)
+end
+
+function _km_update!(centroids::Vector{Vector{Float64}},
+                     X::Matrix{Float64}, labels::Vector{Int})
+    n, m = size(X); k = length(centroids); T = Threads.nthreads()
+    sums = [zeros(Float64, m, k) for _ in 1:T]
+    cnts = [zeros(Int, k)        for _ in 1:T]
+    Threads.@threads for i in 1:n
+        t = Threads.threadid(); lbl = labels[i]
+        @views sums[t][:, lbl] .+= X[i, :]
+        cnts[t][lbl] += 1
+    end
+    S = sum(sums); C = sum(cnts)
+    for j in 1:k
+        if C[j] == 0
+            centroids[j] .= X[rand(1:n), :]
+        else
+            centroids[j] .= S[:, j] ./ C[j]
+        end
+    end
+end
+
+"""
+    _km_parallel(X, k; n_init, rng) -> (labels::Vector{Int}, totalcost::Float64)
+
+Pure-Julia multi-threaded k-means on the rows of `X`.  Runs `n_init` random
+restarts and returns the assignment with the lowest total SSE.  Convergence is
+declared when the SSE change between iterations falls below `1e-8`.
+"""
+function _km_parallel(
+    X::Matrix{Float64},
+    k::Int;
+    n_init::Int        = 3,
+    max_iter::Int      = 300,
+    tol::Float64       = 1e-8,
+    rng::AbstractRNG   = MersenneTwister(42),
+)::Tuple{Vector{Int}, Float64}
+    n = size(X, 1)
+    best_sse    = Inf
+    best_labels = zeros(Int, n)
+    labels      = zeros(Int, n)
+
+    for _ in 1:n_init
+        centroids = _km_init_random(X, k, rng)
+        prev_sse  = Inf
+        for _ in 1:max_iter
+            sse = _km_assign!(labels, X, centroids)
+            _km_update!(centroids, X, labels)
+            abs(prev_sse - sse) < tol && break
+            prev_sse = sse
+        end
+        sse = _km_assign!(labels, X, centroids)
+        if sse < best_sse
+            best_sse = sse
+            best_labels .= labels
+        end
+    end
+    return best_labels, best_sse
+end
+
+# Thin dispatch wrapper: calls the right engine and returns (labels, totalcost).
+function _run_kmeans(
+    X_zscored::Matrix{Float64},
+    k::Int,
+    opts::FitOptions,
+)::Tuple{Vector{Int}, Float64}
+    if opts.cluster_engine === :parallel_julia
+        return _km_parallel(X_zscored, k; n_init = opts.cluster_n_init)
+    else
+        result = kmeans(X_zscored', k)
+        return assignments(result), result.totalcost
+    end
 end
 
 export preprocess

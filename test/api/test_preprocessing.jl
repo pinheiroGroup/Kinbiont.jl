@@ -79,6 +79,30 @@
         @test data.curves == original_copy
     end
 
+    @testset "parallel_julia engine produces valid labels and WCSS" begin
+        n_k  = 2
+        opts = FitOptions(cluster=true, n_clusters=n_k, cluster_trend_test=false,
+                          cluster_engine=:parallel_julia, cluster_n_init=3)
+        processed = preprocess(data, opts)
+        @test processed.clusters isa Vector{Int}
+        @test length(processed.clusters) == size(data.curves, 1)
+        @test all(1 .<= processed.clusters .<= n_k)
+        @test processed.centroids isa Matrix{Float64}
+        @test size(processed.centroids) == (n_k, length(data.times))
+        @test processed.wcss isa Float64
+        @test processed.wcss >= 0.0
+    end
+
+    @testset "parallel_julia and clustering_jl engines agree on label range" begin
+        # Both engines must keep labels within 1..n_clusters regardless of engine
+        for engine in (:clustering_jl, :parallel_julia)
+            opts = FitOptions(cluster=true, n_clusters=3, cluster_trend_test=false,
+                              cluster_engine=engine)
+            processed = preprocess(data, opts)
+            @test all(1 .<= processed.clusters .<= 3)
+        end
+    end
+
     @testset "Smoothing (rolling_avg) does not error" begin
         opts = FitOptions(smooth=true, smooth_method=:rolling_avg, smooth_pt_avg=3)
         processed = preprocess(data, opts)
