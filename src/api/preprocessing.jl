@@ -15,6 +15,7 @@
 using Clustering: kmeans, assignments
 using StatsBase: zscore
 using Distributions: Normal, cdf
+using Random: AbstractRNG, MersenneTwister
 
 # ---------------------------------------------------------------------------
 # Public entry point
