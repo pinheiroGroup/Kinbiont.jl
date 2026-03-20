@@ -513,7 +513,7 @@ end
 end
 
 function _km_init_random(X::Matrix{Float64}, k::Int, rng::AbstractRNG)
-    [copy(X[rand(rng, 1:size(X, 1)), :]) for _ in 1:k]
+    [@views copy(X[rand(rng, 1:size(X, 1)), :]) for _ in 1:k]
 end
 
 function _km_assign!(labels::Vector{Int}, X::Matrix{Float64},
