@@ -519,7 +519,10 @@ end
 function _km_assign!(labels::Vector{Int}, X::Matrix{Float64},
                      centroids::Vector{Vector{Float64}})::Float64
     n = size(X, 1); k = length(centroids)
-    inertia = zeros(Float64, Threads.nthreads())
+    # @threads parallelises the assignment; each i writes only to labels[i] so
+    # there is no race condition. SSE is accumulated in a separate sequential
+    # pass to avoid threadid()-based per-thread arrays, which break on Julia
+    # 1.12+ where threadid() can exceed nthreads() for migrating tasks.
     Threads.@threads for i in 1:n
         xi = @view X[i, :]
         best_k = 1
@@ -529,27 +532,29 @@ function _km_assign!(labels::Vector{Int}, X::Matrix{Float64},
             if d < best_d; best_d = d; best_k = j; end
         end
         labels[i] = best_k
-        inertia[Threads.threadid()] += best_d
     end
-    sum(inertia)
+    sse = 0.0
+    for i in 1:n
+        sse += _km_sqdist(@view(X[i, :]), centroids[labels[i]])
+    end
+    sse
 end
 
 function _km_update!(centroids::Vector{Vector{Float64}},
                      X::Matrix{Float64}, labels::Vector{Int})
-    n, m = size(X); k = length(centroids); T = Threads.nthreads()
-    sums = [zeros(Float64, m, k) for _ in 1:T]
-    cnts = [zeros(Int, k)        for _ in 1:T]
-    Threads.@threads for i in 1:n
-        t = Threads.threadid(); lbl = labels[i]
-        @views sums[t][:, lbl] .+= X[i, :]
-        cnts[t][lbl] += 1
+    n, m = size(X); k = length(centroids)
+    sums = zeros(Float64, m, k)
+    cnts = zeros(Int, k)
+    for i in 1:n
+        lbl = labels[i]
+        @views sums[:, lbl] .+= X[i, :]
+        cnts[lbl] += 1
     end
-    S = sum(sums); C = sum(cnts)
     for j in 1:k
-        if C[j] == 0
+        if cnts[j] == 0
             centroids[j] .= X[rand(1:n), :]
         else
-            centroids[j] .= S[:, j] ./ C[j]
+            centroids[j] .= sums[:, j] ./ cnts[j]
         end
     end
 end
