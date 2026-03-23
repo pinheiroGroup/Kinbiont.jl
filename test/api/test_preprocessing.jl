@@ -18,6 +18,40 @@
         @test processed.curves ≈ data.curves .- 0.05
     end
 
+    @testset "Replicate averaging collapses duplicate labels" begin
+        # 4 curves: A appears twice, B appears twice
+        rep_curves = vcat(curves[1:2, :], curves[3:4, :])
+        rep_labels = ["A", "A", "B", "B"]
+        rep_data   = GrowthData(rep_curves, times, rep_labels)
+
+        opts = FitOptions(average_replicates=true)
+        processed = preprocess(rep_data, opts)
+
+        @test size(processed.curves, 1) == 2          # collapsed to 2 unique labels
+        @test processed.labels == ["A", "B"]
+        @test processed.curves[1, :] ≈ mean(rep_curves[1:2, :], dims=1)[:]
+        @test processed.curves[2, :] ≈ mean(rep_curves[3:4, :], dims=1)[:]
+    end
+
+    @testset "Replicate averaging drops 'b' and 'X' wells" begin
+        rep_curves = vcat(curves[1:2, :], curves[3:4, :], curves[5:5, :])
+        rep_labels = ["A", "A", "b", "X", "B"]
+        rep_data   = GrowthData(rep_curves, times, rep_labels)
+
+        opts = FitOptions(average_replicates=true)
+        processed = preprocess(rep_data, opts)
+
+        @test processed.labels == ["A", "B"]
+        @test size(processed.curves, 1) == 2
+    end
+
+    @testset "Replicate averaging is a no-op when disabled" begin
+        opts = FitOptions(average_replicates=false)
+        processed = preprocess(data, opts)
+        @test processed.curves ≈ data.curves
+        @test processed.labels == data.labels
+    end
+
     @testset "Clustering assigns cluster ids" begin
         opts = FitOptions(cluster=true, n_clusters=2, cluster_trend_test=false)
         processed = preprocess(data, opts)
