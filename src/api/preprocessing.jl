@@ -183,6 +183,10 @@ function _apply_smoothing(
         return _apply_gaussian_smoothing(curves, times, opts)
     end
 
+    if opts.smooth_method == :boxcar
+        return _apply_boxcar_smoothing(curves, times, opts)
+    end
+
     smoothing_str = _smoothing_symbol_to_string(opts.smooth_method)
     n_curves = size(curves, 1)
 
@@ -225,6 +229,41 @@ _smoothing_symbol_to_string(s::Symbol) = Dict(
     :rolling_avg => "rolling_avg",
     :none        => "NO",
 )[s]
+
+# ---------------------------------------------------------------------------
+# Boxcar (symmetric moving average) smoothing
+# Keeps the original time grid; each point is replaced by the mean of the
+# symmetric window [j-half, j+half], clamped at the array boundaries.
+# ---------------------------------------------------------------------------
+
+"""
+    _apply_boxcar_smoothing(curves, times, opts) -> (Matrix{Float64}, Vector{Float64})
+
+Apply a centered boxcar (symmetric moving-average) filter to every curve.
+Unlike `:rolling_avg`, the time grid is unchanged and no points are dropped.
+Window width is `opts.boxcar_window` (must be ≥ 1).
+"""
+function _apply_boxcar_smoothing(
+    curves::Matrix{Float64},
+    times::Vector{Float64},
+    opts::FitOptions,
+)::Tuple{Matrix{Float64}, Vector{Float64}}
+    w = max(1, opts.boxcar_window)
+    half = w ÷ 2
+    n_curves, n_tp = size(curves)
+    smoothed = Matrix{Float64}(undef, n_curves, n_tp)
+
+    for i in 1:n_curves
+        curve = @view curves[i, :]
+        for j in 1:n_tp
+            lo = max(1, j - half)
+            hi = min(n_tp, j + half)
+            smoothed[i, j] = mean(@view curve[lo:hi])
+        end
+    end
+
+    return smoothed, times   # time grid is preserved
+end
 
 # ---------------------------------------------------------------------------
 # Gaussian kernel smoothing (no external dependencies)
