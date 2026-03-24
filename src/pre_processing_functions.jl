@@ -68,22 +68,28 @@ end
     data::Matrix{Float64};
     method="rolling_avg",
     pt_avg=7,
-    thr_lowess=0.05
+    thr_lowess=0.05,
+    gaussian_h_mult=2.0,
+    gaussian_time_grid=nothing
 )
 
 # Arguments:
 
 - `data::Matrix{Float64}`: Matrix of size 2xN, where N is the number of time points (single curve).
 
-- `method::String = "rolling_avg"`: Method for smoothing the data. Options include `"NO"`, `"rolling_avg"` (rolling average), and `"lowess"`.
+- `method::String = "rolling_avg"`: Method for smoothing the data. Options include `"NO"`, `"rolling_avg"` (rolling average), `"lowess"`, and `"gaussian"` (Nadaraya–Watson kernel smoother).
 
 - `pt_avg::Int = 7`: Number of points used for rolling average smoothing or initial condition generation.
 
 - `thr_lowess::Float64 = 0.05`: Parameter for lowess smoothing.
 
+- `gaussian_h_mult::Float64 = 2.0`: Bandwidth multiplier for Gaussian smoothing (bandwidth = `gaussian_h_mult × median(Δt)`).
+
+- `gaussian_time_grid::Union{Nothing,Vector{Float64}} = nothing`: Optional target time grid for Gaussian smoothing. When `nothing`, the input times are used as query points.
+
 # Output:
 
-- `Matrix{Float64}`: Array of smoothed data.
+- `Matrix{Float64}`: Array of smoothed data (row 1 = times, row 2 = values). For `"gaussian"` with a custom `gaussian_time_grid`, the output length may differ from the input.
 
 
 """
@@ -91,10 +97,12 @@ function smoothing_data(
     data::Matrix{Float64};
     method="rolling_avg",
     pt_avg=7,
-    thr_lowess=0.05
+    thr_lowess=0.05,
+    gaussian_h_mult=2.0,
+    gaussian_time_grid=nothing,
 )
 
-    
+
     if method == "rolling_avg" && pt_avg < 3
         println("WARNING: the number of points to do rolling average is too low")
         println("changing the method of smoothing to lowess")
@@ -116,6 +124,12 @@ function smoothing_data(
         model_fit = lowess_model(data[1, :], data[2, :], thr_lowess)
         smoothed_data = Matrix(transpose(hcat(data[1, :], model_fit)))
 
+    elseif method == "gaussian"
+
+        tq     = isnothing(gaussian_time_grid) ? data[1, :] : gaussian_time_grid
+        values = _gaussian_smooth_curve(data[1, :], data[2, :], tq; h_mult=gaussian_h_mult)
+        smoothed_data = Matrix(transpose(hcat(tq, values)))
+
     else
 
         #  println(" Warning wrong smoothing input, this part is skipped")
@@ -124,6 +138,49 @@ function smoothing_data(
 
     end
     return smoothed_data
+end
+
+# ---------------------------------------------------------------------------
+# Gaussian kernel smoothing helpers (used by smoothing_data method="gaussian")
+# ---------------------------------------------------------------------------
+
+_gaussian_kernel(u::Float64) = exp(-0.5 * u * u)
+
+function _gaussian_bandwidth(t::Vector{Float64}; h_mult::Float64 = 2.0)
+    t_finite = filter(isfinite, t)
+    length(t_finite) < 3 && return 1.0
+    dt = median(diff(sort(t_finite)))
+    (isfinite(dt) && dt > 0.0) || return 1.0
+    return h_mult * dt
+end
+
+function _gaussian_smooth_curve(
+    t::Vector{Float64},
+    y::Vector{Float64},
+    tq::Vector{Float64};
+    h_mult::Float64 = 2.0,
+)::Vector{Float64}
+    mask = isfinite.(t) .& isfinite.(y)
+    t2 = t[mask]
+    y2 = max.(y[mask], 1e-9)
+
+    length(t2) == 0 && return fill(0.0, length(tq))
+    length(t2) == 1 && return fill(y2[1], length(tq))
+
+    h    = _gaussian_bandwidth(t2; h_mult)
+    invh = 1.0 / h
+    yhat = Vector{Float64}(undef, length(tq))
+
+    for (j, x) in enumerate(tq)
+        ww = _gaussian_kernel.((x .- t2) .* invh)
+        s  = sum(ww)
+        if s <= 1e-12
+            yhat[j] = y2[argmin(abs.(t2 .- x))]
+        else
+            yhat[j] = sum(ww .* y2) / s
+        end
+    end
+    return yhat
 end
 
 function blank_subtraction(
@@ -136,10 +193,10 @@ function blank_subtraction(
 
         blank_values = mean([mean(dfs_data[k]) for k in list_of_blank])
 
-    elseif method == "time_blank"
+    elseif method == "time_avg"
 
         blank_values =
-            [mean([dfs_data[k][j] for k in list_of_blank]) for j in eachindex(times_data)]
+            [mean([dfs_data[k][j] for k in list_of_blank]) for j in eachindex(dfs_data[first(list_of_blank)])]
 
     else
 

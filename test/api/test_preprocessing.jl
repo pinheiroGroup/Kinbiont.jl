@@ -56,6 +56,30 @@
         @test size(processed.centroids) == (n_k, length(data.times))
     end
 
+    @testset "cluster_trend_test: lag+growth+stationary not mislabeled as flat" begin
+        n_lag  = 15
+        n_grow = 3
+        n_stat = 15
+        od_low  = 0.05
+        od_high = 1.5
+        grow_vals = [od_low + (od_high - od_low) * i / (n_grow + 1) for i in 1:n_grow]
+        growing_curve = vcat(fill(od_low, n_lag), grow_vals, fill(od_high, n_stat))
+        flat_curve    = fill(od_low, n_lag + n_grow + n_stat)
+        n_tp      = n_lag + n_grow + n_stat
+        tp_times  = collect(0.0:(n_tp - 1))
+        tp_curves = Matrix(hcat(growing_curve, flat_curve)')  # 2 × n_tp
+        tp_data   = GrowthData(tp_curves, tp_times, ["growing", "flat"])
+
+        n_k  = 2
+        opts = FitOptions(cluster=true, n_clusters=n_k, cluster_trend_test=true)
+        processed = preprocess(tp_data, opts)
+
+        # The flat curve must receive the flat label (n_clusters)
+        @test processed.clusters[2] == n_k
+        # The growing curve must NOT receive the flat label
+        @test processed.clusters[1] != n_k
+    end
+
     @testset "Constant pre-screening keeps labels within 1..n_clusters" begin
         # Mix flat and growing curves so pre-screening has something to detect
         flat_curves = hcat(fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),
