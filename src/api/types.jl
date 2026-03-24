@@ -90,14 +90,21 @@ Every field has a sensible default so users only override what they need.
 
 # Preprocessing fields
 - `smooth::Bool = false`: apply smoothing before fitting.
-- `smooth_method::Symbol = :lowess`: `:lowess`, `:rolling_avg`, `:gaussian`, or `:none`.
+- `smooth_method::Symbol = :lowess`: `:lowess`, `:rolling_avg`, `:gaussian`, `:boxcar`, or `:none`.
 - `smooth_pt_avg::Int = 7`: window size for `:rolling_avg`.
+- `boxcar_window::Int = 5`: half-width of the symmetric boxcar filter (`:boxcar` method).
+  Each point is averaged over `[j - boxcar_window÷2, j + boxcar_window÷2]`. The original
+  time grid is preserved (no points dropped).
 - `lowess_frac::Float64 = 0.05`: bandwidth fraction for `:lowess`.
 - `gaussian_h_mult::Float64 = 2.0`: bandwidth multiplier for Gaussian smoothing
   (bandwidth = `gaussian_h_mult × median(Δt)`).
 - `gaussian_time_grid::Union{Nothing,Vector{Float64}} = nothing`: optional target
   time grid for Gaussian smoothing; when set, smoothed curves are evaluated at
   these times (interpolation). `nothing` keeps the original time grid.
+- `average_replicates::Bool = false`: before any other preprocessing step, average all
+  curves that share the same label into a single curve. Wells labelled `"b"` (blank) or
+  `"X"` (discard) are excluded and dropped from the output. Useful when the same
+  biological condition was measured in multiple wells.
 - `blank_subtraction::Bool = false`: subtract a blank value from all curves.
 - `blank_value::Float64 = 0.0`: constant blank to subtract when `blank_subtraction=true`.
 - `correct_negatives::Bool = false`: handle negative values after blank subtraction.
@@ -164,9 +171,11 @@ find the elbow and choose the optimal number of clusters.
     smooth::Bool                = false
     smooth_method::Symbol       = :lowess
     smooth_pt_avg::Int          = 7
+    boxcar_window::Int          = 5
     lowess_frac::Float64        = 0.05
     gaussian_h_mult::Float64    = 2.0
     gaussian_time_grid::Union{Nothing, Vector{Float64}} = nothing
+    average_replicates::Bool    = false
     blank_subtraction::Bool     = false
     blank_value::Float64        = 0.0
     correct_negatives::Bool     = false

@@ -44,6 +44,10 @@ processed = preprocess(raw_data, opts)
 function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     curves = data.curves   # n_curves × n_tp, never mutated in place
     times  = data.times
+    labels = data.labels
+
+    # Replicate averaging collapses curves with identical labels before any other step
+    curves, labels = _apply_replicate_averaging(curves, labels, opts)
 
     curves = _apply_scattering_correction(curves, times, opts)
 
@@ -57,6 +61,40 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
     return GrowthData(curves, times, data.labels, clusters, centroids, wcss)
+end
+
+# ---------------------------------------------------------------------------
+# Step 0 — Replicate averaging
+# ---------------------------------------------------------------------------
+
+"""
+    _apply_replicate_averaging(curves, labels, opts) -> (Matrix{Float64}, Vector{String})
+
+When `opts.average_replicates=true`, average all curves that share the same label
+into a single row. Wells labelled `"b"` (blank) or `"X"` (discard) are excluded
+from averaging and dropped from the output — they are not biologically meaningful
+replicates. Returns the merged curves matrix and the deduplicated label vector.
+
+When `opts.average_replicates=false`, returns the inputs unchanged.
+"""
+function _apply_replicate_averaging(
+    curves::Matrix{Float64},
+    labels::Vector{String},
+    opts::FitOptions,
+)::Tuple{Matrix{Float64}, Vector{String}}
+    opts.average_replicates || return curves, labels
+
+    skip = ("b", "X")
+    unique_labels = unique(l for l in labels if l ∉ skip)
+    isempty(unique_labels) && return curves[Int[], :], String[]
+
+    n_tp  = size(curves, 2)
+    out   = Matrix{Float64}(undef, length(unique_labels), n_tp)
+    for (i, lbl) in enumerate(unique_labels)
+        idx = findall(==(lbl), labels)
+        out[i, :] = vec(mean(curves[idx, :], dims=1))
+    end
+    return out, unique_labels
 end
 
 # ---------------------------------------------------------------------------
@@ -191,7 +229,42 @@ _smoothing_symbol_to_string(s::Symbol) = Dict(
 )[s]
 
 # ---------------------------------------------------------------------------
-# Step 5 — K-means clustering on z-scored curves
+# Boxcar (symmetric moving average) smoothing
+# Keeps the original time grid; each point is replaced by the mean of the
+# symmetric window [j-half, j+half], clamped at the array boundaries.
+# ---------------------------------------------------------------------------
+
+"""
+    _apply_boxcar_smoothing(curves, times, opts) -> (Matrix{Float64}, Vector{Float64})
+
+Apply a centered boxcar (symmetric moving-average) filter to every curve.
+Unlike `:rolling_avg`, the time grid is unchanged and no points are dropped.
+Window width is `opts.boxcar_window` (must be ≥ 1).
+"""
+function _apply_boxcar_smoothing(
+    curves::Matrix{Float64},
+    times::Vector{Float64},
+    opts::FitOptions,
+)::Tuple{Matrix{Float64}, Vector{Float64}}
+    w = max(1, opts.boxcar_window)
+    half = w ÷ 2
+    n_curves, n_tp = size(curves)
+    smoothed = Matrix{Float64}(undef, n_curves, n_tp)
+
+    for i in 1:n_curves
+        curve = @view curves[i, :]
+        for j in 1:n_tp
+            lo = max(1, j - half)
+            hi = min(n_tp, j + half)
+            smoothed[i, j] = mean(@view curve[lo:hi])
+        end
+    end
+
+    return smoothed, times   # time grid is preserved
+end
+
+# ---------------------------------------------------------------------------
+# # Step 5 — K-means clustering on z-scored curves
 # ---------------------------------------------------------------------------
 
 """
