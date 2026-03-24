@@ -60,7 +60,7 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
-    return GrowthData(curves, times, data.labels, clusters, centroids, wcss)
+    return GrowthData(curves, times, labels, clusters, centroids, wcss)
 end
 
 # ---------------------------------------------------------------------------
@@ -178,6 +178,8 @@ function _apply_smoothing(
 )::Tuple{Matrix{Float64}, Vector{Float64}}
     opts.smooth || return curves, times
     opts.smooth_method == :none && return curves, times
+
+    opts.smooth_method == :boxcar && return _apply_boxcar_smoothing(curves, times, opts)
 
     smoothing_str = _smoothing_symbol_to_string(opts.smooth_method)
     n_curves = size(curves, 1)
