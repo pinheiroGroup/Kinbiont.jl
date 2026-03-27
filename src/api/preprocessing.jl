@@ -14,6 +14,7 @@
 using Clustering: kmeans, assignments
 using StatsBase: zscore
 using Distributions: TDist, cdf
+using Random: MersenneTwister, GLOBAL_RNG
 
 # ---------------------------------------------------------------------------
 # Public entry point
@@ -179,10 +180,12 @@ function _apply_smoothing(
     opts.smooth || return curves, times
     opts.smooth_method == :none && return curves, times
 
+    n_curves = size(curves, 1)
+    n_curves == 0 && return curves, times
+
     opts.smooth_method == :boxcar && return _apply_boxcar_smoothing(curves, times, opts)
 
     smoothing_str = _smoothing_symbol_to_string(opts.smooth_method)
-    n_curves = size(curves, 1)
 
     # Process first curve to determine output length (smoothing may shorten data,
     # and :gaussian with a custom time grid may produce a different number of points)
@@ -266,8 +269,20 @@ function _apply_boxcar_smoothing(
 end
 
 # ---------------------------------------------------------------------------
-# # Step 5 — K-means clustering on z-scored curves
+# Step 5 — K-means clustering on z-scored curves
 # ---------------------------------------------------------------------------
+
+# Run k-means `opts.kmeans_n_init` times and return the result with the lowest WCSS.
+# Uses a seeded MersenneTwister when `opts.kmeans_seed != 0` for reproducibility.
+function _kmeans_best(X::AbstractMatrix{Float64}, k::Int, opts::FitOptions)
+    rng  = opts.kmeans_seed == 0 ? GLOBAL_RNG : MersenneTwister(opts.kmeans_seed)
+    best = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
+    for _ in 2:opts.kmeans_n_init
+        r = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
+        r.totalcost < best.totalcost && (best = r)
+    end
+    return best
+end
 
 """
     _cluster(curves, times, opts) -> (labels, centroids, wcss)
@@ -294,6 +309,8 @@ function _cluster(
     times::Vector{Float64},
     opts::FitOptions,
 )::Tuple{Vector{Int}, Matrix{Float64}, Float64}
+    size(curves, 1) == 0 && return Int[], zeros(Float64, opts.n_clusters, size(curves, 2)), 0.0
+
     # Z-score all curves once; used for both k-means and centroid computation.
     zscored_all = _zscore_rows(curves)
 
@@ -301,12 +318,12 @@ function _cluster(
         labels, wcss = _cluster_with_prescreen(curves, zscored_all, opts)
     elseif opts.cluster_trend_test
         k_dynamic = max(1, opts.n_clusters - 1)
-        result = kmeans(zscored_all', k_dynamic)
+        result = _kmeans_best(zscored_all', k_dynamic, opts)
         labels = assignments(result)
         wcss   = result.totalcost
         labels = _apply_trend_labels(curves, times, labels, opts.n_clusters)
     else
-        result = kmeans(zscored_all', opts.n_clusters)
+        result = _kmeans_best(zscored_all', opts.n_clusters, opts)
         labels = assignments(result)
         wcss   = result.totalcost
     end
@@ -366,7 +383,7 @@ function _cluster_with_prescreen(
     if !isempty(dynamic_idx) && opts.n_clusters > 1
         k_dynamic = opts.n_clusters - 1
         # k-means runs on z-normalised dynamic curves
-        result    = kmeans(zscored_all[dynamic_idx, :]', k_dynamic)
+        result    = _kmeans_best(zscored_all[dynamic_idx, :]', k_dynamic, opts)
         km_labels = assignments(result)
         wcss      = result.totalcost
         for (pos, idx) in enumerate(dynamic_idx)
@@ -384,7 +401,7 @@ end
 """
     _compute_centroids(curves, labels, n_clusters) -> Matrix{Float64}
 
-Compute the mean curve (in original space) for each cluster.
+Compute the mean curve (in z-normalised space) for each cluster.
 Returns an `n_clusters × n_timepoints` matrix; empty clusters produce a zero row.
 """
 function _compute_centroids(
@@ -418,8 +435,7 @@ function _zscore_rows(curves::Matrix{Float64})::Matrix{Float64}
 end
 
 # Assign a dedicated cluster id to curves with no significant linear trend.
-# Uses a t-test on the OLS slope (p ≥ 0.05 → flat), implemented with Statistics
-# stdlib only — no extra package required.
+# Uses a two-tailed t-test on the OLS slope (p ≥ 0.05 → flat).
 # `flat_id` is passed in by the caller; it must already be within 1..n_clusters.
 function _apply_trend_labels(
     curves::Matrix{Float64},
@@ -442,7 +458,9 @@ function _apply_trend_labels(
         s2        = sum(residuals .^ 2) / (n - 2)
         se_slope  = sqrt(s2 / ss_t)
         if se_slope <= 0 || !isfinite(se_slope)
-            new_labels[i] = flat_id
+            if abs(slope) < 1e-12
+                new_labels[i] = flat_id
+            end
             continue
         end
         t_stat   = slope / se_slope

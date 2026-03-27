@@ -147,6 +147,13 @@ Every field has a sensible default so users only override what they need.
   tail in constant pre-screening.
 - `cluster_q_high::Float64 = 0.95`: upper quantile used to estimate the signal
   tail in constant pre-screening.
+- `kmeans_n_init::Int = 10`: number of times k-means is run with different random
+  initialisations; the run with the lowest WCSS is kept.
+- `kmeans_max_iters::Int = 300`: maximum number of Lloyd iterations per k-means run.
+- `kmeans_tol::Float64 = 1e-6`: convergence tolerance (relative change in WCSS).
+- `kmeans_seed::Int = 0`: random seed for k-means initialisation. `0` means
+  non-reproducible (uses the global RNG); any other value seeds a `MersenneTwister`
+  so results are fully reproducible.
 
 After clustering, `processed.wcss` holds the within-cluster sum of squares. Run
 `preprocess` for `n_clusters = 2, 3, 4, ...` and plot `wcss` vs `n_clusters` to
@@ -200,6 +207,10 @@ find the elbow and choose the optimal number of clusters.
     cluster_tol_const::Float64       = 1.5
     cluster_q_low::Float64           = 0.05
     cluster_q_high::Float64          = 0.95
+    kmeans_n_init::Int               = 10
+    kmeans_max_iters::Int            = 300
+    kmeans_tol::Float64              = 1e-6
+    kmeans_seed::Int                 = 0
 
     # --- fitting ---
     loss::String                = "RE"
