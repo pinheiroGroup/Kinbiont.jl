@@ -38,6 +38,40 @@
         @test processed.wcss >= 0.0
     end
 
+    @testset "Replicate averaging collapses duplicate labels" begin
+        # 4 curves: A appears twice, B appears twice
+        rep_curves = vcat(curves[1:2, :], curves[3:4, :])
+        rep_labels = ["A", "A", "B", "B"]
+        rep_data   = GrowthData(rep_curves, times, rep_labels)
+
+        opts = FitOptions(average_replicates=true)
+        processed = preprocess(rep_data, opts)
+
+        @test size(processed.curves, 1) == 2          # collapsed to 2 unique labels
+        @test processed.labels == ["A", "B"]
+        @test processed.curves[1, :] ≈ mean(rep_curves[1:2, :], dims=1)[:]
+        @test processed.curves[2, :] ≈ mean(rep_curves[3:4, :], dims=1)[:]
+    end
+
+    @testset "Replicate averaging drops 'b' and 'X' wells" begin
+        rep_curves = vcat(curves[1:2, :], curves[3:4, :], curves[5:5, :])
+        rep_labels = ["A", "A", "b", "X", "B"]
+        rep_data   = GrowthData(rep_curves, times, rep_labels)
+
+        opts = FitOptions(average_replicates=true)
+        processed = preprocess(rep_data, opts)
+
+        @test processed.labels == ["A", "B"]
+        @test size(processed.curves, 1) == 2
+    end
+
+    @testset "Replicate averaging is a no-op when disabled" begin
+        opts = FitOptions(average_replicates=false)
+        processed = preprocess(data, opts)
+        @test processed.curves ≈ data.curves
+        @test processed.labels == data.labels
+    end
+
     @testset "Exponential prototype cluster labels within 1..n_clusters" begin
         opts = FitOptions(cluster=true, n_clusters=3,
                           cluster_trend_test=false, cluster_exp_prototype=true)
@@ -106,6 +140,16 @@
         # rolling_avg may shorten the time dimension; number of curves is preserved
         @test size(processed.curves, 1) == size(data.curves, 1)
         @test size(processed.curves, 2) <= size(data.curves, 2)
+    end
+
+    @testset "Smoothing (boxcar) preserves shape and time grid" begin
+        opts = FitOptions(smooth=true, smooth_method=:boxcar, boxcar_window=3)
+        processed = preprocess(data, opts)
+        # boxcar is length-preserving: shape and times identical to input
+        @test size(processed.curves) == size(data.curves)
+        @test processed.times == data.times
+        # smoothing must change at least some values
+        @test processed.curves != data.curves
     end
 
     @testset "Smoothing (gaussian) keeps original times when no grid given" begin
