@@ -147,6 +147,13 @@ Every field has a sensible default so users only override what they need.
   tail in constant pre-screening.
 - `cluster_q_high::Float64 = 0.95`: upper quantile used to estimate the signal
   tail in constant pre-screening.
+- `cluster_exp_prototype::Bool = false`: add a dedicated "exponential" cluster
+  (label `n_clusters - 1` when used together with constant pre-screening, or
+  `n_clusters` when used alone). For each curve, the distance to the nearest
+  exponential shape prototype (z-scored, bases 2⁶..2¹⁶) is compared to the
+  distance to the nearest k-means centroid; the exponential label wins when
+  it is closer. Requires `n_clusters ≥ 3` when combined with constant pre-screening
+  (`n_clusters - 1` for exponential, `n_clusters` for constant), or ≥ 2 otherwise.
 - `kmeans_n_init::Int = 10`: number of times k-means is run with different random
   initialisations; the run with the lowest WCSS is kept.
 - `kmeans_max_iters::Int = 300`: maximum number of Lloyd iterations per k-means run.
@@ -207,6 +214,7 @@ find the elbow and choose the optimal number of clusters.
     cluster_tol_const::Float64       = 1.5
     cluster_q_low::Float64           = 0.05
     cluster_q_high::Float64          = 0.95
+    cluster_exp_prototype::Bool      = false
     kmeans_n_init::Int               = 10
     kmeans_max_iters::Int            = 300
     kmeans_tol::Float64              = 1e-6

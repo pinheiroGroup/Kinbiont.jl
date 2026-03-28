@@ -72,6 +72,27 @@
         @test processed.wcss >= 0.0
     end
 
+    @testset "Exponential prototype cluster labels within 1..n_clusters" begin
+        opts = FitOptions(cluster=true, n_clusters=3,
+                          cluster_trend_test=false, cluster_exp_prototype=true)
+        processed = preprocess(data, opts)
+        @test all(1 .<= processed.clusters .<= 3)
+    end
+
+    @testset "Exponential prototype reassigns a clearly exponential curve" begin
+        # Build a plate where one curve is strongly exponential
+        t = data.times
+        exp_curve = 0.01 .* exp.(0.8 .* t)
+        mixed = vcat(data.curves, reshape(exp_curve, 1, :))
+        mixed_data = GrowthData(mixed, t, ["c$i" for i in 1:6])
+        opts = FitOptions(cluster=true, n_clusters=3,
+                          cluster_trend_test=false, cluster_exp_prototype=true)
+        processed = preprocess(mixed_data, opts)
+        exp_label = 3   # n_clusters when no constant pre-screening
+        # the exponential curve (last row) should be in the exp cluster
+        @test processed.clusters[end] == exp_label
+    end
+
     @testset "WCSS decreases as n_clusters increases" begin
         # More clusters → lower total SSE (elbow-plot property)
         wcss_vals = map(2:4) do k
