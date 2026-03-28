@@ -28,12 +28,16 @@ using DataFrames
     @testset "Summary CSV structure" begin
         df = CSV.read(paths.summary, DataFrame)
         @test nrow(df) == 2
-        @test "label"      in names(df)
-        @test "best_model" in names(df)
-        @test "n_params"   in names(df)
-        @test "aic"        in names(df)
-        @test "loss"       in names(df)
-        @test "param_1"    in names(df)
+        @test "label"       in names(df)
+        @test "best_model"  in names(df)
+        @test "n_params"    in names(df)
+        @test "param_names" in names(df)
+        @test "aic"         in names(df)
+        @test "loss"        in names(df)
+        @test "param_1"     in names(df)
+        # NL_logistic param names: N_max, growth_rate, lag
+        @test all(occursin("growth_rate", s) for s in df.param_names)
+        @test all(occursin("N_max",       s) for s in df.param_names)
     end
 
     @testset "Fitted curves CSV structure" begin
@@ -48,11 +52,12 @@ using DataFrames
 
     @testset "All-models CSV structure" begin
         df = CSV.read(paths.all_models, DataFrame)
-        @test "label"      in names(df)
-        @test "model_name" in names(df)
-        @test "aic"        in names(df)
-        @test "loss"       in names(df)
-        @test "is_best"    in names(df)
+        @test "label"       in names(df)
+        @test "model_name"  in names(df)
+        @test "param_names" in names(df)
+        @test "aic"         in names(df)
+        @test "loss"        in names(df)
+        @test "is_best"     in names(df)
         # one model, two curves → 2 rows
         @test nrow(df) == 2 * length(spec.models)
         # exactly one is_best per label
@@ -60,5 +65,7 @@ using DataFrames
             subset_df = filter(row -> row.label == lbl, df)
             @test sum(subset_df.is_best) == 1
         end
+        # param_names column is non-empty for known models
+        @test all(!isempty, df.param_names)
     end
 end

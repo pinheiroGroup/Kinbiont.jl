@@ -94,6 +94,61 @@
         @test processed.wcss >= 0.0
     end
 
+    @testset "Replicate averaging collapses duplicate labels" begin
+        # 4 curves: A appears twice, B appears twice
+        rep_curves = vcat(curves[1:2, :], curves[3:4, :])
+        rep_labels = ["A", "A", "B", "B"]
+        rep_data   = GrowthData(rep_curves, times, rep_labels)
+
+        opts = FitOptions(average_replicates=true)
+        processed = preprocess(rep_data, opts)
+
+        @test size(processed.curves, 1) == 2          # collapsed to 2 unique labels
+        @test processed.labels == ["A", "B"]
+        @test processed.curves[1, :] ≈ mean(rep_curves[1:2, :], dims=1)[:]
+        @test processed.curves[2, :] ≈ mean(rep_curves[3:4, :], dims=1)[:]
+    end
+
+    @testset "Replicate averaging drops 'b' and 'X' wells" begin
+        rep_curves = vcat(curves[1:2, :], curves[3:4, :], curves[5:5, :])
+        rep_labels = ["A", "A", "b", "X", "B"]
+        rep_data   = GrowthData(rep_curves, times, rep_labels)
+
+        opts = FitOptions(average_replicates=true)
+        processed = preprocess(rep_data, opts)
+
+        @test processed.labels == ["A", "B"]
+        @test size(processed.curves, 1) == 2
+    end
+
+    @testset "Replicate averaging is a no-op when disabled" begin
+        opts = FitOptions(average_replicates=false)
+        processed = preprocess(data, opts)
+        @test processed.curves ≈ data.curves
+        @test processed.labels == data.labels
+    end
+
+    @testset "Exponential prototype cluster labels within 1..n_clusters" begin
+        opts = FitOptions(cluster=true, n_clusters=3,
+                          cluster_trend_test=false, cluster_exp_prototype=true)
+        processed = preprocess(data, opts)
+        @test all(1 .<= processed.clusters .<= 3)
+    end
+
+    @testset "Exponential prototype reassigns a clearly exponential curve" begin
+        # Build a plate where one curve is strongly exponential
+        t = data.times
+        exp_curve = 0.01 .* exp.(0.8 .* t)
+        mixed = vcat(data.curves, reshape(exp_curve, 1, :))
+        mixed_data = GrowthData(mixed, t, ["c$i" for i in 1:6])
+        opts = FitOptions(cluster=true, n_clusters=3,
+                          cluster_trend_test=false, cluster_exp_prototype=true)
+        processed = preprocess(mixed_data, opts)
+        exp_label = 3   # n_clusters when no constant pre-screening
+        # the exponential curve (last row) should be in the exp cluster
+        @test processed.clusters[end] == exp_label
+    end
+
     @testset "WCSS decreases as n_clusters increases" begin
         # More clusters → lower total SSE (elbow-plot property)
         wcss_vals = map(2:4) do k
