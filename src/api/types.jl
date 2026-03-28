@@ -90,14 +90,21 @@ Every field has a sensible default so users only override what they need.
 
 # Preprocessing fields
 - `smooth::Bool = false`: apply smoothing before fitting.
-- `smooth_method::Symbol = :lowess`: `:lowess`, `:rolling_avg`, `:gaussian`, or `:none`.
+- `smooth_method::Symbol = :lowess`: `:lowess`, `:rolling_avg`, `:gaussian`, `:boxcar`, or `:none`.
 - `smooth_pt_avg::Int = 7`: window size for `:rolling_avg`.
+- `boxcar_window::Int = 5`: half-width of the symmetric boxcar filter (`:boxcar` method).
+  Each point is averaged over `[j - boxcar_window÷2, j + boxcar_window÷2]`. The original
+  time grid is preserved (no points dropped).
 - `lowess_frac::Float64 = 0.05`: bandwidth fraction for `:lowess`.
 - `gaussian_h_mult::Float64 = 2.0`: bandwidth multiplier for Gaussian smoothing
   (bandwidth = `gaussian_h_mult × median(Δt)`).
 - `gaussian_time_grid::Union{Nothing,Vector{Float64}} = nothing`: optional target
   time grid for Gaussian smoothing; when set, smoothed curves are evaluated at
   these times (interpolation). `nothing` keeps the original time grid.
+- `average_replicates::Bool = false`: before any other preprocessing step, average all
+  curves that share the same label into a single curve. Wells labelled `"b"` (blank) or
+  `"X"` (discard) are excluded and dropped from the output. Useful when the same
+  biological condition was measured in multiple wells.
 - `blank_subtraction::Bool = false`: subtract a blank value from all curves.
 - `blank_value::Float64 = 0.0`: constant blank to subtract when `blank_subtraction=true`.
 - `correct_negatives::Bool = false`: handle negative values after blank subtraction.
@@ -147,6 +154,13 @@ Every field has a sensible default so users only override what they need.
   distance to the nearest k-means centroid; the exponential label wins when
   it is closer. Requires `n_clusters ≥ 3` when combined with constant pre-screening
   (`n_clusters - 1` for exponential, `n_clusters` for constant), or ≥ 2 otherwise.
+- `kmeans_n_init::Int = 10`: number of times k-means is run with different random
+  initialisations; the run with the lowest WCSS is kept.
+- `kmeans_max_iters::Int = 300`: maximum number of Lloyd iterations per k-means run.
+- `kmeans_tol::Float64 = 1e-6`: convergence tolerance (relative change in WCSS).
+- `kmeans_seed::Int = 0`: random seed for k-means initialisation. `0` means
+  non-reproducible (uses the global RNG); any other value seeds a `MersenneTwister`
+  so results are fully reproducible.
 
 After clustering, `processed.wcss` holds the within-cluster sum of squares. Run
 `preprocess` for `n_clusters = 2, 3, 4, ...` and plot `wcss` vs `n_clusters` to
@@ -171,9 +185,11 @@ find the elbow and choose the optimal number of clusters.
     smooth::Bool                = false
     smooth_method::Symbol       = :lowess
     smooth_pt_avg::Int          = 7
+    boxcar_window::Int          = 5
     lowess_frac::Float64        = 0.05
     gaussian_h_mult::Float64    = 2.0
     gaussian_time_grid::Union{Nothing, Vector{Float64}} = nothing
+    average_replicates::Bool    = false
     blank_subtraction::Bool     = false
     blank_value::Float64        = 0.0
     correct_negatives::Bool     = false
@@ -199,6 +215,10 @@ find the elbow and choose the optimal number of clusters.
     cluster_q_low::Float64           = 0.05
     cluster_q_high::Float64          = 0.95
     cluster_exp_prototype::Bool      = false
+    kmeans_n_init::Int               = 10
+    kmeans_max_iters::Int            = 300
+    kmeans_tol::Float64              = 1e-6
+    kmeans_seed::Int                 = 0
 
     # --- fitting ---
     loss::String                = "RE"

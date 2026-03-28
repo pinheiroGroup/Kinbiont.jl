@@ -13,7 +13,8 @@
 
 using Clustering: kmeans, assignments
 using StatsBase: zscore
-using Distributions: Normal, cdf
+using Distributions: TDist, cdf
+using Random: MersenneTwister, GLOBAL_RNG
 
 # ---------------------------------------------------------------------------
 # Public entry point
@@ -44,6 +45,10 @@ processed = preprocess(raw_data, opts)
 function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     curves = data.curves   # n_curves × n_tp, never mutated in place
     times  = data.times
+    labels = data.labels
+
+    # Replicate averaging collapses curves with identical labels before any other step
+    curves, labels = _apply_replicate_averaging(curves, labels, opts)
 
     curves = _apply_scattering_correction(curves, times, opts)
 
@@ -56,7 +61,41 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
-    return GrowthData(curves, times, data.labels, clusters, centroids, wcss)
+    return GrowthData(curves, times, labels, clusters, centroids, wcss)
+end
+
+# ---------------------------------------------------------------------------
+# Step 0 — Replicate averaging
+# ---------------------------------------------------------------------------
+
+"""
+    _apply_replicate_averaging(curves, labels, opts) -> (Matrix{Float64}, Vector{String})
+
+When `opts.average_replicates=true`, average all curves that share the same label
+into a single row. Wells labelled `"b"` (blank) or `"X"` (discard) are excluded
+from averaging and dropped from the output — they are not biologically meaningful
+replicates. Returns the merged curves matrix and the deduplicated label vector.
+
+When `opts.average_replicates=false`, returns the inputs unchanged.
+"""
+function _apply_replicate_averaging(
+    curves::Matrix{Float64},
+    labels::Vector{String},
+    opts::FitOptions,
+)::Tuple{Matrix{Float64}, Vector{String}}
+    opts.average_replicates || return curves, labels
+
+    skip = ("b", "X")
+    unique_labels = unique(l for l in labels if l ∉ skip)
+    isempty(unique_labels) && return curves[Int[], :], String[]
+
+    n_tp  = size(curves, 2)
+    out   = Matrix{Float64}(undef, length(unique_labels), n_tp)
+    for (i, lbl) in enumerate(unique_labels)
+        idx = findall(==(lbl), labels)
+        out[i, :] = vec(mean(curves[idx, :], dims=1))
+    end
+    return out, unique_labels
 end
 
 # ---------------------------------------------------------------------------
@@ -141,20 +180,23 @@ function _apply_smoothing(
     opts.smooth || return curves, times
     opts.smooth_method == :none && return curves, times
 
-    if opts.smooth_method == :gaussian
-        return _apply_gaussian_smoothing(curves, times, opts)
-    end
+    n_curves = size(curves, 1)
+    n_curves == 0 && return curves, times
+
+    opts.smooth_method == :boxcar && return _apply_boxcar_smoothing(curves, times, opts)
 
     smoothing_str = _smoothing_symbol_to_string(opts.smooth_method)
-    n_curves = size(curves, 1)
 
-    # Process first curve to determine output length (smoothing may shorten data)
+    # Process first curve to determine output length (smoothing may shorten data,
+    # and :gaussian with a custom time grid may produce a different number of points)
     curve_mat1 = Matrix(transpose(hcat(times, curves[1, :])))
     result1 = smoothing_data(
         curve_mat1;
-        method     = smoothing_str,
-        pt_avg     = opts.smooth_pt_avg,
-        thr_lowess = opts.lowess_frac,
+        method             = smoothing_str,
+        pt_avg             = opts.smooth_pt_avg,
+        thr_lowess         = opts.lowess_frac,
+        gaussian_h_mult    = opts.gaussian_h_mult,
+        gaussian_time_grid = opts.gaussian_time_grid,
     )
     n_out     = size(result1, 2)
     new_times = Vector{Float64}(result1[1, :])
@@ -165,9 +207,11 @@ function _apply_smoothing(
         curve_mat = Matrix(transpose(hcat(times, curves[i, :])))
         result = smoothing_data(
             curve_mat;
-            method     = smoothing_str,
-            pt_avg     = opts.smooth_pt_avg,
-            thr_lowess = opts.lowess_frac,
+            method             = smoothing_str,
+            pt_avg             = opts.smooth_pt_avg,
+            thr_lowess         = opts.lowess_frac,
+            gaussian_h_mult    = opts.gaussian_h_mult,
+            gaussian_time_grid = opts.gaussian_time_grid,
         )
         ni = size(result, 2)
         if ni == n_out
@@ -185,92 +229,60 @@ end
 _smoothing_symbol_to_string(s::Symbol) = Dict(
     :lowess      => "lowess",
     :rolling_avg => "rolling_avg",
+    :gaussian    => "gaussian",
     :none        => "NO",
 )[s]
 
 # ---------------------------------------------------------------------------
-# Gaussian kernel smoothing (no external dependencies)
+# Boxcar (symmetric moving average) smoothing
+# Keeps the original time grid; each point is replaced by the mean of the
+# symmetric window [j-half, j+half], clamped at the array boundaries.
 # ---------------------------------------------------------------------------
 
 """
-    _gaussian_kernel(u) -> Float64
+    _apply_boxcar_smoothing(curves, times, opts) -> (Matrix{Float64}, Vector{Float64})
 
-Un-normalised Gaussian kernel evaluated at standardised distance `u = (t - tᵢ)/h`.
+Apply a centered boxcar (symmetric moving-average) filter to every curve.
+Unlike `:rolling_avg`, the time grid is unchanged and no points are dropped.
+Window width is `opts.boxcar_window` (must be ≥ 1).
 """
-_gaussian_kernel(u::Float64) = exp(-0.5 * u * u)
-
-"""
-    _gaussian_bandwidth(t; h_mult) -> Float64
-
-Estimate bandwidth as `h_mult × median(Δt)` over the finite, sorted time points.
-Falls back to 1.0 when fewer than three points are available or the median step
-is non-positive.
-"""
-function _gaussian_bandwidth(t::Vector{Float64}; h_mult::Float64 = 2.0)
-    t_finite = filter(isfinite, t)
-    length(t_finite) < 3 && return 1.0
-    dt = median(diff(sort(t_finite)))
-    (isfinite(dt) && dt > 0.0) || return 1.0
-    return h_mult * dt
-end
-
-"""
-    _gaussian_smooth_curve(t, y, tq; h_mult) -> Vector{Float64}
-
-Nadaraya–Watson kernel smoother with a Gaussian kernel. Evaluates the smoothed
-curve at the query points `tq`. Non-finite values in `(t, y)` are excluded.
-Falls back to the nearest observed value when the total kernel weight is < 1e-12.
-"""
-function _gaussian_smooth_curve(
-    t::Vector{Float64},
-    y::Vector{Float64},
-    tq::Vector{Float64};
-    h_mult::Float64 = 2.0,
-)::Vector{Float64}
-    mask = isfinite.(t) .& isfinite.(y)
-    t2 = t[mask]
-    y2 = max.(y[mask], 1e-9)     # clamp to small positive (matches New-api)
-
-    length(t2) == 0 && return fill(0.0, length(tq))
-    length(t2) == 1 && return fill(y2[1], length(tq))
-
-    h    = _gaussian_bandwidth(t2; h_mult)
-    invh = 1.0 / h
-    yhat = Vector{Float64}(undef, length(tq))
-
-    for (j, x) in enumerate(tq)
-        ww = _gaussian_kernel.((x .- t2) .* invh)
-        s  = sum(ww)
-        if s <= 1e-12
-            # nearest-point fallback
-            yhat[j] = y2[argmin(abs.(t2 .- x))]
-        else
-            yhat[j] = sum(ww .* y2) / s
-        end
-    end
-    return yhat
-end
-
-function _apply_gaussian_smoothing(
+function _apply_boxcar_smoothing(
     curves::Matrix{Float64},
     times::Vector{Float64},
     opts::FitOptions,
 )::Tuple{Matrix{Float64}, Vector{Float64}}
-    tq      = something(opts.gaussian_time_grid, times)   # query grid
-    n_curves = size(curves, 1)
-    smoothed = Matrix{Float64}(undef, n_curves, length(tq))
+    w = max(1, opts.boxcar_window)
+    half = w ÷ 2
+    n_curves, n_tp = size(curves)
+    smoothed = Matrix{Float64}(undef, n_curves, n_tp)
 
-    for i in axes(curves, 1)
-        smoothed[i, :] = _gaussian_smooth_curve(
-            times, curves[i, :], tq; h_mult = opts.gaussian_h_mult
-        )
+    for i in 1:n_curves
+        curve = @view curves[i, :]
+        for j in 1:n_tp
+            lo = max(1, j - half)
+            hi = min(n_tp, j + half)
+            smoothed[i, j] = mean(@view curve[lo:hi])
+        end
     end
-    return smoothed, tq
+
+    return smoothed, times   # time grid is preserved
 end
 
 # ---------------------------------------------------------------------------
 # Step 5 — K-means clustering on z-scored curves
 # ---------------------------------------------------------------------------
+
+# Run k-means `opts.kmeans_n_init` times and return the result with the lowest WCSS.
+# Uses a seeded MersenneTwister when `opts.kmeans_seed != 0` for reproducibility.
+function _kmeans_best(X::AbstractMatrix{Float64}, k::Int, opts::FitOptions)
+    rng  = opts.kmeans_seed == 0 ? GLOBAL_RNG : MersenneTwister(opts.kmeans_seed)
+    best = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
+    for _ in 2:opts.kmeans_n_init
+        r = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
+        r.totalcost < best.totalcost && (best = r)
+    end
+    return best
+end
 
 """
     _cluster(curves, times, opts) -> (labels, centroids, wcss)
@@ -301,6 +313,8 @@ function _cluster(
     times::Vector{Float64},
     opts::FitOptions,
 )::Tuple{Vector{Int}, Matrix{Float64}, Float64}
+    size(curves, 1) == 0 && return Int[], zeros(Float64, opts.n_clusters, size(curves, 2)), 0.0
+
     # Z-score all curves once; used for both k-means and centroid computation.
     zscored_all = _zscore_rows(curves)
 
@@ -308,12 +322,12 @@ function _cluster(
         labels, wcss = _cluster_with_prescreen(curves, zscored_all, opts)
     elseif opts.cluster_trend_test
         k_dynamic = max(1, opts.n_clusters - 1)
-        result = kmeans(zscored_all', k_dynamic)
+        result = _kmeans_best(zscored_all', k_dynamic, opts)
         labels = assignments(result)
         wcss   = result.totalcost
         labels = _apply_trend_labels(curves, times, labels, opts.n_clusters)
     else
-        result = kmeans(zscored_all', opts.n_clusters)
+        result = _kmeans_best(zscored_all', opts.n_clusters, opts)
         labels = assignments(result)
         wcss   = result.totalcost
     end
@@ -386,7 +400,7 @@ function _cluster_with_prescreen(
     if !isempty(dynamic_idx) && opts.n_clusters > 1
         k_dynamic = opts.n_clusters - 1
         # k-means runs on z-normalised dynamic curves
-        result    = kmeans(zscored_all[dynamic_idx, :]', k_dynamic)
+        result    = _kmeans_best(zscored_all[dynamic_idx, :]', k_dynamic, opts)
         km_labels = assignments(result)
         wcss      = result.totalcost
         for (pos, idx) in enumerate(dynamic_idx)
@@ -404,7 +418,7 @@ end
 """
     _compute_centroids(curves, labels, n_clusters) -> Matrix{Float64}
 
-Compute the mean curve (in original space) for each cluster.
+Compute the mean curve (in z-normalised space) for each cluster.
 Returns an `n_clusters × n_timepoints` matrix; empty clusters produce a zero row.
 """
 function _compute_centroids(
@@ -497,8 +511,7 @@ function _zscore_rows(curves::Matrix{Float64})::Matrix{Float64}
 end
 
 # Assign a dedicated cluster id to curves with no significant linear trend.
-# Uses a t-test on the OLS slope (p ≥ 0.05 → flat), implemented with Statistics
-# stdlib only — no extra package required.
+# Uses a two-tailed t-test on the OLS slope (p ≥ 0.05 → flat).
 # `flat_id` is passed in by the caller; it must already be within 1..n_clusters.
 function _apply_trend_labels(
     curves::Matrix{Float64},
@@ -508,8 +521,10 @@ function _apply_trend_labels(
 )::Vector{Int}
     new_labels = copy(labels)
     n          = length(times)
+    n < 3      && return new_labels
     t_centered = times .- mean(times)
     ss_t       = sum(t_centered .^ 2)
+    ss_t <= 0  && return new_labels
 
     for i in axes(curves, 1)
         y         = curves[i, :]
@@ -518,9 +533,15 @@ function _apply_trend_labels(
         residuals = y .- y_hat
         s2        = sum(residuals .^ 2) / (n - 2)
         se_slope  = sqrt(s2 / ss_t)
-        t_stat    = slope / se_slope
-        # Two-tailed p-value via normal approximation (good for n > 10)
-        p_approx  = 2 * (1 - cdf(Normal(), abs(t_stat)))
+        if se_slope <= 0 || !isfinite(se_slope)
+            if abs(slope) < 1e-12
+                new_labels[i] = flat_id
+            end
+            continue
+        end
+        t_stat   = slope / se_slope
+        # Two-tailed p-value from the t-distribution with n-2 degrees of freedom
+        p_approx = 2 * (1 - cdf(TDist(n - 2), abs(t_stat)))
         if p_approx >= 0.05
             new_labels[i] = flat_id
         end
