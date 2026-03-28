@@ -18,7 +18,7 @@ using OrdinaryDiffEq: Tsit5
 # ---------------------------------------------------------------------------
 
 """
-    GrowthData(curves, times, labels[, clusters])
+    GrowthData(curves, times, labels[, clusters[, centroids]])
 
 Immutable container for a set of growth curves measured at common time points.
 
@@ -26,22 +26,32 @@ Immutable container for a set of growth curves measured at common time points.
 - `curves::Matrix{Float64}`: `n_curves × n_timepoints` matrix; each row is one curve.
 - `times::Vector{Float64}`: time points shared by all curves (length `n_timepoints`).
 - `labels::Vector{String}`: identifier for each curve (length `n_curves`).
-- `clusters::Union{Nothing, Vector{Int}}`: cluster assignment per curve, populated
-  by [`preprocess`](@ref). `nothing` until clustering is performed.
+- `clusters::Union{Nothing, Vector{Int}}`: cluster assignment per curve (1-based, within
+  `1..n_clusters`), populated by [`preprocess`](@ref). `nothing` until clustering is run.
+- `centroids::Union{Nothing, Matrix{Float64}}`: `n_clusters × n_timepoints` matrix of
+  per-cluster shape centroids in **z-normalised space**, populated alongside `clusters`.
+  Row `k` is the mean of the z-scored curves assigned to cluster `k` — a scale-independent
+  shape prototype. To obtain original-space prototypes, compute
+  `mean(data.curves[data.clusters .== k, :], dims=1)` for each `k`.
+- `wcss::Union{Nothing, Float64}`: within-cluster sum of squares (total SSE) returned
+  by k-means, populated alongside `clusters`. Use this to construct an elbow plot and
+  choose `n_clusters`. `nothing` when clustering was not performed.
 """
 struct GrowthData
     curves::Matrix{Float64}
     times::Vector{Float64}
     labels::Vector{String}
     clusters::Union{Nothing, Vector{Int}}
+    centroids::Union{Nothing, Matrix{Float64}}
+    wcss::Union{Nothing, Float64}
 
-    function GrowthData(curves, times, labels, clusters=nothing)
+    function GrowthData(curves, times, labels, clusters=nothing, centroids=nothing, wcss=nothing)
         n_curves, n_tp = size(curves)
         length(times)  == n_tp     || error("times length $(length(times)) ≠ n_timepoints $n_tp")
         length(labels) == n_curves || error("labels length $(length(labels)) ≠ n_curves $n_curves")
         clusters === nothing || length(clusters) == n_curves ||
             error("clusters length $(length(clusters)) ≠ n_curves $n_curves")
-        new(curves, times, labels, clusters)
+        new(curves, times, labels, clusters, centroids, wcss)
     end
 end
 
@@ -121,8 +131,37 @@ Every field has a sensible default so users only override what they need.
 
 # Clustering fields
 - `cluster::Bool = false`: cluster curves after preprocessing.
-- `n_clusters::Int = 3`: number of clusters (k for k-means).
-- `cluster_trend_test::Bool = true`: use Mann-Kendall test to label flat-curve clusters.
+- `n_clusters::Int = 3`: total number of cluster labels (1..`n_clusters`). Labels are
+  always within this range regardless of other options.
+- `cluster_trend_test::Bool = true`: reserve label `n_clusters` for flat/non-growing
+  curves (identified by an OLS slope t-test, p ≥ 0.05). K-means then runs with
+  `n_clusters - 1` dynamic groups, so all labels remain in `1..n_clusters`.
+  Requires `n_clusters ≥ 2`. Ignored when `cluster_prescreen_constant=true`.
+- `cluster_prescreen_constant::Bool = false`: before running k-means, identify
+  non-growing wells using a quantile-ratio criterion (high tail / low tail ≤
+  `cluster_tol_const`) and pin them to label `n_clusters`. K-means then runs with
+  `n_clusters - 1` groups on the remaining dynamic curves only. More biologically
+  meaningful than the post-hoc `cluster_trend_test` because k-means never sees
+  flat wells. Requires `n_clusters ≥ 2`.
+- `cluster_tol_const::Float64 = 1.5`: threshold for constant pre-screening.
+  A curve is flagged as non-growing when its `cluster_q_high` quantile is ≤
+  `cluster_tol_const × cluster_q_low` quantile. Increase to be more permissive
+  (fewer constant calls); decrease to be stricter.
+- `cluster_q_low::Float64 = 0.05`: lower quantile used to estimate the baseline
+  tail in constant pre-screening.
+- `cluster_q_high::Float64 = 0.95`: upper quantile used to estimate the signal
+  tail in constant pre-screening.
+- `kmeans_n_init::Int = 10`: number of times k-means is run with different random
+  initialisations; the run with the lowest WCSS is kept.
+- `kmeans_max_iters::Int = 300`: maximum number of Lloyd iterations per k-means run.
+- `kmeans_tol::Float64 = 1e-6`: convergence tolerance (relative change in WCSS).
+- `kmeans_seed::Int = 0`: random seed for k-means initialisation. `0` means
+  non-reproducible (uses the global RNG); any other value seeds a `MersenneTwister`
+  so results are fully reproducible.
+
+After clustering, `processed.wcss` holds the within-cluster sum of squares. Run
+`preprocess` for `n_clusters = 2, 3, 4, ...` and plot `wcss` vs `n_clusters` to
+find the elbow and choose the optimal number of clusters.
 
 # Fitting fields
 - `loss::String = "RE"`: loss function — `"RE"`, `"L2"`, `"L2_derivative"`, etc.
@@ -166,9 +205,17 @@ Every field has a sensible default so users only override what they need.
     stationary_thr_od::Float64             = 0.02
 
     # --- clustering ---
-    cluster::Bool               = false
-    n_clusters::Int             = 3
-    cluster_trend_test::Bool    = true
+    cluster::Bool                    = false
+    n_clusters::Int                  = 3
+    cluster_trend_test::Bool         = true
+    cluster_prescreen_constant::Bool = false
+    cluster_tol_const::Float64       = 1.5
+    cluster_q_low::Float64           = 0.05
+    cluster_q_high::Float64          = 0.95
+    kmeans_n_init::Int               = 10
+    kmeans_max_iters::Int            = 300
+    kmeans_tol::Float64              = 1e-6
+    kmeans_seed::Int                 = 0
 
     # --- fitting ---
     loss::String                = "RE"

@@ -4,10 +4,11 @@
     labels = ["a", "b", "c"]
 
     gd = GrowthData(curves, times, labels)
-    @test gd.curves === curves
-    @test gd.times  === times
-    @test gd.labels === labels
-    @test gd.clusters === nothing
+    @test gd.curves    === curves
+    @test gd.times     === times
+    @test gd.labels    === labels
+    @test gd.clusters  === nothing
+    @test gd.centroids === nothing
 
     # times length mismatch
     @test_throws ErrorException GrowthData(curves, collect(1.0:9.0), labels)

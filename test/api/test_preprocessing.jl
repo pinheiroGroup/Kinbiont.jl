@@ -74,11 +74,83 @@
         @test processed.labels == data.labels
     end
 
-    @testset "Clustering assigns cluster ids" begin
-        opts = FitOptions(cluster=true, n_clusters=2, cluster_trend_test=false)
+    @testset "Clustering assigns cluster ids, centroids and WCSS" begin
+        n_k  = 2
+        opts = FitOptions(cluster=true, n_clusters=n_k, cluster_trend_test=false)
+        processed = preprocess(data, opts)
+        @test processed.clusters  isa Vector{Int}
+        @test length(processed.clusters) == size(data.curves, 1)
+        # centroid matrix: one row per cluster, one column per timepoint
+        @test processed.centroids isa Matrix{Float64}
+        @test size(processed.centroids) == (n_k, length(data.times))
+        # centroids are in z-normalised space: each non-empty row has ~zero mean
+        for k in 1:n_k
+            if any(==(k), processed.clusters)
+                @test abs(mean(processed.centroids[k, :])) < 0.1
+            end
+        end
+        # WCSS is a non-negative scalar
+        @test processed.wcss isa Float64
+        @test processed.wcss >= 0.0
+    end
+
+    @testset "WCSS decreases as n_clusters increases" begin
+        # More clusters → lower total SSE (elbow-plot property)
+        wcss_vals = map(2:4) do k
+            opts = FitOptions(cluster=true, n_clusters=k, cluster_trend_test=false)
+            preprocess(data, opts).wcss
+        end
+        @test issorted(wcss_vals, rev=true)
+    end
+
+    @testset "Clustering labels always within 1..n_clusters (cluster_trend_test=true)" begin
+        n_k = 3
+        opts = FitOptions(cluster=true, n_clusters=n_k, cluster_trend_test=true)
         processed = preprocess(data, opts)
         @test processed.clusters isa Vector{Int}
-        @test length(processed.clusters) == size(data.curves, 1)
+        @test all(1 .<= processed.clusters .<= n_k)
+        @test size(processed.centroids) == (n_k, length(data.times))
+    end
+
+    @testset "cluster_trend_test: lag+growth+stationary not mislabeled as flat" begin
+        n_lag  = 15
+        n_grow = 3
+        n_stat = 15
+        od_low  = 0.05
+        od_high = 1.5
+        grow_vals = [od_low + (od_high - od_low) * i / (n_grow + 1) for i in 1:n_grow]
+        growing_curve = vcat(fill(od_low, n_lag), grow_vals, fill(od_high, n_stat))
+        flat_curve    = fill(od_low, n_lag + n_grow + n_stat)
+        n_tp      = n_lag + n_grow + n_stat
+        tp_times  = collect(0.0:(n_tp - 1))
+        tp_curves = Matrix(hcat(growing_curve, flat_curve)')  # 2 × n_tp
+        tp_data   = GrowthData(tp_curves, tp_times, ["growing", "flat"])
+
+        n_k  = 2
+        opts = FitOptions(cluster=true, n_clusters=n_k, cluster_trend_test=true)
+        processed = preprocess(tp_data, opts)
+
+        # The flat curve must receive the flat label (n_clusters)
+        @test processed.clusters[2] == n_k
+        # The growing curve must NOT receive the flat label
+        @test processed.clusters[1] != n_k
+    end
+
+    @testset "Constant pre-screening keeps labels within 1..n_clusters" begin
+        # Mix flat and growing curves so pre-screening has something to detect
+        flat_curves = hcat(fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),
+                           fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),
+                           fill(0.1, 3), fill(0.1, 3), fill(0.1, 3), fill(0.1, 3))
+        mixed = vcat(data.curves, flat_curves)
+        mixed_data = GrowthData(mixed, data.times, ["c$i" for i in 1:8])
+        n_k  = 3
+        opts = FitOptions(cluster=true, n_clusters=n_k,
+                          cluster_prescreen_constant=true, cluster_trend_test=false)
+        processed = preprocess(mixed_data, opts)
+        @test all(1 .<= processed.clusters .<= n_k)
+        @test size(processed.centroids) == (n_k, length(data.times))
+        # flat curves should be assigned to the last label
+        @test all(processed.clusters[6:8] .== n_k)
     end
 
     @testset "Pure function — original data not mutated" begin
