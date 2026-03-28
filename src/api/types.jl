@@ -96,7 +96,11 @@ Every field has a sensible default so users only override what they need.
   `"X"` (discard) are excluded and dropped from the output. Useful when the same
   biological condition was measured in multiple wells.
 - `blank_subtraction::Bool = false`: subtract a blank value from all curves.
-- `blank_value::Float64 = 0.0`: constant blank to subtract when `blank_subtraction=true`.
+- `blank_value::Float64 = 0.0`: constant blank to subtract when `blank_subtraction=true`
+  and `blank_from_labels=false`.
+- `blank_from_labels::Bool = false`: when `true` (and `blank_subtraction=true`), compute
+  the blank automatically as the mean OD across all wells whose label is `"b"` in the
+  `GrowthData.labels` vector. Takes precedence over `blank_value`.
 - `correct_negatives::Bool = false`: handle negative values after blank subtraction.
 - `negative_method::Symbol = :remove`: `:remove`, `:thr_correction`, or `:blank_correction`.
 - `negative_threshold::Float64 = 0.01`: floor value used by `:thr_correction`.
@@ -146,6 +150,7 @@ Every field has a sensible default so users only override what they need.
     average_replicates::Bool    = false
     blank_subtraction::Bool     = false
     blank_value::Float64        = 0.0
+    blank_from_labels::Bool     = false
     correct_negatives::Bool     = false
     negative_method::Symbol     = :remove
     negative_threshold::Float64 = 0.01
