@@ -14,9 +14,22 @@
 using CSV
 using DataFrames
 
-# LogLinModel has no .name field — provide a fallback
-_model_name(m::AbstractGrowthModel) = m.name
-_model_name(::LogLinModel) = "log_lin"
+# LogLinModel has no .name / .param_names fields — provide fallbacks
+_model_name(m::AbstractGrowthModel)        = m.name
+_model_name(::LogLinModel)                 = "log_lin"
+_model_param_names(m::AbstractGrowthModel) = m.param_names
+_model_param_names(::LogLinModel)          = ["intercept", "slope"]
+
+# Look up param names by model name string (for all_results which store name, not object).
+const _EXTRA_PARAM_NAMES = Dict(
+    "log_lin" => ["intercept", "slope"],
+    "DDDE"    => String[],   # data-driven; parameter count varies
+)
+function _param_names_by_name(name::String)
+    haskey(_EXTRA_PARAM_NAMES, name) && return _EXTRA_PARAM_NAMES[name]
+    haskey(MODEL_REGISTRY, name)     && return MODEL_REGISTRY[name].param_names
+    return String[]
+end
 
 """
     save_results(results::GrowthFitResults, dir::String; prefix="kinbiont")
@@ -65,16 +78,17 @@ function _save_summary(results::GrowthFitResults, path::String)
 
     # Build DataFrame with explicit param columns so missing pads correctly
     df = DataFrame(
-        label      = [r.label for r in results.results],
-        cluster    = [
+        label       = [r.label for r in results.results],
+        cluster     = [
             results.data.clusters === nothing ? missing :
             results.data.clusters[findfirst(==(r.label), results.data.labels)]
             for r in results.results
         ],
-        best_model = [_model_name(r.best_model) for r in results.results],
-        n_params   = [length(r.best_params) for r in results.results],
-        aic        = [r.best_aic for r in results.results],
-        loss       = [r.loss for r in results.results],
+        best_model  = [_model_name(r.best_model) for r in results.results],
+        n_params    = [length(r.best_params) for r in results.results],
+        param_names = [join(_model_param_names(r.best_model), ";") for r in results.results],
+        aic         = [r.best_aic for r in results.results],
+        loss        = [r.loss for r in results.results],
     )
 
     for k in 1:n_max_params
@@ -128,11 +142,12 @@ function _save_all_models(results::GrowthFitResults, path::String)
     )
 
     df = DataFrame(
-        label      = String[],
-        model_name = String[],
-        aic        = Float64[],
-        loss       = Float64[],
-        is_best    = Bool[],
+        label       = String[],
+        model_name  = String[],
+        param_names = String[],
+        aic         = Float64[],
+        loss        = Float64[],
+        is_best     = Bool[],
     )
     for k in 1:n_max_params
         df[!, Symbol("param_$k")] = Any[]
@@ -141,11 +156,12 @@ function _save_all_models(results::GrowthFitResults, path::String)
     for r in results.results
         for c in r.all_results
             row = Dict{Symbol, Any}(
-                :label      => r.label,
-                :model_name => c.model_name,
-                :aic        => c.aic,
-                :loss       => c.loss,
-                :is_best    => c.model_name == _model_name(r.best_model),
+                :label       => r.label,
+                :model_name  => c.model_name,
+                :param_names => join(_param_names_by_name(c.model_name), ";"),
+                :aic         => c.aic,
+                :loss        => c.loss,
+                :is_best     => c.model_name == _model_name(r.best_model),
             )
             for k in 1:n_max_params
                 row[Symbol("param_$k")] = k <= length(c.params) ? c.params[k] : missing
