@@ -106,7 +106,11 @@ Every field has a sensible default so users only override what they need.
   `"X"` (discard) are excluded and dropped from the output. Useful when the same
   biological condition was measured in multiple wells.
 - `blank_subtraction::Bool = false`: subtract a blank value from all curves.
-- `blank_value::Float64 = 0.0`: constant blank to subtract when `blank_subtraction=true`.
+- `blank_value::Float64 = 0.0`: constant blank to subtract when `blank_subtraction=true`
+  and `blank_from_labels=false`.
+- `blank_from_labels::Bool = false`: when `true` (and `blank_subtraction=true`), compute
+  the blank automatically as the mean OD across all wells whose label is `"b"` in the
+  `GrowthData.labels` vector. Takes precedence over `blank_value`.
 - `correct_negatives::Bool = false`: handle negative values after blank subtraction.
 - `negative_method::Symbol = :remove`: `:remove`, `:thr_correction`, or `:blank_correction`.
 - `negative_threshold::Float64 = 0.01`: floor value used by `:thr_correction`.
@@ -154,6 +158,13 @@ Every field has a sensible default so users only override what they need.
   distance to the nearest k-means centroid; the exponential label wins when
   it is closer. Requires `n_clusters ≥ 3` when combined with constant pre-screening
   (`n_clusters - 1` for exponential, `n_clusters` for constant), or ≥ 2 otherwise.
+- `kmeans_n_init::Int = 10`: number of times k-means is run with different random
+  initialisations; the run with the lowest WCSS is kept.
+- `kmeans_max_iters::Int = 300`: maximum number of Lloyd iterations per k-means run.
+- `kmeans_tol::Float64 = 1e-6`: convergence tolerance (relative change in WCSS).
+- `kmeans_seed::Int = 0`: random seed for k-means initialisation. `0` means
+  non-reproducible (uses the global RNG); any other value seeds a `MersenneTwister`
+  so results are fully reproducible.
 
 After clustering, `processed.wcss` holds the within-cluster sum of squares. Run
 `preprocess` for `n_clusters = 2, 3, 4, ...` and plot `wcss` vs `n_clusters` to
@@ -185,6 +196,7 @@ find the elbow and choose the optimal number of clusters.
     average_replicates::Bool    = false
     blank_subtraction::Bool     = false
     blank_value::Float64        = 0.0
+    blank_from_labels::Bool     = false
     correct_negatives::Bool     = false
     negative_method::Symbol     = :remove
     negative_threshold::Float64 = 0.01
@@ -208,6 +220,10 @@ find the elbow and choose the optimal number of clusters.
     cluster_q_low::Float64           = 0.05
     cluster_q_high::Float64          = 0.95
     cluster_exp_prototype::Bool      = false
+    kmeans_n_init::Int               = 10
+    kmeans_max_iters::Int            = 300
+    kmeans_tol::Float64              = 1e-6
+    kmeans_seed::Int                 = 0
 
     # --- fitting ---
     loss::String                = "RE"
