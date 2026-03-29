@@ -428,6 +428,35 @@ Base.length(r::GrowthFitResults) = length(r.results)
 Base.iterate(r::GrowthFitResults, args...) = iterate(r.results, args...)
 Base.getindex(r::GrowthFitResults, i) = r.results[i]
 
+# ---------------------------------------------------------------------------
+# 6. GrowthData subsetting
+# ---------------------------------------------------------------------------
+
+"""
+    data[labels::Vector{String}] -> GrowthData
+
+Return a new `GrowthData` containing only the curves whose labels appear in
+`labels`, in the order given. Clustering fields (`clusters`, `centroids`,
+`wcss`) are not carried over — subsetting invalidates any prior clustering.
+
+Throws `ArgumentError` if any requested label is not present in `data.labels`.
+
+# Example
+```julia
+data = GrowthData("experiment.csv")   # loads all wells
+data_b2 = data[["B2"]]               # single well
+data_sub = data[["B2", "C3", "D4"]]  # three wells
+```
+"""
+function Base.getindex(data::GrowthData, labels::Vector{String})
+    missing = filter(l -> !(l in data.labels), labels)
+    isempty(missing) || throw(ArgumentError(
+        "label(s) not found in GrowthData: $(join(missing, ", "))"
+    ))
+    idx = [findfirst(==(l), data.labels) for l in labels]
+    GrowthData(data.curves[idx, :], data.times, data.labels[idx])
+end
+
 export GrowthData
 export FitOptions
 export AbstractGrowthModel, NLModel, ODEModel, LogLinModel, DDDEModel
