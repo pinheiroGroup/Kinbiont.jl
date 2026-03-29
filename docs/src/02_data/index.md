@@ -24,7 +24,7 @@ Time,  A1,     A2,      A3,
 4.0,   0.008,  0.41,    0.122,
 ```
 
-Kinbiont.jl expects a comma (,) as the separator between columns and  the first column will be used as time.
+Kinbiont.jl expects a comma (,) as the separator between columns and the first column will be used as time.
 
 The annotation file is optional (but mandatory if blank subtraction and averaging of replicates are required) and should be a two-column .csv file where the number of rows corresponds to the number of wells. The first column should contain the name of the well (they should match the names of the wells in the data .csv), while the second column should contain a unique ID for each technical replicate. A `b` indicates that the well should be considered as a blank, an `X` indicates that the well should be discarded from the analysis, and if two wells have the same ID, they will be considered replicates:
 ```
