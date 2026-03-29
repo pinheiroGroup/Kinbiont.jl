@@ -93,6 +93,36 @@ end
     @test_throws ErrorException ModelSpec([m1], [[1.0, 0.3, 0.0]]; upper=[[10.0], [10.0]])
 end
 
+@testset "GrowthData subsetting via getindex" begin
+    curves = Float64[1 2 3; 4 5 6; 7 8 9]   # 3 curves × 3 timepoints
+    times  = [0.0, 1.0, 2.0]
+    labels = ["A1", "B2", "C3"]
+    gd = GrowthData(curves, times, labels)
+
+    # single well
+    sub = gd[["B2"]]
+    @test sub.labels == ["B2"]
+    @test size(sub.curves) == (1, 3)
+    @test sub.curves[1, :] == [4.0, 5.0, 6.0]
+    @test sub.times == times
+    @test sub.clusters === nothing
+    @test sub.centroids === nothing
+
+    # multiple wells, different order than original
+    sub2 = gd[["C3", "A1"]]
+    @test sub2.labels == ["C3", "A1"]
+    @test sub2.curves[1, :] == [7.0, 8.0, 9.0]
+    @test sub2.curves[2, :] == [1.0, 2.0, 3.0]
+
+    # unknown label throws ArgumentError
+    @test_throws ArgumentError gd[["B2", "Z9"]]
+
+    # clustering fields are dropped even if present on source
+    gd_with_clusters = GrowthData(curves, times, labels, [1, 2, 3])
+    sub3 = gd_with_clusters[["A1"]]
+    @test sub3.clusters === nothing
+end
+
 # 1.5 — Custom model trait constructors
 @testset "Custom model constructors (NLModel, ODEModel, LogLinModel)" begin
 
