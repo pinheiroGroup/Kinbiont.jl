@@ -14,7 +14,7 @@
 using Clustering: kmeans, assignments
 using StatsBase: zscore
 using Distributions: TDist, cdf
-using Random: MersenneTwister, GLOBAL_RNG
+using Random: MersenneTwister
 
 # ---------------------------------------------------------------------------
 # Public entry point
@@ -302,9 +302,10 @@ end
 # Run k-means `opts.kmeans_n_init` times and return the result with the lowest WCSS.
 # Uses a seeded MersenneTwister when `opts.kmeans_seed != 0` for reproducibility.
 function _kmeans_best(X::AbstractMatrix{Float64}, k::Int, opts::FitOptions)
-    rng  = opts.kmeans_seed == 0 ? GLOBAL_RNG : MersenneTwister(opts.kmeans_seed)
-    best = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
-    for _ in 2:opts.kmeans_n_init
+    rng    = opts.kmeans_seed == 0 ? MersenneTwister(42) : MersenneTwister(opts.kmeans_seed)
+    n_init = max(1, opts.kmeans_n_init)
+    best   = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
+    for _ in 2:n_init
         r = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
         r.totalcost < best.totalcost && (best = r)
     end
@@ -360,22 +361,26 @@ function _cluster(
     end
 
     if opts.cluster_exp_prototype
-        exp_label      = _exp_prototype_label(opts)
+        exp_label      = _exp_prototype_label(opts, labels)
         exp_protos     = _build_exp_prototypes(times)
         centroids_norm = _compute_centroids(zscored_all, labels, opts.n_clusters)
         labels         = _apply_exp_prototype_labels(zscored_all, labels, exp_protos,
                                                      centroids_norm, exp_label)
     end
 
+    n_effective = isempty(labels) ? opts.n_clusters : maximum(labels)
     # Centroids in z-normalised space (shape prototypes, scale-independent).
-    centroids = _compute_centroids(zscored_all, labels, opts.n_clusters)
+    centroids = _compute_centroids(zscored_all, labels, n_effective)
     return labels, centroids, wcss
 end
 
-# The exponential prototype occupies label n_clusters-1 when constant
-# pre-screening is active (reserving n_clusters for constant), otherwise n_clusters.
-_exp_prototype_label(opts::FitOptions) =
-    opts.cluster_prescreen_constant ? opts.n_clusters - 1 : opts.n_clusters
+# The exponential prototype occupies a label that is NOT already in use by k-means.
+# Preferred slot: n_clusters-1 (constant pre-screening mode) or n_clusters (plain mode).
+# If that slot is already occupied by k-means, allocate max(labels)+1 instead.
+function _exp_prototype_label(opts::FitOptions, labels::Vector{Int})
+    preferred = opts.cluster_prescreen_constant ? opts.n_clusters - 1 : opts.n_clusters
+    preferred ∈ labels ? maximum(labels) + 1 : preferred
+end
 
 # ---------------------------------------------------------------------------
 # Constant pre-screening helpers

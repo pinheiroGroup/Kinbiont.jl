@@ -128,11 +128,13 @@
         @test processed.labels == data.labels
     end
 
-    @testset "Exponential prototype cluster labels within 1..n_clusters" begin
+    @testset "Exponential prototype cluster labels are valid positive integers" begin
         opts = FitOptions(cluster=true, n_clusters=3,
                           cluster_trend_test=false, cluster_exp_prototype=true)
         processed = preprocess(data, opts)
-        @test all(1 .<= processed.clusters .<= 3)
+        # exp prototype may add one extra cluster beyond n_clusters if that slot
+        # was already used by k-means, so upper bound is n_clusters + 1
+        @test all(1 .<= processed.clusters .<= opts.n_clusters + 1)
     end
 
     @testset "Exponential prototype reassigns a clearly exponential curve" begin
@@ -144,9 +146,9 @@
         opts = FitOptions(cluster=true, n_clusters=3,
                           cluster_trend_test=false, cluster_exp_prototype=true)
         processed = preprocess(mixed_data, opts)
-        exp_label = 3   # n_clusters when no constant pre-screening
-        # the exponential curve (last row) should be in the exp cluster
-        @test processed.clusters[end] == exp_label
+        # The exponential prototype always occupies the highest label index;
+        # the clearly exponential curve (last row) should be assigned to it.
+        @test processed.clusters[end] == maximum(processed.clusters)
     end
 
     @testset "WCSS decreases as n_clusters increases" begin
