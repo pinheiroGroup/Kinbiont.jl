@@ -57,7 +57,7 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     # non-growing wells (which is precisely what clustering is meant to find).
     clusters, centroids, wcss = opts.cluster ? _cluster(curves, times, opts) : (nothing, nothing, nothing)
 
-    curves = _apply_blank_subtraction(curves, data.labels, opts)
+    curves = _apply_blank_subtraction(curves, labels, opts)
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
@@ -206,8 +206,6 @@ function _apply_smoothing(
     n_curves = size(curves, 1)
     n_curves == 0 && return curves, times
 
-    opts.smooth_method == :boxcar && return _apply_boxcar_smoothing(curves, times, opts)
-
     if opts.smooth_method == :boxcar
         return _apply_boxcar_smoothing(curves, times, opts)
     end
@@ -318,11 +316,14 @@ end
 Cluster growth curves and return per-curve labels, per-cluster shape centroids,
 and the within-cluster sum of squares (WCSS / total SSE from k-means).
 
-Labels are always in `1..opts.n_clusters`. `centroids` is an
-`n_clusters × n_timepoints` matrix in **z-normalised space**: each row is the
-mean of the z-scored curves assigned to that cluster. This captures the *shape*
-of each cluster independently of absolute OD magnitude. To recover original-space
-prototypes, compute the mean of `data.curves[data.clusters .== k, :]` for each `k`.
+Without exponential prototype relabeling, labels lie in `1..opts.n_clusters`.
+When `cluster_exp_prototype=true`, an additional label may be allocated (up to
+`opts.n_clusters + 1`) if the preferred slot is already occupied by k-means.
+`centroids` is an `n_effective × n_timepoints` matrix in **z-normalised space**:
+each row is the mean of the z-scored curves assigned to that cluster. This captures
+the *shape* of each cluster independently of absolute OD magnitude. To recover
+original-space prototypes, compute the mean of `data.curves[data.clusters .== k, :]`
+for each `k`.
 `wcss` is the total SSE from the k-means step (0.0 when all curves were classified
 as constant).
 
