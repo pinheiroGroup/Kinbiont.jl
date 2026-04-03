@@ -1,298 +1,206 @@
-# [Data formatting and outputs](@id data)
+# [Data & Types](@id data)
+
 ```@contents
 Pages = ["index.md"]
-Depth = 4
+Depth = 3
 ```
 
-## Data and annotation formatting for fitting one dimensional data
+This page describes the data types used throughout Kinbiont's new API.
+For a runnable introduction, see [Quick Start](@ref quickstart).
 
+---
 
-Kinbiont can operate directly on data files or within a Julia notebook. The format of a single time series must be a `2 x n_time_points` matrix of `Float64`:
-```
- 0.0        2.0       4.0       6.0       8.0        10.0       10.0       12.0       14.0       16.0       18.0       20.0       22.0      24.0      26.0       28.0       30.0       32.0       34.0       36.0       …  
- 0.0912154  0.107956  0.105468  0.101727  0.0931484   0.106318   0.103697   0.139821   0.173598   0.204888   0.251052   0.289018   0.31298   0.33752   0.359356   0.370861   0.376347   0.383732   0.398496   0.384511 …  
-```
-The first row should represent the time, and the second row should represent the quantity to be fitted (e.g., optical density or CFU).
+## `GrowthData`
 
-If the user calls APIs that require a `.csv` input, they must provide Kinbiont.jl with the paths to the `.csv` data file and the optional `.csv` annotation file. In these cases, Kinbiont expects a data matrix where the first row contains the names of the wells, and the other columns contain the numerical values of the measurements:
-```
-Time,  A1,     A2,      A3, 
-0.0,   0.09,   0.09,    0.087,
-1.0,   0.08,   0.011,   0.012,
-2.0,   0.011,  0.18,    0.1,
-3.0,   0.012,  0.32,    0.22,
-4.0,   0.008,  0.41,    0.122,
-```
+Immutable container for a set of growth curves.
 
-Kinbiont.jl expects a comma (,) as the separator between columns and  the first column will be used as time.
-
-The annotation file is optional (but mandatory if blank subtraction and averaging of replicates are required) and should be a two-column .csv file where the number of rows corresponds to the number of wells. The first column should contain the name of the well (they should match the names of the wells in the data .csv), while the second column should contain a unique ID for each technical replicate. A `b` indicates that the well should be considered as a blank, an `X` indicates that the well should be discarded from the analysis, and if two wells have the same ID, they will be considered replicates:
-```
-A1, b
-A2, X
-A3, unique_ID
-```
-
-To provide a calibration curve of optical density (OD), that maps OD values obtained from a microplate reader to corresponding values obtained from an independent source, the file should be provided to KinBiont as a CSV file containing two columns:
-- `Raw_OD`: Optical density values measured using a microplate reader.
-- `Real_OD`: Optical density values measured using an independent source.
-
-```csv
-Raw_OD,Real_OD
-1.9617333333333333,4.19666666666
-1.57826666,2.813333333
-1.1751333333,1.68333333333
-0.87273,1.005
-0.66826666666,0.74533333333
-0.45426666666,0.492
-0.2812,0.283
-0.09426666,0.097
-0.04726666,0.04933333333333334
-0.0238,0.024
-0.0,0.0
-```
-
-
-See the folder  `data_examples` for examples. 
-
-## Data and Annotation Formatting for Fitting Multidimensional Data  
-
-If the user wants to use the functions `fit_ODEs_System`, `RN_fit`, and `fit_Cybernetic_models`, the format of a single time series must be an `(m+1) \times n_{\text{time points}}` matrix of `Float64`, where \( m \) is the number of equations present in the system (e.g., the number of chemical species).  
-
-The first row is assumed to represent time, while the remaining rows correspond to the quantities being fitted. For example, if there are two equations, an input could be:  
-
-```
- 0.0        2.0       4.0       6.0       8.0        10.0       12.0       14.0       16.0       18.0       20.0       22.0   …  
- 0.0912154  0.107956  0.105468  0.101727  0.0931484   0.106318   0.103697   0.139821   0.173598   0.204888   0.251052   0.289018   0.31298  …  
- 0.1        0.2       0.3       0.4       0.5        0.6        0.7        0.8        0.9        0.9        0.9        0.9        0.9   …  
-```
-
-These functions also allow users to exclude specific data points (e.g., if the data for the first species is not available). In such cases, the user should specify `set_of_equation_to_fit=[2]` in the fitting functions and provide the data in the following format:  
-
-```
- 0.0        2.0       4.0       6.0       8.0        10.0       12.0       14.0       16.0       18.0       20.0       22.0   …  
- 0.1        0.2       0.3       0.4       0.5        0.6        0.7        0.8        0.9        0.9        0.9        0.9        0.9   …  
-```
-
-
-
-## Data and annotation formatting for downstream ML
-
-
-All ML functions of Kinbiont take as input a matrix of results  (i.e., the outputs of fits `Kinbiont_results`) and a matrix of features  (e.g., the concentration of antibiotics present in all wells `feature_matrix`).
-For example:
 ```julia
-downstream_decision_tree_regression(Kinbiont_results, 
-  feature_matrix,
-  row_to_learn;
+# Fields
+data.curves    # Matrix{Float64}: n_curves × n_timepoints
+data.times     # Vector{Float64}: shared time points
+data.labels    # Vector{String}: one label per curve
+data.clusters  # Union{Nothing, Vector{Int}}: populated by preprocess()
+data.centroids # Union{Nothing, Matrix{Float64}}: n_clusters × n_timepoints (z-scored)
+data.wcss      # Union{Nothing, Float64}: within-cluster sum of squares
+```
+
+**Three constructors:**
+
+```julia
+# 1. From a CSV file (first column = time, remaining = wells)
+data = GrowthData("experiment.csv")
+
+# 2. From a matrix (n_curves × n_timepoints orientation)
+curves = Matrix{Float64}(df[:, 2:end])'
+data   = GrowthData(curves, times, labels)
+
+# 3. After loading with DataFrames
+df     = CSV.read("experiment.csv", DataFrame)
+times  = Float64.(df[:, 1])
+labels = names(df)[2:end]
+curves = Matrix{Float64}(df[:, 2:end])'
+data   = GrowthData(curves, times, labels)
+```
+
+**Subsetting:**
+
+```julia
+# Return a new GrowthData with only the listed wells
+sub = data[["Curve11728", "Curve11729"]]
+```
+
+---
+
+## CSV format
+
+First column: time. Remaining columns: one curve per column, header = well name.
+
+```
+Time_h,A1,A2,A3
+0.0,0.09,0.09,0.087
+1.0,0.08,0.011,0.012
+2.0,0.011,0.18,0.1
+```
+
+Separator must be a comma (`,`).
+
+---
+
+## Annotation format
+
+Optional two-column CSV (no header). Maps well names to labels:
+- `"b"` → blank well (used for `blank_from_labels=true`)
+- `"X"` → discard (excluded from all analysis)
+- Any other string → biological label; identical labels are treated as replicates
+
+```
+A1,b
+A2,X
+A3,condition_1
+A4,condition_1
+A5,condition_2
+```
+
+---
+
+## `FitOptions`
+
+All configuration in one `@kwdef` struct. Every field has a default — only set
+what you need.
+
+```julia
+# Minimal: all defaults
+opts = FitOptions()
+
+# Common pattern
+opts = FitOptions(
+    smooth               = true,
+    smooth_method        = :rolling_avg,
+    blank_subtraction    = true,
+    blank_from_labels    = true,
+    cut_stationary_phase = true,
+    cluster              = true,
+    n_clusters           = 4,
+    loss                 = "RE",
 )
 ```
 
+Field groups and their defaults:
+
+| Group | Key fields | Defaults |
+|---|---|---|
+| Smoothing | `smooth`, `smooth_method`, `smooth_pt_avg`, `lowess_frac`, `boxcar_window`, `gaussian_h_mult` | `false`, `:lowess`, `7`, `0.05`, `5`, `2.0` |
+| Blank subtraction | `blank_subtraction`, `blank_value`, `blank_from_labels` | `false`, `0.0`, `false` |
+| Replicates | `average_replicates` | `false` |
+| Negatives | `correct_negatives`, `negative_method`, `negative_threshold` | `false`, `:remove`, `0.01` |
+| Scattering | `scattering_correction`, `calibration_file`, `scattering_method` | `false`, `""`, `:interpolation` |
+| Stationary | `cut_stationary_phase`, `stationary_percentile_thr`, `stationary_win_size` | `false`, `0.05`, `5` |
+| Clustering | `cluster`, `n_clusters`, `cluster_trend_test`, `cluster_prescreen_constant`, `cluster_exp_prototype`, `kmeans_seed` | `false`, `3`, `true`, `false`, `false`, `0` |
+| Fitting | `loss`, `multistart`, `n_restart`, `optimizer`, `integrator` | `"RE"`, `false`, `50`, BBO, Tsit5 |
+
+See the [API Reference](@ref) for the full field list.
+
+---
+
+## `ModelSpec`
+
+Specifies which models to fit and their starting parameters.
+
 ```julia
-downstream_symbolic_regression(Kinbiont_results,
-  feature_matrix,
-  row_to_learn;
+spec = ModelSpec(
+    models  = [MODEL_REGISTRY["aHPM"], MODEL_REGISTRY["logistic"]],
+    params  = [[1.0, 1.0, 1.0, 1.0], [0.5, 1.0]];
+    lower   = [[0.0,0.0,0.0,0.0], [0.0,0.0]],
+    upper   = [[50.,50.,50.,50.], [10.,10.]],
 )
 ```
 
-The first matrix is the standard output of any of the Kinbiont fit functions. In this case, each row represents a parameter, and each column a growth curve.
+`lower` and `upper` are optional. Omitting them triggers an auto-bounds warning
+and uses `guess/10` to `guess*10`.
 
-For example:
+---
 
-```
-label_exp,       exp_2_no_corrections,    exp_2_no_corrections
-well,            A1,                      A2
-model,           HPM,                     HPM
-gr,              0.008875566468779583,    0.010090369128600398
-exit_lag_rate,   1.7249775833759684e-6,   1.4012949810152472e-6
-N_max,           2.498999749717784,       1.6986904454789507
-th_max_gr,       0.005778245042794245,    0.00599548534261212
-emp_max_gr,      0.007951369027199616,    0.008096305651156249
-loss,            0.0013005418069932683,   0.0013349159149782007
+## `MODEL_REGISTRY`
+
+Global `Dict{String, AbstractGrowthModel}` of all built-in models.
+
+```julia
+sort(collect(keys(MODEL_REGISTRY)))   # list all names
+MODEL_REGISTRY["aHPM"].param_names   # inspect parameters
 ```
 
-Note the first row is dedicated to the label of the experiment and will not be used by the functions. It is necessary that the second row (i.e., `well`) reports a unique ID for each curve. The functions will ask which is the target row of the regression (i.e., `row_to_learn`); please do not use the first row. The first column is dedicated to the names of the columns and will be discarded from the ML analysis.
+---
 
-Instead, the feature matrix specifies the conditions associated with each unique ID of the previous matrix. Only the wells where there is a match  between the first column of the feature matrix and the second row of the fitting results will be used. For example, suppose you have two different antibiotics, each with two different concentrations. Then the matrix could be:
+## Result types
 
-```
-ID_exp,   abx_1,   abx_2
-A1,       0,       1,
-A2,       2,       0,
-A3,       1,       1,
-A4,       1,       0,
-A5,       0,       2,
+**`GrowthFitResults`** — returned by `kinbiont_fit`:
+```julia
+results.data     # GrowthData: the preprocessed data that was fitted
+results.results  # Vector{CurveFitResult}: one per curve
 ```
 
-Note that it is necessary to add one column for each new chemical/condition added to the experiment (even if in a specific well it is absent).  The first row will not be used and is dedicated to the feature names.
+**`CurveFitResult`** — one per fitted curve:
+```julia
+r.label          # String: curve identifier
+r.best_model     # AbstractGrowthModel: selected by AICc
+r.best_params    # Vector{Any}: fitted parameters
+r.best_aic       # Float64: AICc of best model
+r.fitted_curve   # Vector{Float64}: model values at each time point
+r.times          # Vector{Float64}: time points
+r.loss           # Float64: final objective value
+r.all_results    # Vector{NamedTuple}: raw result for every candidate model
+```
 
-See the folder  `data_examples` for examples. 
+`GrowthFitResults` supports indexing and iteration:
+```julia
+results[1]           # CurveFitResult for the first curve
+for r in results     # iterate over all curves
+    println(r.label)
+end
+length(results)      # number of curves fitted
+```
 
-## Outputs of Kinbiont
+---
 
-Kinbiont has different data structures as output. Here, you will find a brief summary of the main function; please consult the API section for the description of all the functions.
+## CSV format for multi-dimensional data
 
-- `fitting_one_well_Log_Lin`
+For `fit_ODEs_System`, `RN_fit`, and `fit_Cybernetic_models`, the input is an
+`(m+1) × n_timepoints` matrix where row 1 is time and rows 2..m+1 are the
+quantities being fitted:
 
-This structure stores results for a single well using a log-linear method.
+```
+0.0   2.0   4.0   6.0  …
+0.09  0.11  0.14  0.18 …   ← species 1
+0.10  0.20  0.30  0.40 …   ← species 2
+```
 
-1. `method:String` - The method used.
-1. `params:Vector{Any}` - Parameters obtained from the fitting process.
-1. `fit:Any` - The fitted function in the exponential window.
-1. `times:Any` - The times at which measurements were taken.
-1. `confidence_band:Any` - The confidence band of the fit.
+---
 
-- `fitting_one_well_ODE_constrained` and `fitting_one_well_custom_ODE`
+## ML input format
 
-This structure stores results for a single well.
+`downstream_decision_tree_regression` and `downstream_symbolic_regression` take:
 
-1. `method:String` - The method used.
-1. `params:Vector{Any}` - Parameters obtained from the fitting process.
-1. `fit:Any` - The fitted function.
-1. `times:Any` - The times at which measurements were taken.
+1. **Kinbiont_results matrix** — columns = curves, rows = `[label_row, well, model, param_1, …, loss]`
+2. **feature_matrix** — rows = curves, columns = `[well_id, feature_1, feature_2, …]`, first row = header
 
-- `ODE_Model_selection`
-
-1. `method:String` - The method used.
-1. `params:Vector{Any}` - Parameters obtained from the fitting process.
-1. `fit:Any` - The fitted function.
-1. `times:Any` - The times at which measurements were taken.
-
-- `Kinbiont_res_bootstrap_NL`
-
-This structure stores results of the bootstrap fitting of a NL function.
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
-1. `fit:Any` - The fitted function.
-1. `times:Any` - The times at which measurements were taken.
-1. `fin_param:Any` - The  parameters of each bootstrap fit.
-1. `new_param_fin:Any` - The  parameters of each bootstrap fit after considering only the best $95/%$ of the losses.
-1. `mean_param:Any` - Mean of the parameters.
-1. `sd_param:Any` - Standard deviation of the parameters.
-
-- `ODE_Model_selection`
-
-This structure stores model selection results.
-
-1. `method:String` - The method used.
-1. `params:Vector{Any}` - Parameters obtained from the fitting process.
-1. `fit:Vector{Float64}` - The fit result.
-1. `times:Vector{Float64}` - The times at which measurements were taken.
-1. `rss_array:Any` - Residual sum of squares array.
-1. `min_rss_array:Any` - Minimum residual sum of squares array.
-1. `param_min:Any` - Parameters corresponding to minimum RSS.
-1. `min_AIC:Vector{Any}` - Minimum AIC values.
-1. `selected_model:String` - The selected model.
-1. `full_param:Vector{Any}` - Full parameter set.
-
-
-- `NL_model_selection`
-
-This structure stores non-linear model selection results.
-
-1. `method:String` - The method used.
-1. `params:Vector{Any}` - Parameters obtained from the fitting process.
-1. `fit:Vector{Float64}` - The fit result.
-1. `times:Vector{Float64}` - The times at which measurements were taken.
-1. `score_res:Any` - Score results.
-1. `top_loss:Any` - Top loss values.
-
-- `sensitivity_NL`
-
-This structure stores sensitivity analysis results using non-linear methods.
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
-1. `fit:Any` - The fit result.
-1. `times:Any` - The times at which measurements were taken.
-1. `combinations:Matrix{Any}` - The list of each of the starting hyperparameters  used in sensitivity analysis.
-
-- `one_well_morris_sensitivity`
-
-This structure stores sensitivity analysis results.
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
-1. `combinations:Matrix{Any}` - The list of each of the starting hyperparameters  used in sensitivity analysis.
-
-- `segmentation_ODE`
-
-This structure stores segmentation results using ODE methods.
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
-1. `fit:Array{Float64}` - The fitted functions.
-1. `times:Array{Float64}` - The times at which measurements were taken.
-1. `interval_cdp:Array{Any}` - Change point intervals.
-1. `score_of_the_models:Any` - Scores of the models.
-
-- `segmentation_NL`
-
-This structure stores segmentation results using non-linear methods.
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
-1. `fit:Array{Float64}` - The fitted functions.
-1. `times:Array{Float64}` - The times at which measurements were taken.
-1. `interval_cdp:Array{Any}` - Change point intervals.
-
-- `fit_ODEs_System`
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
-1. `fit:Array{Float64}` - The fitted functions in SciML format.
-
-- `fit_Cybernetic_models`
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
-1. `fit:Array{Float64}` - The fitted functions in SciML format.
-
-- `RN_fit`
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - Parameters obtained from the fitting process.
-1. `fit:Array{Float64}` - The fitted functions in SciML format.
-
-
-This structure stores results for log-linear fits across multiple curves in one file.
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - The matrix with the  parameters obtained from the fitting process of each curve of the file.
-1. `fits:Tuple{Any}` - The fitted functions in each exponential window.
-1. `data:Tuple{Any}` - The data used for fitting.
-1. `confidence_bands:Tuple{Any}` - Confidence bands for the fits.
-
-- `Kinbiont_res_one_file`
-
-This structure stores results of the fit for all curves in a single file.
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - The matrix of the parameters obtained from the fitting process.
-1. `fits:Tuple{Any}` - The fitted functions for each well.
-1. `data:Tuple{Any}` - The data used for fitting.
-
-- `Kinbiont_res_one_file_segmentation`
-
-This structure stores segmentation results  for all curves in a single file.
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - The matrix of the parameters obtained from the fitting process.
-1. `fits:Tuple{Any}` -  The fitted functions for each well.
-1. `data:Tuple{Any}` - The data used for fitting.
-1. `cp:Tuple{Any}` - Change points detected.
-1. `vector_AIC:Any` - AIC (or AICc) values of the best model for each well.
- 
-
- - `ODEs_system_fit`
-
-This structure stores segmentation results  for all curves in a single file.
-
-1. `method:String` - The method used.
-1. `params:Matrix{Any}` - The matrix of the parameters obtained from the fitting process.
-1. `fits:Tuple{Any}` -  The fitted functions for each well.
-1. `data:Tuple{Any}` - The data used for fitting.
-1. `cp:Tuple{Any}` - Change points detected.
-1. `vector_AIC:Any` - AIC (or AICc) values of the best model for each well.
- 
+See [ML Downstream](@ref ml) for a full working example built from `save_results` output.
