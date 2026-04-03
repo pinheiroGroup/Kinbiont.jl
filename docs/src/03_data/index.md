@@ -118,7 +118,7 @@ Field groups and their defaults:
 | Clustering | `cluster`, `n_clusters`, `cluster_trend_test`, `cluster_prescreen_constant`, `cluster_exp_prototype`, `kmeans_seed` | `false`, `3`, `true`, `false`, `false`, `0` |
 | Fitting | `loss`, `multistart`, `n_restart`, `optimizer`, `integrator` | `"RE"`, `false`, `50`, BBO, Tsit5 |
 
-See the [API Reference](@ref) for the full field list.
+See the [API Reference](@ref api) for the full field list.
 
 ---
 

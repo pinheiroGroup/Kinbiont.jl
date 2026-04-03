@@ -245,5 +245,5 @@ spec = ModelSpec(
 
 Kinbiont also has a lower-level API: `fitting_one_well_ODE_constrained`,
 `fitting_one_well_Log_Lin`, `segmentation_ODE_file`, etc. These functions
-still work and are documented in the [API Reference](@ref). New code should
+still work and are documented in the [API Reference](@ref api). New code should
 prefer `kinbiont_fit`.
