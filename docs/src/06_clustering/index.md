@@ -10,6 +10,11 @@ Z-scoring makes clustering scale-independent — a fast-growing well that reache
 OD 2.0 and a slow-growing well that reaches OD 0.4 can still be grouped by
 whether their dynamics are sigmoidal, exponential, or flat.
 
+!!! note "Z-scoring edge case"
+    Perfectly constant curves (standard deviation < 1e-12) become all-zero rows
+    after z-scoring. This is intentional: flat wells become a single point at the
+    origin in shape space and naturally cluster together.
+
 Clustering is performed inside `preprocess()` **before** blank subtraction, so
 that non-growing (blank) wells are still distinguishable by their raw signal and
 correctly identified as constant.
@@ -36,6 +41,11 @@ println(results.data.wcss)       # Float64: within-cluster sum of squares
 
 Cluster labels are always integers in `1..n_clusters` (or up to `n_clusters+1`
 when `cluster_exp_prototype=true` allocates an extra slot).
+
+!!! note "Centroids are in z-scored space"
+    `results.data.centroids` rows are shape prototypes — averages of the
+    z-scored curves in each cluster, not averages of the raw OD trajectories.
+    They represent temporal shape, not absolute OD magnitude.
 
 ---
 
@@ -69,6 +79,11 @@ scatter(ks, wcss;
     If the curve is monotone with no clear bend, try `cluster_prescreen_constant=true`
     to handle non-growing wells separately.
 
+!!! note "WCSS and exponential prototype relabeling"
+    When `cluster_exp_prototype=true`, WCSS is computed from the k-means solution
+    **before** exponential prototype reassignment. The value still reflects the
+    k-means cost, not the cost of the final labels.
+
 ---
 
 ## Handling non-growing wells
@@ -78,8 +93,8 @@ Two strategies for identifying flat / non-growing curves:
 ### Strategy 1: `cluster_trend_test` (default)
 
 After k-means, an OLS slope t-test flags curves with no significant linear trend
-(p ≥ 0.05) and re-labels them to `n_clusters`. K-means runs on all `n_clusters - 1`
-dynamic groups first.
+(p ≥ 0.05) and re-labels them to `n_clusters`. K-means runs on all curves first,
+then flat wells are post-hoc reassigned.
 
 ```julia
 opts = FitOptions(
@@ -89,12 +104,15 @@ opts = FitOptions(
 )
 ```
 
+Useful when flat curves are noisy enough to escape a quantile filter but still
+lack a statistically significant linear trend.
+
 ### Strategy 2: `cluster_prescreen_constant` (recommended for noisy plates)
 
 Pre-screens before k-means using a quantile-ratio criterion. Curves where
-`q_high / q_low ≤ cluster_tol_const` are pinned to label `n_clusters`; k-means
-then runs only on dynamic curves. More biologically meaningful because k-means
-never sees flat wells.
+`q_high / q_low ≤ cluster_tol_const` (when `q_low > 0`) are pinned to label
+`n_clusters`; k-means then runs only on dynamic curves. More biologically
+meaningful because k-means never sees flat wells.
 
 ```julia
 opts = FitOptions(
@@ -107,10 +125,15 @@ opts = FitOptions(
 )
 ```
 
+!!! warning "These two modes are mutually exclusive"
+    If both `cluster_prescreen_constant=true` and `cluster_trend_test=true` are
+    set, **prescreen takes priority** and the trend-test branch is ignored entirely.
+    Set only one of them (or neither for plain k-means).
+
 !!! note "Which to use?"
     `cluster_prescreen_constant=true` is generally better for microplate data
     where blank wells and non-growing knockouts are common. Use `cluster_trend_test`
-    for datasets where all wells are expected to grow.
+    for datasets where all wells are expected to grow but some have very weak signal.
 
 ---
 
@@ -127,15 +150,27 @@ opts = FitOptions(
     n_clusters                 = 4,
     cluster_prescreen_constant = true,
     cluster_exp_prototype      = true,
-    # Label allocation:
-    # n_clusters     → constant wells (from prescreen)
-    # n_clusters - 1 → exponential prototype cluster
-    # 1..n_clusters-2 → k-means dynamic groups
 )
 ```
 
-When the preferred exponential slot is already occupied by k-means,
-the exponential prototype is assigned label `max(labels) + 1`.
+**Label allocation with `cluster_prescreen_constant=true`:**
+
+| Label | Meaning |
+|---|---|
+| `1 .. n_clusters-2` | Dynamic k-means groups |
+| `n_clusters - 1` | Exponential prototype cluster (preferred slot) |
+| `n_clusters` | Constant / non-growing wells (from prescreen) |
+
+**Label allocation with `cluster_prescreen_constant=false`:**
+
+| Label | Meaning |
+|---|---|
+| `1 .. n_clusters-1` | Dynamic k-means groups |
+| `n_clusters` | Exponential prototype cluster (preferred slot) |
+
+If the preferred exponential slot is already occupied by a k-means cluster,
+the exponential prototype is assigned label `max(labels) + 1` instead. This
+means the final labels may exceed `n_clusters` when this collision occurs.
 
 ---
 
@@ -152,7 +187,83 @@ opts = FitOptions(
 )
 ```
 
-`kmeans_seed = 0` (the default) also uses seed 42 (not the global RNG).
+`kmeans_seed = 0` (the default) also uses seed 42 (not the global RNG). The
+same RNG is reused across all `kmeans_n_init` repetitions, so the full sequence
+of starts is deterministic for a given seed.
+
+---
+
+## Synthetic example: comparing clustering modes
+
+The example below generates three curve shapes (flat, logistic, exponential) and
+compares plain k-means, prescreen, and exponential prototype modes side by side.
+
+```julia
+using Kinbiont, Plots, Random
+Random.seed!(42)
+
+times = collect(0.0:2.0:48.0)
+n_tp  = length(times)
+
+# Helper functions
+logistic_curve(t, lag, rate, amp, base) =
+    base .+ amp ./ (1 .+ exp.(-rate .* (t .- lag)))
+
+function exp_curve(t, rate, amp, base)
+    tnorm = (t .- minimum(t)) ./ (maximum(t) - minimum(t))
+    base .+ amp .* (exp.(rate .* tnorm) .- 1.0) ./ (exp(rate) - 1.0)
+end
+
+# Build dataset: 6 flat + 6 logistic + 6 exponential
+curves = Matrix{Float64}(undef, 18, n_tp)
+for i in 1:6
+    curves[i, :] = fill(0.06, n_tp) .+ 0.002 .* randn(n_tp)
+end
+for i in 7:12
+    curves[i, :] = logistic_curve(times, 18.0, 0.35, 0.8, 0.04) .+ 0.01 .* randn(n_tp)
+end
+for i in 13:18
+    curves[i, :] = exp_curve(times, 4.5, 0.9, 0.04) .+ 0.01 .* randn(n_tp)
+end
+
+labels = vcat(fill("flat", 6), fill("logistic", 6), fill("exponential", 6))
+data   = GrowthData(curves, times, labels)
+
+# Mode A: plain k-means
+proc_plain = preprocess(data, FitOptions(
+    cluster=true, n_clusters=3,
+    cluster_prescreen_constant=false, cluster_trend_test=false,
+    cluster_exp_prototype=false, kmeans_seed=11, kmeans_n_init=10,
+))
+
+# Mode B: constant pre-screening
+proc_const = preprocess(data, FitOptions(
+    cluster=true, n_clusters=3,
+    cluster_prescreen_constant=true, cluster_tol_const=1.9,
+    cluster_q_low=0.10, cluster_q_high=0.90,
+    cluster_trend_test=false, cluster_exp_prototype=false,
+    kmeans_seed=11, kmeans_n_init=10,
+))
+
+# Mode C: exponential prototype
+proc_exp = preprocess(data, FitOptions(
+    cluster=true, n_clusters=3,
+    cluster_prescreen_constant=false, cluster_trend_test=false,
+    cluster_exp_prototype=true, kmeans_seed=11, kmeans_n_init=10,
+))
+
+println("Plain   clusters: ", proc_plain.clusters)
+println("Prescreen clusters: ", proc_const.clusters)
+println("Exp proto clusters: ", proc_exp.clusters)
+
+# Plot centroids for mode C
+p = plot(xlabel="Time (h)", ylabel="OD (z-scored)", title="Exp prototype centroids")
+for k in 1:size(proc_exp.centroids, 1)
+    n = sum(proc_exp.clusters .== k)
+    plot!(p, times, proc_exp.centroids[k, :]; label="Cluster $k (n=$n)", linewidth=2)
+end
+display(p)
+```
 
 ---
 
