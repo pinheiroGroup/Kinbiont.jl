@@ -14,7 +14,7 @@
 using Clustering: kmeans, assignments
 using StatsBase: zscore
 using Distributions: TDist, cdf
-using Random: MersenneTwister, GLOBAL_RNG
+using Random: MersenneTwister
 
 # ---------------------------------------------------------------------------
 # Public entry point
@@ -47,7 +47,10 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     times  = data.times
     labels = data.labels
 
-    # Replicate averaging collapses curves with identical labels before any other step
+    # Resolve blank value before replicate averaging: averaging removes "b"-labelled
+    # wells, so _blank_from_labels would find nothing if called afterwards.
+    blank_val = _resolve_blank_value(curves, labels, opts)
+
     curves, labels = _apply_replicate_averaging(curves, labels, opts)
 
     curves = _apply_scattering_correction(curves, times, opts)
@@ -57,7 +60,7 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     # non-growing wells (which is precisely what clustering is meant to find).
     clusters, centroids, wcss = opts.cluster ? _cluster(curves, times, opts) : (nothing, nothing, nothing)
 
-    curves = _apply_blank_subtraction(curves, data.labels, opts)
+    curves = _apply_blank_subtraction(curves, blank_val, opts)
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
@@ -127,19 +130,34 @@ end
 # Step 2 — Blank subtraction
 # ---------------------------------------------------------------------------
 
-function _apply_blank_subtraction(
+"""
+    _resolve_blank_value(curves, labels, opts) -> Float64
+
+Determine the blank OD value to subtract. Must be called **before** replicate
+averaging, because averaging drops `"b"`-labelled wells from the matrix.
+
+Returns 0.0 when `opts.blank_subtraction` is false.
+"""
+function _resolve_blank_value(
     curves::Matrix{Float64},
     labels::Vector{String},
     opts::FitOptions,
-)::Matrix{Float64}
-    opts.blank_subtraction || return curves
+)::Float64
+    opts.blank_subtraction || return 0.0
 
     if opts.blank_from_labels
-        blank_val = _blank_from_labels(curves, labels)
+        return _blank_from_labels(curves, labels)
     else
-        blank_val = opts.blank_value
+        return opts.blank_value
     end
+end
 
+function _apply_blank_subtraction(
+    curves::Matrix{Float64},
+    blank_val::Float64,
+    opts::FitOptions,
+)::Matrix{Float64}
+    opts.blank_subtraction || return curves
     return curves .- blank_val
 end
 
@@ -205,8 +223,6 @@ function _apply_smoothing(
 
     n_curves = size(curves, 1)
     n_curves == 0 && return curves, times
-
-    opts.smooth_method == :boxcar && return _apply_boxcar_smoothing(curves, times, opts)
 
     if opts.smooth_method == :boxcar
         return _apply_boxcar_smoothing(curves, times, opts)
@@ -300,11 +316,13 @@ end
 # ---------------------------------------------------------------------------
 
 # Run k-means `opts.kmeans_n_init` times and return the result with the lowest WCSS.
-# Uses a seeded MersenneTwister when `opts.kmeans_seed != 0` for reproducibility.
+# Uses a deterministic MersenneTwister. When `opts.kmeans_seed == 0`, a default
+# fixed seed (42) is used; otherwise the user-provided seed is used.
 function _kmeans_best(X::AbstractMatrix{Float64}, k::Int, opts::FitOptions)
-    rng  = opts.kmeans_seed == 0 ? GLOBAL_RNG : MersenneTwister(opts.kmeans_seed)
-    best = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
-    for _ in 2:opts.kmeans_n_init
+    rng    = opts.kmeans_seed == 0 ? MersenneTwister(42) : MersenneTwister(opts.kmeans_seed)
+    n_init = max(1, opts.kmeans_n_init)
+    best   = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
+    for _ in 2:n_init
         r = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
         r.totalcost < best.totalcost && (best = r)
     end
@@ -317,11 +335,14 @@ end
 Cluster growth curves and return per-curve labels, per-cluster shape centroids,
 and the within-cluster sum of squares (WCSS / total SSE from k-means).
 
-Labels are always in `1..opts.n_clusters`. `centroids` is an
-`n_clusters × n_timepoints` matrix in **z-normalised space**: each row is the
-mean of the z-scored curves assigned to that cluster. This captures the *shape*
-of each cluster independently of absolute OD magnitude. To recover original-space
-prototypes, compute the mean of `data.curves[data.clusters .== k, :]` for each `k`.
+Without exponential prototype relabeling, labels lie in `1..opts.n_clusters`.
+When `cluster_exp_prototype=true`, an additional label may be allocated (up to
+`opts.n_clusters + 1`) if the preferred slot is already occupied by k-means.
+`centroids` is an `n_effective × n_timepoints` matrix in **z-normalised space**:
+each row is the mean of the z-scored curves assigned to that cluster. This captures
+the *shape* of each cluster independently of absolute OD magnitude. To recover
+original-space prototypes, compute the mean of `data.curves[data.clusters .== k, :]`
+for each `k`.
 `wcss` is the total SSE from the k-means step (0.0 when all curves were classified
 as constant).
 
@@ -360,22 +381,26 @@ function _cluster(
     end
 
     if opts.cluster_exp_prototype
-        exp_label      = _exp_prototype_label(opts)
+        exp_label      = _exp_prototype_label(opts, labels)
         exp_protos     = _build_exp_prototypes(times)
         centroids_norm = _compute_centroids(zscored_all, labels, opts.n_clusters)
         labels         = _apply_exp_prototype_labels(zscored_all, labels, exp_protos,
                                                      centroids_norm, exp_label)
     end
 
+    n_effective = isempty(labels) ? opts.n_clusters : maximum(labels)
     # Centroids in z-normalised space (shape prototypes, scale-independent).
-    centroids = _compute_centroids(zscored_all, labels, opts.n_clusters)
+    centroids = _compute_centroids(zscored_all, labels, n_effective)
     return labels, centroids, wcss
 end
 
-# The exponential prototype occupies label n_clusters-1 when constant
-# pre-screening is active (reserving n_clusters for constant), otherwise n_clusters.
-_exp_prototype_label(opts::FitOptions) =
-    opts.cluster_prescreen_constant ? opts.n_clusters - 1 : opts.n_clusters
+# The exponential prototype occupies a label that is NOT already in use by k-means.
+# Preferred slot: n_clusters-1 (constant pre-screening mode) or n_clusters (plain mode).
+# If that slot is already occupied by k-means, allocate max(labels)+1 instead.
+function _exp_prototype_label(opts::FitOptions, labels::Vector{Int})
+    preferred = opts.cluster_prescreen_constant ? opts.n_clusters - 1 : opts.n_clusters
+    preferred ∈ labels ? maximum(labels) + 1 : preferred
+end
 
 # ---------------------------------------------------------------------------
 # Constant pre-screening helpers
@@ -497,8 +522,8 @@ end
     _apply_exp_prototype_labels(zscored, labels, exp_protos, centroids_norm, exp_label)
 
 For each curve, compare its squared distance to the nearest exponential prototype
-against the distance to the nearest k-means centroid. If the exponential is closer,
-reassign the curve to `exp_label`.
+against the distance to its assigned k-means centroid. If the exponential prototype
+is closer, reassign the curve to `exp_label`.
 """
 function _apply_exp_prototype_labels(
     zscored::Matrix{Float64},
