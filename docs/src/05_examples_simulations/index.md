@@ -289,7 +289,7 @@ This rule allocates resources to substrates proportionally based on their concen
 ```julia
 # Function for proportional allocation based on substrate concentrations
 function proportional_allocation_rule(a, b, V_S, k_S, Y_S, P, S, cost, protein_thresholds)
-# Normalize substrate concentrations to create an allocation vector
+# Normalize substrate concentrations to create an alloc vector
 alloc = S ./ sum(S)
 return alloc
 end

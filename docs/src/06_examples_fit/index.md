@@ -9,7 +9,7 @@ Pages = ["index.md"]
 Depth = 4
 ```
 
-A corse grain description on which function/method to fit can be used is described in the following flow chart:
+A coarse-grained description on which function/method to fit can be used is described in the following flow chart:
 
 ```@raw html
 <div style="text-align: center; margin: auto; max-width: 1000px;">
@@ -35,7 +35,7 @@ using Random
 
 ## Fitting a single kinetics
 
-### Simulating Data with ODEs
+### Simulating Data with ODEs:
 
 First, we simulate the data to use them example for the fitting:
 
@@ -83,7 +83,7 @@ The user can evaluate the specific growth rate during the whole curve. This can 
 pt_win = 7
 specific_gr_array = Kinbiont.specific_gr_evaluation(data_OD,pt_win )
 specific_gr_times = [
-    (data_OD[1, r] + data_OD[1, 	(r+pt_smoopt_winthing_derivative)]) / 2 for
+    (data_OD[1, r] + data_OD[1, 	(r+pt_win)]) / 2 for
     r = 1:1:(eachindex(data_OD[2, :])[end].- pt_win)
  	]
 Plots.scatter(specific_gr_times,specific_gr_array, xlabel="Time", ylabel="Arb. Units", label=["Data " nothing],  color=:blue, size = (300,300))
@@ -885,14 +885,14 @@ results = fit_Cybernetic_models(
 
 Instead of fitting a single kinetics, the user can supply a `.csv` file (formatted as described in the section), and Kinbiont will proceed to perform the analysis on all the wells of the experiment. Note that the user can supply an annotation .csv. In this case, it becomes possible to subtract the blanks and fit the average of replicates.
 
-Note that this is aviable only for ODE with one dimensional data (OD or biomass). For use a `.csv` with multidimensional ODEs you need import the data and shape them in the format required by Kinbiont. 
+Note that this is available only for ODE with one dimensional data (OD or biomass). For use a `.csv` with multidimensional ODEs you need import the data and shape them in the format required by Kinbiont. 
 To use the following functions, the user should input Kinbiont variables that contain the string of the path to the .csv files:
 
 ```julia
 path_to_data = "your_path/data_examples/plate_data.csv"
 path_to_annotation ="your_path_to_annotation/annotation.csv"
 ```
-In the following examples, we assume that these two variables have a value. You can use the file in the folder (data examples)[https://github.com/pinheiroGroup/Kinbiont.jl/tree/main/data_examples].
+In the following examples, we assume that these two variables have a value. You can use the file in the folder [data examples](https://github.com/pinheiroGroup/Kinbiont.jl/tree/main/data_examples).
 Note that if you use the following function you can use the package https://github.com/pinheiroGroup/KinbiontPlots.jl to display or save the plots of the fit for all the wells in the experiment. This can be done using the following function with input of the data struct coming for any fit:
 
 ```julia

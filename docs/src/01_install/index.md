@@ -3,7 +3,7 @@
 ## Manual installation
 Download the folder from Github. 
 First, it is necessary to install the Julia from https://julialang.org/.   
-Next, the user need to copy the project folder in the chosen working directory. 
+Next, the user needs to copy the project folder in the chosen working directory. 
 
 - Using REPL or the COMMAND LINE move to the working directory.  
 - If you use the COMMAND LINE, to start a Julia session run the command:
