@@ -1,4 +1,4 @@
-# API 
+# [API Reference](@id api)
 
 ## Pre-processing functions
 [`Kinbiont.smoothing_data`](@ref)
