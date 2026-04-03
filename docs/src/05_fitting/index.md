@@ -1,4 +1,4 @@
-# [Examples of fitting](@id examples)
+# [Examples of fitting](@id fitting)
 
 This section provides some copy-and-paste examples on how to fit kinetics data with Kinbiont.jl. 
 These examples can be replicated by running the scripts in the [examples folder](https://github.com/pinheiroGroup/Kinbiont.jl/tree/main/Example_scripts). 
