@@ -47,7 +47,10 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     times  = data.times
     labels = data.labels
 
-    # Replicate averaging collapses curves with identical labels before any other step
+    # Resolve blank value before replicate averaging: averaging removes "b"-labelled
+    # wells, so _blank_from_labels would find nothing if called afterwards.
+    blank_val = _resolve_blank_value(curves, labels, opts)
+
     curves, labels = _apply_replicate_averaging(curves, labels, opts)
 
     curves = _apply_scattering_correction(curves, times, opts)
@@ -57,7 +60,7 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     # non-growing wells (which is precisely what clustering is meant to find).
     clusters, centroids, wcss = opts.cluster ? _cluster(curves, times, opts) : (nothing, nothing, nothing)
 
-    curves = _apply_blank_subtraction(curves, labels, opts)
+    curves = _apply_blank_subtraction(curves, blank_val, opts)
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
@@ -127,19 +130,34 @@ end
 # Step 2 — Blank subtraction
 # ---------------------------------------------------------------------------
 
-function _apply_blank_subtraction(
+"""
+    _resolve_blank_value(curves, labels, opts) -> Float64
+
+Determine the blank OD value to subtract. Must be called **before** replicate
+averaging, because averaging drops `"b"`-labelled wells from the matrix.
+
+Returns 0.0 when `opts.blank_subtraction` is false.
+"""
+function _resolve_blank_value(
     curves::Matrix{Float64},
     labels::Vector{String},
     opts::FitOptions,
-)::Matrix{Float64}
-    opts.blank_subtraction || return curves
+)::Float64
+    opts.blank_subtraction || return 0.0
 
     if opts.blank_from_labels
-        blank_val = _blank_from_labels(curves, labels)
+        return _blank_from_labels(curves, labels)
     else
-        blank_val = opts.blank_value
+        return opts.blank_value
     end
+end
 
+function _apply_blank_subtraction(
+    curves::Matrix{Float64},
+    blank_val::Float64,
+    opts::FitOptions,
+)::Matrix{Float64}
+    opts.blank_subtraction || return curves
     return curves .- blank_val
 end
 
@@ -298,7 +316,8 @@ end
 # ---------------------------------------------------------------------------
 
 # Run k-means `opts.kmeans_n_init` times and return the result with the lowest WCSS.
-# Uses a seeded MersenneTwister when `opts.kmeans_seed != 0` for reproducibility.
+# Uses a deterministic MersenneTwister. When `opts.kmeans_seed == 0`, a default
+# fixed seed (42) is used; otherwise the user-provided seed is used.
 function _kmeans_best(X::AbstractMatrix{Float64}, k::Int, opts::FitOptions)
     rng    = opts.kmeans_seed == 0 ? MersenneTwister(42) : MersenneTwister(opts.kmeans_seed)
     n_init = max(1, opts.kmeans_n_init)
@@ -503,8 +522,8 @@ end
     _apply_exp_prototype_labels(zscored, labels, exp_protos, centroids_norm, exp_label)
 
 For each curve, compare its squared distance to the nearest exponential prototype
-against the distance to the nearest k-means centroid. If the exponential is closer,
-reassign the curve to `exp_label`.
+against the distance to its assigned k-means centroid. If the exponential prototype
+is closer, reassign the curve to `exp_label`.
 """
 function _apply_exp_prototype_labels(
     zscored::Matrix{Float64},
