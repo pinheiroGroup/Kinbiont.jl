@@ -18,6 +18,7 @@ Pages = [
     "04_preprocessing/index.md",
     "05_fitting/index.md",
     "06_clustering/index.md",
+    "06_clustering/internals.md",
     "07_ml/index.md",
     "08_simulations/index.md",
     "09_math/index.md",
