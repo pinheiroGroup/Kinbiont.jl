@@ -60,7 +60,7 @@ med_df.Label = string.(med_df.Label)
 println("  Medium cols: ", names(med_df)[1:min(8, ncol(med_df))])
 
 # Find compound columns: try common names after sanitisation
-candidates = [:Glucose_mM_, :K2HPO4_mM_, :KH2PO4_mM_, :Na2HPO4_mM_, :NH4Cl_mM_]
+candidates = [:Glucose_mM_, :K2HPO4_mM_, :KH2PO4_mM_, :Na2HPO4_mM_, :_NH4_2SO4_mM_]
 compound_cols = filter(c -> c in Symbol.(names(med_df)), candidates)
 
 if isempty(compound_cols)
@@ -73,7 +73,7 @@ end
 select!(med_df, vcat([:Label], compound_cols))
 
 # Rename to clean names regardless of fallback
-target_names = [:Glucose_mM, :K2HPO4_mM, :KH2PO4_mM, :Na2HPO4_mM, :NH4Cl_mM]
+target_names = [:Glucose_mM, :K2HPO4_mM, :KH2PO4_mM, :Na2HPO4_mM, :NH4_2SO4_mM]
 for (i, old) in enumerate(compound_cols)
     i > length(target_names) && break
     rename!(med_df, old => target_names[i])
