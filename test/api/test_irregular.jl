@@ -96,3 +96,59 @@ end
     # output matrix has no NaN or Inf
     @test all(isfinite.(X))
 end
+
+@testset "IrregularGrowthData constructor" begin
+    # Three curves with irregular times (minutes, not normalized)
+    rc = [[0.1, 0.2, 0.5, 0.9], [0.05, 0.15, 0.4, 0.8], [0.08, 0.18, 0.45, 0.85]]
+    rt = [[0.0, 15.0, 45.0, 90.0],
+          [5.0, 20.0, 50.0, 95.0],
+          [0.0, 30.0, 60.0, 120.0]]
+    labels = ["well_A", "well_B", "well_C"]
+
+    data = IrregularGrowthData(rc, rt, labels; step=0.01)
+
+    # raw fields preserved unchanged
+    @test data.raw_curves === rc
+    @test data.raw_times  === rt
+    @test data.labels     === labels
+
+    # resampled matrix has correct shape
+    @test size(data.curves, 1) == 3
+    @test data.times[1]   == 0.0
+    @test data.times[end] == 1.0
+    @test issorted(data.times)
+
+    # clustering fields are nothing until preprocess is called
+    @test data.clusters  === nothing
+    @test data.centroids === nothing
+    @test data.wcss      === nothing
+
+    # resampled values are finite
+    @test all(isfinite.(data.curves))
+end
+
+@testset "IrregularGrowthData constructor validation" begin
+    good_rc = [[0.1, 0.5, 0.9], [0.1, 0.5, 0.9]]
+    good_rt = [[0.0, 5.0, 10.0], [0.0, 5.0, 10.0]]
+    good_lb = ["A", "B"]
+
+    # raw_curves / raw_times length mismatch
+    @test_throws ArgumentError IrregularGrowthData(good_rc, [[0.0, 5.0, 10.0]], good_lb)
+
+    # labels length mismatch
+    @test_throws ArgumentError IrregularGrowthData(good_rc, good_rt, ["A"])
+
+    # curve/time length mismatch within a pair
+    @test_throws ArgumentError IrregularGrowthData(
+        [[0.1, 0.5], [0.1, 0.5, 0.9]],
+        [[0.0, 5.0, 10.0], [0.0, 5.0, 10.0]],
+        good_lb,
+    )
+
+    # time vector too short (< 2 points)
+    @test_throws ArgumentError IrregularGrowthData(
+        [[0.1], [0.1, 0.5]],
+        [[0.0], [0.0, 5.0]],
+        good_lb,
+    )
+end

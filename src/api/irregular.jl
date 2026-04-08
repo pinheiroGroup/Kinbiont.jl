@@ -86,3 +86,88 @@ function _resample_to_union_grid(
     end
     return X
 end
+
+"""
+    IrregularGrowthData
+
+Container for growth curves measured at per-curve irregular time points.
+
+# Fields
+- `raw_curves::Vector{Vector{Float64}}`: original OD values, one vector per curve.
+- `raw_times::Vector{Vector{Float64}}`: original (unnormalized) time points, one vector per curve.
+- `labels::Vector{String}`: identifier for each curve.
+- `curves::Matrix{Float64}`: `n_curves × n_grid` resampled matrix on the normalized [0, 1] union grid. Ready for clustering.
+- `times::Vector{Float64}`: the [0, 1] union grid shared by all resampled curves.
+- `clusters`, `centroids`, `wcss`: populated by [`preprocess`](@ref), `nothing` until then.
+
+Construct with:
+```julia
+data = IrregularGrowthData(raw_curves, raw_times, labels; step=0.01)
+```
+where `raw_curves` and `raw_times` are `Vector{Vector{Float64}}` of the same length,
+and `step` controls the resolution of the union grid in normalized time.
+"""
+struct IrregularGrowthData
+    raw_curves :: Vector{Vector{Float64}}
+    raw_times  :: Vector{Vector{Float64}}
+    labels     :: Vector{String}
+    curves     :: Matrix{Float64}
+    times      :: Vector{Float64}
+    clusters   :: Union{Nothing, Vector{Int}}
+    centroids  :: Union{Nothing, Matrix{Float64}}
+    wcss       :: Union{Nothing, Float64}
+
+    # Inner constructor: validates all fields and stores directly.
+    # Called by the outer constructor (after resampling) and by preprocess
+    # (when updating only clustering fields).
+    function IrregularGrowthData(
+        raw_curves, raw_times, labels, curves, times,
+        clusters = nothing, centroids = nothing, wcss = nothing,
+    )
+        n = length(raw_curves)
+        length(raw_times)  == n ||
+            throw(ArgumentError("raw_times length $(length(raw_times)) ≠ n_curves $n"))
+        length(labels)     == n ||
+            throw(ArgumentError("labels length $(length(labels)) ≠ n_curves $n"))
+        for i in 1:n
+            length(raw_curves[i]) == length(raw_times[i]) ||
+                throw(ArgumentError("curve $i: raw_curves length $(length(raw_curves[i])) ≠ raw_times length $(length(raw_times[i]))"))
+            length(raw_times[i]) >= 2 ||
+                throw(ArgumentError("curve $i: time vector must have at least 2 points"))
+        end
+        size(curves, 1) == n ||
+            throw(ArgumentError("curves rows $(size(curves,1)) ≠ n_curves $n"))
+        size(curves, 2) == length(times) ||
+            throw(ArgumentError("curves cols $(size(curves,2)) ≠ length(times) $(length(times))"))
+        clusters === nothing || length(clusters) == n ||
+            throw(ArgumentError("clusters length $(length(clusters)) ≠ n_curves $n"))
+        new(raw_curves, raw_times, labels, curves, times, clusters, centroids, wcss)
+    end
+end
+
+# Outer constructor: normalizes times → builds union grid → resamples → stores.
+function IrregularGrowthData(
+    raw_curves :: Vector{Vector{Float64}},
+    raw_times  :: Vector{Vector{Float64}},
+    labels     :: Vector{String};
+    step       :: Float64 = 0.01,
+)
+    n = length(raw_curves)
+    # Early validation so errors point here, not at the inner constructor
+    length(raw_times) == n ||
+        throw(ArgumentError("raw_times length $(length(raw_times)) ≠ n_curves $n"))
+    length(labels)    == n ||
+        throw(ArgumentError("labels length $(length(labels)) ≠ n_curves $n"))
+    for i in 1:n
+        length(raw_curves[i]) == length(raw_times[i]) ||
+            throw(ArgumentError("curve $i: raw_curves and raw_times must have the same length"))
+        length(raw_times[i]) >= 2 ||
+            throw(ArgumentError("curve $i: time vector must have at least 2 points"))
+    end
+
+    times01_list = [_normalize_times_01(raw_times[i]) for i in 1:n]
+    union_grid   = _build_union_grid(times01_list; step = step)
+    curves_mat   = _resample_to_union_grid(times01_list, raw_curves, union_grid; step = step)
+
+    return IrregularGrowthData(raw_curves, raw_times, labels, curves_mat, union_grid)
+end
