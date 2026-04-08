@@ -75,3 +75,24 @@ end
     x2 = [0.0, 1.0]; y2 = [2.0, 4.0]
     @test Kinbiont._interp_linear(x2, y2, [0.5])[1] ≈ 3.0
 end
+
+@testset "_resample_to_union_grid" begin
+    # Two curves sampled at different (already-normalized) time points
+    # Curve 1: linear ramp on [0.0, 0.5, 1.0]
+    # Curve 2: flat 0.5 on [0.0, 1.0]
+    t1 = [0.0, 0.5, 1.0];  y1 = [0.0, 0.5, 1.0]
+    t2 = [0.0, 1.0];        y2 = [0.5, 0.5]
+    grid = [0.0, 0.25, 0.5, 0.75, 1.0]
+
+    X = Kinbiont._resample_to_union_grid([t1, t2], [y1, y2], grid; step=0.25)
+    @test size(X) == (2, 5)
+
+    # curve 1 is a ramp — check sampled values
+    @test X[1, :] ≈ [0.0, 0.25, 0.5, 0.75, 1.0]
+
+    # curve 2 is flat — all values equal 0.5
+    @test all(X[2, :] .≈ 0.5)
+
+    # output matrix has no NaN or Inf
+    @test all(isfinite.(X))
+end
