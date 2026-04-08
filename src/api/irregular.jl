@@ -28,3 +28,25 @@ function _build_union_grid(
     isempty(grid) || grid[end] < 1.0 && push!(grid, 1.0)
     return grid
 end
+
+function _interp_linear(
+    x::Vector{Float64},
+    y::Vector{Float64},
+    x_new::Vector{Float64},
+)::Vector{Float64}
+    n   = length(x)
+    out = Vector{Float64}(undef, length(x_new))
+    for (k, xi) in enumerate(x_new)
+        if xi <= x[1]
+            out[k] = y[1]
+        elseif xi >= x[end]
+            out[k] = y[end]
+        else
+            hi = searchsortedfirst(x, xi)   # first index where x[hi] >= xi
+            lo = hi - 1
+            α  = (xi - x[lo]) / (x[hi] - x[lo])
+            out[k] = (1.0 - α) * y[lo] + α * y[hi]
+        end
+    end
+    return out
+end

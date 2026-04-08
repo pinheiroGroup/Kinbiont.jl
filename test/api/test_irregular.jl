@@ -47,3 +47,31 @@ end
     g3 = Kinbiont._build_union_grid(dense; step=0.01)
     @test length(g3) == 101
 end
+
+@testset "_interp_linear" begin
+    x = [0.0, 0.5, 1.0]
+    y = [0.0, 1.0, 0.0]   # triangle
+
+    # exact at known points
+    @test Kinbiont._interp_linear(x, y, [0.0])[1] ≈ 0.0
+    @test Kinbiont._interp_linear(x, y, [0.5])[1] ≈ 1.0
+    @test Kinbiont._interp_linear(x, y, [1.0])[1] ≈ 0.0
+
+    # midpoint interpolation
+    @test Kinbiont._interp_linear(x, y, [0.25])[1] ≈ 0.5
+    @test Kinbiont._interp_linear(x, y, [0.75])[1] ≈ 0.5
+
+    # clamped below lower bound
+    @test Kinbiont._interp_linear(x, y, [-0.1])[1] ≈ 0.0   # clamped to y[1]
+
+    # clamped above upper bound
+    @test Kinbiont._interp_linear(x, y, [1.5])[1] ≈ 0.0    # clamped to y[end]
+
+    # multiple query points at once
+    result = Kinbiont._interp_linear(x, y, [0.0, 0.25, 0.5, 0.75, 1.0])
+    @test result ≈ [0.0, 0.5, 1.0, 0.5, 0.0]
+
+    # single-interval source
+    x2 = [0.0, 1.0]; y2 = [2.0, 4.0]
+    @test Kinbiont._interp_linear(x2, y2, [0.5])[1] ≈ 3.0
+end
