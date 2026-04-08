@@ -152,3 +152,34 @@ end
         good_lb,
     )
 end
+
+@testset "IrregularGrowthData getindex subsetting" begin
+    rc = [[0.1, 0.2, 0.5], [0.2, 0.4, 0.7], [0.05, 0.3, 0.6]]
+    rt = [[0.0, 10.0, 20.0], [5.0, 15.0, 25.0], [0.0, 8.0, 16.0]]
+    lb = ["A", "B", "C"]
+    data = IrregularGrowthData(rc, rt, lb)
+
+    # single label
+    sub = data[["B"]]
+    @test sub.labels == ["B"]
+    @test sub.raw_curves == [rc[2]]
+    @test sub.raw_times  == [rt[2]]
+    @test size(sub.curves, 1) == 1
+    @test sub.times == data.times       # same union grid
+    @test sub.clusters  === nothing
+    @test sub.centroids === nothing
+    @test sub.wcss      === nothing
+
+    # multiple labels in different order
+    sub2 = data[["C", "A"]]
+    @test sub2.labels     == ["C", "A"]
+    @test sub2.raw_curves == [rc[3], rc[1]]
+
+    # unknown label throws ArgumentError
+    @test_throws ArgumentError data[["A", "Z"]]
+
+    # clustering fields are dropped even when source has them
+    data_cl = IrregularGrowthData(rc, rt, lb, data.curves, data.times, [1,2,3])
+    sub3 = data_cl[["A"]]
+    @test sub3.clusters === nothing
+end

@@ -171,3 +171,34 @@ function IrregularGrowthData(
 
     return IrregularGrowthData(raw_curves, raw_times, labels, curves_mat, union_grid)
 end
+
+"""
+    data[labels::Vector{String}] -> IrregularGrowthData
+
+Return a new `IrregularGrowthData` containing only the curves whose labels appear in
+`labels`, in the order given. Clustering fields (`clusters`, `centroids`,
+`wcss`) are not carried over — subsetting invalidates any prior clustering.
+
+Throws `ArgumentError` if any requested label is not present in `data.labels`.
+
+# Example
+```julia
+data = IrregularGrowthData(raw_curves, raw_times, labels)  # load data
+sub = data[["A"]]                                          # single curve
+sub_multi = data[["A", "C"]]                               # two curves
+```
+"""
+function Base.getindex(data::IrregularGrowthData, labels::Vector{String})
+    missing_labels = filter(l -> !(l in data.labels), labels)
+    isempty(missing_labels) || throw(ArgumentError(
+        "label(s) not found in IrregularGrowthData: $(join(missing_labels, ", "))"
+    ))
+    idx = [findfirst(==(l), data.labels) for l in labels]
+    return IrregularGrowthData(
+        data.raw_curves[idx],
+        data.raw_times[idx],
+        data.labels[idx],
+        data.curves[idx, :],
+        data.times,       # shared union grid — no re-resampling needed
+    )
+end
