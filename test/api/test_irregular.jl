@@ -46,6 +46,11 @@ end
     dense = [[i * 0.01 for i in 0:100] for _ in 1:3]
     g3 = Kinbiont._build_union_grid(dense; step=0.01)
     @test length(g3) == 101
+
+    # endpoint guard fires when source times don't snap to 0.0 or 1.0
+    g4 = Kinbiont._build_union_grid([[0.15, 0.45, 0.85]]; step=0.1)
+    @test g4[1]   == 0.0
+    @test g4[end] == 1.0
 end
 
 @testset "_interp_linear" begin
@@ -258,4 +263,15 @@ end
     _ = preprocess(data, FitOptions(cluster=true, n_clusters=2, cluster_trend_test=false))
     @test data.curves == original_curves
     @test data.clusters === nothing
+end
+
+@testset "preprocess(IrregularGrowthData) cluster=false no-op" begin
+    rc = [[0.1, 0.5, 0.9], [0.2, 0.6, 1.0]]
+    rt = [[0.0, 5.0, 10.0], [0.0, 5.0, 10.0]]
+    data = IrregularGrowthData(rc, rt, ["A", "B"])
+    result = preprocess(data, FitOptions())   # cluster=false by default
+    @test result isa IrregularGrowthData
+    @test result.clusters  === nothing
+    @test result.centroids === nothing
+    @test result.wcss      === nothing
 end

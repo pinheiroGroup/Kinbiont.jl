@@ -24,8 +24,8 @@ function _build_union_grid(
         end
     end
     grid = sort!(collect(points))
-    isempty(grid) || grid[1] > 0.0  && pushfirst!(grid, 0.0)
-    isempty(grid) || grid[end] < 1.0 && push!(grid, 1.0)
+    (!isempty(grid) && grid[1] > 0.0)   && pushfirst!(grid, 0.0)
+    (!isempty(grid) && grid[end] < 1.0) && push!(grid, 1.0)
     return grid
 end
 
@@ -34,7 +34,6 @@ function _interp_linear(
     y::Vector{Float64},
     x_new::Vector{Float64},
 )::Vector{Float64}
-    n   = length(x)
     out = Vector{Float64}(undef, length(x_new))
     for (k, xi) in enumerate(x_new)
         if xi <= x[1]
