@@ -183,3 +183,79 @@ end
     sub3 = data_cl[["A"]]
     @test sub3.clusters === nothing
 end
+
+@testset "preprocess(IrregularGrowthData) clustering" begin
+    Random.seed!(42)
+    # 6 curves, 2 clear shape groups: fast-rising (logistic, midpoint=0.2) and
+    # slow-rising (logistic, midpoint=0.8), 3 curves each, on irregular times
+    function logistic_sample(tau, mid)
+        0.05 .+ 0.9 ./ (1 .+ exp.(-12 .* (tau .- mid)))
+    end
+
+    raw_curves = Vector{Vector{Float64}}()
+    raw_times  = Vector{Vector{Float64}}()
+    for i in 1:3
+        t  = sort(rand(20)) .* 100.0   # random times in [0, 100]
+        τ  = (t .- minimum(t)) ./ (maximum(t) - minimum(t))
+        push!(raw_times, t)
+        push!(raw_curves, logistic_sample(τ, 0.2) .+ 0.005 .* randn(20))
+    end
+    for i in 1:3
+        t  = sort(rand(20)) .* 100.0
+        τ  = (t .- minimum(t)) ./ (maximum(t) - minimum(t))
+        push!(raw_times, t)
+        push!(raw_curves, logistic_sample(τ, 0.8) .+ 0.005 .* randn(20))
+    end
+    labels = vcat(["early_$i" for i in 1:3], ["late_$i" for i in 1:3])
+    data   = IrregularGrowthData(raw_curves, raw_times, labels)
+
+    opts = FitOptions(cluster=true, n_clusters=2,
+                      cluster_trend_test=false, kmeans_seed=42, kmeans_n_init=10)
+    result = preprocess(data, opts)
+
+    # type preserved
+    @test result isa IrregularGrowthData
+
+    # raw fields unchanged
+    @test result.raw_curves === data.raw_curves
+    @test result.raw_times  === data.raw_times
+    @test result.labels     === data.labels
+    @test result.curves     === data.curves
+    @test result.times      === data.times
+
+    # clustering fields populated
+    @test result.clusters  isa Vector{Int}
+    @test length(result.clusters) == 6
+    @test all(1 .<= result.clusters .<= 2)
+    @test result.centroids isa Matrix{Float64}
+    @test size(result.centroids) == (2, length(data.times))
+    @test result.wcss isa Float64
+    @test result.wcss >= 0.0
+
+    # the two groups should be in different clusters
+    early_cluster = result.clusters[1]
+    late_cluster  = result.clusters[4]
+    @test early_cluster != late_cluster
+    @test all(result.clusters[1:3] .== early_cluster)
+    @test all(result.clusters[4:6] .== late_cluster)
+end
+
+@testset "preprocess(IrregularGrowthData) unsupported opts warnings" begin
+    rc = [[0.1, 0.5, 0.9], [0.1, 0.5, 0.9]]
+    rt = [[0.0, 5.0, 10.0], [0.0, 5.0, 10.0]]
+    data = IrregularGrowthData(rc, rt, ["A", "B"])
+
+    @test_warn r"blank_subtraction" preprocess(data, FitOptions(blank_subtraction=true))
+    @test_warn r"correct_negatives" preprocess(data, FitOptions(correct_negatives=true))
+    @test_warn r"smooth"            preprocess(data, FitOptions(smooth=true))
+end
+
+@testset "preprocess(IrregularGrowthData) pure function" begin
+    rc = [[0.1, 0.5, 0.9], [0.2, 0.6, 1.0]]
+    rt = [[0.0, 5.0, 10.0], [0.0, 5.0, 10.0]]
+    data = IrregularGrowthData(rc, rt, ["A", "B"])
+    original_curves = copy(data.curves)
+    _ = preprocess(data, FitOptions(cluster=true, n_clusters=2, cluster_trend_test=false))
+    @test data.curves == original_curves
+    @test data.clusters === nothing
+end
