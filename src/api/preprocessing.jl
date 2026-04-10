@@ -650,4 +650,42 @@ function _find_stationary_cutoff(data_mat::Matrix{Float64}, opts::FitOptions)::I
     return n
 end
 
+# ---------------------------------------------------------------------------
+# preprocess for IrregularGrowthData
+# ---------------------------------------------------------------------------
+
+"""
+    preprocess(data::IrregularGrowthData, opts::FitOptions) -> IrregularGrowthData
+
+Apply the clustering step defined by `opts` to an `IrregularGrowthData`.
+Returns a **new** `IrregularGrowthData`; the input is never modified.
+
+Clustering operates on `data.curves` — the resampled matrix on the normalized [0, 1]
+union grid built at construction time.
+
+Other preprocessing steps (blank subtraction, negative correction, smoothing, replicate
+averaging, scattering correction) are **not supported** for `IrregularGrowthData` because
+they require physical time units. Apply them to the raw measurements before constructing
+`IrregularGrowthData`. A warning is emitted for each unsupported option that is `true`.
+"""
+function preprocess(data::IrregularGrowthData, opts::FitOptions)::IrregularGrowthData
+    opts.blank_subtraction    && @warn "blank_subtraction is not supported for IrregularGrowthData; apply it on raw data before construction"
+    opts.correct_negatives    && @warn "correct_negatives is not supported for IrregularGrowthData; apply it on raw data before construction"
+    opts.smooth               && @warn "smooth is not supported for IrregularGrowthData; apply it on raw data before construction"
+    opts.average_replicates   && @warn "average_replicates is not supported for IrregularGrowthData"
+    opts.scattering_correction && @warn "scattering_correction is not supported for IrregularGrowthData"
+
+    clusters, centroids, wcss = opts.cluster ?
+        _cluster(data.curves, data.times, opts) :
+        (nothing, nothing, nothing)
+
+    # Re-use the inner constructor directly: raw data and resampled matrix are
+    # unchanged; only the clustering fields are updated.
+    return IrregularGrowthData(
+        data.raw_curves, data.raw_times, data.labels,
+        data.curves, data.times,
+        clusters, centroids, wcss,
+    )
+end
+
 export preprocess

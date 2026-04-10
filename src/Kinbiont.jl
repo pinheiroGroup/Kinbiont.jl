@@ -3,6 +3,7 @@ module Kinbiont
 
   # Unified matrix API
   include("api/types.jl")
+  include("api/irregular.jl")
   include("api/model_registry.jl")
   include("api/preprocessing.jl")
   include("api/fitting.jl")
