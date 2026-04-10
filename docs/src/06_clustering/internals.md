@@ -1,4 +1,4 @@
-# Clustering analysis of growth curves
+# [Clustering analysis of growth curves](@id clustering_internals)
 
 This section provides examples of the clustering module used in the unified preprocessing pipeline.
 The purpose of this module is to group growth curves according to their **shape**, rather than their absolute OD magnitude.
@@ -11,7 +11,7 @@ The clustering procedure is based on **k-means applied to row-wise z-scored curv
 - forced shift-detection with post-hoc reassignment of curves that are closer to exponential prototypes than to their assigned k-means centroid.
 
 ```@contents
-Pages = ["index.md"]
+Pages = ["internals.md"]
 Depth = 3
 ```
 
@@ -21,56 +21,31 @@ In this section, we present different examples of how to use the clustering part
 To run these examples, you will typically need the following Julia packages:
 
 ```julia
-using Clustering
-using StatsBase
-using Distributions
+using Kinbiont
 using Random
 using Statistics
 using Plots
 ```
 
-The clustering logic is implemented internally through the following functions:
+The clustering result is accessed through the `preprocess` function, which returns a `GrowthData` object
+with `clusters`, `centroids`, and `wcss` fields populated:
 
 ```julia
-_kmeans_best(X, k, opts)
-_cluster(curves, times, opts)
-_prescreen_constant(curves, opts)
-_cluster_with_prescreen(curves, zscored_all, opts)
-_compute_centroids(curves, labels, n_clusters)
-_build_exp_prototypes(times)
-_apply_exp_prototype_labels(zscored, labels, exp_protos, centroids_norm, exp_label)
-_apply_trend_labels(curves, times, labels, flat_id)
-_zscore_rows(curves)
-_exp_prototype_label(opts, labels)
+proc = preprocess(data, opts)
+# proc.clusters   → Vector{Int}: cluster assignment for each curve
+# proc.centroids  → Matrix{Float64}: cluster centroids in z-normalised space
+# proc.wcss       → Float64: within-cluster sum of squares from the k-means step
 ```
 
-The main internal entry point is:
-
-```julia
-_cluster(curves, times, opts)
-```
-
-This function returns:
-
-```julia
-(labels, centroids, wcss)
-```
-
-where:
-
-- `labels` is the vector of cluster assignments,
-- `centroids` is the matrix of cluster centroids in **z-normalised space**,
-- `wcss` is the within-cluster sum of squares returned by the **k-means step**.
-
-When exponential prototype relabeling is enabled, `wcss` is **not recomputed** after relabeling: 
+When exponential prototype relabeling is enabled, `wcss` is **not recomputed** after relabeling:
 it still refers to the k-means solution obtained before the exponential reassignment step.
 
 ## Basic clustering on z-scored curves
 
-In this first example, we simulate a small set of synthetic growth curves with different temporal shapes 
+In this first example, we simulate a small set of synthetic growth curves with different temporal shapes
 and cluster them using plain k-means on z-scored trajectories.
 
-The purpose of this example is to show the simplest use of the clustering module, 
+The purpose of this example is to show the simplest use of the clustering module,
 without constant pre-screening, trend testing, or exponential prototype relabeling.
 
 First, we define the time axis:
@@ -143,7 +118,11 @@ opts = FitOptions(
     kmeans_tol=1e-6
 )
 
-labels, centroids, wcss = _cluster(curves, times, opts)
+data_ex = GrowthData(curves, times, [string(i) for i in 1:size(curves, 1)])
+proc    = preprocess(data_ex, opts)
+labels    = proc.clusters
+centroids = proc.centroids
+wcss      = proc.wcss
 ```
 
 The clustering result can be inspected through:
@@ -167,20 +146,14 @@ for k in 1:maximum(labels)
 end
 ```
 
-In this example, the flat curves and the two kinds of growing curves are expected 
-to be separated mainly according to their **shape**, because the clustering is 
+In this example, the flat curves and the two kinds of growing curves are expected
+to be separated mainly according to their **shape**, because the clustering is
 performed after row-wise z-score normalisation.
 
 ## Behaviour of row-wise z-score normalisation
 
-The helper used internally is:
-
-```julia
-_zscore_rows(curves)
-```
-
 Each curve is z-scored independently across its own time points.
-If a curve is effectively constant, the whole row is replaced by zeros:
+If a curve is effectively constant (standard deviation < 1e-12), the whole row is replaced by zeros:
 
 ```julia
 if s < 1e-12
@@ -190,25 +163,19 @@ else
 end
 ```
 
-This means that perfectly flat curves become all-zero trajectories in z-normalised space, 
+This means that perfectly flat curves become all-zero trajectories in z-normalised space,
 which is consistent with the intended shape-based comparison.
 
 ## Constant pre-screening of flat curves
 
 In many datasets, some wells are clearly non-growing or nearly constant.
-In this case, it can be useful to identify these curves before running 
+In this case, it can be useful to identify these curves before running
 k-means, so that the dynamic clusters are learned only from the genuinely varying trajectories.
 
 This behaviour is activated with:
 
 ```julia
 cluster_prescreen_constant=true
-```
-
-The constant detection is based on a quantile-ratio criterion implemented by:
-
-```julia
-_prescreen_constant(curves, opts)
 ```
 
 For each curve, the code computes:
@@ -264,7 +231,11 @@ opts = FitOptions(
     kmeans_tol=1e-6
 )
 
-labels, centroids, wcss = _cluster(curves, times, opts)
+data_ex = GrowthData(curves, times, [string(i) for i in 1:size(curves, 1)])
+proc    = preprocess(data_ex, opts)
+labels    = proc.clusters
+centroids = proc.centroids
+wcss      = proc.wcss
 ```
 
 In this mode:
@@ -292,12 +263,12 @@ for k in 1:maximum(labels)
 end
 ```
 
-A special edge case is also handled explicitly in the code: 
+A special edge case is also handled explicitly in the code:
 if all curves are classified as constant, no k-means step is run and `wcss` remains `0.0`.
 
 ## Trend-test reassignment of flat curves
 
-A different strategy for handling flat curves is to first run 
+A different strategy for handling flat curves is to first run
 k-means and then reassign curves whose overall slope is not statistically significant.
 
 This behaviour is activated with:
@@ -312,18 +283,12 @@ In this case, the code:
 2. then applies a post-hoc trend test on the **original curves**,
 3. reassigns curves with non-significant slope to a dedicated flat cluster with label `n_clusters`.
 
-The helper used for this step is:
-
-```julia
-_apply_trend_labels(curves, times, labels, flat_id)
-```
-
-This function computes the OLS slope analytically and evaluates a two-tailed 
-t-test on that slope using a Student t distribution with `n - 2` degrees of freedom.
+The OLS slope is computed analytically and evaluated with a two-tailed
+t-test using a Student t distribution with `n - 2` degrees of freedom.
 
 The reassignment rule is:
 
-- if `p >= 0.05`, the curve is reassigned to `flat_id`,
+- if `p >= 0.05`, the curve is reassigned to the flat cluster,
 - otherwise, it keeps its k-means label.
 
 ### Trend-test reassignment: synthetic example
@@ -363,7 +328,9 @@ opts = FitOptions(
     kmeans_tol=1e-6
 )
 
-labels, centroids, wcss = _cluster(curves, times, opts)
+data_ex = GrowthData(curves, times, [string(i) for i in 1:size(curves, 1)])
+proc    = preprocess(data_ex, opts)
+labels  = proc.clusters
 ```
 
 The cluster labels can be inspected through:
@@ -385,7 +352,7 @@ for k in 1:maximum(labels)
 end
 ```
 
-This strategy is useful when flat curves are noisy enough to escape the 
+This strategy is useful when flat curves are noisy enough to escape the
 quantile-ratio filter, but still do not show a statistically significant linear trend.
 
 ## Priority between pre-screening and trend-test modes
@@ -404,7 +371,7 @@ So, if both `cluster_prescreen_constant=true` and `cluster_trend_test=true`, the
 
 ## Exponential prototype relabeling
 
-The clustering module also supports a post-processing step that identifies curves 
+The clustering module also supports a post-processing step that identifies curves
 closer to a family of idealised exponential shapes than to their assigned k-means centroid.
 
 This behaviour is activated with:
@@ -419,14 +386,6 @@ In this case, the code:
 2. computes the squared distance between each curve and the nearest exponential prototype,
 3. computes the squared distance to the curve's currently assigned centroid,
 4. reassigns the curve if the exponential prototype is closer.
-
-The helper functions used are:
-
-```julia
-_build_exp_prototypes(times)
-_apply_exp_prototype_labels(zscored, labels, exp_protos, centroids_norm, exp_label)
-_exp_prototype_label(opts, labels)
-```
 
 ### How the exponential label is chosen
 
@@ -485,15 +444,11 @@ opts = FitOptions(
     kmeans_tol=1e-6
 )
 
-labels, centroids, wcss = _cluster(curves, times, opts)
-```
-
-The output can be inspected through:
-
-```julia
-labels
-centroids
-wcss
+data_ex   = GrowthData(curves, times, [string(i) for i in 1:size(curves, 1)])
+proc      = preprocess(data_ex, opts)
+labels    = proc.clusters
+centroids = proc.centroids
+wcss      = proc.wcss
 ```
 
 To visualise the result:
@@ -513,23 +468,7 @@ end
 
 After the final cluster labels are determined, the centroids are computed by averaging the z-scored curves assigned to each cluster.
 
-This is performed in the actual workflow by:
-
-```julia
-centroids = _compute_centroids(zscored_all, labels, n_effective)
-```
-
-The helper itself is generic:
-
-```julia
-_compute_centroids(curves, labels, n_clusters)
-```
-
-It simply averages the rows of the matrix that it receives.
-Therefore, `_compute_centroids` does **not** perform z-scoring on its own.
-The centroids are in z-normalised space only because, in the real pipeline, the function is called on `zscored_all`.
-
-The returned centroid matrix is therefore expressed in **z-normalised space**, not in the original OD scale.
+The returned centroid matrix is expressed in **z-normalised space**, not in the original OD scale.
 This means that the centroids represent **shape prototypes**, not average absolute OD trajectories.
 
 If a cluster is empty, the corresponding centroid row remains a vector of zeros.
@@ -537,8 +476,10 @@ If a cluster is empty, the corresponding centroid row remains a vector of zeros.
 ### Centroid computation: simple example
 
 ```julia
-zscored = _zscore_rows(curves)
-centroids = _compute_centroids(zscored, labels, maximum(labels))
+data_ex   = GrowthData(curves, times, [string(i) for i in 1:size(curves, 1)])
+proc      = preprocess(data_ex, opts)
+labels    = proc.clusters
+centroids = proc.centroids
 ```
 
 The centroids can be plotted directly:
@@ -566,13 +507,7 @@ end
 
 ## Repeated k-means initialisations
 
-The k-means routine is wrapped by:
-
-```julia
-_kmeans_best(X, k, opts)
-```
-
-This function runs k-means `opts.kmeans_n_init` times and returns the result with the lowest total cost.
+The k-means step runs `kmeans_n_init` times and returns the result with the lowest total cost.
 
 The implementation uses a deterministic `MersenneTwister`, with:
 
@@ -593,7 +528,10 @@ opts = FitOptions(
     kmeans_tol=1e-8
 )
 
-labels, centroids, wcss = _cluster(curves, times, opts)
+data_ex = GrowthData(curves, times, [string(i) for i in 1:size(curves, 1)])
+proc    = preprocess(data_ex, opts)
+labels  = proc.clusters
+wcss    = proc.wcss
 ```
 
 This is useful when the user wants a more stable partition and wants to reduce the chance of keeping a poor local optimum.
@@ -602,9 +540,9 @@ This is useful when the user wants a more stable partition and wants to reduce t
 
 The clustering code explicitly handles the case where the input contains zero curves.
 
-If `size(curves, 1) == 0`, the function returns:
+If the curve matrix has zero rows, `preprocess` returns a `GrowthData` with:
 
-- an empty label vector,
+- an empty cluster vector,
 - a zero centroid matrix of size `n_clusters × n_timepoints`,
 - `wcss = 0.0`.
 
@@ -632,6 +570,8 @@ end
 for i in 13:18
     curves[i, :] = exponential_like_curve(times, 4.5, 0.9, 0.04) .+ randn(n_tp) .* 0.01
 end
+
+data_ex = GrowthData(curves, times, [string(i) for i in 1:size(curves, 1)])
 ```
 
 We first run plain clustering:
@@ -647,7 +587,9 @@ opts_plain = FitOptions(
     kmeans_seed=11
 )
 
-labels_plain, centroids_plain, wcss_plain = _cluster(curves, times, opts_plain)
+proc_plain    = preprocess(data_ex, opts_plain)
+labels_plain  = proc_plain.clusters
+wcss_plain    = proc_plain.wcss
 ```
 
 Then clustering with constant pre-screening:
@@ -666,7 +608,9 @@ opts_const = FitOptions(
     kmeans_seed=11
 )
 
-labels_const, centroids_const, wcss_const = _cluster(curves, times, opts_const)
+proc_const    = preprocess(data_ex, opts_const)
+labels_const  = proc_const.clusters
+wcss_const    = proc_const.wcss
 ```
 
 Finally clustering with exponential prototype relabeling:
@@ -682,7 +626,9 @@ opts_exp = FitOptions(
     kmeans_seed=11
 )
 
-labels_exp, centroids_exp, wcss_exp = _cluster(curves, times, opts_exp)
+proc_exp    = preprocess(data_ex, opts_exp)
+labels_exp  = proc_exp.clusters
+wcss_exp    = proc_exp.wcss
 ```
 
 The results can be compared through:
@@ -711,5 +657,5 @@ Depending on the chosen options, the user can:
 - reserve one cluster for flat curves using a slope significance test,
 - add an exponential-like cluster by comparing curves against analytical prototypes.
 
-These options make the clustering stage flexible and suitable 
+These options make the clustering stage flexible and suitable
 for both exploratory analyses and more structured downstream workflows in growth-curve analysis.
