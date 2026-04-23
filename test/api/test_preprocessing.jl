@@ -245,12 +245,12 @@
     @testset "cluster_method=:kmedoids with prescreen assigns sentinel" begin
         flat_curves = repeat([0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1], 2)
         mixed_data  = GrowthData(vcat(data.curves, flat_curves), data.times,
-                                  ["c$i" for i in 1:10])
+                                  ["c$i" for i in 1:7])
         opts = FitOptions(cluster=true, n_clusters=3, cluster_method=:kmedoids,
                           cluster_prescreen_constant=true, cluster_trend_test=false)
         processed = preprocess(mixed_data, opts)
-        @test all(processed.clusters[9:10] .== 3)
-        @test all(processed.clusters[1:8] .!= 3)
+        @test all(processed.clusters[6:7] .== 3)
+        @test all(processed.clusters[1:5] .!= 3)
     end
 
     @testset "cluster_method=:hclust with trend_test reassigns flat curves" begin

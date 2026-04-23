@@ -399,7 +399,8 @@ function _cluster(
                                                      centroids_norm, exp_label)
     end
 
-    n_effective = isempty(labels) ? opts.n_clusters : maximum(filter(>(0), labels; init=0))
+    pos_labels  = filter(>(0), labels)
+    n_effective = (isempty(labels) || isempty(pos_labels)) ? opts.n_clusters : maximum(pos_labels)
     n_effective = max(n_effective, 1)
     centroids   = _compute_centroids(zscored_all, labels, n_effective)
     return labels, centroids, wcss
@@ -421,7 +422,6 @@ function _cluster_dispatch(
         D      = _pairwise_euclidean(zscored)
         result = kmedoids(D, k; maxiter = opts.kmeans_max_iters, tol = opts.kmeans_tol)
         ids    = assignments(result)
-        wcss   = sum(minimum(D[i, ids .== ids[i]] for j in 1:1) for i in eachindex(ids))
         return ids, result.totalcost
 
     elseif method == :hclust
