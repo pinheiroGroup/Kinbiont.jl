@@ -210,6 +210,66 @@
         @test all(processed.clusters[6:8] .== n_k)
     end
 
+    # -----------------------------------------------------------------------
+    # cluster_method variants
+    # -----------------------------------------------------------------------
+
+    @testset "cluster_method=:kmedoids produces valid labels" begin
+        opts = FitOptions(cluster=true, n_clusters=3, cluster_method=:kmedoids,
+                          cluster_trend_test=false)
+        processed = preprocess(data, opts)
+        @test processed.clusters isa Vector{Int}
+        @test length(processed.clusters) == size(data.curves, 1)
+        @test all(1 .<= processed.clusters .<= 3)
+    end
+
+    @testset "cluster_method=:hclust produces valid labels" begin
+        opts = FitOptions(cluster=true, n_clusters=3, cluster_method=:hclust,
+                          cluster_hclust_linkage=:ward, cluster_trend_test=false)
+        processed = preprocess(data, opts)
+        @test processed.clusters isa Vector{Int}
+        @test length(processed.clusters) == size(data.curves, 1)
+        @test all(1 .<= processed.clusters .<= 3)
+    end
+
+    @testset "cluster_method=:dbscan produces non-negative labels" begin
+        opts = FitOptions(cluster=true, cluster_method=:dbscan,
+                          cluster_dbscan_eps=2.0, cluster_dbscan_minpts=2,
+                          cluster_trend_test=false)
+        processed = preprocess(data, opts)
+        @test processed.clusters isa Vector{Int}
+        @test length(processed.clusters) == size(data.curves, 1)
+        @test all(processed.clusters .>= 0)   # 0 = noise
+    end
+
+    @testset "cluster_method=:kmedoids with prescreen assigns sentinel" begin
+        flat_curves = repeat([0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1], 2)
+        mixed_data  = GrowthData(vcat(data.curves, flat_curves), data.times,
+                                  ["c$i" for i in 1:10])
+        opts = FitOptions(cluster=true, n_clusters=3, cluster_method=:kmedoids,
+                          cluster_prescreen_constant=true, cluster_trend_test=false)
+        processed = preprocess(mixed_data, opts)
+        @test all(processed.clusters[9:10] .== 3)
+        @test all(processed.clusters[1:8] .!= 3)
+    end
+
+    @testset "cluster_method=:hclust with trend_test reassigns flat curves" begin
+        times_test = collect(0.0:1.0:9.0)
+        flat   = fill(0.3, 1, 10)
+        growth = [range(0.0, 1.0; length=10)'; range(0.0, 1.5; length=10)']
+        gd     = GrowthData(vcat(flat, growth), times_test, ["flat","g1","g2"])
+        opts   = FitOptions(cluster=true, n_clusters=3, cluster_method=:hclust,
+                            cluster_trend_test=true)
+        processed = preprocess(gd, opts)
+        @test processed.clusters[1] == maximum(processed.clusters)
+    end
+
+    @testset "Unknown cluster_method throws" begin
+        opts = FitOptions(cluster=true, n_clusters=2, cluster_method=:bogus,
+                          cluster_trend_test=false)
+        @test_throws ErrorException preprocess(data, opts)
+    end
+
     @testset "Pure function — original data not mutated" begin
         original_copy = copy(data.curves)
         _ = preprocess(data, FitOptions(blank_subtraction=true, blank_value=0.1))
