@@ -158,6 +158,15 @@ Every field has a sensible default so users only override what they need.
   distance to the nearest k-means centroid; the exponential label wins when
   it is closer. Requires `n_clusters ≥ 3` when combined with constant pre-screening
   (`n_clusters - 1` for exponential, `n_clusters` for constant), or ≥ 2 otherwise.
+- `cluster_method::Symbol = :kmeans`: clustering algorithm — `:kmeans`, `:kmedoids`,
+  `:hclust`, or `:dbscan`. Pre-screening and the trend test are supported for all
+  methods. `n_clusters` is ignored by `:dbscan` (it determines the number of clusters
+  from the data). `cluster_exp_prototype` is only available with `:kmeans`.
+- `cluster_hclust_linkage::Symbol = :ward`: linkage criterion for `:hclust` —
+  `:ward`, `:average`, `:complete`, or `:single`.
+- `cluster_dbscan_eps::Float64 = 1.0`: neighbourhood radius for `:dbscan`.
+- `cluster_dbscan_minpts::Int = 3`: minimum number of neighbours for a core point
+  in `:dbscan`. Points below this threshold are labelled 0 (noise).
 - `kmeans_n_init::Int = 10`: number of times k-means is run with different random
   initialisations; the run with the lowest WCSS is kept.
 - `kmeans_max_iters::Int = 300`: maximum number of Lloyd iterations per k-means run.
@@ -220,6 +229,10 @@ find the elbow and choose the optimal number of clusters.
     cluster_q_low::Float64           = 0.05
     cluster_q_high::Float64          = 0.95
     cluster_exp_prototype::Bool      = false
+    cluster_method::Symbol           = :kmeans
+    cluster_hclust_linkage::Symbol   = :ward
+    cluster_dbscan_eps::Float64      = 1.0
+    cluster_dbscan_minpts::Int       = 3
     kmeans_n_init::Int               = 10
     kmeans_max_iters::Int            = 300
     kmeans_tol::Float64              = 1e-6

@@ -11,7 +11,7 @@
 #   - linear slope t-test (Statistics stdlib) for flat-curve trend detection
 # =============================================================================
 
-using Clustering: kmeans, assignments
+using Clustering: kmeans, kmedoids, hclust, cutree, dbscan, assignments
 using StatsBase: zscore
 using Distributions: TDist, cdf
 using Random: MersenneTwister
@@ -356,6 +356,15 @@ When `cluster_exp_prototype=true`, an additional exponential shape cluster is
 added after k-means: each curve is tested against pre-built z-scored exponential
 prototypes and re-labelled if it is closer to them than to any k-means centroid.
 """
+function _pairwise_euclidean(X::Matrix{Float64})::Matrix{Float64}
+    n = size(X, 1)
+    D = Matrix{Float64}(undef, n, n)
+    for i in 1:n, j in 1:n
+        D[i, j] = sqrt(sum((X[i, k] - X[j, k])^2 for k in axes(X, 2)))
+    end
+    return D
+end
+
 function _cluster(
     curves::Matrix{Float64},
     times::Vector{Float64},
@@ -363,24 +372,26 @@ function _cluster(
 )::Tuple{Vector{Int}, Matrix{Float64}, Float64}
     size(curves, 1) == 0 && return Int[], zeros(Float64, opts.n_clusters, size(curves, 2)), 0.0
 
-    # Z-score all curves once; used for both k-means and centroid computation.
     zscored_all = _zscore_rows(curves)
+    method      = opts.cluster_method
 
-    if opts.cluster_prescreen_constant
-        labels, wcss = _cluster_with_prescreen(curves, zscored_all, opts)
-    elseif opts.cluster_trend_test
-        k_dynamic = max(1, opts.n_clusters - 1)
-        result = _kmeans_best(zscored_all', k_dynamic, opts)
-        labels = assignments(result)
-        wcss   = result.totalcost
-        labels = _apply_trend_labels(curves, times, labels, opts.n_clusters)
+    # Pre-screening: separate constant curves before running any clustering
+    # algorithm. Applies to all methods except :dbscan (no k parameter).
+    if opts.cluster_prescreen_constant && method != :dbscan
+        labels, wcss = _cluster_with_prescreen_method(curves, zscored_all, opts)
     else
-        result = _kmeans_best(zscored_all', opts.n_clusters, opts)
-        labels = assignments(result)
-        wcss   = result.totalcost
+        labels, wcss = _cluster_dispatch(zscored_all, opts)
+
+        # Post-hoc trend-test flat reassignment (ignored when pre-screening is on
+        # since the sentinel cluster already captures constant curves)
+        if opts.cluster_trend_test && !opts.cluster_prescreen_constant
+            flat_id = method == :dbscan ? maximum(labels) + 1 : opts.n_clusters
+            labels  = _apply_trend_labels(curves, times, labels, flat_id)
+        end
     end
 
-    if opts.cluster_exp_prototype
+    # Exponential prototype (kmeans only)
+    if opts.cluster_exp_prototype && method == :kmeans
         exp_label      = _exp_prototype_label(opts, labels)
         exp_protos     = _build_exp_prototypes(times)
         centroids_norm = _compute_centroids(zscored_all, labels, opts.n_clusters)
@@ -388,10 +399,75 @@ function _cluster(
                                                      centroids_norm, exp_label)
     end
 
-    n_effective = isempty(labels) ? opts.n_clusters : maximum(labels)
-    # Centroids in z-normalised space (shape prototypes, scale-independent).
-    centroids = _compute_centroids(zscored_all, labels, n_effective)
+    pos_labels  = filter(>(0), labels)
+    n_effective = (isempty(labels) || isempty(pos_labels)) ? opts.n_clusters : maximum(pos_labels)
+    n_effective = max(n_effective, 1)
+    centroids   = _compute_centroids(zscored_all, labels, n_effective)
     return labels, centroids, wcss
+end
+
+# Dispatch to the appropriate clustering algorithm on z-scored curves.
+function _cluster_dispatch(
+    zscored::Matrix{Float64},
+    opts::FitOptions,
+)::Tuple{Vector{Int}, Float64}
+    method = opts.cluster_method
+    k      = opts.n_clusters
+
+    if method == :kmeans
+        result = _kmeans_best(zscored', k, opts)
+        return assignments(result), result.totalcost
+
+    elseif method == :kmedoids
+        D      = _pairwise_euclidean(zscored)
+        result = kmedoids(D, k; maxiter = opts.kmeans_max_iters, tol = opts.kmeans_tol)
+        ids    = assignments(result)
+        return ids, result.totalcost
+
+    elseif method == :hclust
+        D      = _pairwise_euclidean(zscored)
+        hc     = hclust(D; linkage = opts.cluster_hclust_linkage)
+        ids    = cutree(hc; k)
+        wcss   = sum(sum((zscored[ids .== c, :] .- mean(zscored[ids .== c, :], dims=1)).^2)
+                     for c in unique(ids))
+        return ids, wcss
+
+    elseif method == :dbscan
+        result = dbscan(zscored', opts.cluster_dbscan_eps;
+                        min_neighbors = opts.cluster_dbscan_minpts)
+        ids    = assignments(result)   # 0 = noise
+        return ids, 0.0
+
+    else
+        error("Unknown cluster_method: $method. Choose :kmeans, :kmedoids, :hclust, or :dbscan.")
+    end
+end
+
+# Pre-screening variant: flag constant curves, run the chosen algorithm on the
+# dynamic subset only, assign constant curves to the sentinel label n_clusters.
+function _cluster_with_prescreen_method(
+    curves::Matrix{Float64},
+    zscored_all::Matrix{Float64},
+    opts::FitOptions,
+)::Tuple{Vector{Int}, Float64}
+    W           = size(curves, 1)
+    const_mask  = _prescreen_constant(curves, opts)
+    dynamic_idx = findall(.!const_mask)
+    labels      = fill(opts.n_clusters, W)
+    wcss        = 0.0
+
+    if !isempty(dynamic_idx) && opts.n_clusters > 1
+        sub_opts   = FitOptions(; (f => getfield(opts, f) for f in fieldnames(FitOptions))...,
+                                  n_clusters          = opts.n_clusters - 1,
+                                  cluster_trend_test  = false,
+                                  cluster_prescreen_constant = false)
+        sub_z      = zscored_all[dynamic_idx, :]
+        sub_labels, wcss = _cluster_dispatch(sub_z, sub_opts)
+        for (pos, idx) in enumerate(dynamic_idx)
+            labels[idx] = sub_labels[pos]
+        end
+    end
+    return labels, wcss
 end
 
 # The exponential prototype occupies a label that is NOT already in use by k-means.
@@ -430,38 +506,6 @@ function _prescreen_constant(curves::Matrix{Float64}, opts::FitOptions)::BitVect
     return const_mask
 end
 
-"""
-    _cluster_with_prescreen(curves, zscored_all, opts) -> (Vector{Int}, Float64)
-
-Pre-screen constant curves using original-space quantile ratio, then run k-means
-on the z-normalised dynamic subset. Constant curves receive label `n_clusters`;
-dynamic curves get labels `1..n_clusters-1`.
-Returns labels and the WCSS from the k-means step (0.0 when all curves are constant).
-"""
-function _cluster_with_prescreen(
-    curves::Matrix{Float64},
-    zscored_all::Matrix{Float64},
-    opts::FitOptions,
-)::Tuple{Vector{Int}, Float64}
-    W           = size(curves, 1)
-    const_mask  = _prescreen_constant(curves, opts)   # quantile test on raw curves
-    dynamic_idx = findall(.!const_mask)
-    labels      = fill(opts.n_clusters, W)   # default: constant
-    wcss        = 0.0
-
-    if !isempty(dynamic_idx) && opts.n_clusters > 1
-        k_dynamic = opts.n_clusters - 1
-        # k-means runs on z-normalised dynamic curves
-        result    = _kmeans_best(zscored_all[dynamic_idx, :]', k_dynamic, opts)
-        km_labels = assignments(result)
-        wcss      = result.totalcost
-        for (pos, idx) in enumerate(dynamic_idx)
-            labels[idx] = km_labels[pos]
-        end
-    end
-
-    return labels, wcss
-end
 
 # ---------------------------------------------------------------------------
 # Centroid computation
