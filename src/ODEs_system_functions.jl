@@ -87,7 +87,7 @@ function loss_RE_ODE_Sys(data, index_of_eqs, index_of_data, ODE_prob, Integratio
     end
 
 
-    return lossa, sol
+    return lossa
 end
 
 
@@ -130,7 +130,7 @@ function define_loss_function_odes_system(data, set_of_equation_to_fit, ODE_prob
             lossa = 10.0^9 * length(data[2, :])
         end
     
-        return lossa, sol
+        return lossa
     end
 
 
@@ -160,7 +160,7 @@ function define_loss_function_odes_system(data, set_of_equation_to_fit, ODE_prob
         end
 
 
-        return lossa, sol
+        return lossa
     end
 
 

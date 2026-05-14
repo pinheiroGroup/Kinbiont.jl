@@ -28,7 +28,7 @@ function loss_L2_derivative(data, ODE_prob, Integration_method, p, tsteps)
         lossa = 10.0^9 * length(data[2, :])
     end
 
-    return lossa, sol
+    return lossa
 end
 
 function loss_blank_weighted_L2(data, ODE_prob, Integration_method, p, tsteps, blank_array)
@@ -67,7 +67,7 @@ function loss_blank_weighted_L2(data, ODE_prob, Integration_method, p, tsteps, b
         lossa = 10.0^9 * length(data[2, :])
     end
 
-    return lossa, sol
+    return lossa
 end
 
 function loss_L2(data, ODE_prob, Integration_method, p, tsteps)
@@ -89,7 +89,7 @@ function loss_L2(data, ODE_prob, Integration_method, p, tsteps)
         lossa = 10.0^9 * length(data[2, :])
     end
 
-    return lossa, sol
+    return lossa
 end
 
 function loss_L2_log(data, ODE_prob, Integration_method, p, tsteps)
@@ -111,7 +111,7 @@ function loss_L2_log(data, ODE_prob, Integration_method, p, tsteps)
         lossa = 10.0^9 * length(data[2, :])
     end
 
-    return lossa, sol
+    return lossa
 end
 
 
@@ -136,7 +136,7 @@ function loss_RE(data, ODE_prob, Integration_method, p, tsteps)
         lossa = 10.0^9 * length(data[2, :])
     end
 
-    return lossa, sol
+    return lossa
 end
 
 
@@ -162,7 +162,7 @@ function loss_RE_log(data, ODE_prob, Integration_method, p, tsteps)
         lossa = 10.0^9 * length(data[2, :])
     end
 
-    return lossa, sol
+    return lossa
 end
 
 
@@ -192,7 +192,7 @@ function loss_L2_std_blank(data, ODE_prob, Integration_method, p, tsteps, blank_
         lossa = 10.0^9 * length(data[2, :])
     end
 
-    return lossa, sol
+    return lossa
 end
 
 function loss_relative_error(data, ODE_prob, Integration_method, p, tsteps)
@@ -218,7 +218,7 @@ function loss_relative_error(data, ODE_prob, Integration_method, p, tsteps)
         lossa = 10.0^9 * length(data[2, :])
     end
 
-    return lossa, sol
+    return lossa
 end
 
 

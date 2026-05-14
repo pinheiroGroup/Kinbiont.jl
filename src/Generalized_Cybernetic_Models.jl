@@ -110,7 +110,7 @@ function loss_RE_Cybernetic(data, index_of_eqs, index_of_data, ODE_prob, Integra
         lossa = 10.0^9 * length(data[2, :])
     end
 
-    return lossa, sol
+    return lossa
 end
 
 function define_loss_function_cybernetic_ODEs(data, set_of_equation_to_fit, ODE_prob, Integration_method, tsteps)
@@ -157,9 +157,9 @@ function define_loss_function_cybernetic_ODEs(data, set_of_equation_to_fit, ODE_
             lossa = 10.0^9 * length(data[2, :])
         end
     
-        return lossa, sol
+        return lossa
     end
-    
+
 
 
 
