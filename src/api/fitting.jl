@@ -105,6 +105,14 @@ function _fit_curve(
     opts::FitOptions,
 )::CurveFitResult
 
+    # Drop time points whose OD reading is missing — real plate-reader
+    # exports often pad the trailing rows with NaN once a run ends early.
+    # Without this filter the legacy fit functions silently land on a
+    # spurious optimum because NaN propagates through smoothing and loss.
+    finite_mask = isfinite.(curve) .& isfinite.(times)
+    times = times[finite_mask]
+    curve = curve[finite_mask]
+
     # Legacy functions expect a 2×n matrix [times; values]
     data_mat = Matrix(transpose(hcat(times, curve)))
 

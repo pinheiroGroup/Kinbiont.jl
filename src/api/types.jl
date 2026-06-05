@@ -72,9 +72,13 @@ data = GrowthData("/path/to/experiment.csv")
 function GrowthData(path::String)
     tbl    = CSV.File(path)
     cols   = propertynames(tbl)
-    times  = Float64.(tbl[cols[1]])
+    # CSV.jl returns SentinelVector{Float64, Float64, Missing, ...} when any
+    # cell is blank; coalesce missing → NaN before promoting to Float64 so
+    # plate-reader exports with intermittent dropouts load cleanly.
+    _to_f64(col) = Float64.(coalesce.(col, NaN))
+    times  = _to_f64(tbl[cols[1]])
     labels = String.(cols[2:end])
-    curves = Matrix{Float64}(reduce(hcat, [Float64.(tbl[c]) for c in cols[2:end]])')
+    curves = Matrix{Float64}(reduce(hcat, [_to_f64(tbl[c]) for c in cols[2:end]])')
     return GrowthData(curves, times, labels)
 end
 
