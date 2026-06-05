@@ -437,8 +437,10 @@ function _fit_single(
     fit_matrix   = raw[3]
     fit_times    = Vector{Float64}(fit_matrix[:, 1])
     fitted_curve = Vector{Float64}(fit_matrix[:, 2])
-    # Log-lin loss is the residual of the linear regression
-    loss_val     = 1.0 - Float64(params_raw[end])   # 1 - R²
+    # Log-lin loss is the residual of the linear regression.
+    # Position 14 is the Pearson correlation; later positions are the
+    # appended model-free lag and empirical N_max, so do not use [end].
+    loss_val     = 1.0 - Float64(params_raw[14])   # 1 - ρ
     n_params     = 2   # slope + intercept
     aic          = AICc_evaluation2(n_params, 2.0, fit_times, max(loss_val, 1e-12);
                                     correction = opts.aic_correction)

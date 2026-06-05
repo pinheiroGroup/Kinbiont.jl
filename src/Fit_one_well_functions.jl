@@ -65,6 +65,10 @@ Fits a logarithmic-linear model to data from a .csv file. The function assumes t
      - `intercept log-lin fitting`: Intercept of the log-linear fitting.
      - `2 sigma intercept`: Confidence interval of the intercept (±2 sigma).
      - `R^2`: Coefficient of determination (R-squared).
+     - `lag_loglin`: Model-free lag time as the tangent-intercept of the
+       log-linear fit projected back to the initial OD (Buchanan definition).
+     - `N_max_emp`: Empirical carrying capacity as the 95th percentile of
+       the smoothed OD trajectory.
     3. The fit in the exponential window.
     4. The log data.
     5. The 95% condfidence band of the fit.
@@ -289,6 +293,18 @@ function fitting_one_well_Log_Lin(
 
         # storing results
 
+        # Model-free lag (Buchanan tangent-intercept):
+        # solve log(N_0) = coeff_1 + coeff_2 * t for t, with N_0 the first
+        # smoothed OD. Falls back to missing for non-positive baselines or
+        # non-positive slope (degenerate fit).
+        N0_emp = data_smooted[2, 1]
+        lag_loglin = (N0_emp > 0 && coeff_2 > 0) ?
+            (log(N0_emp) - coeff_1) / coeff_2 : missing
+
+        # Model-free carrying capacity: 95th percentile of the smoothed
+        # OD trajectory, robust to single-point spikes.
+        N_max_emp = quantile(data_smooted[2, :], 0.95)
+
         results_lin_log_fit = [
             label_exp,
             name_well,
@@ -304,6 +320,8 @@ function fitting_one_well_Log_Lin(
             coeff_1,
             sigma_a,
             rho,
+            lag_loglin,
+            N_max_emp,
         ]
 
     else
@@ -316,6 +334,8 @@ function fitting_one_well_Log_Lin(
         results_lin_log_fit = [
             label_exp,
             name_well,
+            missing,
+            missing,
             missing,
             missing,
             missing,

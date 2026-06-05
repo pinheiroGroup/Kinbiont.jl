@@ -127,6 +127,8 @@ function fit_one_file_Log_Lin(
         "intercept",
         "sigma_intercept",
         "Pearson_correlation",
+        "lag_loglin",
+        "N_max_emp",
     ]
 
     if write_res == true

@@ -42,13 +42,21 @@
         )
 
         @test result[1] == "Log-lin"
-        # R² is stored at params[end]
-        r2 = Float64(result[2][end])
-        @test isfinite(r2)
-        @test 0.0 <= r2 <= 1.0
+        # Pearson R at params[14]; positions 15–16 are appended model-free
+        # lag and empirical N_max, so do not use [end].
+        r = Float64(result[2][14])
+        @test isfinite(r)
+        @test -1.0 <= r <= 1.0
         # fit_matrix is n×2: [times  log_fitted_values]
         @test size(result[3], 2) == 2
         @test length(result[3][:, 1]) > 0
+        # Appended fields: lag_loglin and empirical N_max.
+        @test length(result[2]) == 16
+        lag = result[2][15]
+        nmx = result[2][16]
+        @test lag === missing || isfinite(Float64(lag))
+        @test isfinite(Float64(nmx))
+        @test Float64(nmx) > 0.0
     end
 
     # ------------------------------------------------------------------
