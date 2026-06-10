@@ -151,6 +151,10 @@ const GUI_BATCH_MODEL_INIT = Dict{String, Function}(
 )
 
 function _gui_batch_initial_value(param_name, features)
+    # Priority-ordered substring match: more specific suffix/prefix tokens
+    # (e.g. "nlag", "death", "doubl") are checked before broader ones
+    # ("lag", "growth"). Reordering this block changes which initial value
+    # ambiguous names like `growth_rate_max` receive.
     compact = replace(lowercase(String(param_name)), r"[^a-z0-9]" => "")
     if compact in ("nlag", "xlag", "ylag", "odlag") ||
        ((startswith(compact, "n") || startswith(compact, "x") ||
@@ -280,10 +284,10 @@ function _gui_batch_run_attempt(
         od_fit = od_for_fit[1:cut_idx]
     end
 
-    keys = isempty(model_names) ? [model_name] : filter(!=("log_lin"), model_names)
-    isempty(keys) && error("No parametric models selected")
-    models = [MODEL_REGISTRY[k] for k in keys]
-    initial_params = [_gui_batch_initial_params(keys[i], models[i], time_fit, od_fit) for i in eachindex(models)]
+    model_keys = isempty(model_names) ? [model_name] : filter(!=("log_lin"), model_names)
+    isempty(model_keys) && error("No parametric models selected")
+    models = [MODEL_REGISTRY[k] for k in model_keys]
+    initial_params = [_gui_batch_initial_params(model_keys[i], models[i], time_fit, od_fit) for i in eachindex(models)]
     bounds = [_gui_batch_param_bounds(m, time_fit, od_fit) for m in models]
     lower = Union{Nothing, Vector{Float64}}[b[1] for b in bounds]
     upper = Union{Nothing, Vector{Float64}}[b[2] for b in bounds]
@@ -501,6 +505,15 @@ end
 Run a GUIbiont-compatible batch fit on a `GrowthData` object. The returned
 named tuple contains `results`, `skipped`, and `errors` dictionaries shaped
 like GUIbiont's `/api/batch-fit` response.
+
+The returned `model` field is `"multi"` when more than one parametric model
+is compared (and `model_names` holds the list); when a single model is
+fitted, `model` is its name and `model_names == [model]`.
+
+Each result carries two loss fields: `loss_re` is the optimizer objective
+(relative error on the smoothed/blank-shifted curve) and `loss_rmse` is
+recomputed on the displayed blank-corrected curve. The "best" optimizer
+attempt is chosen by minimum `loss_rmse`.
 """
 function kinbiont_batch_fit(
     data::GrowthData;
