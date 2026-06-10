@@ -649,5 +649,203 @@ function save_gui_batch_results(batch, dir::String="."; prefix::Union{Nothing, S
     return (summary=summary_path, fitted_curves=fitted_path)
 end
 
+function _gui_batch_fit_loglin_one(
+    time_numeric::Vector{Float64},
+    od_raw::Vector{Float64},
+    label::String,
+    experiment::String;
+    blank_value::Float64=0.0,
+    subtract_blank::Bool=false,
+    blank_method::String="pointbypoint",
+    blank_timeseries::Vector{Float64}=Float64[],
+    type_of_smoothing::String="rolling_avg",
+    pt_avg::Int=7,
+    pt_smoothing_derivative::Int=7,
+    pt_min_size_of_win::Int=7,
+    type_of_win::String="maximum",
+    threshold_of_exp::Float64=0.9,
+    start_exp_win_thr::Float64=0.05,
+    thr_lowess::Float64=0.05,
+)
+    od_subtracted_display = nothing
+    if subtract_blank && blank_value > 0.0
+        corrected = (blank_method == "pointbypoint" && length(blank_timeseries) == length(od_raw)) ?
+            od_raw .- blank_timeseries : od_raw .- blank_value
+        od_subtracted_display = max.(corrected, 0.0)
+        if blank_method == "clip"
+            od_for_fit = max.(corrected, 1e-4)
+        else
+            shift = max(-minimum(corrected), 0.0) + 1e-4
+            od_for_fit = corrected .+ shift
+        end
+    else
+        od_for_fit = max.(od_raw, 1e-4)
+    end
+
+    raw = fitting_one_well_Log_Lin(
+        Matrix(transpose(hcat(time_numeric, od_for_fit))),
+        label,
+        experiment;
+        type_of_smoothing=type_of_smoothing,
+        pt_avg=pt_avg,
+        pt_smoothing_derivative=pt_smoothing_derivative,
+        pt_min_size_of_win=pt_min_size_of_win,
+        type_of_win=type_of_win,
+        threshold_of_exp=threshold_of_exp,
+        start_exp_win_thr=start_exp_win_thr,
+        thr_lowess=thr_lowess,
+    )
+    params = raw[2]
+    result = Dict{String, Any}(
+        "experiment" => experiment,
+        "well" => label,
+        "method" => "Log-lin",
+        "experimental_time" => time_numeric,
+        "experimental_od" => od_raw,
+        "blank_value" => blank_value,
+        "blank_subtraction" => subtract_blank,
+        "blank_method" => blank_method,
+    )
+    if length(params) >= 14 && params[7] !== missing
+        result["gr_loglin"] = Float64(params[7])
+        result["gr_loglin_se"] = Float64(params[8])
+        result["gr_max_sliding"] = Float64(params[6])
+        result["t_exp_start_loglin"] = Float64(params[3])
+        result["t_exp_end_loglin"] = Float64(params[4])
+        result["doubling_time_loglin"] = Float64(params[9])
+        result["R_squared_loglin"] = Float64(params[14])^2
+        result["lag_loglin"] = length(params) >= 16 && params[15] !== missing ? Float64(params[15]) : NaN
+        result["N_max_emp"] = length(params) >= 16 && params[16] !== missing ? Float64(params[16]) : NaN
+        result["loglin_converged"] = true
+    else
+        for name in ["gr_loglin", "gr_loglin_se", "gr_max_sliding",
+                     "t_exp_start_loglin", "t_exp_end_loglin",
+                     "doubling_time_loglin", "R_squared_loglin",
+                     "lag_loglin", "N_max_emp"]
+            result[name] = NaN
+        end
+        result["loglin_converged"] = false
+    end
+    od_subtracted_display !== nothing && (result["experimental_od_subtracted"] = od_subtracted_display)
+    return result
+end
+
+"""
+    kinbiont_batch_loglin(data::GrowthData; kwargs...)
+
+Run GUIbiont-compatible batch log-linear fitting on a `GrowthData` object.
+"""
+function kinbiont_batch_loglin(
+    data::GrowthData;
+    experiment::String="experiment",
+    labels::Vector{String}=String[],
+    blank_subtraction::Bool=false,
+    blank_method::String="pointbypoint",
+    blank_value::Float64=0.0,
+    blank_timeseries::Vector{Float64}=Float64[],
+    type_of_smoothing::String="rolling_avg",
+    pt_avg::Int=7,
+    pt_smoothing_derivative::Int=7,
+    pt_min_size_of_win::Int=7,
+    type_of_win::String="maximum",
+    threshold_of_exp::Float64=0.9,
+    start_exp_win_thr::Float64=0.05,
+    thr_lowess::Float64=0.05,
+    skip_flat_threshold::Float64=0.05,
+)
+    selected = isempty(labels) ? data.labels : labels
+    results = Dict{String, Any}[]
+    skipped = Dict{String, Any}[]
+    errors = String[]
+    min_pts = max(10, pt_smoothing_derivative + pt_min_size_of_win + 2)
+
+    for label in selected
+        idx = findfirst(==(label), data.labels)
+        if idx === nothing
+            push!(errors, "Well '$label' not found")
+            continue
+        end
+        t = data.times
+        yraw = vec(data.curves[idx, :])
+        valid = findall(i -> isfinite(t[i]) && isfinite(yraw[i]), eachindex(t))
+        if length(valid) < min_pts
+            push!(errors, "$label: insufficient data points")
+            continue
+        end
+        tv = Float64.(t[valid])
+        yv = Float64.(yraw[valid])
+        amp = maximum(yv) - minimum(yv)
+        if skip_flat_threshold > 0.0 && amp < skip_flat_threshold
+            push!(skipped, Dict{String, Any}(
+                "well" => label,
+                "amplitude" => amp,
+                "reason" => "flat curve (amplitude $(round(amp, digits=4)) < threshold $(skip_flat_threshold))",
+            ))
+            continue
+        end
+        blank_ts = isempty(blank_timeseries) ? Float64[] : Float64.(blank_timeseries[valid])
+        try
+            push!(results, _gui_batch_fit_loglin_one(
+                tv, yv, label, experiment;
+                blank_value=blank_value,
+                subtract_blank=blank_subtraction,
+                blank_method=blank_method,
+                blank_timeseries=blank_ts,
+                type_of_smoothing=type_of_smoothing,
+                pt_avg=pt_avg,
+                pt_smoothing_derivative=pt_smoothing_derivative,
+                pt_min_size_of_win=pt_min_size_of_win,
+                type_of_win=type_of_win,
+                threshold_of_exp=threshold_of_exp,
+                start_exp_win_thr=start_exp_win_thr,
+                thr_lowess=thr_lowess,
+            ))
+        catch e
+            push!(errors, "$label: $(string(e))")
+        end
+    end
+
+    return (
+        experiment=experiment,
+        model="log_lin",
+        model_names=["log_lin"],
+        results=results,
+        skipped=skipped,
+        errors=errors,
+    )
+end
+
+"""
+    save_gui_batch_loglin_results(batch, dir="."; prefix=nothing)
+
+Write GUIbiont-compatible `batch_fit_loglin` CSV output.
+"""
+function save_gui_batch_loglin_results(batch, dir::String="."; prefix::Union{Nothing, String}=nothing)
+    mkpath(dir)
+    prefix = prefix === nothing ? "$(batch.experiment)_batch_fit_loglin" : prefix
+    header = Any["experiment", "well", "method",
+        "gr_loglin", "gr_loglin_se", "gr_max_sliding",
+        "t_exp_start_loglin", "t_exp_end_loglin",
+        "doubling_time_loglin", "R_squared_loglin",
+        "lag_loglin", "N_max_emp", "loglin_converged"]
+    rows = Vector{Vector{Any}}()
+    for r in batch.results
+        push!(rows, Any[
+            batch.experiment, r["well"], "log_lin",
+            get(r, "gr_loglin", ""), get(r, "gr_loglin_se", ""),
+            get(r, "gr_max_sliding", ""), get(r, "t_exp_start_loglin", ""),
+            get(r, "t_exp_end_loglin", ""), get(r, "doubling_time_loglin", ""),
+            get(r, "R_squared_loglin", ""), get(r, "lag_loglin", ""),
+            get(r, "N_max_emp", ""),
+            get(r, "loglin_converged", false) ? "true" : "false",
+        ])
+    end
+    path = joinpath(dir, prefix * ".csv")
+    _gui_batch_write_csv(path, header, rows)
+    return (summary=path,)
+end
+
 export kinbiont_batch_fit
 export save_gui_batch_results
+export kinbiont_batch_loglin
+export save_gui_batch_loglin_results
