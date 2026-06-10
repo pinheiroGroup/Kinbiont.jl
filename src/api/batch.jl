@@ -263,7 +263,7 @@ function _gui_batch_run_attempt(
     anchor::Float64,
     shift::Float64,
     subtract_blank::Bool,
-    blank_value::Float64,
+    blank_value::Real,
     label::String,
     model_name::String,
     model_names::Vector{String},
@@ -389,7 +389,7 @@ function _gui_batch_fit_one(
     od_raw::Vector{Float64},
     label::String,
     experiment::String;
-    blank_value::Float64=0.0,
+    blank_value::Real=0.0,
     subtract_blank::Bool=false,
     blank_method::String="pointbypoint",
     blank_timeseries::Vector{Float64}=Float64[],
@@ -522,7 +522,7 @@ function kinbiont_batch_fit(
     loglin_threshold_of_exp::Float64=0.9,
     blank_subtraction::Bool=false,
     blank_method::String="pointbypoint",
-    blank_value::Float64=0.0,
+    blank_value::Real=0.0,
     blank_timeseries::Vector{Float64}=Float64[],
 )
     selected = isempty(labels) ? data.labels : labels
@@ -654,7 +654,7 @@ function _gui_batch_fit_loglin_one(
     od_raw::Vector{Float64},
     label::String,
     experiment::String;
-    blank_value::Float64=0.0,
+    blank_value::Real=0.0,
     subtract_blank::Bool=false,
     blank_method::String="pointbypoint",
     blank_timeseries::Vector{Float64}=Float64[],
@@ -741,7 +741,7 @@ function kinbiont_batch_loglin(
     labels::Vector{String}=String[],
     blank_subtraction::Bool=false,
     blank_method::String="pointbypoint",
-    blank_value::Float64=0.0,
+    blank_value::Real=0.0,
     blank_timeseries::Vector{Float64}=Float64[],
     type_of_smoothing::String="rolling_avg",
     pt_avg::Int=7,
