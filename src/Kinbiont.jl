@@ -8,4 +8,5 @@ module Kinbiont
   include("api/preprocessing.jl")
   include("api/fitting.jl")
   include("api/io.jl")
+  include("api/batch.jl")
 end
