@@ -138,9 +138,12 @@ Every field has a sensible default so users only override what they need.
 - `n_clusters::Int = 3`: total number of cluster labels (1..`n_clusters`). Labels are
   always within this range regardless of other options.
 - `cluster_trend_test::Bool = true`: reserve label `n_clusters` for flat/non-growing
-  curves (identified by an OLS slope t-test, p ≥ 0.05). K-means then runs with
+  curves (identified by an OLS slope t-test, p ≥ `cluster_trend_p_thr`). K-means then runs with
   `n_clusters - 1` dynamic groups, so all labels remain in `1..n_clusters`.
   Requires `n_clusters ≥ 2`. Ignored when `cluster_prescreen_constant=true`.
+- `cluster_trend_p_thr::Float64 = 0.05`: p-value threshold used by
+  `cluster_trend_test`. Curves with no significant linear OD-vs-time slope
+  (`p ≥ cluster_trend_p_thr`) are reassigned to the flat cluster.
 - `cluster_prescreen_constant::Bool = false`: before running k-means, identify
   non-growing wells using a quantile-ratio criterion (high tail / low tail ≤
   `cluster_tol_const`) and pin them to label `n_clusters`. K-means then runs with
@@ -228,6 +231,7 @@ find the elbow and choose the optimal number of clusters.
     cluster::Bool                    = false
     n_clusters::Int                  = 3
     cluster_trend_test::Bool         = true
+    cluster_trend_p_thr::Float64     = 0.05
     cluster_prescreen_constant::Bool = false
     cluster_tol_const::Float64       = 1.5
     cluster_q_low::Float64           = 0.05

@@ -193,6 +193,21 @@
         @test processed.clusters[1] != n_k
     end
 
+    @testset "cluster_trend_p_thr controls post-hoc flat reassignment" begin
+        weak_trend = [0.1 + 0.01 * t + 0.05 * sin(1.7 * t) for t in times]
+        flat_curve = fill(0.1, length(times))
+        trend_curves = Matrix(hcat(weak_trend, flat_curve)')
+        start_labels = [1, 1]
+
+        lower_thr = Kinbiont._apply_trend_labels(trend_curves, times, start_labels, 2, 0.01)
+        default_thr = Kinbiont._apply_trend_labels(trend_curves, times, start_labels, 2, 0.05)
+
+        @test lower_thr[1] == 2
+        @test default_thr[1] == 1
+        @test lower_thr[2] == 2
+        @test default_thr[2] == 2
+    end
+
     @testset "Constant pre-screening keeps labels within 1..n_clusters" begin
         # Mix flat and growing curves so pre-screening has something to detect
         flat_curves = hcat(fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),
@@ -312,6 +327,38 @@
         @test processed.times == new_times
         @test size(processed.curves, 1) == size(data.curves, 1)   # same n_curves
         @test size(processed.curves, 2) == length(new_times)
+    end
+
+    @testset "Public clustering preprocessing helpers" begin
+        raw_times = [collect(0.0:1.0:4.0), collect(1.0:1.0:5.0)]
+        raw_curves = [[0.0, 1.0, 2.0, 3.0, 4.0], [10.0, 11.0, 12.0, 13.0, 14.0]]
+        grid = common_time_grid(raw_times; n_grid=5, q_low=0.0, q_high=1.0)
+        interp = interpolate_curves_to_grid(raw_curves, raw_times, grid)
+
+        @test grid == collect(range(0.0, 5.0; length=5))
+        @test size(interp) == (2, 5)
+        @test interp[1, 1] == raw_curves[1][1]
+        @test interp[2, end] == raw_curves[2][end]
+
+        corrected = apply_blank_timeseries(copy(data.curves), fill(0.1, length(times));
+                                           method=:pointbypoint)
+        @test corrected ≈ data.curves .- 0.1
+
+        dirty = copy(data.curves)
+        dirty[1, 1] = NaN
+        filled = fill_nonfinite_colmean(dirty)
+        @test isfinite(filled[1, 1])
+
+        blank_rows = vcat(fill(0.01, 1, length(times)),
+                          [0.2 + 0.1 * t for t in times]')
+        blanks = detect_blank_indices(blank_rows, times;
+                                      flat_range_thr=0.005,
+                                      od_percentile=0.5)
+        @test blanks == [1]
+
+        q = cluster_quality_indices(data.curves, [1, 1, 2, 2, 2])
+        @test haskey(q, "silhouette_mean")
+        @test haskey(q, "davies_bouldin")
     end
 end
 

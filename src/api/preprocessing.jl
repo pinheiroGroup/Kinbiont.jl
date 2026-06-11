@@ -386,7 +386,8 @@ function _cluster(
         # since the sentinel cluster already captures constant curves)
         if opts.cluster_trend_test && !opts.cluster_prescreen_constant
             flat_id = method == :dbscan ? maximum(labels) + 1 : opts.n_clusters
-            labels  = _apply_trend_labels(curves, times, labels, flat_id)
+            labels  = _apply_trend_labels(curves, times, labels, flat_id,
+                                           opts.cluster_trend_p_thr)
         end
     end
 
@@ -614,6 +615,7 @@ function _apply_trend_labels(
     times::Vector{Float64},
     labels::Vector{Int},
     flat_id::Int,
+    p_threshold::Float64 = 0.05,
 )::Vector{Int}
     new_labels = copy(labels)
     n          = length(times)
@@ -638,7 +640,7 @@ function _apply_trend_labels(
         t_stat   = slope / se_slope
         # Two-tailed p-value from the t-distribution with n-2 degrees of freedom
         p_approx = 2 * (1 - cdf(TDist(n - 2), abs(t_stat)))
-        if p_approx >= 0.05
+        if p_approx >= p_threshold
             new_labels[i] = flat_id
         end
     end
