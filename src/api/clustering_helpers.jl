@@ -7,7 +7,6 @@
 
 using CSV, DataFrames
 using Clustering: silhouettes, clustering_quality
-using Distributions: Normal, cdf
 
 function apply_blank_timeseries(
     curves::Matrix{Float64},
@@ -54,38 +53,15 @@ function detect_blank_indices(
     flat_range_thr::Float64 = 0.005,
     od_percentile::Float64 = 0.10,
 )::Vector{Int}
-    length(times) == size(curves, 2) ||
-        throw(ArgumentError("times length $(length(times)) != n_timepoints $(size(curves, 2))"))
-    length(times) < 3 && return Int[]
+    flat_flags = _flat_curve_mask(curves, times;
+        p_threshold=flat_p_thr,
+        range_threshold=flat_range_thr,
+    )
 
-    t_c = times .- mean(times)
     mean_ods = Float64[]
-    flat_flags = Bool[]
     for i in axes(curves, 1)
-        y = curves[i, :]
-        finite_mask = isfinite.(y)
-        nf = sum(finite_mask)
-        if nf < 3
-            push!(mean_ods, NaN); push!(flat_flags, false); continue
-        end
-        yf = y[finite_mask]
-        tcf = t_c[finite_mask]
-        push!(mean_ods, mean(yf))
-
-        if maximum(yf) - minimum(yf) < flat_range_thr
-            push!(flat_flags, true); continue
-        end
-        ss_t = sum(tcf .^ 2)
-        if ss_t < 1e-12
-            push!(flat_flags, true); continue
-        end
-        slope = sum(tcf .* yf) / ss_t
-        yhat = mean(yf) .+ slope .* tcf
-        s2 = sum((yf .- yhat) .^ 2) / (nf - 2)
-        se = sqrt(max(s2, 0.0) / ss_t)
-        t_stat = se < 1e-12 ? Inf : abs(slope / se)
-        p_value = 2 * (1 - cdf(Normal(), t_stat))
-        push!(flat_flags, p_value >= flat_p_thr)
+        finite = filter(isfinite, curves[i, :])
+        push!(mean_ods, isempty(finite) ? NaN : mean(finite))
     end
 
     finite_means = filter(isfinite, mean_ods)
@@ -156,14 +132,6 @@ function interpolate_curves_to_grid(
     return out
 end
 
-function _centroids_for_quality(X::Matrix{Float64}, ids::Vector{Int})::Matrix{Float64}
-    centers = Matrix{Float64}(undef, maximum(ids), size(X, 2))
-    for cid in 1:maximum(ids)
-        centers[cid, :] = vec(mean(X[ids .== cid, :], dims=1))
-    end
-    return centers
-end
-
 function cluster_quality_indices(
     curves::Matrix{Float64},
     ids::Vector{Int};
@@ -200,7 +168,7 @@ function cluster_quality_indices(
         q["dunn"] = nothing
     end
 
-    centers = _centroids_for_quality(Xq, labels)'
+    centers = _compute_centroids(Xq, labels, maximum(labels))'
     q["davies_bouldin"] = try Float64(clustering_quality(Xq', centers, labels; quality_index=:davies_bouldin)) catch; nothing end
     q["calinski_harabasz"] = try Float64(clustering_quality(Xq', centers, labels; quality_index=:calinski_harabasz)) catch; nothing end
     q["xie_beni"] = try Float64(clustering_quality(Xq', centers, labels; quality_index=:xie_beni)) catch; nothing end

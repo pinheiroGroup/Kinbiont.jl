@@ -607,6 +607,54 @@ function _zscore_rows(curves::Matrix{Float64})::Matrix{Float64}
     return out
 end
 
+function _flat_curve_mask(
+    curves::Matrix{Float64},
+    times::Vector{Float64};
+    p_threshold::Float64 = 0.05,
+    range_threshold::Union{Nothing,Float64} = nothing,
+)::BitVector
+    length(times) == size(curves, 2) ||
+        throw(ArgumentError("times length $(length(times)) != n_timepoints $(size(curves, 2))"))
+
+    mask = falses(size(curves, 1))
+    length(times) < 3 && return mask
+
+    for i in axes(curves, 1)
+        finite_mask = isfinite.(curves[i, :]) .& isfinite.(times)
+        nf = sum(finite_mask)
+        nf < 3 && continue
+
+        y = curves[i, finite_mask]
+        t = times[finite_mask]
+        if range_threshold !== nothing && maximum(y) - minimum(y) < range_threshold
+            mask[i] = true
+            continue
+        end
+
+        t_centered = t .- mean(t)
+        ss_t = sum(t_centered .^ 2)
+        if ss_t <= 1e-12
+            mask[i] = true
+            continue
+        end
+
+        slope = sum(t_centered .* y) / ss_t
+        y_hat = mean(y) .+ slope .* t_centered
+        residuals = y .- y_hat
+        s2 = sum(residuals .^ 2) / (nf - 2)
+        se_slope = sqrt(max(s2, 0.0) / ss_t)
+        if se_slope <= 0 || !isfinite(se_slope)
+            mask[i] = abs(slope) < 1e-12
+            continue
+        end
+
+        t_stat = slope / se_slope
+        p_value = 2 * (1 - cdf(TDist(nf - 2), abs(t_stat)))
+        mask[i] = p_value >= p_threshold
+    end
+    return mask
+end
+
 # Assign a dedicated cluster id to curves with no significant linear trend.
 # Uses a two-tailed t-test on the OLS slope (p ≥ 0.05 → flat).
 # `flat_id` is passed in by the caller; it must already be within 1..n_clusters.
@@ -617,36 +665,11 @@ function _apply_trend_labels(
     flat_id::Int,
     p_threshold::Float64 = 0.05,
 )::Vector{Int}
+    flat_mask = _flat_curve_mask(curves, times; p_threshold=p_threshold)
     new_labels = copy(labels)
-    n          = length(times)
-    n < 3      && return new_labels
-    t_centered = times .- mean(times)
-    ss_t       = sum(t_centered .^ 2)
-    ss_t <= 0  && return new_labels
-
-    for i in axes(curves, 1)
-        y         = curves[i, :]
-        slope     = sum(t_centered .* y) / ss_t
-        y_hat     = mean(y) .+ slope .* t_centered
-        residuals = y .- y_hat
-        s2        = sum(residuals .^ 2) / (n - 2)
-        se_slope  = sqrt(s2 / ss_t)
-        if se_slope <= 0 || !isfinite(se_slope)
-            if abs(slope) < 1e-12
-                new_labels[i] = flat_id
-            end
-            continue
-        end
-        t_stat   = slope / se_slope
-        # Two-tailed p-value from the t-distribution with n-2 degrees of freedom
-        p_approx = 2 * (1 - cdf(TDist(n - 2), abs(t_stat)))
-        if p_approx >= p_threshold
-            new_labels[i] = flat_id
-        end
-    end
+    new_labels[flat_mask] .= flat_id
     return new_labels
 end
-
 # ---------------------------------------------------------------------------
 # Stationary phase cutoff detection
 # ---------------------------------------------------------------------------
