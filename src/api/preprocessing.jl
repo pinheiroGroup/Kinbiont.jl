@@ -649,6 +649,7 @@ function _flat_curve_mask(
         end
 
         t_stat = slope / se_slope
+        # Two-tailed p-value from the t-distribution with nf-2 degrees of freedom
         p_value = 2 * (1 - cdf(TDist(nf - 2), abs(t_stat)))
         mask[i] = p_value >= p_threshold
     end
@@ -670,6 +671,7 @@ function _apply_trend_labels(
     new_labels[flat_mask] .= flat_id
     return new_labels
 end
+
 # ---------------------------------------------------------------------------
 # Stationary phase cutoff detection
 # ---------------------------------------------------------------------------

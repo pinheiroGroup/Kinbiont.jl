@@ -8,6 +8,22 @@
 using CSV, DataFrames
 using Clustering: silhouettes, clustering_quality
 
+"""
+    apply_blank_timeseries(curves, blank_timeseries; method=:pointbypoint) -> Matrix{Float64}
+
+Subtract a per-timepoint blank trace from every curve in `curves` (rows = curves,
+columns = timepoints) and return a new matrix.
+
+`method` selects the correction style:
+- `:pointbypoint` — subtract `blank_timeseries[t]` from each timepoint. Non-finite
+  blank values are treated as zero (no correction at that timepoint).
+- `:shift` — subtract the mean of the (finite) blank trace, then shift each curve
+  so its minimum is ≥ 0.
+- `:clip` — subtract the mean of the (finite) blank trace, then clamp negatives
+  to 0.
+
+`blank_timeseries` must be at least as long as the number of timepoints.
+"""
 function apply_blank_timeseries(
     curves::Matrix{Float64},
     blank_timeseries::Vector{Float64};
@@ -20,8 +36,11 @@ function apply_blank_timeseries(
     out = copy(curves)
 
     if method == :pointbypoint
+        # Replace non-finite blank entries with 0 so they leave the curve untouched
+        # at that timepoint (consistent with :shift / :clip which filter to finite).
+        ts_safe = [isfinite(v) ? v : 0.0 for v in ts]
         for i in axes(out, 1)
-            out[i, :] = out[i, :] .- ts
+            out[i, :] = out[i, :] .- ts_safe
         end
     elseif method == :shift
         finite = filter(isfinite, ts)
@@ -46,6 +65,14 @@ function apply_blank_timeseries(
     return out
 end
 
+"""
+    detect_blank_indices(curves, times; flat_p_thr=0.05, flat_range_thr=0.005, od_percentile=0.10) -> Vector{Int}
+
+Return the row indices in `curves` that look like blank wells: curves that are
+both *flat* (no significant linear trend at p ≥ `flat_p_thr` **or** OD range
+< `flat_range_thr`) and have a mean OD in the lowest `od_percentile` quantile of
+all finite curve means.
+"""
 function detect_blank_indices(
     curves::Matrix{Float64},
     times::Vector{Float64};
@@ -71,6 +98,13 @@ function detect_blank_indices(
             if flat_flags[i] && isfinite(mean_ods[i]) && mean_ods[i] <= od_thr]
 end
 
+"""
+    fill_nonfinite_colmean(curves) -> Matrix{Float64}
+
+Return a copy of `curves` (rows = curves, columns = timepoints) where each
+non-finite entry is replaced by the mean of the finite values in its column.
+Columns with no finite values are filled with 0.
+"""
 function fill_nonfinite_colmean(curves::Matrix{Float64})::Matrix{Float64}
     out = copy(curves)
     for j in axes(out, 2)
@@ -83,6 +117,14 @@ function fill_nonfinite_colmean(curves::Matrix{Float64})::Matrix{Float64}
     return out
 end
 
+"""
+    common_time_grid(times_all; n_grid=100, q_low=0.05, q_high=0.95) -> Vector{Float64}
+
+Build a uniform interpolation grid covering the bulk of the time ranges in
+`times_all`. The grid starts at the `q_low` quantile of all curve start times
+and ends at the `q_high` quantile of all curve end times. Falls back to the
+full min/max range if the quantile-based interval is degenerate.
+"""
 function common_time_grid(
     times_all::Vector{Vector{Float64}};
     n_grid::Int = 100,
@@ -99,6 +141,13 @@ function common_time_grid(
     return collect(range(t0, t1; length=n))
 end
 
+"""
+    interpolate_curves_to_grid(curves_all, times_all, grid) -> Matrix{Float64}
+
+Linearly interpolate each curve in `curves_all` (paired with its own time vector
+in `times_all`) onto the common `grid`. Values outside a curve's own time range
+are clamped to the nearest endpoint. Empty curves produce a row of `NaN`.
+"""
 function interpolate_curves_to_grid(
     curves_all::Vector{Vector{Float64}},
     times_all::Vector{Vector{Float64}},
@@ -132,6 +181,18 @@ function interpolate_curves_to_grid(
     return out
 end
 
+"""
+    cluster_quality_indices(curves, ids; zscore_curves=true, max_pairwise_n=5000) -> Dict{String,Any}
+
+Compute clustering quality indices for `curves` (rows = curves) given cluster
+assignments `ids`. Curves with `ids[i] == 0` (DBSCAN noise) are excluded.
+
+Returns a dictionary with keys `silhouette_mean`, `silhouettes`, `dunn`,
+`davies_bouldin`, `calinski_harabasz`, `xie_beni`. Entries that cannot be
+computed (too few labels, too many samples for the pairwise step, or a
+Clustering.jl failure) are returned as `nothing`; the underlying exception is
+emitted on the `@debug` log level.
+"""
 function cluster_quality_indices(
     curves::Matrix{Float64},
     ids::Vector{Int};
@@ -158,10 +219,20 @@ function cluster_quality_indices(
     Xq = zscore_curves ? _zscore_rows(X) : X
     if length(labels) <= max_pairwise_n
         dmat = _pairwise_euclidean(Xq)
-        sil = try silhouettes(labels, dmat) catch; nothing end
+        sil = try
+            silhouettes(labels, dmat)
+        catch e
+            @debug "silhouettes computation failed" exception=e
+            nothing
+        end
         q["silhouettes"] = sil === nothing ? nothing : collect(Float64, sil)
         q["silhouette_mean"] = sil === nothing ? nothing : mean(sil)
-        q["dunn"] = try Float64(clustering_quality(Xq', labels; quality_index=:dunn)) catch; nothing end
+        q["dunn"] = try
+            Float64(clustering_quality(Xq', labels; quality_index=:dunn))
+        catch e
+            @debug "dunn computation failed" exception=e
+            nothing
+        end
     else
         q["silhouettes"] = nothing
         q["silhouette_mean"] = nothing
@@ -169,13 +240,41 @@ function cluster_quality_indices(
     end
 
     centers = _compute_centroids(Xq, labels, maximum(labels))'
-    q["davies_bouldin"] = try Float64(clustering_quality(Xq', centers, labels; quality_index=:davies_bouldin)) catch; nothing end
-    q["calinski_harabasz"] = try Float64(clustering_quality(Xq', centers, labels; quality_index=:calinski_harabasz)) catch; nothing end
-    q["xie_beni"] = try Float64(clustering_quality(Xq', centers, labels; quality_index=:xie_beni)) catch; nothing end
+    q["davies_bouldin"] = try
+        Float64(clustering_quality(Xq', centers, labels; quality_index=:davies_bouldin))
+    catch e
+        @debug "davies_bouldin computation failed" exception=e
+        nothing
+    end
+    q["calinski_harabasz"] = try
+        Float64(clustering_quality(Xq', centers, labels; quality_index=:calinski_harabasz))
+    catch e
+        @debug "calinski_harabasz computation failed" exception=e
+        nothing
+    end
+    q["xie_beni"] = try
+        Float64(clustering_quality(Xq', centers, labels; quality_index=:xie_beni))
+    catch e
+        @debug "xie_beni computation failed" exception=e
+        nothing
+    end
     return q
 end
 
-_to_f64_vector(col) = [try parse(Float64, string(v)) catch; NaN end for v in col]
+# Parse a column of mixed numeric/string values into a Float64 vector.
+# Non-parseable entries become `NaN`.
+function _to_f64_vector(col)
+    out = Vector{Float64}(undef, length(col))
+    for (i, v) in enumerate(col)
+        if v isa Real
+            out[i] = Float64(v)
+        else
+            parsed = tryparse(Float64, string(v))
+            out[i] = parsed === nothing ? NaN : parsed
+        end
+    end
+    return out
+end
 
 function _load_clustering_csv(path::String)
     raw_df = CSV.read(path, DataFrame)
@@ -221,8 +320,12 @@ function _load_clustering_experiments(clean_data_path::String, experiments::Vect
         time_col = names(gd_raw)[1]
         time_data = gd_raw[!, time_col]
         time_numeric = if eltype(time_data) <: AbstractString
-            try [0.0; [parse(Float64, string(t)) for t in time_data[2:end]]]
-            catch; Float64.(0:(nrow(gd_raw) - 1)) end
+            parsed = [tryparse(Float64, string(t)) for t in time_data[2:end]]
+            if any(==(nothing), parsed)
+                Float64.(0:(nrow(gd_raw) - 1))
+            else
+                [0.0; Float64.(parsed)]
+            end
         else
             Float64.(time_data)
         end
@@ -241,13 +344,39 @@ function _load_clustering_experiments(clean_data_path::String, experiments::Vect
     return times_all, curves_all, labels, blank_curves_all, blank_labels
 end
 
+# Strip a trailing NaN tail from a curve so it can be resampled by
+# IrregularGrowthData. Returns `nothing` if the curve has fewer than 2 finite
+# leading values (callers must drop such curves rather than fabricate data).
 function _strip_nan_tail_for_clustering(t::Vector{Float64}, y::Vector{Float64})
     last_valid = findlast(!isnan, y)
-    last_valid === nothing && return t[1:min(2, end)], fill(0.0, min(2, length(y)))
-    last_valid = max(last_valid, 2)
+    last_valid === nothing && return nothing
+    last_valid < 2 && return nothing
     return t[1:last_valid], y[1:last_valid]
 end
 
+"""
+    prepare_clustering_data(; kwargs...) -> GrowthData
+
+Load growth curve data and assemble a `GrowthData` ready for the clustering
+pipeline, mirroring GUIbiont's data-preparation steps.
+
+Source (one of):
+- `csv_path` — single CSV file: first column is time (or `"Column1"`/`"Unnamed:"`
+  sentinel skipped), remaining columns are wells.
+- `clean_data_path` + `experiments` — GUIbiont layout where each experiment is a
+  subdirectory containing `data_channel_1.csv` and `annotation_clean.csv`
+  (annotation markers `"b"`, `"X"`, `"x"` flag blanks).
+
+Pipeline options:
+- `interpolate` — resample all curves onto a common quantile-trimmed grid.
+- `auto_detect_blanks` — flag flat, low-OD curves as blanks via
+  [`detect_blank_indices`](@ref) when no explicit blanks were provided.
+- `subtract_blank` — subtract the per-timepoint mean of the blank curves using
+  [`apply_blank_timeseries`](@ref) with `blank_method`.
+
+Curves that become invalid (e.g. all-NaN after trimming) are dropped silently
+**from the curve list, not fabricated as zeros**.
+"""
 function prepare_clustering_data(;
     csv_path::String = "",
     clean_data_path::String = "",
@@ -281,8 +410,9 @@ function prepare_clustering_data(;
         clean_curves = Vector{Vector{Float64}}()
         clean_labels = String[]
         for i in eachindex(curves_all)
-            ct, cy = _strip_nan_tail_for_clustering(times_all[i], curves_all[i])
-            length(ct) < 2 && continue
+            stripped = _strip_nan_tail_for_clustering(times_all[i], curves_all[i])
+            stripped === nothing && continue
+            ct, cy = stripped
             push!(clean_times, ct); push!(clean_curves, cy); push!(clean_labels, labels[i])
         end
         isempty(clean_curves) && error("No valid curves after NaN removal")

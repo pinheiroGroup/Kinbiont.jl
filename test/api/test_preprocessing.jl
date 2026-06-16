@@ -360,6 +360,60 @@
         @test haskey(q, "silhouette_mean")
         @test haskey(q, "davies_bouldin")
     end
+
+    @testset "apply_blank_timeseries handles NaN blanks" begin
+        # Non-finite blank entries should not propagate into corrected curves
+        # for :pointbypoint (matches :shift/:clip filtering behaviour).
+        curves_local = [0.1 0.2 0.3; 0.4 0.5 0.6]
+        blank_with_nan = [0.05, NaN, 0.05]
+        corrected = apply_blank_timeseries(curves_local, blank_with_nan;
+                                           method=:pointbypoint)
+        @test all(isfinite, corrected)
+        @test corrected[1, 1] ≈ 0.05
+        @test corrected[1, 2] == 0.2   # NaN blank → no correction
+        @test corrected[2, 3] ≈ 0.55
+    end
+
+    @testset "prepare_clustering_data from CSV" begin
+        mktempdir() do dir
+            csv_file = joinpath(dir, "input.csv")
+            open(csv_file, "w") do io
+                println(io, "time,well_blank,well_a,well_b")
+                for t in 0.0:1.0:9.0
+                    println(io, "$t,0.05,$(0.05 + 0.05 * t),$(0.1 + 0.05 * t)")
+                end
+            end
+
+            gd = prepare_clustering_data(; csv_path=csv_file,
+                                          auto_detect_blanks=true,
+                                          subtract_blank=false,
+                                          blank_od_percentile=0.5)
+            @test gd isa GrowthData
+            @test size(gd.curves, 1) == 2   # blank well auto-detected and removed
+            @test "well_blank" ∉ gd.labels
+            @test length(gd.times) == 10
+        end
+    end
+
+    @testset "prepare_clustering_data drops fully-NaN curves" begin
+        # Regression: previously a fully-NaN curve was fabricated as [0.0, 0.0]
+        # and silently passed through. It should be dropped instead.
+        mktempdir() do dir
+            csv_file = joinpath(dir, "input.csv")
+            open(csv_file, "w") do io
+                println(io, "time,well_a,well_dead,well_b")
+                for (i, t) in enumerate(0.0:1.0:4.0)
+                    dead = "NaN"
+                    println(io, "$t,$(0.1 * i),$dead,$(0.2 * i)")
+                end
+            end
+
+            gd = prepare_clustering_data(; csv_path=csv_file,
+                                          auto_detect_blanks=false)
+            @test "well_dead" ∉ gd.labels
+            @test size(gd.curves, 1) == 2
+        end
+    end
 end
 
 # 2.3 — negative_value_correction (old-API utility)
