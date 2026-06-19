@@ -193,6 +193,26 @@
         @test processed.clusters[1] != n_k
     end
 
+    @testset "cluster_trend_test reserves sentinel for flat curves" begin
+        trend_times = collect(0.0:5.0)
+        trend_curves = [0.100 0.101 0.099 0.100 0.102 0.101;
+                        0.110 0.109 0.112 0.110 0.111 0.109;
+                        0.100 0.160 0.280 0.450 0.650 0.820;
+                        0.120 0.190 0.330 0.520 0.740 0.930;
+                        0.140 0.220 0.390 0.610 0.850 1.050;
+                        0.160 0.250 0.450 0.700 0.970 1.200]
+        trend_data = GrowthData(trend_curves, trend_times,
+                                ["F1", "F2", "G1", "G2", "G3", "G4"])
+
+        opts = FitOptions(cluster=true, n_clusters=2,
+                          cluster_trend_test=true, cluster_trend_p_thr=0.05)
+        processed = preprocess(trend_data, opts)
+
+        @test all(1 .<= processed.clusters .<= 2)
+        @test processed.clusters[1:2] == [2, 2]
+        @test all(processed.clusters[3:6] .!= 2)
+    end
+
     @testset "cluster_trend_p_thr controls post-hoc flat reassignment" begin
         weak_trend = [0.1 + 0.01 * t + 0.05 * sin(1.7 * t) for t in times]
         flat_curve = fill(0.1, length(times))
