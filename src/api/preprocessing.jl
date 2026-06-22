@@ -379,13 +379,15 @@ function _cluster(
     # algorithm. Applies to all methods except :dbscan (no k parameter).
     if opts.cluster_prescreen_constant && method != :dbscan
         labels, wcss = _cluster_with_prescreen_method(curves, zscored_all, opts)
+    elseif opts.cluster_trend_test && method != :dbscan
+        labels, wcss = _cluster_with_trend_method(curves, times, zscored_all, opts)
     else
         labels, wcss = _cluster_dispatch(zscored_all, opts)
 
-        # Post-hoc trend-test flat reassignment (ignored when pre-screening is on
-        # since the sentinel cluster already captures constant curves)
+        # DBSCAN has no k parameter, so trend-test flat reassignment has to be
+        # post-hoc and uses a fresh label above the DBSCAN cluster ids.
         if opts.cluster_trend_test && !opts.cluster_prescreen_constant
-            flat_id = method == :dbscan ? maximum(labels) + 1 : opts.n_clusters
+            flat_id = maximum(labels) + 1
             labels  = _apply_trend_labels(curves, times, labels, flat_id,
                                            opts.cluster_trend_p_thr)
         end
@@ -444,6 +446,39 @@ function _cluster_dispatch(
     end
 end
 
+# Trend-test variant: flag flat curves, run the chosen algorithm on the dynamic
+# subset only, assign flat curves to the sentinel label n_clusters.
+function _cluster_with_trend_method(
+    curves::Matrix{Float64},
+    times::Vector{Float64},
+    zscored_all::Matrix{Float64},
+    opts::FitOptions,
+)::Tuple{Vector{Int}, Float64}
+    opts.n_clusters <= 1 && return _cluster_dispatch(zscored_all, opts)
+
+    W           = size(curves, 1)
+    flat_mask   = _flat_curve_mask(curves, times; p_threshold = opts.cluster_trend_p_thr)
+    dynamic_idx = findall(.!flat_mask)
+
+    any(flat_mask) || return _cluster_dispatch(zscored_all, opts)
+
+    labels      = fill(opts.n_clusters, W)
+    wcss        = 0.0
+
+    if !isempty(dynamic_idx) && opts.n_clusters > 1
+        sub_opts = FitOptions(; (f => getfield(opts, f) for f in fieldnames(FitOptions))...,
+                                n_clusters                 = opts.n_clusters - 1,
+                                cluster_trend_test         = false,
+                                cluster_prescreen_constant = false)
+        sub_z = zscored_all[dynamic_idx, :]
+        sub_labels, wcss = _cluster_dispatch(sub_z, sub_opts)
+        for (pos, idx) in enumerate(dynamic_idx)
+            labels[idx] = sub_labels[pos]
+        end
+    end
+    return labels, wcss
+end
+
 # Pre-screening variant: flag constant curves, run the chosen algorithm on the
 # dynamic subset only, assign constant curves to the sentinel label n_clusters.
 function _cluster_with_prescreen_method(
@@ -451,9 +486,14 @@ function _cluster_with_prescreen_method(
     zscored_all::Matrix{Float64},
     opts::FitOptions,
 )::Tuple{Vector{Int}, Float64}
+    opts.n_clusters <= 1 && return _cluster_dispatch(zscored_all, opts)
+
     W           = size(curves, 1)
     const_mask  = _prescreen_constant(curves, opts)
     dynamic_idx = findall(.!const_mask)
+
+    any(const_mask) || return _cluster_dispatch(zscored_all, opts)
+
     labels      = fill(opts.n_clusters, W)
     wcss        = 0.0
 
