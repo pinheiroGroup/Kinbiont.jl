@@ -454,9 +454,14 @@ function _cluster_with_trend_method(
     zscored_all::Matrix{Float64},
     opts::FitOptions,
 )::Tuple{Vector{Int}, Float64}
+    opts.n_clusters <= 1 && return _cluster_dispatch(zscored_all, opts)
+
     W           = size(curves, 1)
     flat_mask   = _flat_curve_mask(curves, times; p_threshold = opts.cluster_trend_p_thr)
     dynamic_idx = findall(.!flat_mask)
+
+    any(flat_mask) || return _cluster_dispatch(zscored_all, opts)
+
     labels      = fill(opts.n_clusters, W)
     wcss        = 0.0
 
@@ -481,9 +486,14 @@ function _cluster_with_prescreen_method(
     zscored_all::Matrix{Float64},
     opts::FitOptions,
 )::Tuple{Vector{Int}, Float64}
+    opts.n_clusters <= 1 && return _cluster_dispatch(zscored_all, opts)
+
     W           = size(curves, 1)
     const_mask  = _prescreen_constant(curves, opts)
     dynamic_idx = findall(.!const_mask)
+
+    any(const_mask) || return _cluster_dispatch(zscored_all, opts)
+
     labels      = fill(opts.n_clusters, W)
     wcss        = 0.0
 

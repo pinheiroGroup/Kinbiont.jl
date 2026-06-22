@@ -193,6 +193,22 @@
         @test processed.clusters[1] != n_k
     end
 
+    @testset "cluster_trend_test does not reserve sentinel when no flat curves are found" begin
+        trend_times = collect(0.0:9.0)
+        trend_curves = [0.10 0.20 0.32 0.48 0.67 0.90 1.12 1.35 1.55 1.75;
+                        0.12 0.24 0.38 0.56 0.78 1.00 1.25 1.48 1.70 1.92;
+                        1.80 1.62 1.44 1.26 1.08 0.90 0.72 0.54 0.36 0.18;
+                        1.95 1.75 1.55 1.35 1.15 0.95 0.75 0.55 0.35 0.15]
+        trend_data = GrowthData(trend_curves, trend_times, ["up1", "up2", "down1", "down2"])
+
+        opts = FitOptions(cluster=true, n_clusters=2, cluster_trend_test=true)
+        processed = preprocess(trend_data, opts)
+
+        @test length(unique(processed.clusters)) == 2
+        @test all(1 .<= processed.clusters .<= 2)
+        @test all(count(==(k), processed.clusters) > 0 for k in 1:2)
+    end
+
     @testset "cluster_trend_test reserves sentinel for flat curves" begin
         trend_times = collect(0.0:5.0)
         trend_curves = [0.100 0.101 0.099 0.100 0.102 0.101;
@@ -211,6 +227,24 @@
         @test all(1 .<= processed.clusters .<= 2)
         @test processed.clusters[1:2] == [2, 2]
         @test all(processed.clusters[3:6] .!= 2)
+    end
+
+    @testset "cluster_trend_test leaves k=1 as all-data baseline" begin
+        trend_times = collect(0.0:5.0)
+        trend_curves = [0.100 0.101 0.099 0.100 0.102 0.101;
+                        0.110 0.109 0.112 0.110 0.111 0.109;
+                        0.100 0.160 0.280 0.450 0.650 0.820;
+                        0.120 0.190 0.330 0.520 0.740 0.930]
+        trend_data = GrowthData(trend_curves, trend_times, ["F1", "F2", "G1", "G2"])
+
+        baseline = preprocess(trend_data, FitOptions(cluster=true, n_clusters=1,
+                                                     cluster_trend_test=false))
+        processed = preprocess(trend_data, FitOptions(cluster=true, n_clusters=1,
+                                                      cluster_trend_test=true))
+
+        @test processed.clusters == fill(1, size(trend_curves, 1))
+        @test processed.wcss ≈ baseline.wcss
+        @test processed.wcss > 0
     end
 
     @testset "cluster_trend_p_thr controls post-hoc flat reassignment" begin
@@ -243,6 +277,42 @@
         @test size(processed.centroids) == (n_k, length(data.times))
         # flat curves should be assigned to the last label
         @test all(processed.clusters[6:8] .== n_k)
+    end
+
+    @testset "Constant pre-screening leaves k=1 as all-data baseline" begin
+        flat_curves = hcat(fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),
+                           fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),
+                           fill(0.1, 3), fill(0.1, 3), fill(0.1, 3), fill(0.1, 3))
+        mixed = vcat(data.curves, flat_curves)
+        mixed_data = GrowthData(mixed, data.times, ["c$i" for i in 1:8])
+
+        baseline = preprocess(mixed_data, FitOptions(cluster=true, n_clusters=1,
+                                                     cluster_trend_test=false))
+        processed = preprocess(mixed_data, FitOptions(cluster=true, n_clusters=1,
+                                                      cluster_prescreen_constant=true,
+                                                      cluster_trend_test=false))
+
+        @test processed.clusters == fill(1, size(mixed, 1))
+        @test processed.wcss ≈ baseline.wcss
+        @test processed.wcss > 0
+    end
+
+    @testset "Constant pre-screening does not reserve sentinel when no constant curves are found" begin
+        prescreen_times = collect(0.0:9.0)
+        prescreen_curves = [0.10 0.20 0.32 0.48 0.67 0.90 1.12 1.35 1.55 1.75;
+                            0.12 0.24 0.38 0.56 0.78 1.00 1.25 1.48 1.70 1.92;
+                            1.80 1.62 1.44 1.26 1.08 0.90 0.72 0.54 0.36 0.18;
+                            1.95 1.75 1.55 1.35 1.15 0.95 0.75 0.55 0.35 0.15]
+        prescreen_data = GrowthData(prescreen_curves, prescreen_times,
+                                    ["up1", "up2", "down1", "down2"])
+
+        opts = FitOptions(cluster=true, n_clusters=2,
+                          cluster_prescreen_constant=true, cluster_trend_test=false)
+        processed = preprocess(prescreen_data, opts)
+
+        @test length(unique(processed.clusters)) == 2
+        @test all(1 .<= processed.clusters .<= 2)
+        @test all(count(==(k), processed.clusters) > 0 for k in 1:2)
     end
 
     # -----------------------------------------------------------------------
