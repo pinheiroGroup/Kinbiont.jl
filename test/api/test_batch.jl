@@ -179,6 +179,20 @@ using DataFrames
         end
     end
 
+    @testset "kinbiont_fit_loglin single-curve API" begin
+        one_curve = data[["well_A"]]
+        r = kinbiont_fit_loglin(one_curve; experiment="single")
+
+        @test r["well"] == "well_A"
+        @test r["loglin_converged"] === true
+        @test isfinite(r["gr_loglin"])
+        @test isfinite(r["N_max_emp"])
+
+        opts = FitOptions(negative_threshold=0.01)
+        r_from_opts = kinbiont_fit_loglin(one_curve, opts; experiment="single")
+        @test r_from_opts["N_max_emp"] == r["N_max_emp"]
+    end
+
     @testset "save_gui_batch_loglin_results roundtrip" begin
         batch = kinbiont_batch_loglin(data; experiment="llrt", labels=["well_A"])
         tmpdir = mktempdir()

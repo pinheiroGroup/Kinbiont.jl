@@ -1,4 +1,30 @@
 @testset "Preprocessing" begin
+    @testset "Stationary cutoff from external mu_max" begin
+        t = collect(0.0:1.0:20.0)
+        od = vcat(
+            0.05 .* exp.(0.45 .* t[1:9]),
+            collect(range(1.9, 2.0; length=4)),
+            fill(2.0, 8),
+        )
+        data_mat = Matrix(transpose(hcat(t, od)))
+        opts = FitOptions(
+            stationary_percentile_thr=0.05,
+            stationary_pt_smooth_derivative=2,
+            stationary_win_size=5,
+            stationary_thr_od=0.0,
+        )
+
+        cutoff = find_stationary_cutoff_from_mu(data_mat, 0.45, opts)
+        @test 1 <= cutoff <= length(t)
+        @test_throws ArgumentError find_stationary_cutoff_from_mu(data_mat, 0.0, opts)
+        @test_throws ArgumentError find_stationary_cutoff_from_mu(data_mat, NaN, opts)
+
+        # Supplying the legacy reference value must preserve its cutoff.
+        sgr = specific_gr_evaluation(data_mat, opts.stationary_pt_smooth_derivative)
+        @test find_stationary_cutoff_from_mu(data_mat, maximum(sgr), opts) ==
+              Kinbiont._find_stationary_cutoff(data_mat, opts)
+    end
+
     # Small synthetic data: 5 curves × 10 timepoints
     Random.seed!(42)
     times  = collect(0.0:1.0:9.0)

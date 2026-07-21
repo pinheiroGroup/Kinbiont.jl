@@ -930,14 +930,19 @@ The algorithm:
    `opts.stationary_win_size` time points (the OD may still rise after the SGR
    threshold is crossed).
 """
-function _find_stationary_cutoff(data_mat::Matrix{Float64}, opts::FitOptions)::Int
+function _find_stationary_cutoff(
+    data_mat::Matrix{Float64},
+    opts::FitOptions;
+    reference_mu_max::Union{Nothing, Float64}=nothing,
+)::Int
     n = size(data_mat, 2)
     index_od = findall(data_mat[2, :] .> opts.stationary_thr_od)
     isempty(index_od) && return n
 
     data_t = data_mat[:, index_od]
     sgr = specific_gr_evaluation(data_t, opts.stationary_pt_smooth_derivative)
-    thr = maximum(sgr) * opts.stationary_percentile_thr
+    mu_max = isnothing(reference_mu_max) ? maximum(sgr) : reference_mu_max
+    thr = mu_max * opts.stationary_percentile_thr
     max_idx = argmax(sgr)
     win = opts.stationary_win_size
 
@@ -956,6 +961,28 @@ function _find_stationary_cutoff(data_mat::Matrix{Float64}, opts::FitOptions)::I
     end
 
     return n
+end
+
+"""
+    find_stationary_cutoff_from_mu(data_mat, mu_max, opts=FitOptions()) -> Int
+
+Find the stationary-phase cutoff using an externally estimated maximum specific
+growth rate `mu_max` as the reference for the SGR threshold. The scan and OD
+peak snapping are otherwise identical to [`_find_stationary_cutoff`](@ref).
+
+This is intended for workflows that first estimate `mu_max` with
+[`fitting_one_well_Log_Lin`](@ref), then derive an empirical carrying capacity
+from `data_mat[2, cutoff]`. It does not alter the legacy log-linear result
+vector, whose 16th element remains the q95-based `N_max_emp`.
+"""
+function find_stationary_cutoff_from_mu(
+    data_mat::Matrix{Float64},
+    mu_max::Real,
+    opts::FitOptions=FitOptions(),
+)::Int
+    mu = Float64(mu_max)
+    isfinite(mu) && mu > 0 || throw(ArgumentError("mu_max must be finite and positive"))
+    return _find_stationary_cutoff(data_mat, opts; reference_mu_max=mu)
 end
 
 # ---------------------------------------------------------------------------
@@ -999,3 +1026,4 @@ end
 export preprocess
 export apply_blank_timeseries
 export detect_non_growing_indices
+export find_stationary_cutoff_from_mu
