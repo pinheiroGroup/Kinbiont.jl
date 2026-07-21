@@ -172,7 +172,7 @@ function _shift_rows_to_floor(curves::Matrix{Float64}, floor::Float64)::Matrix{F
     for i in axes(shifted, 1)
         finite_values = filter(isfinite, shifted[i, :])
         isempty(finite_values) && continue
-        delta = max(-minimum(finite_values), 0.0) + floor
+        delta = max(floor - minimum(finite_values), 0.0)
         shifted[i, :] .+= delta
     end
     return shifted

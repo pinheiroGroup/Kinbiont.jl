@@ -177,6 +177,8 @@ Correct every sample curve using only blank curves from the same group. Blank
 curves are linearly interpolated onto each sample's time grid before their
 pointwise mean is computed, so measurements are paired by time rather than by
 column index. Samples whose group has no blank curve are returned unchanged.
+Corrected curves are kept at or above `floor` (default `1e-4`), matching the
+blank-subtraction policy used by fitting.
 
 Returns `(corrected_curves, corrected_mask)`, where `corrected_mask[i]` records
 whether sample `i` had a same-group blank available.
@@ -189,6 +191,7 @@ function apply_grouped_blank_subtraction(
     blank_times::Vector{Vector{Float64}},
     blank_groups::Vector{String};
     method::Symbol = :pointbypoint,
+    floor::Union{Nothing,Float64} = 1e-4,
 )::Tuple{Vector{Vector{Float64}},BitVector}
     length(curves) == length(times) == length(groups) || throw(ArgumentError(
         "curves, times, and groups must have the same length"
@@ -219,7 +222,7 @@ function apply_grouped_blank_subtraction(
             blank_trace[j] = isempty(finite_values) ? 0.0 : mean(finite_values)
         end
         corrected_row = apply_blank_timeseries(
-            reshape(curves[i], 1, :), blank_trace; method=method
+            reshape(curves[i], 1, :), blank_trace; method=method, floor=floor
         )
         corrected[i] = vec(corrected_row)
         corrected_mask[i] = true
@@ -255,6 +258,7 @@ function derive_blank_from_non_growing(
     prescreen_q_high::Float64=0.95,
     trend_p_threshold::Float64=0.05,
     blank_method::Symbol=:pointbypoint,
+    blank_floor::Union{Nothing,Float64}=1e-4,
 )
     size(curves, 1) == length(labels) == length(groups) || throw(ArgumentError(
         "curves, labels, and groups must contain the same number of samples"
@@ -280,6 +284,7 @@ function derive_blank_from_non_growing(
         remaining, [copy(times) for _ in keep], groups[keep],
         all_blank_curves, all_blank_times, all_blank_groups;
         method=blank_method,
+        floor=blank_floor,
     )
     corrected_matrix = isempty(corrected) ? zeros(Float64, 0, size(curves, 2)) :
                        reduce(vcat, permutedims.(corrected))
@@ -514,6 +519,7 @@ function prepare_clustering_data(;
     auto_detect_blanks::Bool = true,
     subtract_blank::Bool = false,
     blank_method::Symbol = :pointbypoint,
+    blank_floor::Union{Nothing,Float64} = 1e-4,
     blank_range_thr::Float64 = 0.005,
     blank_od_percentile::Float64 = 0.10,
     derive_non_growing_blanks::Bool = false,
@@ -546,6 +552,7 @@ function prepare_clustering_data(;
             curves_all, times_all, groups,
             blank_curves_all, blank_times_all, blank_groups;
             method=blank_method,
+            floor=blank_floor,
         )
     end
 
@@ -611,6 +618,7 @@ function prepare_clustering_data(;
             prescreen_q_high=blank_prescreen_q_high,
             trend_p_threshold=blank_trend_p_threshold,
             blank_method,
+            blank_floor,
         )
         isempty(derived.derived_indices) && error("No non-growing curves were detected for blank derivation")
         isempty(derived.labels) && error("No sample curves remain after blank derivation")
@@ -644,6 +652,7 @@ function prepare_clustering_data(;
             curve_vectors, [copy(times) for _ in curve_vectors], groups,
             blank_curves_all, blank_times_all, blank_groups;
             method=blank_method,
+            floor=blank_floor,
         )
         curves = reduce(vcat, permutedims.(corrected))
     end

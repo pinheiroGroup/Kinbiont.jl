@@ -52,7 +52,7 @@
             blank_timeseries=blank_ts,
         )
         processed = preprocess(data, opts)
-        @test processed.curves ≈ data.curves .- reshape(blank_ts, 1, :) .+ 1e-4
+        @test processed.curves ≈ data.curves .- reshape(blank_ts, 1, :)
     end
 
     @testset "Point-by-point blank subtraction from labels" begin
@@ -72,7 +72,7 @@
         corrected = labelled.curves .- reshape((blank_1 .+ blank_2) ./ 2, 1, :)
         expected = similar(corrected)
         for i in axes(corrected, 1)
-            delta = max(-minimum(corrected[i, :]), 0.0) + 1e-4
+            delta = max(1e-4 - minimum(corrected[i, :]), 0.0)
             expected[i, :] = corrected[i, :] .+ delta
         end
         @test processed.curves ≈ expected
@@ -586,6 +586,23 @@
         @test isapprox(corrected_grouped[2], [9.0, 10.0, 11.0])
         @test corrected_grouped[3] == grouped_curves[3]
         @test corrected_mask == Bool[true, true, false]
+
+        # Grouped clustering subtraction uses the same positive floor as fit
+        # preprocessing. Point-by-point/shift preserve the curve shape by a
+        # constant translation when subtraction would create negatives.
+        floored_grouped, _ = apply_grouped_blank_subtraction(
+            [[0.05, 0.20, 0.40]], [collect(0.0:1.0:2.0)], ["exp_a"],
+            [[0.10, 0.10, 0.10]], [collect(0.0:1.0:2.0)], ["exp_a"],
+        )
+        @test minimum(floored_grouped[1]) ≈ 1e-4
+        @test floored_grouped[1] ≈ [0.0001, 0.1501, 0.3501]
+
+        clipped_grouped, _ = apply_grouped_blank_subtraction(
+            [[0.05, 0.20, 0.40]], [collect(0.0:1.0:2.0)], ["exp_a"],
+            [[0.10, 0.10, 0.10]], [collect(0.0:1.0:2.0)], ["exp_a"];
+            method=:clip,
+        )
+        @test clipped_grouped[1] ≈ [0.0001, 0.10, 0.30]
 
         corrected = apply_blank_timeseries(copy(data.curves), fill(0.1, length(times));
                                            method=:pointbypoint)
