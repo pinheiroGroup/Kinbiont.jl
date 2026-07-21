@@ -17,7 +17,7 @@ jobs:
           version: ${{ matrix.julia-version }}
       - uses: julia-actions/cache@v2
       - name: Install dependencies
-        run: julia --project=. -e 'using Pkg; Pkg.add(name="DynamicQuantities", version="1.11.0"); Pkg.instantiate()'
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
       - name: Load package
         run: julia --project=. -e 'using Kinbiont; println("Kinbiont loaded OK")'
       - name: Run tests

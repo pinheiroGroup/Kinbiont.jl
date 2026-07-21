@@ -41,7 +41,6 @@ using Kinbiont
 
 - **Julia**: (>1.10)
 - **AbstractTrees**: 0.4.5
-- **BetaML**: 0.12.0
 - **CSV**: 0.10.14
 - **ChangePointDetection**: 1.2.0
 - **Combinatorics**: 1.0.2
