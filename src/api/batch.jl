@@ -364,6 +364,35 @@ function _gui_batch_run_attempt(
     )
 end
 
+"""
+    loglin_stationary_nmax(raw; pt_smoothing_derivative=7) -> Float64
+
+Return the empirical maximum OD at the stationary cutoff associated with the
+log-linear `mu_max` stored in `raw`. The legacy q95 value in `raw[2][16]` is
+not used.
+"""
+function loglin_stationary_nmax(
+    raw;
+    pt_smoothing_derivative::Int=7,
+)::Float64
+    params = raw[2]
+    length(params) >= 7 && params[7] !== missing || return NaN
+    smoothed = raw[4]
+    ismissing(smoothed) && return NaN
+
+    opts = FitOptions(
+        stationary_percentile_thr=0.05,
+        stationary_pt_smooth_derivative=pt_smoothing_derivative,
+        stationary_win_size=5,
+        stationary_thr_od=0.02,
+    )
+    cutoff = find_stationary_cutoff_from_mu(
+        Matrix{Float64}(smoothed), Float64(params[7]), opts,
+    )
+    nmax = Float64(smoothed[2, cutoff])
+    return isfinite(nmax) ? nmax : NaN
+end
+
 function _gui_batch_loglin_fields(t, y, label, experiment; pt_avg=7, pt_deriv=7, pt_min_win=7, threshold=0.9)
     out = Dict{String, Any}(
         "gr_loglin" => NaN,
@@ -397,10 +426,12 @@ function _gui_batch_loglin_fields(t, y, label, experiment; pt_avg=7, pt_deriv=7,
             out["t_exp_end_loglin"] = Float64(params[4])
             out["doubling_time_loglin"] = Float64(params[9])
             out["R_squared_loglin"] = Float64(params[14])^2
-            if length(params) >= 16
+            if length(params) >= 15
                 out["lag_loglin"] = params[15] === missing ? NaN : Float64(params[15])
-                out["N_max_emp"] = params[16] === missing ? NaN : Float64(params[16])
             end
+            out["N_max_emp"] = loglin_stationary_nmax(
+                raw; pt_smoothing_derivative=pt_deriv,
+            )
             out["loglin_converged"] = true
         end
     catch
@@ -726,6 +757,7 @@ function _gui_batch_fit_loglin_one(
     threshold_of_exp::Float64=0.9,
     start_exp_win_thr::Float64=0.05,
     thr_lowess::Float64=0.05,
+    unblanked_floor::Float64=1e-4,
 )
     prepared = _gui_prepare_curve(
         od_raw;
@@ -733,7 +765,7 @@ function _gui_batch_fit_loglin_one(
         subtract_blank,
         blank_method,
         blank_timeseries,
-        unblanked_floor=1e-4,
+        unblanked_floor,
     )
     od_for_fit = prepared.od_for_fit
     od_subtracted_display = prepared.od_subtracted_display
@@ -770,8 +802,11 @@ function _gui_batch_fit_loglin_one(
         result["t_exp_end_loglin"] = Float64(params[4])
         result["doubling_time_loglin"] = Float64(params[9])
         result["R_squared_loglin"] = Float64(params[14])^2
-        result["lag_loglin"] = length(params) >= 16 && params[15] !== missing ? Float64(params[15]) : NaN
-        result["N_max_emp"] = length(params) >= 16 && params[16] !== missing ? Float64(params[16]) : NaN
+        result["lag_loglin"] = length(params) >= 15 && params[15] !== missing ? Float64(params[15]) : NaN
+        # Deliberately ignore legacy params[16] (curve q95).
+        result["N_max_emp"] = loglin_stationary_nmax(
+            raw; pt_smoothing_derivative,
+        )
         result["loglin_converged"] = true
     else
         for name in ["gr_loglin", "gr_loglin_se", "gr_max_sliding",
@@ -784,6 +819,83 @@ function _gui_batch_fit_loglin_one(
     end
     od_subtracted_display !== nothing && (result["experimental_od_subtracted"] = od_subtracted_display)
     return result
+end
+
+"""
+    kinbiont_fit_loglin(data::GrowthData; kwargs...) -> Dict
+
+Fit one growth curve with the log-linear method and return the same named
+fields used by GUIbiont, including the stationary-cutoff `N_max_emp`.
+"""
+function kinbiont_fit_loglin(
+    data::GrowthData;
+    experiment::String="experiment",
+    label::Union{Nothing, String}=nothing,
+    blank_subtraction::Bool=false,
+    blank_method::String="pointbypoint",
+    blank_value::Real=0.0,
+    blank_timeseries::Vector{Float64}=Float64[],
+    unblanked_floor::Float64=1e-4,
+    type_of_smoothing::String="rolling_avg",
+    pt_avg::Int=7,
+    pt_smoothing_derivative::Int=7,
+    pt_min_size_of_win::Int=7,
+    type_of_win::String="maximum",
+    threshold_of_exp::Float64=0.9,
+    start_exp_win_thr::Float64=0.05,
+    thr_lowess::Float64=0.05,
+)
+    selected_label = isnothing(label) ? only(data.labels) : label
+    idx = findfirst(==(selected_label), data.labels)
+    idx === nothing && throw(ArgumentError("Well '$selected_label' not found"))
+
+    t = data.times
+    y = vec(data.curves[idx, :])
+    valid = findall(i -> isfinite(t[i]) && isfinite(y[i]), eachindex(t))
+    min_pts = max(10, pt_smoothing_derivative + pt_min_size_of_win + 2)
+    length(valid) >= min_pts || throw(ArgumentError("Insufficient data points"))
+
+    blank_ts = isempty(blank_timeseries) ? Float64[] : Float64.(blank_timeseries[valid])
+    return _gui_batch_fit_loglin_one(
+        Float64.(t[valid]), Float64.(y[valid]), selected_label, experiment;
+        blank_value,
+        subtract_blank=blank_subtraction,
+        blank_method,
+        blank_timeseries=blank_ts,
+        unblanked_floor,
+        type_of_smoothing,
+        pt_avg,
+        pt_smoothing_derivative,
+        pt_min_size_of_win,
+        type_of_win,
+        threshold_of_exp,
+        start_exp_win_thr,
+        thr_lowess,
+    )
+end
+
+"""
+    kinbiont_fit_loglin(data, preprocess_opts::FitOptions; kwargs...) -> Dict
+
+Convenience overload that reuses the blank-correction settings from an
+existing `FitOptions` object.
+"""
+function kinbiont_fit_loglin(
+    data::GrowthData,
+    preprocess_opts::FitOptions;
+    kwargs...,
+)
+    blank_ts = isnothing(preprocess_opts.blank_timeseries) ?
+        Float64[] : preprocess_opts.blank_timeseries
+    return kinbiont_fit_loglin(
+        data;
+        blank_subtraction=preprocess_opts.blank_subtraction,
+        blank_method=String(preprocess_opts.blank_method),
+        blank_value=preprocess_opts.blank_value,
+        blank_timeseries=blank_ts,
+        unblanked_floor=preprocess_opts.negative_threshold,
+        kwargs...,
+    )
 end
 
 """
@@ -903,5 +1015,7 @@ end
 
 export kinbiont_batch_fit
 export save_gui_batch_results
+export loglin_stationary_nmax
+export kinbiont_fit_loglin
 export kinbiont_batch_loglin
 export save_gui_batch_loglin_results
