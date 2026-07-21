@@ -595,7 +595,7 @@ function kinbiont_batch_fit(
     stochastic_runs::Int=1,
     maxiters::Int=100000,
     abstol::Float64=1e-15,
-    skip_flat_threshold::Float64=0.05,
+    skip_flat_threshold::Float64=0.02,
     smooth::Bool=false,
     smooth_window::Int=3,
     compute_loglin::Bool=false,
@@ -919,7 +919,7 @@ function kinbiont_batch_loglin(
     threshold_of_exp::Float64=0.9,
     start_exp_win_thr::Float64=0.05,
     thr_lowess::Float64=0.05,
-    skip_flat_threshold::Float64=0.05,
+    skip_flat_threshold::Float64=0.02,
 )
     selected = isempty(labels) ? data.labels : labels
     results = Dict{String, Any}[]
