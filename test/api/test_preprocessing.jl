@@ -94,6 +94,59 @@
         @test processed.wcss >= 0.0
     end
 
+    @testset "WCSS equals total SSE to assigned cluster centroid (all methods)" begin
+        # z-score each row the way _cluster does (no smoothing → curves unchanged);
+        # StatsBase.zscore uses the corrected (n-1) std, matching (v-mean)/std here.
+        _zrow(v) = (v .- mean(v)) ./ std(v)
+        Z = reduce(vcat, [reshape(_zrow(data.curves[i, :]), 1, :) for i in 1:size(data.curves, 1)])
+        _sse_to_centroid(lbls) = begin
+            total = 0.0
+            for lbl in unique(lbls)
+                idx = findall(==(lbl), lbls)
+                sub = Z[idx, :]
+                c   = vec(mean(sub, dims=1))
+                for i in axes(sub, 1)
+                    total += sum((sub[i, :] .- c) .^ 2)
+                end
+            end
+            total
+        end
+        # For k-medoids in particular this guards against the old bug where WCSS was
+        # a sum of *unsquared* distances to medoids (result.totalcost).
+        for method in (:kmeans, :kmedoids, :hclust)
+            opts = FitOptions(cluster=true, n_clusters=2, cluster_method=method,
+                              cluster_trend_test=false)
+            p = preprocess(data, opts)
+            @test isapprox(p.wcss, _sse_to_centroid(p.clusters); rtol=1e-8)
+        end
+    end
+
+    @testset "WCSS counts set-aside flat curves (trend/sentinel path)" begin
+        _zrow(v) = (v .- mean(v)) ./ std(v)
+        tt = collect(0.0:5.0)
+        cc = [0.10  0.20  0.35  0.55  0.80  1.10;    # growing
+              0.12  0.25  0.40  0.60  0.85  1.15;    # growing
+              0.100 0.101 0.099 0.100 0.102 0.101;   # flat
+              0.050 0.051 0.049 0.050 0.052 0.051]   # flat
+        dd = GrowthData(cc, tt, ["g1", "g2", "f1", "f2"])
+        opts = FitOptions(cluster=true, n_clusters=2, cluster_trend_test=true,
+                          cluster_trend_p_thr=0.05)
+        p = preprocess(dd, opts)
+        Z = reduce(vcat, [reshape(_zrow(cc[i, :]), 1, :) for i in 1:size(cc, 1)])
+        expected = 0.0
+        for lbl in unique(p.clusters)
+            idx = findall(==(lbl), p.clusters)
+            sub = Z[idx, :]
+            c   = vec(mean(sub, dims=1))
+            for i in axes(sub, 1)
+                expected += sum((sub[i, :] .- c) .^ 2)
+            end
+        end
+        # WCSS is over ALL 4 curves (both dynamic and the reserved flat sentinel),
+        # not just the dynamic subset that the algorithm clustered.
+        @test isapprox(p.wcss, expected; rtol=1e-8)
+    end
+
     @testset "Replicate averaging collapses duplicate labels" begin
         # 4 curves: A appears twice, B appears twice
         rep_curves = vcat(curves[1:2, :], curves[3:4, :])

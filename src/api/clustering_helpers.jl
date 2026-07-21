@@ -391,7 +391,7 @@ function prepare_clustering_data(;
     blank_range_thr::Float64 = 0.005,
     blank_od_percentile::Float64 = 0.10,
 )::GrowthData
-    times_all, curves_all, labels, blank_curves_all, _ = if !isempty(csv_path)
+    times_all, curves_all, labels, blank_curves_all, blank_labels = if !isempty(csv_path)
         _load_clustering_csv(csv_path)
     else
         isempty(clean_data_path) && error("clean_data_path is required when csv_path is empty")
@@ -419,6 +419,7 @@ function prepare_clustering_data(;
         igd = IrregularGrowthData(clean_curves, clean_times, clean_labels; step=0.01)
         times, curves, labels = igd.times, igd.curves, clean_labels
         blank_curves_all = Vector{Vector{Float64}}()
+        blank_labels     = String[]
     else
         min_len = minimum(length.(curves_all))
         times = times_all[1][1:min_len]
@@ -433,25 +434,66 @@ function prepare_clustering_data(;
             flat_range_thr=blank_range_thr, od_percentile=blank_od_percentile)
         if !isempty(blank_idxs)
             blank_curves_all = [Vector(curves[i, :]) for i in blank_idxs]
+            blank_labels     = labels[blank_idxs]
             keep = setdiff(1:size(curves, 1), blank_idxs)
             curves, labels = curves[keep, :], labels[keep]
         end
     end
 
+    # Blank correction is performed separately within each loaded experiment,
+    # matching the GUIbiont clustering route: each experiment's wells are
+    # corrected using only that experiment's own blanks.
     if subtract_blank && !isempty(blank_curves_all)
-        ncols = size(curves, 2)
-        blen = min(ncols, minimum(length.(blank_curves_all)))
-        blank_mat = Matrix{Float64}(undef, length(blank_curves_all), blen)
-        for (i, bc) in enumerate(blank_curves_all)
-            blank_mat[i, :] = bc[1:blen]
-        end
-        blank_ts = [mean(filter(isfinite, blank_mat[:, t])) for t in 1:blen]
-        blank_ts_full = length(blank_ts) >= ncols ? blank_ts[1:ncols] :
-                        vcat(blank_ts, fill(blank_ts[end], ncols - length(blank_ts)))
-        curves = apply_blank_timeseries(curves, blank_ts_full; method=blank_method)
+        curves = _subtract_blanks_per_experiment(curves, labels,
+            blank_curves_all, blank_labels, blank_method, !isempty(csv_path))
     end
 
     return GrowthData(fill_nonfinite_colmean(curves), times, labels)
+end
+
+# Experiment key for a series label (mirrors GUIbiont's clustering route). In CSV
+# mode all series share one group; in experiment mode the key is the substring
+# before the first '/'.
+function _clustering_experiment_key(label::AbstractString, csv_mode::Bool)::String
+    csv_mode && return "__all__"
+    idx = findfirst('/', label)
+    return idx === nothing ? String(label) : String(label[1:prevind(label, idx)])
+end
+
+# Per-experiment pooled blank subtraction: each experiment's wells are corrected
+# with a per-timepoint mean blank timeseries built only from that experiment's
+# blanks. Series whose experiment has no blanks are returned unchanged. Returns a
+# new curves matrix (never mutates the input).
+function _subtract_blanks_per_experiment(
+    curves::Matrix{Float64},
+    labels::Vector{String},
+    blank_curves::Vector{Vector{Float64}},
+    blank_labels::Vector{String},
+    blank_method::Symbol,
+    csv_mode::Bool,
+)::Matrix{Float64}
+    out   = copy(curves)
+    ncols = size(curves, 2)
+    isempty(blank_curves) && return out
+    blank_exps = [_clustering_experiment_key(l, csv_mode) for l in blank_labels]
+    curve_exps = [_clustering_experiment_key(l, csv_mode) for l in labels]
+    for exp in unique(blank_exps)
+        bidx = findall(==(exp), blank_exps)
+        isempty(bidx) && continue
+        rows = findall(==(exp), curve_exps)
+        isempty(rows) && continue
+        blen = min(ncols, minimum(length.(blank_curves[bidx])))
+        blen < 1 && continue
+        bmat = Matrix{Float64}(undef, length(bidx), blen)
+        for (i, bi) in enumerate(bidx)
+            bmat[i, :] = blank_curves[bi][1:blen]
+        end
+        blank_ts      = [mean(filter(isfinite, bmat[:, t])) for t in 1:blen]
+        blank_ts_full = length(blank_ts) >= ncols ? blank_ts[1:ncols] :
+                        vcat(blank_ts, fill(blank_ts[end], ncols - length(blank_ts)))
+        out[rows, :] = apply_blank_timeseries(out[rows, :], blank_ts_full; method=blank_method)
+    end
+    return out
 end
 
 export detect_blank_indices
