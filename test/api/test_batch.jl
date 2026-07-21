@@ -36,6 +36,9 @@ using DataFrames
             @test isfinite(r["aic"])
             @test isfinite(r["loss_rmse"])
             @test r["optimizer_used"] == "LN_BOBYQA"
+            @test r["preprocessing"]["smooth"] == false
+            @test r["preprocessing"]["cut_stationary_phase"] == true
+            @test r["stationary_phase_start"] ≈ last(r["fit_time"])
         end
 
         # flat_well is below skip threshold
@@ -44,6 +47,46 @@ using DataFrames
 
         # missing_well raises an error string
         @test any(occursin("missing_well", e) for e in batch.errors)
+    end
+
+    @testset "kinbiont_batch_fit preprocessing is optimizer-independent" begin
+        batch = kinbiont_batch_fit(
+            data;
+            experiment="optimizer_preprocessing",
+            labels=["well_A"],
+            model_name="NL_logistic",
+            optimizer="LN_COBYLA",
+            maxiters=2000,
+        )
+
+        @test length(batch.results) == 1
+        r = only(batch.results)
+        @test r["optimizer_used"] == "LN_COBYLA"
+        @test r["preprocessing"]["smooth"] == false
+        @test r["preprocessing"]["cut_stationary_phase"] == true
+        @test r["stationary_phase_start"] ≈ last(r["fit_time"])
+    end
+
+    @testset "kinbiont_batch_fit centered smoothing" begin
+        batch = kinbiont_batch_fit(
+            data;
+            experiment="smoothed",
+            labels=["well_A"],
+            model_name="NL_logistic",
+            optimizer="LN_BOBYQA",
+            maxiters=2000,
+            smooth=true,
+            smooth_window=3,
+        )
+
+        @test length(batch.results) == 1
+        r = only(batch.results)
+        @test r["preprocessing"]["smooth"] == true
+        @test r["preprocessing"]["smooth_method"] == "boxcar"
+        @test r["preprocessing"]["smooth_window"] == 3
+        @test r["smoothed_time"] == times
+        @test r["smoothed_od"][2] ≈ mean(c1[1:3])
+        @test_throws ArgumentError kinbiont_batch_fit(data; smooth=true, smooth_window=4)
     end
 
     @testset "kinbiont_batch_fit multi-model" begin

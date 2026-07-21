@@ -45,6 +45,9 @@ end
     @test opts.loss       == "RE"
     @test opts.smooth     == false
     @test opts.cluster    == false
+    @test opts.blank_method == :global
+    @test opts.blank_timeseries === nothing
+    @test opts.blank_floor == 1e-4
     @test opts.opt_params == (;)
 end
 
