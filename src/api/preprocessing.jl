@@ -402,11 +402,42 @@ function _cluster(
                                                      centroids_norm, exp_label)
     end
 
+    # Report WCSS with a single, method-independent definition: the total SSE
+    # between every standardized curve and the mean (centroid) of its assigned
+    # cluster, computed over ALL curves — including any flat/constant sentinel
+    # cluster and DBSCAN noise. This overrides the per-method cost so the value
+    # matches the documented "sum of squared Euclidean distances between every
+    # standardized trajectory and its assigned cluster centroid": k-medoids
+    # otherwise returns a sum of *unsquared* distances to medoids, and the
+    # prescreen/trend paths otherwise report the dynamic-subset cost only,
+    # excluding the set-aside curves.
+    wcss = _wcss(zscored_all, labels)
+
     pos_labels  = filter(>(0), labels)
     n_effective = (isempty(labels) || isempty(pos_labels)) ? opts.n_clusters : maximum(pos_labels)
     n_effective = max(n_effective, 1)
     centroids   = _compute_centroids(zscored_all, labels, n_effective)
     return labels, centroids, wcss
+end
+
+# Within-cluster sum of squares (total SSE): for every standardized curve, the
+# squared Euclidean distance to the mean (centroid) of its assigned cluster,
+# summed over all curves. Each distinct label defines a group — including a
+# reserved flat/constant sentinel cluster and DBSCAN noise (label 0) — and each
+# curve is measured against its own group's mean. Method-independent so the
+# elbow/sweep plot uses one consistent definition.
+function _wcss(zscored::Matrix{Float64}, labels::Vector{Int})::Float64
+    (isempty(labels) || size(zscored, 1) == 0) && return 0.0
+    total = 0.0
+    for lbl in unique(labels)
+        idxs = findall(==(lbl), labels)
+        sub  = zscored[idxs, :]
+        c    = vec(mean(sub, dims=1))
+        for i in axes(sub, 1)
+            total += sum((sub[i, :] .- c) .^ 2)
+        end
+    end
+    return total
 end
 
 # Dispatch to the appropriate clustering algorithm on z-scored curves.
