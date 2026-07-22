@@ -150,8 +150,7 @@ Every field has a sensible default so users only override what they need.
 - `n_clusters::Int = 3`: total number of cluster labels (1..`n_clusters`). Labels are
   always within this range regardless of other options.
 - `cluster_trend_test::Bool = true`: reserve label `n_clusters` for flat/non-growing
-  curves (identified by an OLS slope significance test using a two-sided Normal
-  approximation, p ≥ `cluster_trend_p_thr`). K-means then runs with
+  curves (identified by an OLS slope t-test, p ≥ `cluster_trend_p_thr`). K-means then runs with
   `n_clusters - 1` dynamic groups, so all labels remain in `1..n_clusters`.
   Requires `n_clusters ≥ 2`. When the quantile pre-screen is also enabled,
   either criterion can assign a curve to the shared non-growing cluster.
