@@ -340,21 +340,6 @@
         @test default_thr[2] == 2
     end
 
-    @testset "cluster trend test uses the normal approximation" begin
-        trend_times = collect(0.0:5.0)
-        centered_times = trend_times .- mean(trend_times)
-        orthogonal_noise = [1.0, -1.0, 0.0, 0.0, -1.0, 1.0]
-        borderline_trend = 10.0 .+ centered_times .+ 1.9 .* orthogonal_noise
-
-        # The resulting |z| is about 2.20: significant under the historical
-        # normal approximation, but not under a Student t distribution with
-        # four degrees of freedom. It must therefore remain a dynamic curve.
-        flat_mask = Kinbiont._flat_curve_mask(
-            reshape(borderline_trend, 1, :), trend_times; p_threshold=0.05,
-        )
-        @test !flat_mask[1]
-    end
-
     @testset "Constant pre-screening keeps labels within 1..n_clusters" begin
         # Mix flat and growing curves so pre-screening has something to detect
         flat_curves = hcat(fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),

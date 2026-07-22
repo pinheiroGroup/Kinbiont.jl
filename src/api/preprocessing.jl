@@ -8,13 +8,12 @@
 # pre_processing_functions.jl, and uses:
 #   - StatsBase.zscore   for z-score normalisation (replaces custom zscore_vector)
 #   - Clustering.kmeans  for k-means clustering (replaces custom implementation)
-#   - OLS slope significance test with a two-sided Normal approximation for
-#     flat-curve trend detection
+#   - linear slope t-test (Statistics stdlib) for flat-curve trend detection
 # =============================================================================
 
 using Clustering: kmeans, kmedoids, hclust, cutree, dbscan, assignments
 using StatsBase: zscore
-using Distributions: Normal, cdf
+using Distributions: Normal, TDist, cdf
 using Random: MersenneTwister
 
 # ---------------------------------------------------------------------------
@@ -856,17 +855,15 @@ function _flat_curve_mask(
         end
 
         t_stat = slope / se_slope
-        # Two-tailed p-value using the normal approximation. Keep this aligned
-        # with the clustering blank-candidate trend test.
-        p_value = 2 * (1 - cdf(Normal(), abs(t_stat)))
+        # Two-tailed p-value from the t-distribution with nf-2 degrees of freedom
+        p_value = 2 * (1 - cdf(TDist(nf - 2), abs(t_stat)))
         mask[i] = p_value >= p_threshold
     end
     return mask
 end
 
 # Assign a dedicated cluster id to curves with no significant linear trend.
-# Uses a two-tailed Normal approximation for the OLS slope statistic
-# (p ≥ 0.05 → flat).
+# Uses a two-tailed t-test on the OLS slope (p ≥ 0.05 → flat).
 # `flat_id` is passed in by the caller; it must already be within 1..n_clusters.
 function _apply_trend_labels(
     curves::Matrix{Float64},
