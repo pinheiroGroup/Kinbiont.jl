@@ -11,7 +11,7 @@
 #   - linear slope t-test (Statistics stdlib) for flat-curve trend detection
 # =============================================================================
 
-using Clustering: kmeans, kmedoids, hclust, cutree, dbscan, assignments
+using Clustering: kmeans, kmedoids, hclust, cutree, dbscan, assignments, initseeds_by_costs
 using StatsBase: zscore
 using Distributions: Normal, TDist, cdf
 using Random: MersenneTwister
@@ -415,10 +415,9 @@ end
 # ---------------------------------------------------------------------------
 
 # Run k-means `opts.kmeans_n_init` times and return the result with the lowest WCSS.
-# Uses a deterministic MersenneTwister. When `opts.kmeans_seed == 0`, a default
-# fixed seed (42) is used; otherwise the user-provided seed is used.
+# Uses a deterministic MersenneTwister seeded from FitOptions (default 42).
 function _kmeans_best(X::AbstractMatrix{Float64}, k::Int, opts::FitOptions)
-    rng    = opts.kmeans_seed == 0 ? MersenneTwister(42) : MersenneTwister(opts.kmeans_seed)
+    rng    = MersenneTwister(opts.kmeans_seed)
     n_init = max(1, opts.kmeans_n_init)
     best   = kmeans(X, k; maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol, rng=rng)
     for _ in 2:n_init
@@ -612,8 +611,10 @@ function _cluster_dispatch(
         return assignments(result), result.totalcost
 
     elseif method == :kmedoids
-        D      = _pairwise_euclidean(zscored)
-        result = kmedoids(D, k; maxiter = opts.kmeans_max_iters, tol = opts.kmeans_tol)
+        D       = _pairwise_euclidean(zscored)
+        rng     = MersenneTwister(opts.kmedoids_seed)
+        medoids = initseeds_by_costs(:kmpp, D, k; rng=rng)
+        result  = kmedoids(D, k; init=medoids, maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol)
         ids    = assignments(result)
         return ids, result.totalcost
 

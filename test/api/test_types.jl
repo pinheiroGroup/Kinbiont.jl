@@ -49,6 +49,9 @@ end
     @test opts.blank_timeseries === nothing
     @test opts.blank_floor == 1e-4
     @test opts.opt_params == (;)
+    @test opts.kmeans_seed == 42
+    @test opts.kmedoids_seed == 42
+    @test opts.optimizer_seed == 42
 end
 
 @testset "FitOptions keyword override" begin

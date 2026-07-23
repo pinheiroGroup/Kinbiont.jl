@@ -33,7 +33,7 @@
         # Same seed, run new API
         Random.seed!(7)
         spec_nl = ModelSpec([MODEL_REGISTRY["NL_logistic"]], [p0])
-        res_nl  = kinbiont_fit(data_g, spec_nl, FitOptions(loss="RE"))
+        res_nl  = kinbiont_fit(data_g, spec_nl, FitOptions(loss="RE", optimizer_seed=7))
 
         @test Float64.(res_nl[1].best_params) == Float64.(old_params)
         @test res_nl[1].loss                  == old_loss
@@ -63,7 +63,7 @@
         # Same seed, run new API
         Random.seed!(7)
         spec_ode = ModelSpec([MODEL_REGISTRY["logistic"]], [p0_ode])
-        res_ode  = kinbiont_fit(data_g, spec_ode, FitOptions(loss="RE"))
+        res_ode  = kinbiont_fit(data_g, spec_ode, FitOptions(loss="RE", optimizer_seed=7))
 
         @test Float64.(res_ode[1].best_params) == Float64.(old_params_ode)
         @test res_ode[1].loss                  == old_loss_ode
@@ -131,7 +131,11 @@
             res_nl = kinbiont_fit(
                 data_g,
                 spec_nl,
-                FitOptions(loss=loss_name, opt_params=(maxiters=200,)),
+                FitOptions(
+                    loss=loss_name,
+                    optimizer_seed=7,
+                    opt_params=(maxiters=200,),
+                ),
             )
 
             @test res_nl[1].loss == old_loss

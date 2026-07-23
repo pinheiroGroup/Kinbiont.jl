@@ -306,6 +306,7 @@ function _batch_run_attempt(
     abstol::Float64,
     smooth::Bool,
     smooth_window::Int,
+    optimizer_seed::Int,
 )
     time_fit = time_numeric
     od_fit = od_for_fit
@@ -330,6 +331,7 @@ function _batch_run_attempt(
         stationary_win_size=5,
         loss="RE",
         optimizer=_batch_optimizer(optimizer),
+        optimizer_seed=optimizer_seed,
         opt_params=opt_params,
     )
 
@@ -454,6 +456,7 @@ function _batch_fit_one(
     deterministic_optimizers::Vector{String}=String[],
     stochastic_optimizers::Vector{String}=String[],
     stochastic_runs::Int=1,
+    optimizer_seed::Int=42,
     maxiters::Int=100000,
     abstol::Float64=1e-15,
     smooth::Bool=false,
@@ -493,16 +496,19 @@ function _batch_fit_one(
 
     outcomes = NamedTuple[]
     for (opt, run_idx) in attempts
+        attempt_seed = opt in stochastic_optimizers || (isempty(stochastic_optimizers) &&
+            opt in ("GN_ISRES", "BBO_adaptive_de_rand_1_bin_radiuslimited")) ?
+            optimizer_seed + run_idx - 1 : optimizer_seed
         try
             res = _batch_run_attempt(
                 opt, time_numeric, od_for_fit, shift,
                 subtract_blank, blank_value, label, model_name, model_names,
-                maxiters, abstol, smooth, smooth_window,
+                maxiters, abstol, smooth, smooth_window, attempt_seed,
             )
-            push!(outcomes, (optimizer=opt, run=run_idx, status="ok", loss=res.loss_rmse,
+            push!(outcomes, (optimizer=opt, run=run_idx, seed=attempt_seed, status="ok", loss=res.loss_rmse,
                 loss_rmse=res.loss_rmse, loss_re=res.loss_re, aic=res.aic, result=res))
         catch e
-            push!(outcomes, (optimizer=opt, run=run_idx, status="error: $(string(e))",
+            push!(outcomes, (optimizer=opt, run=run_idx, seed=attempt_seed, status="error: $(string(e))",
                 loss=Inf, loss_rmse=Inf, loss_re=NaN, aic=NaN, result=nothing))
         end
     end
@@ -542,7 +548,8 @@ function _batch_fit_one(
         "loss_re" => win.loss_re,
         "optimizer_used" => best.optimizer,
         "optimizer_run" => best.run,
-        "all_attempts" => [Dict("optimizer" => o.optimizer, "run" => o.run,
+        "optimizer_seed" => best.seed,
+        "all_attempts" => [Dict("optimizer" => o.optimizer, "run" => o.run, "seed" => o.seed,
             "status" => o.status, "loss" => o.loss, "loss_rmse" => o.loss_rmse,
             "loss_re" => o.loss_re, "aic" => o.aic) for o in outcomes],
     )
@@ -593,6 +600,7 @@ function kinbiont_batch_fit(
     deterministic_optimizers::Vector{String}=String[],
     stochastic_optimizers::Vector{String}=String[],
     stochastic_runs::Int=1,
+    optimizer_seed::Int=42,
     maxiters::Int=100000,
     abstol::Float64=1e-15,
     skip_flat_threshold::Float64=0.02,
@@ -655,6 +663,7 @@ function kinbiont_batch_fit(
                 deterministic_optimizers=deterministic_optimizers,
                 stochastic_optimizers=stochastic_optimizers,
                 stochastic_runs=stochastic_runs,
+                optimizer_seed=optimizer_seed,
                 maxiters=maxiters,
                 abstol=abstol,
                 smooth=smooth,

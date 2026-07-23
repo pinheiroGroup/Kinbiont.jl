@@ -470,6 +470,19 @@
         @test processed.wcss ≈ sse
     end
 
+    @testset "cluster_method=:kmedoids is reproducible" begin
+        opts = FitOptions(cluster=true, n_clusters=3, cluster_method=:kmedoids,
+                          cluster_trend_test=false, kmedoids_seed=42)
+        Random.seed!(7)
+        first_run = preprocess(data, opts)
+        Random.seed!(999)
+        second_run = preprocess(data, opts)
+
+        @test first_run.clusters == second_run.clusters
+        @test first_run.centroids == second_run.centroids
+        @test first_run.wcss == second_run.wcss
+    end
+
     @testset "cluster_method=:hclust produces valid labels" begin
         opts = FitOptions(cluster=true, n_clusters=3, cluster_method=:hclust,
                           cluster_hclust_linkage=:ward, cluster_trend_test=false)
