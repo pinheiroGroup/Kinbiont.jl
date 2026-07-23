@@ -1,4 +1,30 @@
 @testset "Preprocessing" begin
+    @testset "Stationary cutoff from external mu_max" begin
+        t = collect(0.0:1.0:20.0)
+        od = vcat(
+            0.05 .* exp.(0.45 .* t[1:9]),
+            collect(range(1.9, 2.0; length=4)),
+            fill(2.0, 8),
+        )
+        data_mat = Matrix(transpose(hcat(t, od)))
+        opts = FitOptions(
+            stationary_percentile_thr=0.05,
+            stationary_pt_smooth_derivative=2,
+            stationary_win_size=5,
+            stationary_thr_od=0.0,
+        )
+
+        cutoff = find_stationary_cutoff_from_mu(data_mat, 0.45, opts)
+        @test 1 <= cutoff <= length(t)
+        @test_throws ArgumentError find_stationary_cutoff_from_mu(data_mat, 0.0, opts)
+        @test_throws ArgumentError find_stationary_cutoff_from_mu(data_mat, NaN, opts)
+
+        # Supplying the legacy reference value must preserve its cutoff.
+        sgr = specific_gr_evaluation(data_mat, opts.stationary_pt_smooth_derivative)
+        @test find_stationary_cutoff_from_mu(data_mat, maximum(sgr), opts) ==
+              Kinbiont._find_stationary_cutoff(data_mat, opts)
+    end
+
     # Small synthetic data: 5 curves × 10 timepoints
     Random.seed!(42)
     times  = collect(0.0:1.0:9.0)
@@ -16,6 +42,58 @@
         opts = FitOptions(blank_subtraction=true, blank_value=0.05)
         processed = preprocess(data, opts)
         @test processed.curves ≈ data.curves .- 0.05
+    end
+
+    @testset "Point-by-point blank subtraction" begin
+        blank_ts = collect(range(0.01, 0.10; length=length(times)))
+        opts = FitOptions(
+            blank_subtraction=true,
+            blank_method=:pointbypoint,
+            blank_timeseries=blank_ts,
+        )
+        processed = preprocess(data, opts)
+        @test processed.curves ≈ data.curves .- reshape(blank_ts, 1, :)
+    end
+
+    @testset "Point-by-point blank subtraction from labels" begin
+        blank_1 = collect(range(0.01, 0.10; length=length(times)))
+        blank_2 = collect(range(0.03, 0.12; length=length(times)))
+        labelled = GrowthData(
+            vcat(curves, blank_1', blank_2'),
+            times,
+            ["c1", "c2", "c3", "c4", "c5", "b", "b"],
+        )
+        opts = FitOptions(
+            blank_subtraction=true,
+            blank_method=:pointbypoint,
+            blank_from_labels=true,
+        )
+        processed = preprocess(labelled, opts)
+        corrected = labelled.curves .- reshape((blank_1 .+ blank_2) ./ 2, 1, :)
+        expected = similar(corrected)
+        for i in axes(corrected, 1)
+            delta = max(1e-4 - minimum(corrected[i, :]), 0.0)
+            expected[i, :] = corrected[i, :] .+ delta
+        end
+        @test processed.curves ≈ expected
+    end
+
+    @testset "Point-by-point blank validates trace length" begin
+        opts = FitOptions(
+            blank_subtraction=true,
+            blank_method=:pointbypoint,
+            blank_timeseries=[0.01, 0.02],
+        )
+        @test_throws ArgumentError preprocess(data, opts)
+    end
+
+    @testset "Global blank with uniform shift" begin
+        shifted_data = GrowthData([-0.2 0.0 0.3; -0.1 0.4 0.8], [0.0, 1.0, 2.0], ["a", "b"])
+        opts = FitOptions(blank_subtraction=true, blank_method=:shift, blank_value=0.0)
+        processed = preprocess(shifted_data, opts)
+        @test minimum(processed.curves[1, :]) ≈ 1e-4
+        @test minimum(processed.curves[2, :]) ≈ 1e-4
+        @test diff(processed.curves[1, :]) ≈ diff(shifted_data.curves[1, :])
     end
 
     @testset "Auto blank detection from labels" begin
@@ -379,6 +457,14 @@
         @test processed.clusters isa Vector{Int}
         @test length(processed.clusters) == size(data.curves, 1)
         @test all(1 .<= processed.clusters .<= 3)
+        # WCSS is the unified SSE-to-centroid (PR #98), applied to every method,
+        # not the k-medoids medoid-distance totalcost. Compare against the
+        # centroid SSE of the returned partition.
+        zscored = Kinbiont._zscore_rows(data.curves)
+        sse = sum(sum((zscored[processed.clusters .== c, :] .-
+                       mean(zscored[processed.clusters .== c, :], dims=1)) .^ 2)
+                  for c in unique(processed.clusters))
+        @test processed.wcss ≈ sse
     end
 
     @testset "cluster_method=:hclust produces valid labels" begin
@@ -443,13 +529,18 @@
     end
 
     @testset "Smoothing (boxcar) preserves shape and time grid" begin
-        opts = FitOptions(smooth=true, smooth_method=:boxcar, boxcar_window=3)
-        processed = preprocess(data, opts)
+        centered_data = GrowthData(reshape([1.0, 4.0, 7.0, 10.0], 1, :), collect(0.0:3.0), ["c"])
+        opts = FitOptions(smooth=true, smooth_method=:boxcar)
+        processed = preprocess(centered_data, opts)
         # boxcar is length-preserving: shape and times identical to input
-        @test size(processed.curves) == size(data.curves)
-        @test processed.times == data.times
-        # smoothing must change at least some values
-        @test processed.curves != data.curves
+        @test size(processed.curves) == size(centered_data.curves)
+        @test processed.times == centered_data.times
+        # Default width 3: current point plus one neighbour on each side.
+        @test vec(processed.curves) ≈ [2.5, 4.0, 7.0, 8.5]
+        @test_throws ArgumentError preprocess(centered_data,
+            FitOptions(smooth=true, smooth_method=:boxcar, boxcar_window=2))
+        @test_throws ArgumentError preprocess(centered_data,
+            FitOptions(smooth=true, smooth_method=:boxcar, boxcar_window=4))
     end
 
     @testset "Smoothing (gaussian) keeps original times when no grid given" begin
@@ -483,6 +574,36 @@
         @test interp[1, 1] == raw_curves[1][1]
         @test interp[2, end] == raw_curves[2][end]
 
+        grouped_curves = [[1.0, 2.0, 3.0], [10.0, 11.0, 12.0], [5.0, 6.0, 7.0]]
+        grouped_times = [collect(0.0:1.0:2.0) for _ in grouped_curves]
+        corrected_grouped, corrected_mask = apply_grouped_blank_subtraction(
+            grouped_curves, grouped_times, ["exp_a", "exp_b", "exp_c"],
+            [[0.1, 0.3], [1.0, 1.0, 1.0]],
+            [[0.0, 2.0], [0.0, 1.0, 2.0]],
+            ["exp_a", "exp_b"],
+        )
+        @test isapprox(corrected_grouped[1], [0.9, 1.8, 2.7])
+        @test isapprox(corrected_grouped[2], [9.0, 10.0, 11.0])
+        @test corrected_grouped[3] == grouped_curves[3]
+        @test corrected_mask == Bool[true, true, false]
+
+        # Grouped clustering subtraction uses the same positive floor as fit
+        # preprocessing. Point-by-point/shift preserve the curve shape by a
+        # constant translation when subtraction would create negatives.
+        floored_grouped, _ = apply_grouped_blank_subtraction(
+            [[0.05, 0.20, 0.40]], [collect(0.0:1.0:2.0)], ["exp_a"],
+            [[0.10, 0.10, 0.10]], [collect(0.0:1.0:2.0)], ["exp_a"],
+        )
+        @test minimum(floored_grouped[1]) ≈ 1e-4
+        @test floored_grouped[1] ≈ [0.0001, 0.1501, 0.3501]
+
+        clipped_grouped, _ = apply_grouped_blank_subtraction(
+            [[0.05, 0.20, 0.40]], [collect(0.0:1.0:2.0)], ["exp_a"],
+            [[0.10, 0.10, 0.10]], [collect(0.0:1.0:2.0)], ["exp_a"];
+            method=:clip,
+        )
+        @test clipped_grouped[1] ≈ [0.0001, 0.10, 0.30]
+
         corrected = apply_blank_timeseries(copy(data.curves), fill(0.1, length(times));
                                            method=:pointbypoint)
         @test corrected ≈ data.curves .- 0.1
@@ -498,6 +619,50 @@
                                       flat_range_thr=0.005,
                                       od_percentile=0.5)
         @test blanks == [1]
+
+        # With four points this slope is significant under the documented
+        # Normal approximation, but not under a Student t distribution (df=2).
+        normal_times = [-1.5, -0.5, 0.5, 1.5]
+        a = 0.0719
+        normal_row = 0.2 .+ 0.1 .* normal_times .+ [a, -a, -a, a]
+        normal_candidate = vcat(normal_row', [1.0 1.2 1.4 1.6])
+        @test isempty(detect_blank_indices(
+            normal_candidate, normal_times;
+            flat_range_thr=0.005,
+            od_percentile=0.5,
+        ))
+
+        detector_times = collect(0.0:5.0)
+        detector_curves = [
+            0.10 0.10 0.10 0.10 0.10 0.10;
+            0.10 0.30 0.50 0.50 0.30 0.10;
+            0.10 0.20 0.35 0.55 0.80 1.10;
+        ]
+        @test detect_non_growing_indices(
+            detector_curves, detector_times;
+            prescreen_constant=true,
+            trend_test=true,
+        ) == [1, 2]
+
+        grouped_raw = [
+            0.10 0.10 0.10 0.10 0.10 0.10;
+            0.20 0.40 0.60 0.80 1.00 1.20;
+            1.00 1.00 1.00 1.00 1.00 1.00;
+            1.50 1.90 2.30 2.70 3.10 3.50;
+        ]
+        derived = derive_blank_from_non_growing(
+            grouped_raw, detector_times,
+            ["exp_a/blank", "exp_a/sample", "exp_b/blank", "exp_b/sample"],
+            ["exp_a", "exp_a", "exp_b", "exp_b"],
+            grouped_raw, detector_times;
+            prescreen_constant=true,
+            blank_method=:pointbypoint,
+        )
+        @test derived.labels == ["exp_a/sample", "exp_b/sample"]
+        @test derived.blank_labels == ["exp_a/blank", "exp_b/blank"]
+        @test derived.corrected_mask == Bool[true, true]
+        @test isapprox(derived.curves[1, :], [0.1, 0.3, 0.5, 0.7, 0.9, 1.1])
+        @test isapprox(derived.curves[2, :], [0.5, 0.9, 1.3, 1.7, 2.1, 2.5])
 
         q = cluster_quality_indices(data.curves, [1, 1, 2, 2, 2])
         @test haskey(q, "silhouette_mean")
@@ -555,6 +720,40 @@
                                           auto_detect_blanks=false)
             @test "well_dead" ∉ gd.labels
             @test size(gd.curves, 1) == 2
+        end
+    end
+
+    @testset "prepare_clustering_data keeps annotated blanks within experiments" begin
+        mktempdir() do dir
+            for (name, sample, blank) in (
+                ("exp_a", [0.2, 0.4, 0.6], [0.1, 0.2, 0.3]),
+                ("exp_b", [1.2, 1.4, 1.6], [1.0, 1.0, 1.0]),
+            )
+                exp_dir = joinpath(dir, name)
+                mkpath(exp_dir)
+                open(joinpath(exp_dir, "data_channel_1.csv"), "w") do io
+                    println(io, "time,sample,blank,excluded")
+                    for i in eachindex(sample)
+                        println(io, "$(i - 1),$(sample[i]),$(blank[i]),99.0")
+                    end
+                end
+                open(joinpath(exp_dir, "annotation_clean.csv"), "w") do io
+                    println(io, "sample,s")
+                    println(io, "blank,b")
+                    println(io, "excluded,X")
+                end
+            end
+
+            gd = prepare_clustering_data(
+                clean_data_path=dir,
+                experiments=["exp_a", "exp_b"],
+                auto_detect_blanks=false,
+                subtract_blank=true,
+                blank_method=:pointbypoint,
+            )
+            @test gd.labels == ["exp_a/sample", "exp_b/sample"]
+            @test isapprox(gd.curves[1, :], [0.1, 0.2, 0.3])
+            @test isapprox(gd.curves[2, :], [0.2, 0.4, 0.6])
         end
     end
 end
