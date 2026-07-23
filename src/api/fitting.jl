@@ -202,8 +202,12 @@ function _fit_single(
     loss_val     = Float64(res_param[end])
     params_raw   = res_param[4:end-3]     # strip metadata columns
     n_params     = length(p0)
-    aic          = AICc_evaluation2(n_params, 2.0, fit_times, loss_val;
-                                    correction = opts.aic_correction)
+    # Gaussian-likelihood AICc from the residuals of the fitted curve against the
+    # (already preprocessed) observed OD, rather than the raw fitting loss, so the
+    # reported/compared value is the conventional AICc shown in the manuscript.
+    obs_od       = length(fitted_curve) == size(data_mat, 2) ? data_mat[2, :] : fitted_curve
+    aic          = AICc_evaluation(n_params, 2.0, obs_od, fitted_curve;
+                                   correction = opts.aic_correction)
 
     return (
         model_name   = model.name,
@@ -254,8 +258,10 @@ function _fit_single(
     loss_val     = Float64(res_param[end])
     params_raw   = res_param[3]           # Vector of fitted parameters
     n_params     = length(p0)
-    aic          = AICc_evaluation2(n_params, 2.0, fit_times, loss_val;
-                                    correction = opts.aic_correction)
+    # Gaussian-likelihood AICc from the fitted-curve residuals (see NL branch).
+    obs_od       = length(fitted_curve) == size(data_mat, 2) ? data_mat[2, :] : fitted_curve
+    aic          = AICc_evaluation(n_params, 2.0, obs_od, fitted_curve;
+                                   correction = opts.aic_correction)
 
     return (
         model_name   = model.name,
