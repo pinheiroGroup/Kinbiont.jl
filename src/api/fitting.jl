@@ -14,6 +14,18 @@
 # models in the ModelSpec.
 # =============================================================================
 
+using Random: seed!
+import OptimizationNLopt
+
+# OptimizationBBO and Kinbiont's multistart path use Julia's task-local RNG.
+# NLopt's stochastic algorithms keep a separate RNG in the native library.
+function _seed_optimizer_rng!(opts::FitOptions)
+    seed!(opts.optimizer_seed)
+    if opts.optimizer == OptimizationNLopt.NLopt.GN_ISRES
+        OptimizationNLopt.NLopt.srand(opts.optimizer_seed)
+    end
+end
+
 # Internal result type for a single (curve, model) pair — not exported
 const _CandidateResult = @NamedTuple begin
     model_name::String
@@ -176,6 +188,7 @@ function _fit_single(
 )::_CandidateResult
 
     opt_params = _build_opt_params(lb, ub, opts.opt_params)
+    _seed_optimizer_rng!(opts)
 
     raw = fit_NL_model(
         data_mat,
@@ -228,6 +241,7 @@ function _fit_single(
 )::_CandidateResult
 
     opt_params = _build_opt_params(lb, ub, opts.opt_params)
+    _seed_optimizer_rng!(opts)
 
     raw = fitting_one_well_custom_ODE(
         data_mat,

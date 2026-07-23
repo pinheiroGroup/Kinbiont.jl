@@ -193,9 +193,8 @@ Every field has a sensible default so users only override what they need.
   initialisations; the run with the lowest WCSS is kept.
 - `kmeans_max_iters::Int = 300`: maximum number of Lloyd iterations per k-means run.
 - `kmeans_tol::Float64 = 1e-6`: convergence tolerance (relative change in WCSS).
-- `kmeans_seed::Int = 0`: random seed for k-means initialisation. `0` selects
-  the deterministic default seed `42`; any other value seeds a
-  `MersenneTwister` with the supplied value.
+- `kmeans_seed::Int = 42`: random seed for k-means initialisation.
+- `kmedoids_seed::Int = 42`: random seed for k-medoids initialisation.
 
 After clustering, `processed.wcss` holds the method-independent centroid WCSS
 described above. For methods that use `n_clusters`, run `preprocess` over
@@ -205,6 +204,7 @@ diagnostic.
 # Fitting fields
 - `loss::String = "RE"`: loss function — `"RE"`, `"L2"`, `"L2_derivative"`, etc.
 - `optimizer`: BBO optimizer instance (default: `BBO_adaptive_de_rand_1_bin_radiuslimited()`).
+- `optimizer_seed::Int = 42`: random seed for stochastic optimizers and multistart.
 - `integrator`: ODE integrator (default: `Tsit5()`).
 - `multistart::Bool = false`: enable multistart optimization.
 - `n_restart::Int = 50`: number of restarts when `multistart=true`.
@@ -263,11 +263,13 @@ diagnostic.
     kmeans_n_init::Int               = 10
     kmeans_max_iters::Int            = 300
     kmeans_tol::Float64              = 1e-6
-    kmeans_seed::Int                 = 0
+    kmeans_seed::Int                 = 42
+    kmedoids_seed::Int               = 42
 
     # --- fitting ---
     loss::String                = "RE"
     optimizer                   = BBO_adaptive_de_rand_1_bin_radiuslimited()
+    optimizer_seed::Int         = 42
     integrator                  = Tsit5()
     multistart::Bool            = false
     n_restart::Int              = 50

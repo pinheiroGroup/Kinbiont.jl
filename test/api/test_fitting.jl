@@ -36,6 +36,23 @@
         @test res[1].best_aic == aics[best_idx]
     end
 
+    @testset "BBO fit is reproducible from optimizer_seed" begin
+        spec = ModelSpec([MODEL_REGISTRY["NL_logistic"]], [[1.5, 0.3, 0.0]])
+        opts = FitOptions(
+            loss="RE",
+            optimizer_seed=42,
+            opt_params=(maxiters=100,),
+        )
+
+        Random.seed!(7)
+        first_run = kinbiont_fit(data, spec, opts)
+        Random.seed!(999)
+        second_run = kinbiont_fit(data, spec, opts)
+
+        @test first_run[1].best_params == second_run[1].best_params
+        @test first_run[1].fitted_curve == second_run[1].fitted_curve
+    end
+
     @testset "ODE model" begin
         spec = ModelSpec([MODEL_REGISTRY["logistic"]], [[0.3, 1.2]])
         res  = kinbiont_fit(data, spec)
