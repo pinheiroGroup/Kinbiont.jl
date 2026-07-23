@@ -621,7 +621,7 @@
             [[0.0, 2.0], [0.0, 1.0, 2.0]],
             ["exp_a", "exp_b"],
         )
-        @test isapprox(corrected_grouped[1], [0.9, 1.8, 2.7])
+        @test isapprox(corrected_grouped[1], [0.9, 1.7, 2.8])
         @test isapprox(corrected_grouped[2], [9.0, 10.0, 11.0])
         @test corrected_grouped[3] == grouped_curves[3]
         @test corrected_mask == Bool[true, true, false]
@@ -642,6 +642,34 @@
             method=:clip,
         )
         @test clipped_grouped[1] ≈ [0.0001, 0.10, 0.30]
+
+        # Clustering mirrors Fit/Batch: point-by-point pairs blank readings by
+        # measurement index, while shift uses the global mean of every finite
+        # blank reading.
+        indexed_curves, indexed_mask = apply_grouped_blank_subtraction(
+            [[1.0, 2.0, 3.0]], [[0.0, 5.0, 10.0]], ["exp_a"],
+            [[0.1, NaN, 0.3], [0.2, 0.4, NaN]],
+            [[100.0, 200.0, 300.0], [-5.0, -4.0, -3.0]], ["exp_a", "exp_a"],
+        )
+        @test indexed_mask == Bool[true]
+        @test isapprox(indexed_curves[1], [0.85, 1.6, 2.7])
+
+        globally_shifted, _ = apply_grouped_blank_subtraction(
+            [[1.0, 2.0, 3.0]], [[0.0, 5.0, 10.0]], ["exp_a"],
+            [[0.1, NaN, 0.3], [0.2, 0.4, NaN]],
+            [[100.0, 200.0, 300.0], [-5.0, -4.0, -3.0]], ["exp_a", "exp_a"];
+            method=:shift,
+        )
+        @test isapprox(globally_shifted[1], [0.75, 1.75, 2.75])
+
+        # Merely having a blank well is insufficient: the same positive-global
+        # gate used by Fit/Batch must pass.
+        uncorrected, nonpositive_mask = apply_grouped_blank_subtraction(
+            [[1.0, 2.0, 3.0]], [collect(0.0:1.0:2.0)], ["exp_a"],
+            [[-0.2, -0.1, 0.0]], [collect(0.0:1.0:2.0)], ["exp_a"],
+        )
+        @test uncorrected[1] == [1.0, 2.0, 3.0]
+        @test nonpositive_mask == Bool[false]
 
         corrected = apply_blank_timeseries(copy(data.curves), fill(0.1, length(times));
                                            method=:pointbypoint)
@@ -771,15 +799,16 @@
                 exp_dir = joinpath(dir, name)
                 mkpath(exp_dir)
                 open(joinpath(exp_dir, "data_channel_1.csv"), "w") do io
-                    println(io, "time,sample,blank,excluded")
+                    println(io, "time,sample,blank,excluded,unlabelled")
                     for i in eachindex(sample)
-                        println(io, "$(i - 1),$(sample[i]),$(blank[i]),99.0")
+                        println(io, "$(i - 1),$(sample[i]),$(blank[i]),99.0,88.0")
                     end
                 end
                 open(joinpath(exp_dir, "annotation_clean.csv"), "w") do io
                     println(io, "sample,s")
                     println(io, "blank,b")
                     println(io, "excluded,X")
+                    println(io, "unlabelled,")
                 end
             end
 

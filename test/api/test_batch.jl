@@ -12,6 +12,26 @@ using DataFrames
     curves = vcat(reshape(c1, 1, :), reshape(c2, 1, :), reshape(flat, 1, :))
     data   = GrowthData(curves, times, ["well_A", "well_B", "flat_well"])
 
+    @testset "blank-subtracted display is the fitted array" begin
+        shifted = Kinbiont._batch_prepare_curve(
+            [0.05, 0.20, 0.40];
+            blank_value=0.10,
+            subtract_blank=true,
+            blank_method="shift",
+        )
+        @test isapprox(shifted.od_for_fit, [0.0001, 0.1501, 0.3501])
+        @test shifted.od_subtracted_display == shifted.od_for_fit
+
+        clipped = Kinbiont._batch_prepare_curve(
+            [0.05, 0.20, 0.40];
+            blank_value=0.10,
+            subtract_blank=true,
+            blank_method="clip",
+        )
+        @test isapprox(clipped.od_for_fit, [0.0001, 0.10, 0.30])
+        @test clipped.od_subtracted_display == clipped.od_for_fit
+    end
+
     @testset "kinbiont_batch_fit single model" begin
         batch = kinbiont_batch_fit(
             data;
