@@ -286,8 +286,8 @@ function _batch_prepare_curve(
 
     return (
         od_for_fit=od_for_fit,
-        od_subtracted_display=max.(corrected, 0.0),
-        anchor=max(corrected[1], 0.0),
+        od_subtracted_display=copy(od_for_fit),
+        anchor=od_for_fit[1],
         shift=method == :clip ? 0.0 : od_for_fit[1] - corrected[1],
     )
 end
@@ -339,12 +339,12 @@ function _batch_run_attempt(
     r = fit_results[1]
     preprocessed_time = Float64.(fit_results.data.times)
     preprocessed_od = Float64.(vec(fit_results.data.curves[1, :]))
-    fit_od_curve = subtract_blank && blank_value > 0.0 ? r.fitted_curve .- shift : r.fitted_curve
+    fit_od_curve = r.fitted_curve
     fit_time_out = collect(r.times)
     fit_od_out = collect(fit_od_curve)
 
     stationary_phase_start = Float64(last(r.times))
-    preprocessed_od_out = subtract_blank && blank_value > 0.0 ? preprocessed_od .- shift : preprocessed_od
+    preprocessed_od_out = preprocessed_od
     return (
         best_params=r.best_params,
         param_names=r.best_model.param_names,

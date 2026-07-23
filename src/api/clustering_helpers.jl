@@ -173,12 +173,12 @@ end
                                     blank_curves, blank_times, blank_groups;
                                     method=:pointbypoint)
 
-Correct every sample curve using only blank curves from the same group. Blank
-curves are linearly interpolated onto each sample's time grid before their
-pointwise mean is computed, so measurements are paired by time rather than by
-column index. Samples whose group has no blank curve are returned unchanged.
-Corrected curves are kept at or above `floor` (default `1e-4`), matching the
-blank-subtraction policy used by fitting.
+Correct every sample curve using only blank curves from the same group, with
+the same semantics used by single and batch fitting. Subtraction is enabled
+only when the mean of all finite blank readings is positive. `:shift` and
+`:clip` use that scalar mean; `:pointbypoint` averages blanks by measurement
+index. Samples whose group has no usable positive blank are returned unchanged.
+Corrected curves are kept at or above `floor` (default `1e-4`).
 
 Returns `(corrected_curves, corrected_mask)`, where `corrected_mask[i]` records
 whether sample `i` had a same-group blank available.
@@ -213,16 +213,16 @@ function apply_grouped_blank_subtraction(
         blank_idx = get(blanks_by_group, groups[i], Int[])
         isempty(blank_idx) && continue
 
-        aligned_blanks = interpolate_curves_to_grid(
-            blank_curves[blank_idx], blank_times[blank_idx], times[i]
+        blank_value, blank_trace = _blank_summary(
+            blank_curves[blank_idx],
+            length(curves[i]),
         )
-        blank_trace = Vector{Float64}(undef, length(times[i]))
-        for j in eachindex(blank_trace)
-            finite_values = filter(isfinite, aligned_blanks[:, j])
-            blank_trace[j] = isempty(finite_values) ? 0.0 : mean(finite_values)
-        end
+        blank_value > 0.0 || continue
+        subtraction_trace = method == :pointbypoint ?
+            blank_trace :
+            fill(blank_value, length(curves[i]))
         corrected_row = apply_blank_timeseries(
-            reshape(curves[i], 1, :), blank_trace; method=method, floor=floor
+            reshape(curves[i], 1, :), subtraction_trace; method=method, floor=floor
         )
         corrected[i] = vec(corrected_row)
         corrected_mask[i] = true
@@ -419,7 +419,9 @@ function _annotation_well_sets(path::String)
     ann = CSV.read(path, DataFrame; header=false, silencewarnings=true, stringtype=String)
     for i in 1:nrow(ann)
         ncol(ann) >= 2 || continue
-        marker = string(ann[i, 2])
+        marker_raw = ann[i, 2]
+        marker = ismissing(marker_raw) ? "X" : string(marker_raw)
+        marker in ("", "missing") && (marker = "X")
         well = string(ann[i, 1])
         marker in ("b", "X", "x") && push!(excluded, well)
         marker == "b" && push!(blanks, well)
@@ -467,18 +469,18 @@ function _blank_summary(
 )::Tuple{Float64,Vector{Float64}}
     isempty(blank_curves) && return 0.0, zeros(Float64, n_timepoints)
 
-    values = filter(!isnan, reduce(vcat, blank_curves))
+    values = filter(isfinite, reduce(vcat, blank_curves))
     blank_value = isempty(values) ? 0.0 : mean(values)
     blank_timeseries = Vector{Float64}(undef, n_timepoints)
     for j in 1:n_timepoints
         at_time = Float64[]
         for curve in blank_curves
             j <= length(curve) || continue
-            isnan(curve[j]) || push!(at_time, curve[j])
+            isfinite(curve[j]) && push!(at_time, curve[j])
         end
         blank_timeseries[j] = isempty(at_time) ? NaN : mean(at_time)
     end
-    valid = filter(!isnan, blank_timeseries)
+    valid = filter(isfinite, blank_timeseries)
     fallback = isempty(valid) ? 0.0 : mean(valid)
     replace!(blank_timeseries, NaN => fallback)
     return blank_value, blank_timeseries
