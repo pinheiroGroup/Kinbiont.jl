@@ -680,34 +680,40 @@ end
 
 
 function AICc_evaluation(n_param, beta_smoothing_ms, data, data_th; correction=true)
+    # Conventional small-sample-corrected AIC under a Gaussian error model, as
+    # displayed in the GUIbiont/Kinbiont manuscript:
+    #
+    #   AICc = 2p - 2 log(L_hat) + 2 p (p + 1) / (n - p - 1)
+    #
+    # with the MLE-variance Gaussian deviance
+    #
+    #   -2 log(L_hat) = n log(RSS / n) + n (log(2*pi) + 1),   RSS = sum (fit - obs)^2.
+    #
+    # `beta_smoothing_ms` scales both the parameter penalty and the correction
+    # term (beta = 2 reproduces the displayed 2p and 2 p (p+1)/(n-p-1) exactly).
+    # `data` is the observed series and `data_th` the fitted (theoretical) one.
+    data   = vec(collect(data))
+    data_th = vec(collect(data_th))
     n_data = length(data)
 
-
-    if n_data == length(data_th)
-        if n_data > n_param - 2
-            # RSS = sum(abs.(data_th .- data ) .^ 2)
-            RSS = sum(abs.(data_th .- data) .^ 2)
-
-            println(n_param)
-            println(RSS)
-            println(log(RSS / n_data))
-            if correction == true
-                correction_value = beta_smoothing_ms * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
-            else
-                correction_value = 0.0
-            end
-            AIC = +beta_smoothing_ms * n_param + n_data * log(RSS / n_data)
-            AICc = AIC + correction_value
-        else
-            AICc = 10^9
-
-        end
-    else
-        AICc = 10^9
-
-
+    # A positive small-sample denominator (n - p - 1 > 0) is required for the
+    # correction and for a well-defined Gaussian log-likelihood.
+    if n_data != length(data_th) || n_data <= n_param + 1
+        return 10^9
     end
-    println(AICc)
+
+    RSS = sum(abs.(data_th .- data) .^ 2)
+    RSS = max(RSS, 1e-300)   # guard against a perfect fit (RSS == 0 -> -Inf)
+
+    neg2logL = n_data * log(RSS / n_data) + n_data * (log(2 * pi) + 1)
+
+    if correction == true
+        correction_value = beta_smoothing_ms * ((n_param * (n_param + 1)) / (n_data - n_param - 1))
+    else
+        correction_value = 0.0
+    end
+
+    AICc = beta_smoothing_ms * n_param + neg2logL + correction_value
 
     return AICc
 
