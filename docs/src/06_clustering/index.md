@@ -80,9 +80,9 @@ scatter(ks, wcss;
     to handle non-growing wells separately.
 
 !!! note "WCSS and exponential prototype relabeling"
-    When `cluster_exp_prototype=true`, WCSS is computed from the k-means solution
-    **before** exponential prototype reassignment. The value still reflects the
-    k-means cost, not the cost of the final labels.
+    WCSS is recomputed from the final labels for every clustering method,
+    including k-medoids and DBSCAN. It includes only non-empty clusters populated
+    by the algorithm; non-growing sentinels and DBSCAN noise are excluded.
 
 ---
 
