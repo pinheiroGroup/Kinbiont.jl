@@ -33,10 +33,12 @@ Immutable container for a set of growth curves measured at common time points.
   Row `k` is the mean of the z-scored curves assigned to cluster `k` — a scale-independent
   shape prototype. To obtain original-space prototypes, compute
   `mean(data.curves[data.clusters .== k, :], dims=1)` for each `k`.
-- `wcss::Union{Nothing, Float64}`: historical storage field for the clustering cost,
-  populated alongside `clusters`. It is WCSS for k-means and hierarchical clustering,
-  total distance-to-medoid cost for k-medoids, and `0.0` for DBSCAN. `nothing` when
-  clustering was not performed.
+- `wcss::Union{Nothing, Float64}`: method-independent within-cluster sum of
+  squares in z-normalised space, populated alongside `clusters`. For every
+  supported method, including k-medoids and DBSCAN, it is the centroid-based
+  squared error over non-empty algorithmic clusters. Non-growing sentinels and
+  DBSCAN noise (label `0`) are excluded. `nothing` when clustering was not
+  performed.
 """
 struct GrowthData
     curves::Matrix{Float64}
@@ -191,13 +193,14 @@ Every field has a sensible default so users only override what they need.
   initialisations; the run with the lowest WCSS is kept.
 - `kmeans_max_iters::Int = 300`: maximum number of Lloyd iterations per k-means run.
 - `kmeans_tol::Float64 = 1e-6`: convergence tolerance (relative change in WCSS).
-- `kmeans_seed::Int = 0`: random seed for k-means initialisation. `0` means
-  non-reproducible (uses the global RNG); any other value seeds a `MersenneTwister`
-  so results are fully reproducible.
+- `kmeans_seed::Int = 0`: random seed for k-means initialisation. `0` selects
+  the deterministic default seed `42`; any other value seeds a
+  `MersenneTwister` with the supplied value.
 
-After clustering, `processed.wcss` holds the method-specific clustering cost described
-above. For methods that use `n_clusters`, run `preprocess` over candidate values and
-plot that cost against `n_clusters` to obtain an elbow diagnostic.
+After clustering, `processed.wcss` holds the method-independent centroid WCSS
+described above. For methods that use `n_clusters`, run `preprocess` over
+candidate values and plot that cost against `n_clusters` to obtain an elbow
+diagnostic.
 
 # Fitting fields
 - `loss::String = "RE"`: loss function — `"RE"`, `"L2"`, `"L2_derivative"`, etc.

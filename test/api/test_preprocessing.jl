@@ -172,15 +172,15 @@
         @test processed.wcss >= 0.0
     end
 
-    @testset "WCSS equals total SSE to assigned cluster centroid (all methods)" begin
+    @testset "WCSS equals total SSE to assigned algorithmic-cluster centroid" begin
         # z-score each row the way _cluster does (no smoothing → curves unchanged);
         # StatsBase.zscore uses the corrected (n-1) std, matching (v-mean)/std here.
         _zrow(v) = (v .- mean(v)) ./ std(v)
         Z = reduce(vcat, [reshape(_zrow(data.curves[i, :]), 1, :) for i in 1:size(data.curves, 1)])
-        _sse_to_centroid(lbls) = begin
+        _sse_to_centroid(lbls; include=trues(length(lbls))) = begin
             total = 0.0
-            for lbl in unique(lbls)
-                idx = findall(==(lbl), lbls)
+            for lbl in unique(lbls[include])
+                idx = findall(include .& (lbls .== lbl))
                 sub = Z[idx, :]
                 c   = vec(mean(sub, dims=1))
                 for i in axes(sub, 1)
@@ -199,7 +199,7 @@
         end
     end
 
-    @testset "WCSS counts set-aside flat curves (trend/sentinel path)" begin
+    @testset "WCSS excludes set-aside flat curves (trend/sentinel path)" begin
         _zrow(v) = (v .- mean(v)) ./ std(v)
         tt = collect(0.0:5.0)
         cc = [0.10  0.20  0.35  0.55  0.80  1.10;    # growing
@@ -207,22 +207,25 @@
               0.100 0.101 0.099 0.100 0.102 0.101;   # flat
               0.050 0.051 0.049 0.050 0.052 0.051]   # flat
         dd = GrowthData(cc, tt, ["g1", "g2", "f1", "f2"])
-        opts = FitOptions(cluster=true, n_clusters=2, cluster_trend_test=true,
-                          cluster_trend_p_thr=0.05)
-        p = preprocess(dd, opts)
         Z = reduce(vcat, [reshape(_zrow(cc[i, :]), 1, :) for i in 1:size(cc, 1)])
-        expected = 0.0
-        for lbl in unique(p.clusters)
-            idx = findall(==(lbl), p.clusters)
-            sub = Z[idx, :]
-            c   = vec(mean(sub, dims=1))
-            for i in axes(sub, 1)
-                expected += sum((sub[i, :] .- c) .^ 2)
+        for method in (:kmeans, :kmedoids, :hclust)
+            opts = FitOptions(cluster=true, n_clusters=2, cluster_method=method,
+                              cluster_trend_test=true, cluster_trend_p_thr=0.05)
+            p = preprocess(dd, opts)
+            expected = 0.0
+            include = p.clusters .!= opts.n_clusters
+            for lbl in unique(p.clusters[include])
+                idx = findall(include .& (p.clusters .== lbl))
+                sub = Z[idx, :]
+                c   = vec(mean(sub, dims=1))
+                for i in axes(sub, 1)
+                    expected += sum((sub[i, :] .- c) .^ 2)
+                end
             end
+            # WCSS is over the dynamic subset clustered by the algorithm; the
+            # reserved flat sentinel does not contribute.
+            @test isapprox(p.wcss, expected; rtol=1e-8)
         end
-        # WCSS is over ALL 4 curves (both dynamic and the reserved flat sentinel),
-        # not just the dynamic subset that the algorithm clustered.
-        @test isapprox(p.wcss, expected; rtol=1e-8)
     end
 
     @testset "Replicate averaging collapses duplicate labels" begin
@@ -484,6 +487,29 @@
         @test processed.clusters isa Vector{Int}
         @test length(processed.clusters) == size(data.curves, 1)
         @test all(processed.clusters .>= 0)   # 0 = noise
+    end
+
+    @testset "cluster_method=:dbscan WCSS excludes noise label 0" begin
+        db_times = collect(0.0:4.0)
+        db_curves = [
+            0.0 1.0 2.0 3.0 4.0;
+            0.0 1.1 2.1 3.2 4.1;
+            0.0 4.0 0.0 4.0 0.0;
+            4.0 0.0 4.0 0.0 4.0;
+        ]
+        db_data = GrowthData(db_curves, db_times, ["a", "b", "noise1", "noise2"])
+        opts = FitOptions(cluster=true, cluster_method=:dbscan,
+                          cluster_dbscan_eps=0.25, cluster_dbscan_minpts=2,
+                          cluster_trend_test=false)
+        processed = preprocess(db_data, opts)
+        @test count(==(0), processed.clusters) >= 2
+
+        Z = Kinbiont._zscore_rows(db_curves)
+        include = processed.clusters .!= 0
+        expected = Kinbiont._wcss(Z, processed.clusters; include_mask=include)
+        with_noise = Kinbiont._wcss(Z, processed.clusters)
+        @test processed.wcss ≈ expected
+        @test processed.wcss < with_noise
     end
 
     @testset "cluster_method=:kmedoids with prescreen assigns sentinel" begin
@@ -803,4 +829,28 @@ end
 
     # With cutting, the fitted curve should cover fewer time points
     @test length(res_cut[1].times) < length(res_full[1].times)
+end
+
+@testset "GUI workflow loader recomputes source data and blanks" begin
+    mktempdir() do root
+        exp_dir = joinpath(root, "exp1")
+        mkpath(exp_dir)
+        write(
+            joinpath(exp_dir, "data_channel_1.csv"),
+            "Time,A1,A2,B1\n0.0,0.1,9.0,0.2\n1.0,0.2,9.0,0.5\n2.0,0.3,9.0,0.9\n",
+        )
+        write(
+            joinpath(exp_dir, "annotation_clean.csv"),
+            "A1,b\nA2,X\nB1,sample\n",
+        )
+
+        loaded = load_gui_experiment_data(root, "exp1")
+        @test loaded.data.labels == ["B1"]
+        @test loaded.data.times == [0.0, 1.0, 2.0]
+        @test vec(loaded.data.curves) == [0.2, 0.5, 0.9]
+        @test loaded.blank_value ≈ 0.2
+        @test loaded.blank_timeseries ≈ [0.1, 0.2, 0.3]
+        @test loaded.blank_labels == ["A1"]
+        @test Set(loaded.excluded_labels) == Set(["A1", "A2"])
+    end
 end
