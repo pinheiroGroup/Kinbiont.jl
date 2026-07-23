@@ -457,14 +457,14 @@
         @test processed.clusters isa Vector{Int}
         @test length(processed.clusters) == size(data.curves, 1)
         @test all(1 .<= processed.clusters .<= 3)
+        # WCSS is the unified SSE-to-centroid (PR #98), applied to every method,
+        # not the k-medoids medoid-distance totalcost. Compare against the
+        # centroid SSE of the returned partition.
         zscored = Kinbiont._zscore_rows(data.curves)
-        distances = Kinbiont._pairwise_euclidean(zscored)
-        direct = Kinbiont.kmedoids(
-            distances, 3;
-            maxiter=opts.kmeans_max_iters,
-            tol=opts.kmeans_tol,
-        )
-        @test processed.wcss ≈ direct.totalcost
+        sse = sum(sum((zscored[processed.clusters .== c, :] .-
+                       mean(zscored[processed.clusters .== c, :], dims=1)) .^ 2)
+                  for c in unique(processed.clusters))
+        @test processed.wcss ≈ sse
     end
 
     @testset "cluster_method=:hclust produces valid labels" begin
