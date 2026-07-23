@@ -245,12 +245,12 @@ function _gui_batch_linear_interp(x, xs, ys)
     return Float64(last(ys))
 end
 
-function _gui_batch_loss_rmse(t, y, fit_t, fit_y, t_peak)
+function _gui_batch_loss_rmse(t, y, fit_t, fit_y, score_end)
     isempty(fit_t) && return Inf
     ss = 0.0
     n = 0
     for (i, ti) in enumerate(t)
-        (ti < first(fit_t) || ti > min(t_peak, last(fit_t))) && continue
+        (ti < first(fit_t) || ti > min(score_end, last(fit_t))) && continue
         pred = _gui_batch_linear_interp(ti, fit_t, fit_y)
         isfinite(pred) || continue
         ss += (y[i] - pred)^2
@@ -259,12 +259,43 @@ function _gui_batch_loss_rmse(t, y, fit_t, fit_y, t_peak)
     return n == 0 ? Inf : sqrt(ss / n)
 end
 
+function _gui_prepare_curve(
+    od_raw::Vector{Float64};
+    blank_value::Real=0.0,
+    subtract_blank::Bool=false,
+    blank_method::String="pointbypoint",
+    blank_timeseries::Vector{Float64}=Float64[],
+    unblanked_floor::Float64=0.01,
+)
+    if !(subtract_blank && blank_value > 0.0)
+        return (
+            od_for_fit=max.(od_raw, unblanked_floor),
+            od_subtracted_display=nothing,
+            anchor=od_raw[1],
+            shift=0.0,
+        )
+    end
+
+    pointwise = blank_method == "pointbypoint" && length(blank_timeseries) == length(od_raw)
+    blank_trace = pointwise ? blank_timeseries : fill(Float64(blank_value), length(od_raw))
+    method = blank_method == "clip" ? :clip : blank_method == "shift" ? :shift : :pointbypoint
+    corrected = pointwise ? od_raw .- blank_trace : od_raw .- blank_value
+    od_for_fit = vec(apply_blank_timeseries(
+        reshape(od_raw, 1, :), blank_trace; method, floor=1e-4,
+    ))
+
+    return (
+        od_for_fit=od_for_fit,
+        od_subtracted_display=max.(corrected, 0.0),
+        anchor=max(corrected[1], 0.0),
+        shift=method == :clip ? 0.0 : od_for_fit[1] - corrected[1],
+    )
+end
+
 function _gui_batch_run_attempt(
     optimizer::String,
     time_numeric::Vector{Float64},
     od_for_fit::Vector{Float64},
-    t_peak::Float64,
-    anchor::Float64,
     shift::Float64,
     subtract_blank::Bool,
     blank_value::Real,
@@ -273,16 +304,11 @@ function _gui_batch_run_attempt(
     model_names::Vector{String},
     maxiters::Int,
     abstol::Float64,
+    smooth::Bool,
+    smooth_window::Int,
 )
-    needs_smoothing = uppercase(optimizer) in ("BOBYQA", "LN_BOBYQA")
-    if needs_smoothing
-        time_fit = time_numeric
-        od_fit = od_for_fit
-    else
-        cut_idx = argmax(od_for_fit)
-        time_fit = time_numeric[1:cut_idx]
-        od_fit = od_for_fit[1:cut_idx]
-    end
+    time_fit = time_numeric
+    od_fit = od_for_fit
 
     model_keys = isempty(model_names) ? [model_name] : filter(!=("log_lin"), model_names)
     isempty(model_keys) && error("No parametric models selected")
@@ -293,11 +319,11 @@ function _gui_batch_run_attempt(
     upper = Union{Nothing, Vector{Float64}}[b[2] for b in bounds]
     spec = ModelSpec(models, initial_params; lower=lower, upper=upper)
     opt_params = abstol > 0.0 ? (maxiters=maxiters, abstol=abstol) : (maxiters=maxiters,)
-    opts = needs_smoothing ? FitOptions(
+    opts = FitOptions(
         scattering_correction=false,
-        smooth=true,
-        smooth_method=:rolling_avg,
-        smooth_pt_avg=14,
+        smooth=smooth,
+        smooth_method=:boxcar,
+        boxcar_window=smooth_window,
         cut_stationary_phase=true,
         stationary_percentile_thr=0.05,
         stationary_pt_smooth_derivative=10,
@@ -305,43 +331,66 @@ function _gui_batch_run_attempt(
         loss="RE",
         optimizer=_gui_batch_optimizer(optimizer),
         opt_params=opt_params,
-    ) : FitOptions(
-        scattering_correction=false,
-        smooth=false,
-        cut_stationary_phase=false,
-        loss="RE",
-        optimizer=_gui_batch_optimizer(optimizer),
-        opt_params=opt_params,
     )
 
-    r = kinbiont_fit(GrowthData(reshape(od_fit, 1, :), time_fit, [label]), spec, opts)[1]
+    fit_results = kinbiont_fit(GrowthData(reshape(od_fit, 1, :), time_fit, [label]), spec, opts)
+    r = fit_results[1]
+    preprocessed_time = Float64.(fit_results.data.times)
+    preprocessed_od = Float64.(vec(fit_results.data.curves[1, :]))
     fit_od_curve = subtract_blank && blank_value > 0.0 ? r.fitted_curve .- shift : r.fitted_curve
     fit_time_out = collect(r.times)
     fit_od_out = collect(fit_od_curve)
 
-    fit_start_idx = argmin(abs.(time_fit .- fit_time_out[1]))
-    if fit_start_idx > 1
-        fit_time_out = vcat(time_fit[1:fit_start_idx-1], fit_time_out)
-        fit_od_out = vcat(fill(anchor, fit_start_idx - 1), fit_od_out)
-    end
-
-    crop_idx = findlast(t -> t <= t_peak, fit_time_out)
-    if crop_idx !== nothing && crop_idx < length(fit_time_out)
-        fit_time_out = fit_time_out[1:crop_idx]
-        fit_od_out = fit_od_out[1:crop_idx]
-    end
-
-    fit_for_loss = subtract_blank && blank_value > 0.0 ? Float64.(fit_od_out) .+ shift : Float64.(fit_od_out)
+    stationary_phase_start = Float64(last(r.times))
+    preprocessed_od_out = subtract_blank && blank_value > 0.0 ? preprocessed_od .- shift : preprocessed_od
     return (
         best_params=r.best_params,
         param_names=r.best_model.param_names,
         model_name=_gui_batch_model_name(r.best_model),
         fit_time_out=fit_time_out,
         fit_od_out=fit_od_out,
+        preprocessed_time=preprocessed_time,
+        preprocessed_od=preprocessed_od_out,
+        stationary_phase_start=stationary_phase_start,
         aic=r.best_aic,
-        loss_rmse=_gui_batch_loss_rmse(time_numeric, od_for_fit, Float64.(fit_time_out), fit_for_loss, t_peak),
+        loss_rmse=_gui_batch_loss_rmse(
+            preprocessed_time,
+            preprocessed_od,
+            Float64.(r.times),
+            Float64.(r.fitted_curve),
+            stationary_phase_start,
+        ),
         loss_re=r.loss,
     )
+end
+
+"""
+    loglin_stationary_nmax(raw; pt_smoothing_derivative=7) -> Float64
+
+Return the empirical maximum OD at the stationary cutoff associated with the
+log-linear `mu_max` stored in `raw`. The legacy q95 value in `raw[2][16]` is
+not used.
+"""
+function loglin_stationary_nmax(
+    raw;
+    pt_smoothing_derivative::Int=7,
+)::Float64
+    params = raw[2]
+    length(params) >= 7 && params[7] !== missing || return NaN
+    smoothed = raw[4]
+    ismissing(smoothed) && return NaN
+
+    opts = FitOptions(
+        stationary_percentile_thr=0.05,
+        stationary_pt_smooth_derivative=pt_smoothing_derivative,
+        stationary_win_size=5,
+        stationary_thr_od=0.02,
+    )
+    cutoff = find_stationary_cutoff_from_mu(
+        Matrix{Float64}(smoothed), Float64(params[7]), opts,
+    )
+    nmax = Float64(smoothed[2, cutoff])
+    return isfinite(nmax) ? nmax : NaN
 end
 
 function _gui_batch_loglin_fields(t, y, label, experiment; pt_avg=7, pt_deriv=7, pt_min_win=7, threshold=0.9)
@@ -377,10 +426,12 @@ function _gui_batch_loglin_fields(t, y, label, experiment; pt_avg=7, pt_deriv=7,
             out["t_exp_end_loglin"] = Float64(params[4])
             out["doubling_time_loglin"] = Float64(params[9])
             out["R_squared_loglin"] = Float64(params[14])^2
-            if length(params) >= 16
+            if length(params) >= 15
                 out["lag_loglin"] = params[15] === missing ? NaN : Float64(params[15])
-                out["N_max_emp"] = params[16] === missing ? NaN : Float64(params[16])
             end
+            out["N_max_emp"] = loglin_stationary_nmax(
+                raw; pt_smoothing_derivative=pt_deriv,
+            )
             out["loglin_converged"] = true
         end
     catch
@@ -405,32 +456,30 @@ function _gui_batch_fit_one(
     stochastic_runs::Int=1,
     maxiters::Int=100000,
     abstol::Float64=1e-15,
+    smooth::Bool=false,
+    smooth_window::Int=3,
     compute_loglin::Bool=false,
     loglin_pt_avg::Int=7,
     loglin_pt_smoothing_derivative::Int=7,
     loglin_pt_min_size_of_win::Int=7,
     loglin_threshold_of_exp::Float64=0.9,
 )
-    if subtract_blank && blank_value > 0.0
-        corrected = (blank_method == "pointbypoint" && length(blank_timeseries) == length(od_raw)) ?
-            od_raw .- blank_timeseries : od_raw .- blank_value
-        od_subtracted_display = max.(corrected, 0.0)
-        anchor = od_subtracted_display[1]
-        if blank_method == "clip"
-            od_for_fit = max.(corrected, 1e-4)
-            shift = 0.0
-        else
-            shift = max(-minimum(corrected), 0.0) + 1e-4
-            od_for_fit = corrected .+ shift
-        end
-    else
-        od_subtracted_display = nothing
-        od_for_fit = max.(od_raw, 0.01)
-        anchor = od_raw[1]
-        shift = 0.0
+    if smooth && (smooth_window < 3 || iseven(smooth_window))
+        throw(ArgumentError("smooth_window must be an odd integer greater than or equal to 3"))
     end
 
-    t_peak = time_numeric[argmax(od_for_fit)]
+    prepared = _gui_prepare_curve(
+        od_raw;
+        blank_value,
+        subtract_blank,
+        blank_method,
+        blank_timeseries,
+        unblanked_floor=0.01,
+    )
+    od_for_fit = prepared.od_for_fit
+    od_subtracted_display = prepared.od_subtracted_display
+    shift = prepared.shift
+
     attempts = Tuple{String, Int}[]
     if !isempty(deterministic_optimizers) || !isempty(stochastic_optimizers)
         append!(attempts, [(opt, 1) for opt in deterministic_optimizers])
@@ -446,9 +495,9 @@ function _gui_batch_fit_one(
     for (opt, run_idx) in attempts
         try
             res = _gui_batch_run_attempt(
-                opt, time_numeric, od_for_fit, t_peak, anchor, shift,
+                opt, time_numeric, od_for_fit, shift,
                 subtract_blank, blank_value, label, model_name, model_names,
-                maxiters, abstol,
+                maxiters, abstol, smooth, smooth_window,
             )
             push!(outcomes, (optimizer=opt, run=run_idx, status="ok", loss=res.loss_rmse,
                 loss_rmse=res.loss_rmse, loss_re=res.loss_re, aic=res.aic, result=res))
@@ -475,7 +524,18 @@ function _gui_batch_fit_one(
         "blank_value" => blank_value,
         "blank_subtraction" => subtract_blank,
         "blank_method" => blank_method,
-        "stationary_phase_start" => t_peak,
+        "stationary_phase_start" => win.stationary_phase_start,
+        "maxiters" => maxiters,
+        "abstol" => abstol,
+        "preprocessing" => Dict(
+            "smooth" => smooth,
+            "smooth_method" => smooth ? "boxcar" : "none",
+            "smooth_window" => smooth_window,
+            "cut_stationary_phase" => true,
+            "stationary_percentile_thr" => 0.05,
+            "stationary_pt_smooth_derivative" => 10,
+            "stationary_win_size" => 5,
+        ),
         "aic" => win.aic,
         "loss" => win.loss_rmse,
         "loss_rmse" => win.loss_rmse,
@@ -487,6 +547,10 @@ function _gui_batch_fit_one(
             "loss_re" => o.loss_re, "aic" => o.aic) for o in outcomes],
     )
     od_subtracted_display !== nothing && (result["experimental_od_subtracted"] = od_subtracted_display)
+    if smooth
+        result["smoothed_time"] = win.preprocessed_time
+        result["smoothed_od"] = win.preprocessed_od
+    end
     if compute_loglin
         merge!(result, _gui_batch_loglin_fields(
             time_numeric, od_for_fit, label, experiment;
@@ -510,10 +574,14 @@ The returned `model` field is `"multi"` when more than one parametric model
 is compared (and `model_names` holds the list); when a single model is
 fitted, `model` is its name and `model_names == [model]`.
 
-Each result carries two loss fields: `loss_re` is the optimizer objective
-(relative error on the smoothed/blank-shifted curve) and `loss_rmse` is
-recomputed on the displayed blank-corrected curve. The "best" optimizer
-attempt is chosen by minimum `loss_rmse`.
+Each result carries two loss fields: `loss_re` is the relative-error objective
+minimized by Kinbiont, whereas `loss_rmse` is recomputed against the same
+preprocessed observations through the Kinbiont stationary-phase cutoff.
+GUIbiont selects the optimizer attempt with the lowest `loss_rmse`.
+
+Set `smooth=true` to apply the same centered moving average to every optimizer
+attempt before stationary-phase detection. `smooth_window` is the odd window
+width and defaults to 3 (one point on either side of the current point).
 """
 function kinbiont_batch_fit(
     data::GrowthData;
@@ -527,7 +595,9 @@ function kinbiont_batch_fit(
     stochastic_runs::Int=1,
     maxiters::Int=100000,
     abstol::Float64=1e-15,
-    skip_flat_threshold::Float64=0.05,
+    skip_flat_threshold::Float64=0.02,
+    smooth::Bool=false,
+    smooth_window::Int=3,
     compute_loglin::Bool=false,
     loglin_pt_avg::Int=7,
     loglin_pt_smoothing_derivative::Int=7,
@@ -538,6 +608,10 @@ function kinbiont_batch_fit(
     blank_value::Real=0.0,
     blank_timeseries::Vector{Float64}=Float64[],
 )
+    if smooth && (smooth_window < 3 || iseven(smooth_window))
+        throw(ArgumentError("smooth_window must be an odd integer greater than or equal to 3"))
+    end
+
     selected = isempty(labels) ? data.labels : labels
     results = Dict{String, Any}[]
     skipped = Dict{String, Any}[]
@@ -583,6 +657,8 @@ function kinbiont_batch_fit(
                 stochastic_runs=stochastic_runs,
                 maxiters=maxiters,
                 abstol=abstol,
+                smooth=smooth,
+                smooth_window=smooth_window,
                 compute_loglin=compute_loglin,
                 loglin_pt_avg=loglin_pt_avg,
                 loglin_pt_smoothing_derivative=loglin_pt_smoothing_derivative,
@@ -600,6 +676,8 @@ function kinbiont_batch_fit(
         experiment=experiment,
         model=model_out,
         model_names=model_names_out,
+        smooth=smooth,
+        smooth_window=smooth_window,
         results=results,
         skipped=skipped,
         errors=errors,
@@ -679,21 +757,18 @@ function _gui_batch_fit_loglin_one(
     threshold_of_exp::Float64=0.9,
     start_exp_win_thr::Float64=0.05,
     thr_lowess::Float64=0.05,
+    unblanked_floor::Float64=1e-4,
 )
-    od_subtracted_display = nothing
-    if subtract_blank && blank_value > 0.0
-        corrected = (blank_method == "pointbypoint" && length(blank_timeseries) == length(od_raw)) ?
-            od_raw .- blank_timeseries : od_raw .- blank_value
-        od_subtracted_display = max.(corrected, 0.0)
-        if blank_method == "clip"
-            od_for_fit = max.(corrected, 1e-4)
-        else
-            shift = max(-minimum(corrected), 0.0) + 1e-4
-            od_for_fit = corrected .+ shift
-        end
-    else
-        od_for_fit = max.(od_raw, 1e-4)
-    end
+    prepared = _gui_prepare_curve(
+        od_raw;
+        blank_value,
+        subtract_blank,
+        blank_method,
+        blank_timeseries,
+        unblanked_floor,
+    )
+    od_for_fit = prepared.od_for_fit
+    od_subtracted_display = prepared.od_subtracted_display
 
     raw = fitting_one_well_Log_Lin(
         Matrix(transpose(hcat(time_numeric, od_for_fit))),
@@ -727,8 +802,11 @@ function _gui_batch_fit_loglin_one(
         result["t_exp_end_loglin"] = Float64(params[4])
         result["doubling_time_loglin"] = Float64(params[9])
         result["R_squared_loglin"] = Float64(params[14])^2
-        result["lag_loglin"] = length(params) >= 16 && params[15] !== missing ? Float64(params[15]) : NaN
-        result["N_max_emp"] = length(params) >= 16 && params[16] !== missing ? Float64(params[16]) : NaN
+        result["lag_loglin"] = length(params) >= 15 && params[15] !== missing ? Float64(params[15]) : NaN
+        # Deliberately ignore legacy params[16] (curve q95).
+        result["N_max_emp"] = loglin_stationary_nmax(
+            raw; pt_smoothing_derivative,
+        )
         result["loglin_converged"] = true
     else
         for name in ["gr_loglin", "gr_loglin_se", "gr_max_sliding",
@@ -741,6 +819,83 @@ function _gui_batch_fit_loglin_one(
     end
     od_subtracted_display !== nothing && (result["experimental_od_subtracted"] = od_subtracted_display)
     return result
+end
+
+"""
+    kinbiont_fit_loglin(data::GrowthData; kwargs...) -> Dict
+
+Fit one growth curve with the log-linear method and return the same named
+fields used by GUIbiont, including the stationary-cutoff `N_max_emp`.
+"""
+function kinbiont_fit_loglin(
+    data::GrowthData;
+    experiment::String="experiment",
+    label::Union{Nothing, String}=nothing,
+    blank_subtraction::Bool=false,
+    blank_method::String="pointbypoint",
+    blank_value::Real=0.0,
+    blank_timeseries::Vector{Float64}=Float64[],
+    unblanked_floor::Float64=1e-4,
+    type_of_smoothing::String="rolling_avg",
+    pt_avg::Int=7,
+    pt_smoothing_derivative::Int=7,
+    pt_min_size_of_win::Int=7,
+    type_of_win::String="maximum",
+    threshold_of_exp::Float64=0.9,
+    start_exp_win_thr::Float64=0.05,
+    thr_lowess::Float64=0.05,
+)
+    selected_label = isnothing(label) ? only(data.labels) : label
+    idx = findfirst(==(selected_label), data.labels)
+    idx === nothing && throw(ArgumentError("Well '$selected_label' not found"))
+
+    t = data.times
+    y = vec(data.curves[idx, :])
+    valid = findall(i -> isfinite(t[i]) && isfinite(y[i]), eachindex(t))
+    min_pts = max(10, pt_smoothing_derivative + pt_min_size_of_win + 2)
+    length(valid) >= min_pts || throw(ArgumentError("Insufficient data points"))
+
+    blank_ts = isempty(blank_timeseries) ? Float64[] : Float64.(blank_timeseries[valid])
+    return _gui_batch_fit_loglin_one(
+        Float64.(t[valid]), Float64.(y[valid]), selected_label, experiment;
+        blank_value,
+        subtract_blank=blank_subtraction,
+        blank_method,
+        blank_timeseries=blank_ts,
+        unblanked_floor,
+        type_of_smoothing,
+        pt_avg,
+        pt_smoothing_derivative,
+        pt_min_size_of_win,
+        type_of_win,
+        threshold_of_exp,
+        start_exp_win_thr,
+        thr_lowess,
+    )
+end
+
+"""
+    kinbiont_fit_loglin(data, preprocess_opts::FitOptions; kwargs...) -> Dict
+
+Convenience overload that reuses the blank-correction settings from an
+existing `FitOptions` object.
+"""
+function kinbiont_fit_loglin(
+    data::GrowthData,
+    preprocess_opts::FitOptions;
+    kwargs...,
+)
+    blank_ts = isnothing(preprocess_opts.blank_timeseries) ?
+        Float64[] : preprocess_opts.blank_timeseries
+    return kinbiont_fit_loglin(
+        data;
+        blank_subtraction=preprocess_opts.blank_subtraction,
+        blank_method=String(preprocess_opts.blank_method),
+        blank_value=preprocess_opts.blank_value,
+        blank_timeseries=blank_ts,
+        unblanked_floor=preprocess_opts.negative_threshold,
+        kwargs...,
+    )
 end
 
 """
@@ -764,7 +919,7 @@ function kinbiont_batch_loglin(
     threshold_of_exp::Float64=0.9,
     start_exp_win_thr::Float64=0.05,
     thr_lowess::Float64=0.05,
-    skip_flat_threshold::Float64=0.05,
+    skip_flat_threshold::Float64=0.02,
 )
     selected = isempty(labels) ? data.labels : labels
     results = Dict{String, Any}[]
@@ -860,5 +1015,7 @@ end
 
 export kinbiont_batch_fit
 export save_gui_batch_results
+export loglin_stationary_nmax
+export kinbiont_fit_loglin
 export kinbiont_batch_loglin
 export save_gui_batch_loglin_results

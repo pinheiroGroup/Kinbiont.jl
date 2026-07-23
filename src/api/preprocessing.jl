@@ -13,7 +13,7 @@
 
 using Clustering: kmeans, kmedoids, hclust, cutree, dbscan, assignments
 using StatsBase: zscore
-using Distributions: TDist, cdf
+using Distributions: Normal, TDist, cdf
 using Random: MersenneTwister
 
 # ---------------------------------------------------------------------------
@@ -47,9 +47,9 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     times  = data.times
     labels = data.labels
 
-    # Resolve blank value before replicate averaging: averaging removes "b"-labelled
-    # wells, so _blank_from_labels would find nothing if called afterwards.
-    blank_val = _resolve_blank_value(curves, labels, opts)
+    # Resolve the scalar or point-by-point blank before replicate averaging,
+    # because averaging removes "b"-labelled wells.
+    blank = _resolve_blank_value(curves, labels, opts)
 
     curves, labels = _apply_replicate_averaging(curves, labels, opts)
 
@@ -60,7 +60,7 @@ function preprocess(data::GrowthData, opts::FitOptions)::GrowthData
     # non-growing wells (which is precisely what clustering is meant to find).
     clusters, centroids, wcss = opts.cluster ? _cluster(curves, times, opts) : (nothing, nothing, nothing)
 
-    curves = _apply_blank_subtraction(curves, blank_val, opts)
+    curves = _apply_blank_subtraction(curves, blank, opts)
     curves = _apply_negative_correction(curves, times, opts)
     curves, times = _apply_smoothing(curves, times, opts)   # Gaussian may change times
 
@@ -131,10 +131,58 @@ end
 # ---------------------------------------------------------------------------
 
 """
-    _resolve_blank_value(curves, labels, opts) -> Float64
+    apply_blank_timeseries(curves, blank_timeseries; method=:pointbypoint, floor=nothing)
 
-Determine the blank OD value to subtract. Must be called **before** replicate
-averaging, because averaging drops `"b"`-labelled wells from the matrix.
+Apply one blank trace to every curve. `:pointbypoint` subtracts the trace,
+`:shift` subtracts its finite mean and translates each row uniformly, and
+`:clip` subtracts its finite mean and floors the result. Passing a numeric
+`floor` also makes `:pointbypoint` translate each row above that floor; the
+default `nothing` preserves the legacy subtraction-only behaviour.
+"""
+function apply_blank_timeseries(
+    curves::Matrix{Float64},
+    blank_timeseries::Vector{Float64};
+    method::Symbol=:pointbypoint,
+    floor::Union{Nothing, Float64}=nothing,
+)::Matrix{Float64}
+    n_tp = size(curves, 2)
+    length(blank_timeseries) >= n_tp || throw(ArgumentError(
+        "blank_timeseries length $(length(blank_timeseries)) < n_timepoints $n_tp"
+    ))
+    ts = blank_timeseries[1:n_tp]
+
+    if method in (:pointbypoint, :pointwise, :time_avg)
+        ts_safe = [isfinite(v) ? v : 0.0 for v in ts]
+        corrected = curves .- reshape(ts_safe, 1, :)
+        return floor === nothing ? corrected : _shift_rows_to_floor(corrected, floor)
+    elseif method == :shift
+        finite = filter(isfinite, ts)
+        isempty(finite) && return copy(curves)
+        return _shift_rows_to_floor(curves .- mean(finite), something(floor, 0.0))
+    elseif method == :clip
+        finite = filter(isfinite, ts)
+        isempty(finite) && return copy(curves)
+        return max.(curves .- mean(finite), something(floor, 0.0))
+    end
+    throw(ArgumentError("Unknown blank correction method: $method"))
+end
+
+function _shift_rows_to_floor(curves::Matrix{Float64}, floor::Float64)::Matrix{Float64}
+    shifted = copy(curves)
+    for i in axes(shifted, 1)
+        finite_values = filter(isfinite, shifted[i, :])
+        isempty(finite_values) && continue
+        delta = max(floor - minimum(finite_values), 0.0)
+        shifted[i, :] .+= delta
+    end
+    return shifted
+end
+
+"""
+    _resolve_blank_value(curves, labels, opts) -> Union{Float64,Vector{Float64}}
+
+Determine the scalar or point-by-point blank to subtract. Must be called
+**before** replicate averaging, because averaging drops `"b"`-labelled wells.
 
 Returns 0.0 when `opts.blank_subtraction` is false.
 """
@@ -142,23 +190,42 @@ function _resolve_blank_value(
     curves::Matrix{Float64},
     labels::Vector{String},
     opts::FitOptions,
-)::Float64
+)::Union{Float64, Vector{Float64}}
     opts.blank_subtraction || return 0.0
 
-    if opts.blank_from_labels
-        return _blank_from_labels(curves, labels)
-    else
-        return opts.blank_value
+    method = opts.blank_method
+    if method in (:pointbypoint, :pointwise, :time_avg)
+        if opts.blank_from_labels
+            return _blank_timeseries_from_labels(curves, labels)
+        end
+        opts.blank_timeseries === nothing && throw(ArgumentError(
+            "blank_method=:pointbypoint requires blank_timeseries or blank_from_labels=true"
+        ))
+        length(opts.blank_timeseries) == size(curves, 2) || throw(ArgumentError(
+            "blank_timeseries length $(length(opts.blank_timeseries)) does not match " *
+            "the number of time points $(size(curves, 2))"
+        ))
+        return [isfinite(v) ? v : 0.0 for v in opts.blank_timeseries]
+    elseif method in (:global, :average, :avg_blank, :avg_subtraction, :shift, :clip)
+        return opts.blank_from_labels ? _blank_from_labels(curves, labels) : opts.blank_value
     end
+    throw(ArgumentError("Unknown blank_method: $(opts.blank_method)"))
 end
 
 function _apply_blank_subtraction(
     curves::Matrix{Float64},
-    blank_val::Float64,
+    blank::Union{Float64, Vector{Float64}},
     opts::FitOptions,
 )::Matrix{Float64}
     opts.blank_subtraction || return curves
-    return curves .- blank_val
+    method = opts.blank_method
+    if method in (:pointbypoint, :pointwise, :time_avg)
+        return apply_blank_timeseries(curves, blank; method=:pointbypoint, floor=opts.blank_floor)
+    elseif method in (:shift, :clip)
+        blank_trace = fill(blank, size(curves, 2))
+        return apply_blank_timeseries(curves, blank_trace; method, floor=opts.blank_floor)
+    end
+    return curves .- blank
 end
 
 """
@@ -174,6 +241,36 @@ function _blank_from_labels(curves::Matrix{Float64}, labels::Vector{String})::Fl
         return 0.0
     end
     return mean(curves[blank_idx, :])
+end
+
+"""
+    _blank_timeseries_from_labels(curves, labels) -> Vector{Float64}
+
+Compute the per-timepoint mean across wells labelled `"b"`. Non-finite values
+are ignored; a time point with no finite blank measurement falls back to the
+mean of the other timepoint means, or 0.0 when no finite blank data exist.
+"""
+function _blank_timeseries_from_labels(
+    curves::Matrix{Float64},
+    labels::Vector{String},
+)::Vector{Float64}
+    blank_idx = findall(==("b"), labels)
+    if isempty(blank_idx)
+        @warn "blank_from_labels=true but no wells labelled \"b\" found; blank timeseries set to 0.0"
+        return zeros(Float64, size(curves, 2))
+    end
+
+    blank = Vector{Float64}(undef, size(curves, 2))
+    for j in axes(curves, 2)
+        values = filter(isfinite, curves[blank_idx, j])
+        blank[j] = isempty(values) ? NaN : mean(values)
+    end
+    finite_means = filter(isfinite, blank)
+    fallback = isempty(finite_means) ? 0.0 : mean(finite_means)
+    for j in eachindex(blank)
+        isfinite(blank[j]) || (blank[j] = fallback)
+    end
+    return blank
 end
 
 # ---------------------------------------------------------------------------
@@ -287,14 +384,16 @@ _smoothing_symbol_to_string(s::Symbol) = Dict(
 
 Apply a centered boxcar (symmetric moving-average) filter to every curve.
 Unlike `:rolling_avg`, the time grid is unchanged and no points are dropped.
-Window width is `opts.boxcar_window` (must be ≥ 1).
+Window width is `opts.boxcar_window` (an odd integer of at least 3).
 """
 function _apply_boxcar_smoothing(
     curves::Matrix{Float64},
     times::Vector{Float64},
     opts::FitOptions,
 )::Tuple{Matrix{Float64}, Vector{Float64}}
-    w = max(1, opts.boxcar_window)
+    w = opts.boxcar_window
+    w >= 3 || throw(ArgumentError("boxcar_window must be greater than or equal to 3"))
+    isodd(w) || throw(ArgumentError("boxcar_window must be odd so the average is centered"))
     half = w ÷ 2
     n_curves, n_tp = size(curves)
     smoothed = Matrix{Float64}(undef, n_curves, n_tp)
@@ -330,10 +429,10 @@ function _kmeans_best(X::AbstractMatrix{Float64}, k::Int, opts::FitOptions)
 end
 
 """
-    _cluster(curves, times, opts) -> (labels, centroids, wcss)
+    _cluster(curves, times, opts) -> (labels, centroids, cost)
 
 Cluster growth curves and return per-curve labels, per-cluster shape centroids,
-and the within-cluster sum of squares (WCSS / total SSE from k-means).
+and the method-specific clustering cost stored in the historical `wcss` field.
 
 Without exponential prototype relabeling, labels lie in `1..opts.n_clusters`.
 When `cluster_exp_prototype=true`, an additional label may be allocated (up to
@@ -343,14 +442,13 @@ each row is the mean of the z-scored curves assigned to that cluster. This captu
 the *shape* of each cluster independently of absolute OD magnitude. To recover
 original-space prototypes, compute the mean of `data.curves[data.clusters .== k, :]`
 for each `k`.
-`wcss` is the total SSE from the k-means step (0.0 when all curves were classified
-as constant).
+The cost is WCSS for k-means and hierarchical clustering, total distance to assigned
+medoids for k-medoids, and `0.0` for DBSCAN. Sentinel curves separated by a non-growing
+criterion are excluded from that cost.
 
-Modes (evaluated in priority order):
-1. `cluster_prescreen_constant=true`: quantile-ratio pre-screening identifies
-   non-growing wells before k-means, which then runs on dynamic curves only.
-2. `cluster_trend_test=true`: OLS slope t-test post-hoc re-labels flat curves.
-3. Neither: plain k-means on all curves.
+When the quantile pre-screen and slope trend test are enabled together, their union
+forms one non-growing group. For methods with a predefined `k`, clustering runs on
+the remaining dynamic curves; DBSCAN applies the same reassignment post-hoc.
 
 When `cluster_exp_prototype=true`, an additional exponential shape cluster is
 added after k-means: each curve is tested against pre-built z-scored exponential
@@ -375,21 +473,25 @@ function _cluster(
     zscored_all = _zscore_rows(curves)
     method      = opts.cluster_method
 
-    # Pre-screening: separate constant curves before running any clustering
-    # algorithm. Applies to all methods except :dbscan (no k parameter).
-    if opts.cluster_prescreen_constant && method != :dbscan
-        labels, wcss = _cluster_with_prescreen_method(curves, zscored_all, opts)
-    elseif opts.cluster_trend_test && method != :dbscan
-        labels, wcss = _cluster_with_trend_method(curves, times, zscored_all, opts)
+    # When both detectors are enabled, their union forms one non-growing class.
+    # DBSCAN applies the same union post-hoc because it has no k.
+    if (opts.cluster_prescreen_constant || opts.cluster_trend_test) && method != :dbscan
+        non_growing = _non_growing_mask(curves, times, opts)
+        labels, wcss = _cluster_with_non_growing_method(
+            zscored_all, non_growing, opts
+        )
     else
         labels, wcss = _cluster_dispatch(zscored_all, opts)
 
-        # DBSCAN has no k parameter, so trend-test flat reassignment has to be
-        # post-hoc and uses a fresh label above the DBSCAN cluster ids.
-        if opts.cluster_trend_test && !opts.cluster_prescreen_constant
-            flat_id = maximum(labels) + 1
-            labels  = _apply_trend_labels(curves, times, labels, flat_id,
-                                           opts.cluster_trend_p_thr)
+        # DBSCAN has no k parameter, so the selected non-growing criteria are
+        # applied post-hoc using one fresh label above its cluster ids.
+        if method == :dbscan &&
+           (opts.cluster_prescreen_constant || opts.cluster_trend_test)
+            non_growing = _non_growing_mask(curves, times, opts)
+            if any(non_growing)
+                flat_id = isempty(labels) ? 1 : maximum(labels) + 1
+                labels[non_growing] .= flat_id
+            end
         end
     end
 
@@ -438,6 +540,47 @@ function _wcss(zscored::Matrix{Float64}, labels::Vector{Int})::Float64
         end
     end
     return total
+end
+
+function _non_growing_mask(
+    curves::Matrix{Float64},
+    times::Vector{Float64},
+    opts::FitOptions,
+)::BitVector
+    mask = falses(size(curves, 1))
+    opts.cluster_prescreen_constant && (mask .|= _prescreen_constant(curves, opts))
+    opts.cluster_trend_test && (mask .|= _flat_curve_mask(
+        curves, times; p_threshold=opts.cluster_trend_p_thr
+    ))
+    return mask
+end
+
+"""
+    detect_non_growing_indices(curves, times; kwargs...) -> Vector{Int}
+
+Identify curves selected by the clustering non-growing controls. The
+quantile-ratio pre-screen and the slope trend test can be enabled separately;
+when both are enabled, a curve is selected when either criterion matches.
+"""
+function detect_non_growing_indices(
+    curves::Matrix{Float64},
+    times::Vector{Float64};
+    prescreen_constant::Bool=false,
+    trend_test::Bool=false,
+    prescreen_tol::Float64=1.5,
+    prescreen_q_low::Float64=0.05,
+    prescreen_q_high::Float64=0.95,
+    trend_p_threshold::Float64=0.05,
+)::Vector{Int}
+    opts = FitOptions(
+        cluster_prescreen_constant=prescreen_constant,
+        cluster_trend_test=trend_test,
+        cluster_tol_const=prescreen_tol,
+        cluster_q_low=prescreen_q_low,
+        cluster_q_high=prescreen_q_high,
+        cluster_trend_p_thr=trend_p_threshold,
+    )
+    return findall(_non_growing_mask(curves, times, opts))
 end
 
 # Dispatch to the appropriate clustering algorithm on z-scored curves.
@@ -506,6 +649,29 @@ function _cluster_with_trend_method(
         for (pos, idx) in enumerate(dynamic_idx)
             labels[idx] = sub_labels[pos]
         end
+    end
+    return labels, wcss
+end
+
+function _cluster_with_non_growing_method(
+    zscored_all::Matrix{Float64},
+    non_growing::BitVector,
+    opts::FitOptions,
+)::Tuple{Vector{Int}, Float64}
+    opts.n_clusters <= 1 && return _cluster_dispatch(zscored_all, opts)
+    any(non_growing) || return _cluster_dispatch(zscored_all, opts)
+
+    dynamic_idx = findall(.!non_growing)
+    labels = fill(opts.n_clusters, size(zscored_all, 1))
+    wcss = 0.0
+    if !isempty(dynamic_idx)
+        sub_opts = FitOptions(; (f => getfield(opts, f) for f in fieldnames(FitOptions))...,
+            n_clusters=opts.n_clusters - 1,
+            cluster_trend_test=false,
+            cluster_prescreen_constant=false,
+        )
+        sub_labels, wcss = _cluster_dispatch(zscored_all[dynamic_idx, :], sub_opts)
+        labels[dynamic_idx] = sub_labels
     end
     return labels, wcss
 end
@@ -764,14 +930,19 @@ The algorithm:
    `opts.stationary_win_size` time points (the OD may still rise after the SGR
    threshold is crossed).
 """
-function _find_stationary_cutoff(data_mat::Matrix{Float64}, opts::FitOptions)::Int
+function _find_stationary_cutoff(
+    data_mat::Matrix{Float64},
+    opts::FitOptions;
+    reference_mu_max::Union{Nothing, Float64}=nothing,
+)::Int
     n = size(data_mat, 2)
     index_od = findall(data_mat[2, :] .> opts.stationary_thr_od)
     isempty(index_od) && return n
 
     data_t = data_mat[:, index_od]
     sgr = specific_gr_evaluation(data_t, opts.stationary_pt_smooth_derivative)
-    thr = maximum(sgr) * opts.stationary_percentile_thr
+    mu_max = isnothing(reference_mu_max) ? maximum(sgr) : reference_mu_max
+    thr = mu_max * opts.stationary_percentile_thr
     max_idx = argmax(sgr)
     win = opts.stationary_win_size
 
@@ -790,6 +961,28 @@ function _find_stationary_cutoff(data_mat::Matrix{Float64}, opts::FitOptions)::I
     end
 
     return n
+end
+
+"""
+    find_stationary_cutoff_from_mu(data_mat, mu_max, opts=FitOptions()) -> Int
+
+Find the stationary-phase cutoff using an externally estimated maximum specific
+growth rate `mu_max` as the reference for the SGR threshold. The scan and OD
+peak snapping are otherwise identical to [`_find_stationary_cutoff`](@ref).
+
+This is intended for workflows that first estimate `mu_max` with
+[`fitting_one_well_Log_Lin`](@ref), then derive an empirical carrying capacity
+from `data_mat[2, cutoff]`. It does not alter the legacy log-linear result
+vector, whose 16th element remains the q95-based `N_max_emp`.
+"""
+function find_stationary_cutoff_from_mu(
+    data_mat::Matrix{Float64},
+    mu_max::Real,
+    opts::FitOptions=FitOptions(),
+)::Int
+    mu = Float64(mu_max)
+    isfinite(mu) && mu > 0 || throw(ArgumentError("mu_max must be finite and positive"))
+    return _find_stationary_cutoff(data_mat, opts; reference_mu_max=mu)
 end
 
 # ---------------------------------------------------------------------------
@@ -831,3 +1024,6 @@ function preprocess(data::IrregularGrowthData, opts::FitOptions)::IrregularGrowt
 end
 
 export preprocess
+export apply_blank_timeseries
+export detect_non_growing_indices
+export find_stationary_cutoff_from_mu

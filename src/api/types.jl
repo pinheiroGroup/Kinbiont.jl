@@ -33,9 +33,10 @@ Immutable container for a set of growth curves measured at common time points.
   Row `k` is the mean of the z-scored curves assigned to cluster `k` — a scale-independent
   shape prototype. To obtain original-space prototypes, compute
   `mean(data.curves[data.clusters .== k, :], dims=1)` for each `k`.
-- `wcss::Union{Nothing, Float64}`: within-cluster sum of squares (total SSE) returned
-  by k-means, populated alongside `clusters`. Use this to construct an elbow plot and
-  choose `n_clusters`. `nothing` when clustering was not performed.
+- `wcss::Union{Nothing, Float64}`: historical storage field for the clustering cost,
+  populated alongside `clusters`. It is WCSS for k-means and hierarchical clustering,
+  total distance-to-medoid cost for k-medoids, and `0.0` for DBSCAN. `nothing` when
+  clustering was not performed.
 """
 struct GrowthData
     curves::Matrix{Float64}
@@ -96,7 +97,7 @@ Every field has a sensible default so users only override what they need.
 - `smooth::Bool = false`: apply smoothing before fitting.
 - `smooth_method::Symbol = :lowess`: `:lowess`, `:rolling_avg`, `:gaussian`, `:boxcar`, or `:none`.
 - `smooth_pt_avg::Int = 7`: window size for `:rolling_avg`.
-- `boxcar_window::Int = 5`: half-width of the symmetric boxcar filter (`:boxcar` method).
+- `boxcar_window::Int = 3`: odd width of the symmetric boxcar filter (`:boxcar` method).
   Each point is averaged over `[j - boxcar_window÷2, j + boxcar_window÷2]`. The original
   time grid is preserved (no points dropped).
 - `lowess_frac::Float64 = 0.05`: bandwidth fraction for `:lowess`.
@@ -110,11 +111,22 @@ Every field has a sensible default so users only override what they need.
   `"X"` (discard) are excluded and dropped from the output. Useful when the same
   biological condition was measured in multiple wells.
 - `blank_subtraction::Bool = false`: subtract a blank value from all curves.
-- `blank_value::Float64 = 0.0`: constant blank to subtract when `blank_subtraction=true`
-  and `blank_from_labels=false`.
+- `blank_method::Symbol = :global`: blank-correction policy. `:global` only subtracts
+  `blank_value`; `:pointbypoint` subtracts `blank_timeseries` and shifts the complete
+  curve above zero; `:shift` subtracts `blank_value` and applies the same uniform
+  shift; `:clip` subtracts `blank_value` and floors low values. The aliases
+  `:pointwise` and the legacy `:time_avg` are also accepted.
+- `blank_value::Float64 = 0.0`: constant blank used when `blank_subtraction=true`
+  and `blank_method` is `:global`, `:shift`, or `:clip`.
+- `blank_timeseries::Union{Nothing,Vector{Float64}} = nothing`: explicit per-timepoint
+  blank trace used by `blank_method=:pointbypoint`. Its length must equal the number
+  of time points.
+- `blank_floor::Float64 = 1e-4`: positive floor used automatically by the
+  `:pointbypoint`, `:shift` and `:clip` policies.
 - `blank_from_labels::Bool = false`: when `true` (and `blank_subtraction=true`), compute
-  the blank automatically as the mean OD across all wells whose label is `"b"` in the
-  `GrowthData.labels` vector. Takes precedence over `blank_value`.
+  the blank automatically from wells whose label is `"b"`. With `blank_method=:global`
+  this is one overall mean; with `:pointbypoint` it is the across-blank mean at each time.
+  Takes precedence over `blank_value` and `blank_timeseries`.
 - `correct_negatives::Bool = false`: handle negative values after blank subtraction.
 - `negative_method::Symbol = :remove`: `:remove`, `:thr_correction`, or `:blank_correction`.
 - `negative_threshold::Float64 = 0.01`: floor value used by `:thr_correction`.
@@ -140,7 +152,8 @@ Every field has a sensible default so users only override what they need.
 - `cluster_trend_test::Bool = true`: reserve label `n_clusters` for flat/non-growing
   curves (identified by an OLS slope t-test, p ≥ `cluster_trend_p_thr`). K-means then runs with
   `n_clusters - 1` dynamic groups, so all labels remain in `1..n_clusters`.
-  Requires `n_clusters ≥ 2`. Ignored when `cluster_prescreen_constant=true`.
+  Requires `n_clusters ≥ 2`. When the quantile pre-screen is also enabled,
+  either criterion can assign a curve to the shared non-growing cluster.
 - `cluster_trend_p_thr::Float64 = 0.05`: p-value threshold used by
   `cluster_trend_test`. Curves with no significant linear OD-vs-time slope
   (`p ≥ cluster_trend_p_thr`) are reassigned to the flat cluster.
@@ -182,9 +195,9 @@ Every field has a sensible default so users only override what they need.
   non-reproducible (uses the global RNG); any other value seeds a `MersenneTwister`
   so results are fully reproducible.
 
-After clustering, `processed.wcss` holds the within-cluster sum of squares. Run
-`preprocess` for `n_clusters = 2, 3, 4, ...` and plot `wcss` vs `n_clusters` to
-find the elbow and choose the optimal number of clusters.
+After clustering, `processed.wcss` holds the method-specific clustering cost described
+above. For methods that use `n_clusters`, run `preprocess` over candidate values and
+plot that cost against `n_clusters` to obtain an elbow diagnostic.
 
 # Fitting fields
 - `loss::String = "RE"`: loss function — `"RE"`, `"L2"`, `"L2_derivative"`, etc.
@@ -205,13 +218,16 @@ find the elbow and choose the optimal number of clusters.
     smooth::Bool                = false
     smooth_method::Symbol       = :lowess
     smooth_pt_avg::Int          = 7
-    boxcar_window::Int          = 5
+    boxcar_window::Int          = 3
     lowess_frac::Float64        = 0.05
     gaussian_h_mult::Float64    = 2.0
     gaussian_time_grid::Union{Nothing, Vector{Float64}} = nothing
     average_replicates::Bool    = false
     blank_subtraction::Bool     = false
+    blank_method::Symbol        = :global
     blank_value::Float64        = 0.0
+    blank_timeseries::Union{Nothing, Vector{Float64}} = nothing
+    blank_floor::Float64        = 1e-4
     blank_from_labels::Bool     = false
     correct_negatives::Bool     = false
     negative_method::Symbol     = :remove

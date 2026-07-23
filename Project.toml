@@ -5,7 +5,6 @@ version = "1.4.0"
 
 [deps]
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
-BetaML = "024491cd-cc6b-443e-8034-08ea7eb7db2b"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Catalyst = "479239e8-5488-4da2-87a7-35f2df7eef83"
 ChangePointDetection = "68f453bf-a161-50e8-aafe-8ad75c8d6944"
@@ -55,7 +54,6 @@ KinbiontDataDrivenExt = ["DataDrivenDiffEq", "DataDrivenSparse", "ModelingToolki
 
 [compat]
 AbstractTrees = "0.4.5"
-BetaML = "0.12.1"
 CSV = "0.10.15"
 Catalyst = "14.4.1"
 ChangePointDetection = "1.2.0"
