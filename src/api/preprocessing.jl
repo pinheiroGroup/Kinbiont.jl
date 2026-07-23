@@ -432,7 +432,7 @@ end
     _cluster(curves, times, opts) -> (labels, centroids, cost)
 
 Cluster growth curves and return per-curve labels, per-cluster shape centroids,
-and the method-specific clustering cost stored in the historical `wcss` field.
+and a method-independent WCSS stored in the historical `wcss` field.
 
 Without exponential prototype relabeling, labels lie in `1..opts.n_clusters`.
 When `cluster_exp_prototype=true`, an additional label may be allocated (up to
@@ -442,9 +442,10 @@ each row is the mean of the z-scored curves assigned to that cluster. This captu
 the *shape* of each cluster independently of absolute OD magnitude. To recover
 original-space prototypes, compute the mean of `data.curves[data.clusters .== k, :]`
 for each `k`.
-The cost is WCSS for k-means and hierarchical clustering, total distance to assigned
-medoids for k-medoids, and `0.0` for DBSCAN. Sentinel curves separated by a non-growing
-criterion are excluded from that cost.
+For every supported method, the cost is the sum of squared Euclidean distances
+from each standardized curve to the centroid of its assigned algorithmic cluster.
+Empty clusters, curves assigned to a non-growing sentinel, and DBSCAN noise
+(label `0`) are excluded.
 
 When the quantile pre-screen and slope trend test are enabled together, their union
 forms one non-growing group. For methods with a predefined `k`, clustering runs on
@@ -473,6 +474,11 @@ function _cluster(
     zscored_all = _zscore_rows(curves)
     method      = opts.cluster_method
 
+    # Track the curves that belong to algorithmic clusters. WCSS excludes a
+    # reserved non-growing group and DBSCAN noise, even though both remain in
+    # the returned assignments for display and downstream inspection.
+    wcss_mask = trues(size(curves, 1))
+
     # When both detectors are enabled, their union forms one non-growing class.
     # DBSCAN applies the same union post-hoc because it has no k.
     if (opts.cluster_prescreen_constant || opts.cluster_trend_test) && method != :dbscan
@@ -480,17 +486,26 @@ function _cluster(
         labels, wcss = _cluster_with_non_growing_method(
             zscored_all, non_growing, opts
         )
+        # At k=1 no sentinel is reserved: _cluster_with_non_growing_method
+        # deliberately falls back to a one-cluster all-data baseline.
+        if opts.n_clusters > 1 && any(non_growing)
+            wcss_mask[non_growing] .= false
+        end
     else
         labels, wcss = _cluster_dispatch(zscored_all, opts)
 
         # DBSCAN has no k parameter, so the selected non-growing criteria are
         # applied post-hoc using one fresh label above its cluster ids.
-        if method == :dbscan &&
-           (opts.cluster_prescreen_constant || opts.cluster_trend_test)
-            non_growing = _non_growing_mask(curves, times, opts)
-            if any(non_growing)
-                flat_id = isempty(labels) ? 1 : maximum(labels) + 1
-                labels[non_growing] .= flat_id
+        if method == :dbscan
+            # Label 0 is DBSCAN noise and is never an algorithmic cluster.
+            wcss_mask[labels .== 0] .= false
+            if opts.cluster_prescreen_constant || opts.cluster_trend_test
+                non_growing = _non_growing_mask(curves, times, opts)
+                if any(non_growing)
+                    flat_id = isempty(labels) ? 1 : maximum(labels) + 1
+                    labels[non_growing] .= flat_id
+                    wcss_mask[non_growing] .= false
+                end
             end
         end
     end
@@ -504,16 +519,12 @@ function _cluster(
                                                      centroids_norm, exp_label)
     end
 
-    # Report WCSS with a single, method-independent definition: the total SSE
-    # between every standardized curve and the mean (centroid) of its assigned
-    # cluster, computed over ALL curves — including any flat/constant sentinel
-    # cluster and DBSCAN noise. This overrides the per-method cost so the value
-    # matches the documented "sum of squared Euclidean distances between every
-    # standardized trajectory and its assigned cluster centroid": k-medoids
-    # otherwise returns a sum of *unsquared* distances to medoids, and the
-    # prescreen/trend paths otherwise report the dynamic-subset cost only,
-    # excluding the set-aside curves.
-    wcss = _wcss(zscored_all, labels)
+    # Report WCSS with a single, method-independent definition. Only curves in
+    # non-empty clusters populated by the selected algorithm contribute;
+    # non-growing sentinels and DBSCAN noise are excluded. This intentionally
+    # replaces k-medoids' unsquared distance-to-medoid cost and DBSCAN's lack
+    # of an intrinsic SSE objective with centroid-based squared error.
+    wcss = _wcss(zscored_all, labels; include_mask=wcss_mask)
 
     pos_labels  = filter(>(0), labels)
     n_effective = (isempty(labels) || isempty(pos_labels)) ? opts.n_clusters : maximum(pos_labels)
@@ -522,17 +533,22 @@ function _cluster(
     return labels, centroids, wcss
 end
 
-# Within-cluster sum of squares (total SSE): for every standardized curve, the
-# squared Euclidean distance to the mean (centroid) of its assigned cluster,
-# summed over all curves. Each distinct label defines a group — including a
-# reserved flat/constant sentinel cluster and DBSCAN noise (label 0) — and each
-# curve is measured against its own group's mean. Method-independent so the
-# elbow/sweep plot uses one consistent definition.
-function _wcss(zscored::Matrix{Float64}, labels::Vector{Int})::Float64
+# Within-cluster sum of squares (total SSE): for every included standardized
+# curve, the squared Euclidean distance to the mean (centroid) of its assigned
+# non-empty cluster. The caller excludes non-growing sentinels and DBSCAN noise
+# through `include_mask`. Method-independent so every supported algorithm
+# reports the same quantity.
+function _wcss(
+    zscored::Matrix{Float64},
+    labels::Vector{Int};
+    include_mask::AbstractVector{Bool}=trues(length(labels)),
+)::Float64
     (isempty(labels) || size(zscored, 1) == 0) && return 0.0
+    length(include_mask) == length(labels) ||
+        throw(ArgumentError("include_mask length $(length(include_mask)) ≠ labels length $(length(labels))"))
     total = 0.0
-    for lbl in unique(labels)
-        idxs = findall(==(lbl), labels)
+    for lbl in unique(labels[include_mask])
+        idxs = findall(include_mask .& (labels .== lbl))
         sub  = zscored[idxs, :]
         c    = vec(mean(sub, dims=1))
         for i in axes(sub, 1)

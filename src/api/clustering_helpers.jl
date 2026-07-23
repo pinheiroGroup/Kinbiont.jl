@@ -427,6 +427,161 @@ function _annotation_well_sets(path::String)
     return excluded, blanks
 end
 
+function _gui_annotation_path(
+    experiment_dir::String,
+    channel::Int,
+    channel_annotation::Bool,
+)::String
+    if !channel_annotation
+        path = joinpath(experiment_dir, "annotation_clean.csv")
+        isfile(path) || error("Annotation file not found: $path")
+        return path
+    end
+
+    files = try
+        readdir(experiment_dir)
+    catch
+        String[]
+    end
+    prefix = "annotation_channel_$(channel)_"
+    candidates = sort(filter(
+        f -> startswith(f, prefix) && endswith(f, ".csv"),
+        files,
+    ))
+    !isempty(candidates) && return joinpath(experiment_dir, first(candidates))
+
+    has_channel_annotations = any(
+        f -> occursin(r"^annotation_channel_\d+_", f),
+        files,
+    )
+    if !has_channel_annotations
+        fallback = joinpath(experiment_dir, "annotation_clean.csv")
+        isfile(fallback) && return fallback
+    end
+    error("No annotation file found for channel $channel in $experiment_dir")
+end
+
+function _gui_blank_summary(
+    blank_curves::Vector{Vector{Float64}},
+    n_timepoints::Int,
+)::Tuple{Float64,Vector{Float64}}
+    isempty(blank_curves) && return 0.0, zeros(Float64, n_timepoints)
+
+    values = filter(!isnan, reduce(vcat, blank_curves))
+    blank_value = isempty(values) ? 0.0 : mean(values)
+    blank_timeseries = Vector{Float64}(undef, n_timepoints)
+    for j in 1:n_timepoints
+        at_time = Float64[]
+        for curve in blank_curves
+            j <= length(curve) || continue
+            isnan(curve[j]) || push!(at_time, curve[j])
+        end
+        blank_timeseries[j] = isempty(at_time) ? NaN : mean(at_time)
+    end
+    valid = filter(!isnan, blank_timeseries)
+    fallback = isempty(valid) ? 0.0 : mean(valid)
+    replace!(blank_timeseries, NaN => fallback)
+    return blank_value, blank_timeseries
+end
+
+"""
+    load_gui_experiment_data(clean_data_path, experiment;
+                             channel=1, channel_annotation=false)
+
+Load one experiment from GUIbiont's `Clean_data` layout without using any
+browser-produced result. `clean_data_path` is the user-selected local path,
+and `experiment` identifies its subdirectory.
+
+The returned named tuple contains:
+- `data`: raw nonblank, non-discarded wells as a [`GrowthData`](@ref);
+- `blank_value`: the mean of all finite readings in wells annotated `"b"`;
+- `blank_timeseries`: the pointwise mean of those annotated blank wells;
+- `blank_labels` and `excluded_labels`.
+
+Set `channel_annotation=true` for GUIbiont replicate selections: the loader
+then uses `annotation_channel_N_*.csv` for the selected channel, falling back
+to `annotation_clean.csv` only when no channel-specific annotations exist.
+This helper is intended for exported workflows, which can recompute blank
+correction and fitting directly from source files.
+"""
+function load_gui_experiment_data(
+    clean_data_path::String,
+    experiment::String;
+    channel::Int=1,
+    channel_annotation::Bool=false,
+)
+    experiment_dir = joinpath(clean_data_path, experiment)
+    data_file = joinpath(experiment_dir, "data_channel_$(channel).csv")
+    isfile(data_file) || error("Data file not found: $data_file")
+    annotation_file = _gui_annotation_path(
+        experiment_dir,
+        channel,
+        channel_annotation,
+    )
+
+    raw = CSV.read(data_file, DataFrame; header=1, silencewarnings=true)
+    names_raw = String.(names(raw))
+    length(names_raw) >= 2 || error("Data file must contain time and at least one well")
+    time_data = raw[!, names(raw)[1]]
+    times = if nonmissingtype(eltype(time_data)) <: AbstractString
+        parsed = [tryparse(Float64, string(t)) for t in time_data[2:end]]
+        any(==(nothing), parsed) ?
+            Float64.(0:(nrow(raw) - 1)) :
+            [0.0; Float64.(parsed)]
+    else
+        numeric = _to_f64_vector(time_data)
+        any(isnan, numeric) ? Float64.(0:(nrow(raw) - 1)) : numeric
+    end
+
+    annotation = CSV.read(
+        annotation_file,
+        DataFrame;
+        header=false,
+        silencewarnings=true,
+        stringtype=String,
+    )
+    excluded = Set{String}()
+    blanks = Set{String}()
+    for i in 1:nrow(annotation)
+        ncol(annotation) >= 2 || continue
+        well = string(annotation[i, 1])
+        marker_raw = annotation[i, 2]
+        marker = ismissing(marker_raw) ? "X" : string(marker_raw)
+        marker in ("", "missing") && (marker = "X")
+        marker in ("b", "X", "x") && push!(excluded, well)
+        marker == "b" && push!(blanks, well)
+    end
+
+    sample_labels = String[]
+    sample_curves = Vector{Vector{Float64}}()
+    blank_labels = String[]
+    blank_curves = Vector{Vector{Float64}}()
+    for well in names_raw[2:end]
+        curve = _to_f64_vector(raw[!, well])
+        if well in blanks
+            push!(blank_labels, well)
+            push!(blank_curves, curve)
+        elseif !(well in excluded)
+            push!(sample_labels, well)
+            push!(sample_curves, curve)
+        end
+    end
+    isempty(sample_curves) && error("No nonblank sample wells found in $data_file")
+
+    curves = reduce(vcat, permutedims.(sample_curves))
+    blank_value, blank_timeseries = _gui_blank_summary(
+        blank_curves,
+        length(times),
+    )
+    return (
+        data=GrowthData(curves, times, sample_labels),
+        blank_value=blank_value,
+        blank_timeseries=blank_timeseries,
+        blank_labels=sort(blank_labels),
+        excluded_labels=sort(collect(excluded)),
+    )
+end
+
 function _load_clustering_experiments(clean_data_path::String, experiments::Vector{String})
     times_all = Vector{Vector{Float64}}()
     curves_all = Vector{Vector{Float64}}()
@@ -713,3 +868,4 @@ export apply_grouped_blank_subtraction
 export derive_blank_from_non_growing
 export cluster_quality_indices
 export prepare_clustering_data
+export load_gui_experiment_data
