@@ -844,7 +844,7 @@ end
             "A1,b\nA2,X\nB1,sample\n",
         )
 
-        loaded = load_gui_experiment_data(root, "exp1")
+        loaded = load_experiment_data(root, "exp1")
         @test loaded.data.labels == ["B1"]
         @test loaded.data.times == [0.0, 1.0, 2.0]
         @test vec(loaded.data.curves) == [0.2, 0.5, 0.9]
