@@ -4,7 +4,7 @@
 
 import OptimizationNLopt
 
-const GUI_BATCH_OPTIMIZER_MAP = Dict{String, Any}(
+const BATCH_OPTIMIZER_MAP = Dict{String, Any}(
     "LN_BOBYQA" => OptimizationNLopt.NLopt.LN_BOBYQA,
     "LN_COBYLA" => OptimizationNLopt.NLopt.LN_COBYLA,
     "GN_ISRES" => OptimizationNLopt.NLopt.GN_ISRES,
@@ -12,14 +12,14 @@ const GUI_BATCH_OPTIMIZER_MAP = Dict{String, Any}(
     "BBO_adaptive_de_rand_1_bin_radiuslimited" => BBO_adaptive_de_rand_1_bin_radiuslimited(),
 )
 
-_gui_batch_optimizer(name::String) = get(GUI_BATCH_OPTIMIZER_MAP, name, GUI_BATCH_OPTIMIZER_MAP["LN_BOBYQA"])
+_batch_optimizer(name::String) = get(BATCH_OPTIMIZER_MAP, name, BATCH_OPTIMIZER_MAP["LN_BOBYQA"])
 
-function _gui_batch_model_name(m)
+function _batch_model_name(m)
     m isa LogLinModel && return "log_lin"
     return m.name
 end
 
-function _gui_batch_csv_cell(x)
+function _batch_csv_cell(x)
     if x === missing || x === nothing
         return "\"\""
     elseif x isa AbstractFloat && !isfinite(x)
@@ -28,22 +28,22 @@ function _gui_batch_csv_cell(x)
     return "\"" * replace(string(x), "\"" => "\"\"") * "\""
 end
 
-function _gui_batch_write_csv(path::String, header, rows)
+function _batch_write_csv(path::String, header, rows)
     open(path, "w") do io
-        println(io, join(_gui_batch_csv_cell.(header), ","))
+        println(io, join(_batch_csv_cell.(header), ","))
         for row in rows
-            println(io, join(_gui_batch_csv_cell.(row), ","))
+            println(io, join(_batch_csv_cell.(row), ","))
         end
     end
 end
 
-function _gui_batch_format_time(t)
+function _batch_format_time(t)
     !isfinite(t) && return string(t)
     isapprox(t, round(t); atol=1e-10) && return string(Int(round(t)))
     return string(Float64(round(t; sigdigits=12)))
 end
 
-function _gui_batch_quantile(values, p)
+function _batch_quantile(values, p)
     xs = sort(Float64[v for v in values if isfinite(v)])
     isempty(xs) && return NaN
     length(xs) == 1 && return xs[1]
@@ -54,11 +54,11 @@ function _gui_batch_quantile(values, p)
     return xs[lo] + (pos - lo) * (xs[hi] - xs[lo])
 end
 
-_gui_batch_positive_or(x, fallback) = isfinite(x) && x > 0 ? Float64(x) : Float64(fallback)
-_gui_batch_clip_initial(x; lower=1e-6, upper=49.0) =
+_batch_positive_or(x, fallback) = isfinite(x) && x > 0 ? Float64(x) : Float64(fallback)
+_batch_clip_initial(x; lower=1e-6, upper=49.0) =
     isfinite(x) ? clamp(Float64(x), Float64(lower), Float64(upper)) : 1.0
 
-function _gui_batch_growth_features(time_numeric::Vector{Float64}, od_for_fit::Vector{Float64})
+function _batch_growth_features(time_numeric::Vector{Float64}, od_for_fit::Vector{Float64})
     valid = findall(i -> isfinite(time_numeric[i]) && isfinite(od_for_fit[i]), eachindex(time_numeric))
     if length(valid) < 2
         return Dict{Symbol, Float64}(
@@ -73,11 +73,11 @@ function _gui_batch_growth_features(time_numeric::Vector{Float64}, od_for_fit::V
     ord = sortperm(time_numeric[valid])
     t = time_numeric[valid][ord]
     y = max.(od_for_fit[valid][ord], 1e-6)
-    duration = _gui_batch_positive_or(t[end] - t[1], 1.0)
+    duration = _batch_positive_or(t[end] - t[1], 1.0)
     n_edge = clamp(ceil(Int, length(y) * 0.1), 2, min(8, length(y)))
-    baseline = max(_gui_batch_quantile(y[1:n_edge], 0.5), minimum(y), 1e-4)
-    late_level = _gui_batch_quantile(y[end-n_edge+1:end], 0.5)
-    plateau = max(_gui_batch_quantile(y, 0.95), late_level, baseline + 1e-4)
+    baseline = max(_batch_quantile(y[1:n_edge], 0.5), minimum(y), 1e-4)
+    late_level = _batch_quantile(y[end-n_edge+1:end], 0.5)
+    plateau = max(_batch_quantile(y, 0.95), late_level, baseline + 1e-4)
     amplitude = max(plateau - baseline, maximum(y) - minimum(y), 1e-4)
 
     slopes = Float64[]
@@ -95,7 +95,7 @@ function _gui_batch_growth_features(time_numeric::Vector{Float64}, od_for_fit::V
     max_slope = isempty(pos_slopes) ? amplitude / duration : maximum(pos_slopes)
     pos_log_slopes = filter(x -> isfinite(x) && x > 0, log_slopes)
     max_log_slope = isempty(pos_log_slopes) ? 0.0 : maximum(pos_log_slopes)
-    growth_rate = _gui_batch_clip_initial(max(max_log_slope, 4 * max_slope / max(plateau, 1e-4), 1 / duration); upper=20.0)
+    growth_rate = _batch_clip_initial(max(max_log_slope, 4 * max_slope / max(plateau, 1e-4), 1 / duration); upper=20.0)
 
     function first_cross(thr)
         idx = findfirst(v -> v >= thr, y)
@@ -105,25 +105,25 @@ function _gui_batch_growth_features(time_numeric::Vector{Float64}, od_for_fit::V
     mid_time = clamp(first_cross(baseline + 0.50 * amplitude), t[1], t[end])
     inflection = isempty(slope_times) ? t[1] : slope_times[argmax(slopes)]
     tail_start = max(1, length(slopes) - max(1, ceil(Int, 0.2 * length(slopes))) + 1)
-    terminal_slope = isempty(slopes) ? 0.0 : _gui_batch_quantile(slopes[tail_start:end], 0.5)
+    terminal_slope = isempty(slopes) ? 0.0 : _batch_quantile(slopes[tail_start:end], 0.5)
 
     return Dict{Symbol, Float64}(
-        :baseline => _gui_batch_clip_initial(baseline),
-        :plateau => _gui_batch_clip_initial(plateau),
-        :amplitude => _gui_batch_clip_initial(amplitude),
+        :baseline => _batch_clip_initial(baseline),
+        :plateau => _batch_clip_initial(plateau),
+        :amplitude => _batch_clip_initial(amplitude),
         :growth_rate => growth_rate,
-        :max_slope => _gui_batch_clip_initial(max_slope),
-        :lag_time => _gui_batch_clip_initial(lag_time - t[1]; upper=duration),
-        :mid_time => _gui_batch_clip_initial(mid_time - t[1]; upper=duration),
-        :inflection_time => _gui_batch_clip_initial(inflection - t[1]; upper=duration),
-        :doubling_time => _gui_batch_clip_initial(log(2) / growth_rate; upper=duration),
+        :max_slope => _batch_clip_initial(max_slope),
+        :lag_time => _batch_clip_initial(lag_time - t[1]; upper=duration),
+        :mid_time => _batch_clip_initial(mid_time - t[1]; upper=duration),
+        :inflection_time => _batch_clip_initial(inflection - t[1]; upper=duration),
+        :doubling_time => _batch_clip_initial(log(2) / growth_rate; upper=duration),
         :duration => duration,
-        :terminal_slope => _gui_batch_clip_initial(abs(terminal_slope); upper=20.0),
-        :q0 => _gui_batch_clip_initial(exp(-growth_rate * max(lag_time - t[1], 0.0)); upper=50.0),
+        :terminal_slope => _batch_clip_initial(abs(terminal_slope); upper=20.0),
+        :q0 => _batch_clip_initial(exp(-growth_rate * max(lag_time - t[1], 0.0)); upper=50.0),
     )
 end
 
-const GUI_BATCH_MODEL_INIT = Dict{String, Function}(
+const BATCH_MODEL_INIT = Dict{String, Function}(
     "aHPM" => f -> [f[:growth_rate], 1.0/max(f[:lag_time], 0.1), f[:plateau], 1.0],
     "HPM" => f -> [f[:growth_rate], 1.0/max(f[:lag_time], 0.1), f[:plateau]],
     "HPM_exp" => f -> [f[:growth_rate], 1.0/max(f[:lag_time], 0.1)],
@@ -150,7 +150,7 @@ const GUI_BATCH_MODEL_INIT = Dict{String, Function}(
     "NL_Bertalanffy" => f -> [f[:baseline], f[:plateau], f[:growth_rate], 1.0],
 )
 
-function _gui_batch_initial_value(param_name, features)
+function _batch_initial_value(param_name, features)
     # Priority-ordered substring match: more specific suffix/prefix tokens
     # (e.g. "nlag", "death", "doubl") are checked before broader ones
     # ("lag", "growth"). Reordering this block changes which initial value
@@ -164,7 +164,7 @@ function _gui_batch_initial_value(param_name, features)
            occursin("decline", compact) || occursin("mort", compact) ||
            occursin("inhib", compact) || occursin("inactiv", compact) ||
            occursin("resist", compact)
-        return _gui_batch_clip_initial(0.05 * features[:growth_rate]; upper=20.0)
+        return _batch_clip_initial(0.05 * features[:growth_rate]; upper=20.0)
     elseif occursin("doubl", compact) || compact in ("dt", "td")
         return features[:doubling_time]
     elseif occursin("slope", compact) || occursin("linear", compact)
@@ -194,18 +194,18 @@ function _gui_batch_initial_value(param_name, features)
     return 1.0
 end
 
-function _gui_batch_initial_params(model_name::String, model, t, y)
-    features = _gui_batch_growth_features(t, y)
-    if haskey(GUI_BATCH_MODEL_INIT, model_name)
-        init = GUI_BATCH_MODEL_INIT[model_name](features)
+function _batch_initial_params(model_name::String, model, t, y)
+    features = _batch_growth_features(t, y)
+    if haskey(BATCH_MODEL_INIT, model_name)
+        init = BATCH_MODEL_INIT[model_name](features)
         length(init) == length(model.param_names) &&
-            return [_gui_batch_clip_initial(Float64(v)) for v in init]
+            return [_batch_clip_initial(Float64(v)) for v in init]
     end
-    return [_gui_batch_clip_initial(_gui_batch_initial_value(name, features)) for name in model.param_names]
+    return [_batch_clip_initial(_batch_initial_value(name, features)) for name in model.param_names]
 end
 
-function _gui_batch_param_bounds(model, t, y)
-    features = _gui_batch_growth_features(t, y)
+function _batch_param_bounds(model, t, y)
+    features = _batch_growth_features(t, y)
     lower = Float64[]
     upper = Float64[]
     plateau_cap = max(features[:plateau] * 3, 1.0)
@@ -231,7 +231,7 @@ function _gui_batch_param_bounds(model, t, y)
     return lower, upper
 end
 
-function _gui_batch_linear_interp(x, xs, ys)
+function _batch_linear_interp(x, xs, ys)
     isempty(xs) && return NaN
     x <= first(xs) && return Float64(first(ys))
     x >= last(xs) && return Float64(last(ys))
@@ -245,13 +245,13 @@ function _gui_batch_linear_interp(x, xs, ys)
     return Float64(last(ys))
 end
 
-function _gui_batch_loss_rmse(t, y, fit_t, fit_y, score_end)
+function _batch_loss_rmse(t, y, fit_t, fit_y, score_end)
     isempty(fit_t) && return Inf
     ss = 0.0
     n = 0
     for (i, ti) in enumerate(t)
         (ti < first(fit_t) || ti > min(score_end, last(fit_t))) && continue
-        pred = _gui_batch_linear_interp(ti, fit_t, fit_y)
+        pred = _batch_linear_interp(ti, fit_t, fit_y)
         isfinite(pred) || continue
         ss += (y[i] - pred)^2
         n += 1
@@ -259,7 +259,7 @@ function _gui_batch_loss_rmse(t, y, fit_t, fit_y, score_end)
     return n == 0 ? Inf : sqrt(ss / n)
 end
 
-function _gui_prepare_curve(
+function _batch_prepare_curve(
     od_raw::Vector{Float64};
     blank_value::Real=0.0,
     subtract_blank::Bool=false,
@@ -292,7 +292,7 @@ function _gui_prepare_curve(
     )
 end
 
-function _gui_batch_run_attempt(
+function _batch_run_attempt(
     optimizer::String,
     time_numeric::Vector{Float64},
     od_for_fit::Vector{Float64},
@@ -313,8 +313,8 @@ function _gui_batch_run_attempt(
     model_keys = isempty(model_names) ? [model_name] : filter(!=("log_lin"), model_names)
     isempty(model_keys) && error("No parametric models selected")
     models = [MODEL_REGISTRY[k] for k in model_keys]
-    initial_params = [_gui_batch_initial_params(model_keys[i], models[i], time_fit, od_fit) for i in eachindex(models)]
-    bounds = [_gui_batch_param_bounds(m, time_fit, od_fit) for m in models]
+    initial_params = [_batch_initial_params(model_keys[i], models[i], time_fit, od_fit) for i in eachindex(models)]
+    bounds = [_batch_param_bounds(m, time_fit, od_fit) for m in models]
     lower = Union{Nothing, Vector{Float64}}[b[1] for b in bounds]
     upper = Union{Nothing, Vector{Float64}}[b[2] for b in bounds]
     spec = ModelSpec(models, initial_params; lower=lower, upper=upper)
@@ -329,7 +329,7 @@ function _gui_batch_run_attempt(
         stationary_pt_smooth_derivative=10,
         stationary_win_size=5,
         loss="RE",
-        optimizer=_gui_batch_optimizer(optimizer),
+        optimizer=_batch_optimizer(optimizer),
         opt_params=opt_params,
     )
 
@@ -346,14 +346,14 @@ function _gui_batch_run_attempt(
     return (
         best_params=r.best_params,
         param_names=r.best_model.param_names,
-        model_name=_gui_batch_model_name(r.best_model),
+        model_name=_batch_model_name(r.best_model),
         fit_time_out=fit_time_out,
         fit_od_out=fit_od_out,
         preprocessed_time=preprocessed_time,
         preprocessed_od=preprocessed_od_out,
         stationary_phase_start=stationary_phase_start,
         aic=r.best_aic,
-        loss_rmse=_gui_batch_loss_rmse(
+        loss_rmse=_batch_loss_rmse(
             preprocessed_time,
             preprocessed_od,
             Float64.(r.times),
@@ -393,7 +393,7 @@ function loglin_stationary_nmax(
     return isfinite(nmax) ? nmax : NaN
 end
 
-function _gui_batch_loglin_fields(t, y, label, experiment; pt_avg=7, pt_deriv=7, pt_min_win=7, threshold=0.9)
+function _batch_loglin_fields(t, y, label, experiment; pt_avg=7, pt_deriv=7, pt_min_win=7, threshold=0.9)
     out = Dict{String, Any}(
         "gr_loglin" => NaN,
         "gr_loglin_se" => NaN,
@@ -439,7 +439,7 @@ function _gui_batch_loglin_fields(t, y, label, experiment; pt_avg=7, pt_deriv=7,
     return out
 end
 
-function _gui_batch_fit_one(
+function _batch_fit_one(
     time_numeric::Vector{Float64},
     od_raw::Vector{Float64},
     label::String,
@@ -468,7 +468,7 @@ function _gui_batch_fit_one(
         throw(ArgumentError("smooth_window must be an odd integer greater than or equal to 3"))
     end
 
-    prepared = _gui_prepare_curve(
+    prepared = _batch_prepare_curve(
         od_raw;
         blank_value,
         subtract_blank,
@@ -494,7 +494,7 @@ function _gui_batch_fit_one(
     outcomes = NamedTuple[]
     for (opt, run_idx) in attempts
         try
-            res = _gui_batch_run_attempt(
+            res = _batch_run_attempt(
                 opt, time_numeric, od_for_fit, shift,
                 subtract_blank, blank_value, label, model_name, model_names,
                 maxiters, abstol, smooth, smooth_window,
@@ -552,7 +552,7 @@ function _gui_batch_fit_one(
         result["smoothed_od"] = win.preprocessed_od
     end
     if compute_loglin
-        merge!(result, _gui_batch_loglin_fields(
+        merge!(result, _batch_loglin_fields(
             time_numeric, od_for_fit, label, experiment;
             pt_avg=loglin_pt_avg,
             pt_deriv=loglin_pt_smoothing_derivative,
@@ -643,7 +643,7 @@ function kinbiont_batch_fit(
             continue
         end
         try
-            push!(results, _gui_batch_fit_one(
+            push!(results, _batch_fit_one(
                 tv, yv, label, experiment;
                 blank_value=blank_value,
                 subtract_blank=blank_subtraction,
@@ -685,12 +685,12 @@ function kinbiont_batch_fit(
 end
 
 """
-    save_gui_batch_results(batch, dir="."; prefix=nothing)
+    save_batch_results(batch, dir="."; prefix=nothing)
 
 Write GUIbiont-compatible batch summary and fitted-curve CSV files. Returns
 `(summary=..., fitted_curves=...)`.
 """
-function save_gui_batch_results(batch, dir::String="."; prefix::Union{Nothing, String}=nothing)
+function save_batch_results(batch, dir::String="."; prefix::Union{Nothing, String}=nothing)
     mkpath(dir)
     prefix = prefix === nothing ? "$(batch.experiment)_batch_fit" : prefix
     results = batch.results
@@ -723,24 +723,24 @@ function save_gui_batch_results(batch, dir::String="."; prefix::Union{Nothing, S
         push!(summary_rows, row)
     end
     summary_path = joinpath(dir, prefix * ".csv")
-    _gui_batch_write_csv(summary_path, summary_header, summary_rows)
+    _batch_write_csv(summary_path, summary_header, summary_rows)
 
-    curve_times = [_gui_batch_format_time.(r["fit_time"]) for r in results if haskey(r, "fit_time")]
+    curve_times = [_batch_format_time.(r["fit_time"]) for r in results if haskey(r, "fit_time")]
     time_labels = isempty(curve_times) ? String[] :
         sort(unique(vcat(curve_times...)); by=x -> parse(Float64, x))
     curve_header = Any["experiment", "well", "model", ["t_" * t for t in time_labels]...]
     curve_rows = Vector{Vector{Any}}()
     for r in results
-        by_time = Dict(_gui_batch_format_time(r["fit_time"][i]) => r["fit_od"][i] for i in eachindex(r["fit_time"]))
+        by_time = Dict(_batch_format_time(r["fit_time"][i]) => r["fit_od"][i] for i in eachindex(r["fit_time"]))
         push!(curve_rows, Any[batch.experiment, r["well"], r["model"], [get(by_time, t, "") for t in time_labels]...])
     end
     fitted_path = joinpath(dir, prefix * "_fitted_curves.csv")
-    _gui_batch_write_csv(fitted_path, curve_header, curve_rows)
+    _batch_write_csv(fitted_path, curve_header, curve_rows)
 
     return (summary=summary_path, fitted_curves=fitted_path)
 end
 
-function _gui_batch_fit_loglin_one(
+function _batch_fit_loglin_one(
     time_numeric::Vector{Float64},
     od_raw::Vector{Float64},
     label::String,
@@ -759,7 +759,7 @@ function _gui_batch_fit_loglin_one(
     thr_lowess::Float64=0.05,
     unblanked_floor::Float64=1e-4,
 )
-    prepared = _gui_prepare_curve(
+    prepared = _batch_prepare_curve(
         od_raw;
         blank_value,
         subtract_blank,
@@ -856,7 +856,7 @@ function kinbiont_fit_loglin(
     length(valid) >= min_pts || throw(ArgumentError("Insufficient data points"))
 
     blank_ts = isempty(blank_timeseries) ? Float64[] : Float64.(blank_timeseries[valid])
-    return _gui_batch_fit_loglin_one(
+    return _batch_fit_loglin_one(
         Float64.(t[valid]), Float64.(y[valid]), selected_label, experiment;
         blank_value,
         subtract_blank=blank_subtraction,
@@ -953,7 +953,7 @@ function kinbiont_batch_loglin(
         end
         blank_ts = isempty(blank_timeseries) ? Float64[] : Float64.(blank_timeseries[valid])
         try
-            push!(results, _gui_batch_fit_loglin_one(
+            push!(results, _batch_fit_loglin_one(
                 tv, yv, label, experiment;
                 blank_value=blank_value,
                 subtract_blank=blank_subtraction,
@@ -984,11 +984,11 @@ function kinbiont_batch_loglin(
 end
 
 """
-    save_gui_batch_loglin_results(batch, dir="."; prefix=nothing)
+    save_batch_loglin_results(batch, dir="."; prefix=nothing)
 
 Write GUIbiont-compatible `batch_fit_loglin` CSV output.
 """
-function save_gui_batch_loglin_results(batch, dir::String="."; prefix::Union{Nothing, String}=nothing)
+function save_batch_loglin_results(batch, dir::String="."; prefix::Union{Nothing, String}=nothing)
     mkpath(dir)
     prefix = prefix === nothing ? "$(batch.experiment)_batch_fit_loglin" : prefix
     header = Any["experiment", "well", "method",
@@ -1009,13 +1009,13 @@ function save_gui_batch_loglin_results(batch, dir::String="."; prefix::Union{Not
         ])
     end
     path = joinpath(dir, prefix * ".csv")
-    _gui_batch_write_csv(path, header, rows)
+    _batch_write_csv(path, header, rows)
     return (summary=path,)
 end
 
 export kinbiont_batch_fit
-export save_gui_batch_results
+export save_batch_results
 export loglin_stationary_nmax
 export kinbiont_fit_loglin
 export kinbiont_batch_loglin
-export save_gui_batch_loglin_results
+export save_batch_loglin_results

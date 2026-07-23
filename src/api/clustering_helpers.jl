@@ -427,7 +427,7 @@ function _annotation_well_sets(path::String)
     return excluded, blanks
 end
 
-function _gui_annotation_path(
+function _experiment_annotation_path(
     experiment_dir::String,
     channel::Int,
     channel_annotation::Bool,
@@ -461,7 +461,7 @@ function _gui_annotation_path(
     error("No annotation file found for channel $channel in $experiment_dir")
 end
 
-function _gui_blank_summary(
+function _blank_summary(
     blank_curves::Vector{Vector{Float64}},
     n_timepoints::Int,
 )::Tuple{Float64,Vector{Float64}}
@@ -485,7 +485,7 @@ function _gui_blank_summary(
 end
 
 """
-    load_gui_experiment_data(clean_data_path, experiment;
+    load_experiment_data(clean_data_path, experiment;
                              channel=1, channel_annotation=false)
 
 Load one experiment from GUIbiont's `Clean_data` layout without using any
@@ -504,7 +504,7 @@ to `annotation_clean.csv` only when no channel-specific annotations exist.
 This helper is intended for exported workflows, which can recompute blank
 correction and fitting directly from source files.
 """
-function load_gui_experiment_data(
+function load_experiment_data(
     clean_data_path::String,
     experiment::String;
     channel::Int=1,
@@ -513,7 +513,7 @@ function load_gui_experiment_data(
     experiment_dir = joinpath(clean_data_path, experiment)
     data_file = joinpath(experiment_dir, "data_channel_$(channel).csv")
     isfile(data_file) || error("Data file not found: $data_file")
-    annotation_file = _gui_annotation_path(
+    annotation_file = _experiment_annotation_path(
         experiment_dir,
         channel,
         channel_annotation,
@@ -569,7 +569,7 @@ function load_gui_experiment_data(
     isempty(sample_curves) && error("No nonblank sample wells found in $data_file")
 
     curves = reduce(vcat, permutedims.(sample_curves))
-    blank_value, blank_timeseries = _gui_blank_summary(
+    blank_value, blank_timeseries = _blank_summary(
         blank_curves,
         length(times),
     )
@@ -868,4 +868,4 @@ export apply_grouped_blank_subtraction
 export derive_blank_from_non_growing
 export cluster_quality_indices
 export prepare_clustering_data
-export load_gui_experiment_data
+export load_experiment_data

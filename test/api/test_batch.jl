@@ -123,7 +123,7 @@ using DataFrames
         @test haskey(r, "loglin_converged")
     end
 
-    @testset "save_gui_batch_results roundtrip" begin
+    @testset "save_batch_results roundtrip" begin
         batch = kinbiont_batch_fit(
             data;
             experiment="rt",
@@ -133,7 +133,7 @@ using DataFrames
             maxiters=2000,
         )
         tmpdir = mktempdir()
-        paths  = save_gui_batch_results(batch, tmpdir; prefix="rt_batch")
+        paths  = save_batch_results(batch, tmpdir; prefix="rt_batch")
 
         @test hasproperty(paths, :summary)
         @test hasproperty(paths, :fitted_curves)
@@ -193,10 +193,10 @@ using DataFrames
         @test r_from_opts["N_max_emp"] == r["N_max_emp"]
     end
 
-    @testset "save_gui_batch_loglin_results roundtrip" begin
+    @testset "save_batch_loglin_results roundtrip" begin
         batch = kinbiont_batch_loglin(data; experiment="llrt", labels=["well_A"])
         tmpdir = mktempdir()
-        paths  = save_gui_batch_loglin_results(batch, tmpdir; prefix="llrt_batch")
+        paths  = save_batch_loglin_results(batch, tmpdir; prefix="llrt_batch")
 
         @test hasproperty(paths, :summary)
         @test isfile(paths.summary)
