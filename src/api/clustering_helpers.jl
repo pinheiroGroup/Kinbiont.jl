@@ -299,6 +299,109 @@ function derive_blank_from_non_growing(
 end
 
 """
+    derive_blank_from_non_growing_sources(source_curves, source_times,
+        source_labels, source_groups, detection_curves, detection_times,
+        detection_labels; kwargs...)
+
+Detect non-growing rows on a prepared clustering grid, then map the selected
+labels back to their original source curves. Annotated and derived blanks are
+combined and applied to the remaining source curves before interpolation or
+irregular-grid construction. This keeps measurement-index blank subtraction
+on one shared source schedule instead of mixing raw and resampled indices.
+"""
+function derive_blank_from_non_growing_sources(
+    source_curves::Vector{Vector{Float64}},
+    source_times::Vector{Vector{Float64}},
+    source_labels::Vector{String},
+    source_groups::Vector{String},
+    detection_curves::Matrix{Float64},
+    detection_times::Vector{Float64},
+    detection_labels::Vector{String};
+    annotated_blank_curves::Vector{Vector{Float64}}=Vector{Vector{Float64}}(),
+    annotated_blank_times::Vector{Vector{Float64}}=Vector{Vector{Float64}}(),
+    annotated_blank_groups::Vector{String}=String[],
+    annotated_blank_labels::Vector{String}=String[],
+    prescreen_constant::Bool=false,
+    trend_test::Bool=false,
+    prescreen_tol::Float64=1.5,
+    prescreen_q_low::Float64=0.05,
+    prescreen_q_high::Float64=0.95,
+    trend_p_threshold::Float64=0.05,
+    blank_method::Symbol=:pointbypoint,
+    blank_floor::Union{Nothing,Float64}=1e-4,
+)
+    length(source_curves) == length(source_times) ==
+        length(source_labels) == length(source_groups) || throw(ArgumentError(
+        "source curves, times, labels, and groups must have the same length"
+    ))
+    size(detection_curves, 1) == length(detection_labels) || throw(ArgumentError(
+        "detection_curves must contain one row per detection label"
+    ))
+    length(unique(source_labels)) == length(source_labels) || throw(ArgumentError(
+        "source labels must be unique"
+    ))
+    length(unique(detection_labels)) == length(detection_labels) || throw(ArgumentError(
+        "detection labels must be unique"
+    ))
+    length(annotated_blank_curves) == length(annotated_blank_times) ==
+        length(annotated_blank_groups) == length(annotated_blank_labels) ||
+        throw(ArgumentError(
+            "annotated blank curves, times, groups, and labels must have the same length"
+        ))
+
+    source_index = Dict(label => i for (i, label) in enumerate(source_labels))
+    missing_labels = filter(label -> !haskey(source_index, label), detection_labels)
+    isempty(missing_labels) || throw(ArgumentError(
+        "detection labels missing from source data: $(join(missing_labels, ", "))"
+    ))
+
+    derived_idx = detect_non_growing_indices(
+        detection_curves, detection_times;
+        prescreen_constant, trend_test, prescreen_tol,
+        prescreen_q_low, prescreen_q_high, trend_p_threshold,
+    )
+    keep_idx = setdiff(eachindex(detection_labels), derived_idx)
+    derived_labels = detection_labels[derived_idx]
+    remaining_labels = detection_labels[keep_idx]
+    derived_source_idx = [source_index[label] for label in derived_labels]
+    remaining_source_idx = [source_index[label] for label in remaining_labels]
+
+    all_blank_curves = vcat(
+        annotated_blank_curves,
+        source_curves[derived_source_idx],
+    )
+    all_blank_times = vcat(
+        annotated_blank_times,
+        source_times[derived_source_idx],
+    )
+    all_blank_groups = vcat(
+        annotated_blank_groups,
+        source_groups[derived_source_idx],
+    )
+    all_blank_labels = vcat(annotated_blank_labels, derived_labels)
+
+    corrected, corrected_mask = apply_grouped_blank_subtraction(
+        source_curves[remaining_source_idx],
+        source_times[remaining_source_idx],
+        source_groups[remaining_source_idx],
+        all_blank_curves,
+        all_blank_times,
+        all_blank_groups;
+        method=blank_method,
+        floor=blank_floor,
+    )
+    return (
+        curves=corrected,
+        times=source_times[remaining_source_idx],
+        labels=remaining_labels,
+        groups=source_groups[remaining_source_idx],
+        blank_labels=all_blank_labels,
+        derived_indices=derived_idx,
+        corrected_mask=corrected_mask,
+    )
+end
+
+"""
     cluster_quality_indices(curves, ids; zscore_curves=true, max_pairwise_n=5000) -> Dict{String,Any}
 
 Compute clustering quality indices for `curves` (rows = curves) given cluster
@@ -700,6 +803,11 @@ function prepare_clustering_data(;
         _load_clustering_experiments(clean_data_path, experiments)
     end
     isempty(curves_all) && error("No data loaded")
+    source_times = times_all
+    source_curves = curves_all
+    source_labels = copy(labels)
+    source_groups = copy(groups)
+    used_irregular_grid = !interpolate && any(c -> any(isnan, c), curves_all)
 
     # Annotated blanks are paired within each experiment on the sample's real
     # time grid. This must happen before any cross-experiment resampling.
@@ -718,7 +826,7 @@ function prepare_clustering_data(;
                                  q_low=interp_quantile_lo, q_high=interp_quantile_hi)
         isempty(times) && error("Could not build interpolation grid")
         curves = interpolate_curves_to_grid(curves_all, times_all, times)
-    elseif any(c -> any(isnan, c), curves_all)
+    elseif used_irregular_grid
         clean_times = Vector{Vector{Float64}}()
         clean_curves = Vector{Vector{Float64}}()
         clean_labels = String[]
@@ -762,8 +870,9 @@ function prepare_clustering_data(;
             detector_curves = detector_data.curves
             detector_times = detector_data.times
         end
-        derived = derive_blank_from_non_growing(
-            curves, times, labels, groups, detector_curves, detector_times;
+        derived = derive_blank_from_non_growing_sources(
+            source_curves, source_times, source_labels, source_groups,
+            detector_curves, detector_times, labels;
             annotated_blank_curves=blank_curves_all,
             annotated_blank_times=blank_times_all,
             annotated_blank_groups=blank_groups,
@@ -779,7 +888,37 @@ function prepare_clustering_data(;
         )
         isempty(derived.derived_indices) && error("No non-growing curves were detected for blank derivation")
         isempty(derived.labels) && error("No sample curves remain after blank derivation")
-        curves, labels, groups = derived.curves, derived.labels, derived.groups
+        if interpolate
+            curves = interpolate_curves_to_grid(derived.curves, derived.times, times)
+            labels, groups = derived.labels, derived.groups
+        elseif used_irregular_grid
+            clean_times = Vector{Vector{Float64}}()
+            clean_curves = Vector{Vector{Float64}}()
+            clean_labels = String[]
+            clean_groups = String[]
+            for i in eachindex(derived.curves)
+                stripped = _strip_nan_tail_for_clustering(
+                    derived.times[i], derived.curves[i],
+                )
+                stripped === nothing && continue
+                ct, cy = stripped
+                push!(clean_times, ct)
+                push!(clean_curves, cy)
+                push!(clean_labels, derived.labels[i])
+                push!(clean_groups, derived.groups[i])
+            end
+            isempty(clean_curves) && error("No valid curves remain after blank derivation")
+            igd = IrregularGrowthData(clean_curves, clean_times, clean_labels; step=0.01)
+            times, curves = igd.times, igd.curves
+            labels, groups = clean_labels, clean_groups
+        else
+            ncols = length(times)
+            curves = Matrix{Float64}(undef, length(derived.curves), ncols)
+            for i in eachindex(derived.curves)
+                curves[i, :] = derived.curves[i][1:ncols]
+            end
+            labels, groups = derived.labels, derived.groups
+        end
     end
 
     if !derive_non_growing_blanks && !annotated_blanks && auto_detect_blanks
@@ -868,6 +1007,7 @@ export common_time_grid
 export interpolate_curves_to_grid
 export apply_grouped_blank_subtraction
 export derive_blank_from_non_growing
+export derive_blank_from_non_growing_sources
 export cluster_quality_indices
 export prepare_clustering_data
 export load_experiment_data
