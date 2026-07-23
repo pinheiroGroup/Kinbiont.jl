@@ -34,11 +34,12 @@ with `clusters`, `centroids`, and `wcss` fields populated:
 proc = preprocess(data, opts)
 # proc.clusters   → Vector{Int}: cluster assignment for each curve
 # proc.centroids  → Matrix{Float64}: cluster centroids in z-normalised space
-# proc.wcss       → Float64: within-cluster sum of squares from the k-means step
+# proc.wcss       → Float64: method-independent centroid WCSS
 ```
 
-When exponential prototype relabeling is enabled, `wcss` is **not recomputed** after relabeling:
-it still refers to the k-means solution obtained before the exponential reassignment step.
+WCSS is recomputed from the final labels for every supported clustering method.
+Only non-empty clusters populated by the algorithm contribute; non-growing
+sentinels and DBSCAN noise are excluded.
 
 ## Basic clustering on z-scored curves
 
