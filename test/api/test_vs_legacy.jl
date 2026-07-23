@@ -107,15 +107,18 @@
             type_of_loss = "RE",
             smoothing    = false,
         )
-        old_loss  = Float64(raw_nl[2][end])
-        old_times = Vector{Float64}(raw_nl[4])
-        old_aic   = Kinbiont.AICc_evaluation2(length(p0), 2.0, old_times, old_loss;
-                                              correction=true)
+        old_curve_nl = Vector{Float64}(raw_nl[3])
+        # The API reports a Gaussian-likelihood AICc computed from the residuals
+        # of the fitted curve against the observed data (the manuscript formula),
+        # not the raw fitting loss. Expected value uses the fitted curve vs `curve`.
+        expected_aic = Kinbiont.AICc_evaluation(length(p0), 2.0, curve, old_curve_nl;
+                                                correction=true)
 
         Random.seed!(7)
         spec_nl = ModelSpec([MODEL_REGISTRY["NL_logistic"]], [p0])
         res_nl  = kinbiont_fit(data_g, spec_nl, FitOptions(loss="RE"))
 
-        @test res_nl[1].best_aic == Float64(old_aic)
+        @test res_nl[1].fitted_curve == old_curve_nl
+        @test res_nl[1].best_aic == Float64(expected_aic)
     end
 end
