@@ -671,6 +671,54 @@
         @test uncorrected[1] == [1.0, 2.0, 3.0]
         @test nonpositive_mask == Bool[false]
 
+        # Detection may happen after interpolation, but annotated and derived
+        # blanks must be mapped back to the same raw source grid before
+        # point-by-point subtraction.
+        source_times = [collect(0.0:2.0:4.0), collect(0.0:2.0:4.0)]
+        source_curves = [[1.0, 3.0, 5.0], fill(0.2, 3)]
+        detection_times = collect(0.0:1.0:4.0)
+        detection_curves = [
+            1.0 2.0 3.0 4.0 5.0
+            0.2 0.2 0.2 0.2 0.2
+        ]
+        raw_derived = derive_blank_from_non_growing_sources(
+            source_curves, source_times, ["sample", "derived_blank"],
+            ["exp_a", "exp_a"], detection_curves, detection_times,
+            ["sample", "derived_blank"];
+            annotated_blank_curves=[[0.1, 0.3, 0.5]],
+            annotated_blank_times=[collect(0.0:2.0:4.0)],
+            annotated_blank_groups=["exp_a"],
+            annotated_blank_labels=["annotated_blank"],
+            trend_test=true,
+            blank_method=:pointbypoint,
+        )
+        @test raw_derived.derived_indices == [2]
+        @test raw_derived.labels == ["sample"]
+        @test raw_derived.blank_labels == ["annotated_blank", "derived_blank"]
+        @test raw_derived.curves[1] ≈ [0.85, 2.75, 4.65]
+        rebuilt = interpolate_curves_to_grid(
+            raw_derived.curves, raw_derived.times, detection_times,
+        )
+        @test vec(rebuilt) ≈ [0.85, 1.8, 2.75, 3.7, 4.65]
+
+        for (method, expected) in (
+            (:shift, [0.75, 2.75, 4.75]),
+            (:clip, [0.75, 2.75, 4.75]),
+        )
+            result = derive_blank_from_non_growing_sources(
+                source_curves, source_times, ["sample", "derived_blank"],
+                ["exp_a", "exp_a"], detection_curves, detection_times,
+                ["sample", "derived_blank"];
+                annotated_blank_curves=[[0.1, 0.3, 0.5]],
+                annotated_blank_times=[collect(0.0:2.0:4.0)],
+                annotated_blank_groups=["exp_a"],
+                annotated_blank_labels=["annotated_blank"],
+                trend_test=true,
+                blank_method=method,
+            )
+            @test result.curves[1] ≈ expected
+        end
+
         corrected = apply_blank_timeseries(copy(data.curves), fill(0.1, length(times));
                                            method=:pointbypoint)
         @test corrected ≈ data.curves .- 0.1
@@ -822,6 +870,42 @@
             @test gd.labels == ["exp_a/sample", "exp_b/sample"]
             @test isapprox(gd.curves[1, :], [0.1, 0.2, 0.3])
             @test isapprox(gd.curves[2, :], [0.2, 0.4, 0.6])
+        end
+    end
+
+    @testset "derived and annotated blanks subtract on raw grid before interpolation" begin
+        mktempdir() do dir
+            exp_dir = joinpath(dir, "exp_a")
+            mkpath(exp_dir)
+            open(joinpath(exp_dir, "data_channel_1.csv"), "w") do io
+                println(io, "time,sample,derived_blank,annotated_blank")
+                println(io, "0.0,1.0,0.2,0.1")
+                println(io, "2.0,3.0,0.2,0.3")
+                println(io, "4.0,5.0,0.2,0.5")
+            end
+            open(joinpath(exp_dir, "annotation_clean.csv"), "w") do io
+                println(io, "sample,s")
+                println(io, "derived_blank,s")
+                println(io, "annotated_blank,b")
+            end
+
+            gd = prepare_clustering_data(
+                clean_data_path=dir,
+                experiments=["exp_a"],
+                interpolate=true,
+                interp_n=5,
+                interp_quantile_lo=0.0,
+                interp_quantile_hi=1.0,
+                auto_detect_blanks=false,
+                subtract_blank=true,
+                derive_non_growing_blanks=true,
+                blank_trend_test=true,
+                blank_method=:pointbypoint,
+            )
+            @test gd.labels == ["exp_a/sample"]
+            expected_times = collect(range(0.0, 4.0; length=10))
+            @test gd.times ≈ expected_times
+            @test vec(gd.curves) ≈ 0.85 .+ 0.95 .* expected_times
         end
     end
 end
