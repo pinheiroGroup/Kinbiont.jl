@@ -725,9 +725,11 @@ end
 function AICc_evaluation2(n_param, beta_smoothing_ms, data, loss; correction=true)
 
     n_data = length(data)
-    if n_data > n_param - 2
-        # RSS = sum(abs.(data_th .- data ) .^ 2)
-        RSS = loss
+    if n_data > n_param + 2
+        # RSS is the generic loss term used in this AICc formulation. Its value
+        # must come directly from the objective selected for fitting (RE, L2,
+        # etc.), never from a different residual metric recomputed post-fit.
+        RSS = max(Float64(loss), 1e-300)
 
         if correction == true
             correction_value = beta_smoothing_ms * (((n_param + 1) * (n_param + 2)) / (n_data - n_param - 2))
