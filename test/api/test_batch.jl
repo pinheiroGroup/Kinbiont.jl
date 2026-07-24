@@ -12,6 +12,32 @@ using DataFrames
     curves = vcat(reshape(c1, 1, :), reshape(c2, 1, :), reshape(flat, 1, :))
     data   = GrowthData(curves, times, ["well_A", "well_B", "flat_well"])
 
+    @testset "model parameter semantics" begin
+        features = Kinbiont._batch_growth_features(times, vec(c1))
+        @test Kinbiont._batch_initial_value("exit_lag_rate", features) ==
+              1.0 / max(features[:lag_time], 0.1)
+        @test Kinbiont._batch_initial_value("lag_2_gr", features) == features[:growth_rate]
+        @test Kinbiont._batch_initial_value("gr_lag", features) == features[:growth_rate]
+        @test Kinbiont._batch_initial_value("t_decay_gr", features) == features[:mid_time]
+        @test Kinbiont._batch_initial_value("t_stationary", features) == features[:mid_time]
+
+        hpm = Kinbiont.MODEL_REGISTRY["HPM"]
+        hpm_lower, hpm_upper = Kinbiont._batch_param_bounds(hpm, times, vec(c1))
+        exit_idx = findfirst(==("exit_lag_rate"), hpm.param_names)
+        @test (hpm_lower[exit_idx], hpm_upper[exit_idx]) == (0.0, 20.0)
+
+        diauxic = Kinbiont.MODEL_REGISTRY["Diauxic_piecewise_adjusted_logistic"]
+        diauxic_lower, diauxic_upper = Kinbiont._batch_param_bounds(diauxic, times, vec(c1))
+        lag_gr_idx = findfirst(==("lag_2_gr"), diauxic.param_names)
+        @test (diauxic_lower[lag_gr_idx], diauxic_upper[lag_gr_idx]) == (1e-6, 20.0)
+
+        four_phase = Kinbiont.MODEL_REGISTRY["ODE_four_piecewise"]
+        time_lower, time_upper = Kinbiont._batch_param_bounds(four_phase, times, vec(c1))
+        decay_time_idx = findfirst(==("t_decay_gr"), four_phase.param_names)
+        @test time_lower[decay_time_idx] == 0.0
+        @test time_upper[decay_time_idx] == max(features[:duration] * 2, 10.0)
+    end
+
     @testset "blank-subtracted display is the fitted array" begin
         shifted = Kinbiont._batch_prepare_curve(
             [0.05, 0.20, 0.40];
@@ -160,6 +186,8 @@ using DataFrames
             optimizer="LN_BOBYQA",
             maxiters=2000,
             compute_loglin=true,
+            loglin_type_of_smoothing="gaussian",
+            loglin_gaussian_h_mult=1.5,
         )
 
         @test length(batch.results) == 1
@@ -223,6 +251,17 @@ using DataFrames
             @test isfinite(r["gr_loglin"])
             @test isfinite(r["R_squared_loglin"])
         end
+
+        gaussian_batch = kinbiont_batch_loglin(
+            data;
+            experiment="ll_gaussian",
+            labels=["well_A"],
+            type_of_smoothing="gaussian",
+            gaussian_h_mult=1.5,
+        )
+        @test isempty(gaussian_batch.errors)
+        @test length(gaussian_batch.results) == 1
+        @test only(gaussian_batch.results)["loglin_converged"] === true
     end
 
     @testset "kinbiont_fit_loglin single-curve API" begin
@@ -233,6 +272,15 @@ using DataFrames
         @test r["loglin_converged"] === true
         @test isfinite(r["gr_loglin"])
         @test isfinite(r["N_max_emp"])
+
+        r_gaussian = kinbiont_fit_loglin(
+            one_curve;
+            experiment="single_gaussian",
+            type_of_smoothing="gaussian",
+            gaussian_h_mult=1.5,
+        )
+        @test r_gaussian["loglin_converged"] === true
+        @test isfinite(r_gaussian["gr_loglin"])
 
         opts = FitOptions(negative_threshold=0.01)
         r_from_opts = kinbiont_fit_loglin(one_curve, opts; experiment="single")
