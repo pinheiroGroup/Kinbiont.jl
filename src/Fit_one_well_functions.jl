@@ -19,6 +19,7 @@ using OptimizationMultistartOptimization
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",
     thr_lowess=0.05,
+    gaussian_h_mult=2.0,
     start_exp_win_thr=0.05
     )
 Fits a logarithmic-linear model to data from a .csv file. The function assumes that the first column of the file represents time. It evaluates the specific growth rate, identifies an exponential window based on a statistical threshold, and performs a log-linear fitting.
@@ -30,7 +31,7 @@ Fits a logarithmic-linear model to data from a .csv file. The function assumes t
 
 # Key Arguments:
 
-- `type_of_smoothing="rolling_avg"`: Method of data smoothing. Options are `"NO"`, `"rolling_avg"`, or `"lowess"`.
+- `type_of_smoothing="rolling_avg"`: Method of data smoothing. Options are `"NO"`, `"rolling_avg"`, `"lowess"`, or `"gaussian"`.
 - `pt_avg=7`:  Number of points used in the rolling average smoothing.
 - `pt_smoothing_derivative=7`: Number of points for evaluating specific growth rate. If less than 2, uses interpolation; otherwise, a sliding window approach is used.
 - `pt_min_size_of_win=7`: Minimum size of the exponential windows in terms of the number of smoothed points.
@@ -45,6 +46,7 @@ Fits a logarithmic-linear model to data from a .csv file. The function assumes t
 - `calibration_OD_curve="NA"`: Path to calibration data for multiple scattering correction, used if `multiple_scattering_correction` is true.
 - `method_multiple_scattering_correction="interpolation"`: Method for correcting multiple scattering, options include `"interpolation"` or `"exp_fit"`.
 - `thr_lowess=0.05`: Threshold for lowess smoothing.
+- `gaussian_h_mult=2.0`: Gaussian bandwidth multiplier relative to the median time step.
 - `start_exp_win_thr=0.05`: Minimum OD value that should be reached to start the exponential window.
 
 # Output:
@@ -89,6 +91,7 @@ function fitting_one_well_Log_Lin(
     method_multiple_scattering_correction="interpolation",
     calibration_OD_curve="NA",
     thr_lowess=0.05,
+    gaussian_h_mult=2.0,
     start_exp_win_thr=0.01,
     )
     if multiple_scattering_correction == true
@@ -101,7 +104,8 @@ function fitting_one_well_Log_Lin(
         data;
         method=type_of_smoothing,
         pt_avg=pt_avg,
-        thr_lowess=thr_lowess
+        thr_lowess=thr_lowess,
+        gaussian_h_mult=gaussian_h_mult,
     )
 
 
