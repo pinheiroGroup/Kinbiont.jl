@@ -109,6 +109,32 @@ using DataFrames
         @test_throws ArgumentError kinbiont_batch_fit(data; smooth=true, smooth_window=4)
     end
 
+    @testset "kinbiont_batch_fit selectable smoothing" begin
+        cases = [
+            (:rolling_avg, (; smooth_pt_avg=5)),
+            (:lowess, (; lowess_frac=0.2)),
+            (:gaussian, (; gaussian_h_mult=1.5)),
+        ]
+        for (method, method_kwargs) in cases
+            batch = kinbiont_batch_fit(
+                data;
+                experiment="smoothed_$(method)",
+                labels=["well_A"],
+                model_name="NL_logistic",
+                optimizer="LN_BOBYQA",
+                maxiters=2000,
+                smooth=true,
+                smooth_method=method,
+                method_kwargs...,
+            )
+            @test length(batch.results) == 1
+            preprocessing = only(batch.results)["preprocessing"]
+            @test preprocessing["smooth"] == true
+            @test preprocessing["smooth_method"] == String(method)
+            @test !isempty(only(batch.results)["smoothed_od"])
+        end
+    end
+
     @testset "kinbiont_batch_fit multi-model" begin
         batch = kinbiont_batch_fit(
             data;

@@ -304,7 +304,10 @@ function _batch_run_attempt(
     model_names::Vector{String},
     maxiters::Int,
     abstol::Float64,
-    smooth::Bool,
+    smooth_method::Symbol,
+    smooth_pt_avg::Int,
+    lowess_frac::Float64,
+    gaussian_h_mult::Float64,
     smooth_window::Int,
     optimizer_seed::Int,
 )
@@ -322,8 +325,11 @@ function _batch_run_attempt(
     opt_params = abstol > 0.0 ? (maxiters=maxiters, abstol=abstol) : (maxiters=maxiters,)
     opts = FitOptions(
         scattering_correction=false,
-        smooth=smooth,
-        smooth_method=:boxcar,
+        smooth=smooth_method != :none,
+        smooth_method=smooth_method,
+        smooth_pt_avg=smooth_pt_avg,
+        lowess_frac=lowess_frac,
+        gaussian_h_mult=gaussian_h_mult,
         boxcar_window=smooth_window,
         cut_stationary_phase=true,
         stationary_percentile_thr=0.05,
@@ -461,15 +467,26 @@ function _batch_fit_one(
     abstol::Float64=1e-15,
     smooth::Bool=false,
     smooth_window::Int=3,
+    smooth_method::Symbol=:none,
+    smooth_pt_avg::Int=7,
+    lowess_frac::Float64=0.05,
+    gaussian_h_mult::Float64=2.0,
     compute_loglin::Bool=false,
     loglin_pt_avg::Int=7,
     loglin_pt_smoothing_derivative::Int=7,
     loglin_pt_min_size_of_win::Int=7,
     loglin_threshold_of_exp::Float64=0.9,
 )
-    if smooth && (smooth_window < 3 || iseven(smooth_window))
+    resolved_smooth_method = smooth_method == :none && smooth ? :boxcar : smooth_method
+    resolved_smooth_method in (:none, :rolling_avg, :lowess, :gaussian, :boxcar) ||
+        throw(ArgumentError("Unknown smoothing method: $resolved_smooth_method"))
+    if resolved_smooth_method == :boxcar && (smooth_window < 3 || iseven(smooth_window))
         throw(ArgumentError("smooth_window must be an odd integer greater than or equal to 3"))
     end
+    smooth_pt_avg >= 3 || throw(ArgumentError("smooth_pt_avg must be at least 3"))
+    0.0 < lowess_frac <= 1.0 || throw(ArgumentError("lowess_frac must be in (0, 1]"))
+    gaussian_h_mult > 0.0 || throw(ArgumentError("gaussian_h_mult must be positive"))
+    smooth_enabled = resolved_smooth_method != :none
 
     prepared = _batch_prepare_curve(
         od_raw;
@@ -503,7 +520,8 @@ function _batch_fit_one(
             res = _batch_run_attempt(
                 opt, time_numeric, od_for_fit, shift,
                 subtract_blank, blank_value, label, model_name, model_names,
-                maxiters, abstol, smooth, smooth_window, attempt_seed,
+                maxiters, abstol, resolved_smooth_method, smooth_pt_avg,
+                lowess_frac, gaussian_h_mult, smooth_window, attempt_seed,
             )
             push!(outcomes, (optimizer=opt, run=run_idx, seed=attempt_seed, status="ok", loss=res.loss_rmse,
                 loss_rmse=res.loss_rmse, loss_re=res.loss_re, aic=res.aic, result=res))
@@ -534,9 +552,12 @@ function _batch_fit_one(
         "maxiters" => maxiters,
         "abstol" => abstol,
         "preprocessing" => Dict(
-            "smooth" => smooth,
-            "smooth_method" => smooth ? "boxcar" : "none",
+            "smooth" => smooth_enabled,
+            "smooth_method" => String(resolved_smooth_method),
             "smooth_window" => smooth_window,
+            "smooth_pt_avg" => smooth_pt_avg,
+            "lowess_frac" => lowess_frac,
+            "gaussian_h_mult" => gaussian_h_mult,
             "cut_stationary_phase" => true,
             "stationary_percentile_thr" => 0.05,
             "stationary_pt_smooth_derivative" => 10,
@@ -554,7 +575,7 @@ function _batch_fit_one(
             "loss_re" => o.loss_re, "aic" => o.aic) for o in outcomes],
     )
     od_subtracted_display !== nothing && (result["experimental_od_subtracted"] = od_subtracted_display)
-    if smooth
+    if smooth_enabled
         result["smoothed_time"] = win.preprocessed_time
         result["smoothed_od"] = win.preprocessed_od
     end
@@ -586,9 +607,11 @@ minimized by Kinbiont, whereas `loss_rmse` is recomputed against the same
 preprocessed observations through the Kinbiont stationary-phase cutoff.
 GUIbiont selects the optimizer attempt with the lowest `loss_rmse`.
 
-Set `smooth=true` to apply the same centered moving average to every optimizer
-attempt before stationary-phase detection. `smooth_window` is the odd window
-width and defaults to 3 (one point on either side of the current point).
+Set `smooth=true` and choose `smooth_method=:rolling_avg`, `:lowess`, or
+`:gaussian` to apply the same smoothing to every optimizer attempt before
+stationary-phase detection. The corresponding parameter is `smooth_pt_avg`,
+`lowess_frac`, or `gaussian_h_mult`. The legacy centered average remains
+available through `smooth=true, smooth_window=3`.
 """
 function kinbiont_batch_fit(
     data::GrowthData;
@@ -606,6 +629,10 @@ function kinbiont_batch_fit(
     skip_flat_threshold::Float64=0.02,
     smooth::Bool=false,
     smooth_window::Int=3,
+    smooth_method::Symbol=:none,
+    smooth_pt_avg::Int=7,
+    lowess_frac::Float64=0.05,
+    gaussian_h_mult::Float64=2.0,
     compute_loglin::Bool=false,
     loglin_pt_avg::Int=7,
     loglin_pt_smoothing_derivative::Int=7,
@@ -616,9 +643,16 @@ function kinbiont_batch_fit(
     blank_value::Real=0.0,
     blank_timeseries::Vector{Float64}=Float64[],
 )
-    if smooth && (smooth_window < 3 || iseven(smooth_window))
+    resolved_smooth_method = smooth_method == :none && smooth ? :boxcar : smooth_method
+    resolved_smooth_method in (:none, :rolling_avg, :lowess, :gaussian, :boxcar) ||
+        throw(ArgumentError("Unknown smoothing method: $resolved_smooth_method"))
+    if resolved_smooth_method == :boxcar && (smooth_window < 3 || iseven(smooth_window))
         throw(ArgumentError("smooth_window must be an odd integer greater than or equal to 3"))
     end
+    smooth_pt_avg >= 3 || throw(ArgumentError("smooth_pt_avg must be at least 3"))
+    0.0 < lowess_frac <= 1.0 || throw(ArgumentError("lowess_frac must be in (0, 1]"))
+    gaussian_h_mult > 0.0 || throw(ArgumentError("gaussian_h_mult must be positive"))
+    smooth_enabled = resolved_smooth_method != :none
 
     selected = isempty(labels) ? data.labels : labels
     results = Dict{String, Any}[]
@@ -666,8 +700,12 @@ function kinbiont_batch_fit(
                 optimizer_seed=optimizer_seed,
                 maxiters=maxiters,
                 abstol=abstol,
-                smooth=smooth,
+                smooth=smooth_enabled,
                 smooth_window=smooth_window,
+                smooth_method=resolved_smooth_method,
+                smooth_pt_avg=smooth_pt_avg,
+                lowess_frac=lowess_frac,
+                gaussian_h_mult=gaussian_h_mult,
                 compute_loglin=compute_loglin,
                 loglin_pt_avg=loglin_pt_avg,
                 loglin_pt_smoothing_derivative=loglin_pt_smoothing_derivative,
@@ -685,8 +723,12 @@ function kinbiont_batch_fit(
         experiment=experiment,
         model=model_out,
         model_names=model_names_out,
-        smooth=smooth,
+        smooth=smooth_enabled,
+        smooth_method=resolved_smooth_method,
         smooth_window=smooth_window,
+        smooth_pt_avg=smooth_pt_avg,
+        lowess_frac=lowess_frac,
+        gaussian_h_mult=gaussian_h_mult,
         results=results,
         skipped=skipped,
         errors=errors,
