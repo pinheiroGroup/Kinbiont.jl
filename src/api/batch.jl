@@ -160,6 +160,12 @@ function _batch_initial_value(param_name, features)
        ((startswith(compact, "n") || startswith(compact, "x") ||
          startswith(compact, "y") || startswith(compact, "od")) && occursin("lag", compact))
         return features[:baseline]
+    elseif compact in ("t0", "tmid", "tmax", "tinf", "tinflection",
+                        "tshift", "tstationary", "tdecaygr", "endsecondlag") ||
+           occursin("inflection", compact) || occursin("midtime", compact)
+        return features[:mid_time]
+    elseif compact == "exitlagrate"
+        return _batch_clip_initial(1.0 / max(features[:lag_time], 0.1); upper=20.0)
     elseif occursin("death", compact) || occursin("decay", compact) ||
            occursin("decline", compact) || occursin("mort", compact) ||
            occursin("inhib", compact) || occursin("inactiv", compact) ||
@@ -172,12 +178,13 @@ function _batch_initial_value(param_name, features)
     elseif compact in ("n0", "x0", "y0", "od0") || occursin("initial", compact) ||
            occursin("inoc", compact) || occursin("baseline", compact)
         return features[:baseline]
+    elseif occursin("mu", compact) || compact in ("r", "gr") ||
+           occursin("growth", compact) || startswith(compact, "gr") ||
+           endswith(compact, "gr")
+        return features[:growth_rate]
     elseif compact in ("lag", "tl", "tlag", "lagtime") || startswith(compact, "tlag") ||
            occursin("lambda", compact) || occursin("delay", compact) || occursin("lag", compact)
         return features[:lag_time]
-    elseif occursin("mu", compact) || compact in ("r", "gr") ||
-           occursin("growth", compact) || occursin("rate", compact) || occursin("gr", compact)
-        return features[:growth_rate]
     elseif compact == "k" || occursin("nmax", compact) || occursin("ymax", compact) ||
            occursin("xmax", compact) || occursin("maxod", compact) ||
            occursin("carrying", compact) || occursin("capacity", compact) ||
@@ -208,25 +215,59 @@ function _batch_param_bounds(model, t, y)
     features = _batch_growth_features(t, y)
     lower = Float64[]
     upper = Float64[]
+    plateau = features[:plateau]
+    amplitude = features[:amplitude]
     plateau_cap = max(features[:plateau] * 3, 1.0)
     time_cap = max(features[:duration] * 2, 10.0)
     for name in model.param_names
         compact = replace(lowercase(String(name)), r"[^a-z0-9]" => "")
-        if occursin("max", compact) || occursin("capacity", compact) || compact == "k" ||
-           occursin("plateau", compact) || occursin("asymptote", compact)
-            push!(lower, 1e-6); push!(upper, plateau_cap)
-        elseif occursin("lag", compact) || occursin("lambda", compact) || occursin("delay", compact)
-            push!(lower, 0.0); push!(upper, max(time_cap, 50.0))
-        elseif occursin("growth", compact) || occursin("rate", compact) ||
-               occursin("mu", compact) || compact in ("r", "gr")
-            push!(lower, 1e-6); push!(upper, 20.0)
-        elseif occursin("shape", compact) || compact in ("nu", "theta", "beta", "gamma", "m", "v")
-            push!(lower, 1e-6); push!(upper, 10.0)
+        bounds = if compact in ("nlag", "xlag", "ylag", "odlag") ||
+           ((startswith(compact, "n") || startswith(compact, "x") ||
+             startswith(compact, "y") || startswith(compact, "od")) && occursin("lag", compact))
+            (1e-6, max(plateau, 1.0))
+        elseif compact in ("t0", "tmid", "tmax", "tinf", "tinflection",
+                            "tshift", "tstationary", "tdecaygr", "endsecondlag") ||
+               occursin("inflection", compact) || occursin("midtime", compact)
+            (0.0, time_cap)
+        elseif compact == "exitlagrate"
+            (0.0, 20.0)
+        elseif occursin("death", compact) || occursin("decay", compact) ||
+               occursin("decline", compact) || occursin("mort", compact) ||
+               occursin("inhib", compact) || occursin("inactiv", compact) ||
+               occursin("resist", compact)
+            (0.0, 20.0)
+        elseif occursin("doubl", compact) || compact in ("dt", "td")
+            (1e-6, time_cap)
         elseif occursin("slope", compact) || occursin("linear", compact)
-            push!(lower, -10.0); push!(upper, 10.0)
+            (-10.0, 10.0)
+        elseif compact in ("n0", "x0", "y0", "od0") ||
+               occursin("initial", compact) || occursin("inoc", compact) ||
+               occursin("baseline", compact)
+            (1e-6, max(plateau, 1.0))
+        elseif occursin("mu", compact) || compact in ("r", "gr") ||
+               occursin("growth", compact) || startswith(compact, "gr") ||
+               endswith(compact, "gr")
+            (1e-6, 20.0)
+        elseif compact in ("lag", "tl", "tlag", "lagtime") ||
+               startswith(compact, "tlag") || occursin("lambda", compact) ||
+               occursin("delay", compact) || occursin("lag", compact)
+            (0.0, max(time_cap, 50.0))
+        elseif compact == "k" || occursin("nmax", compact) || occursin("ymax", compact) ||
+               occursin("xmax", compact) || occursin("maxod", compact) ||
+               occursin("carrying", compact) || occursin("capacity", compact) ||
+               occursin("plateau", compact) || occursin("asymptote", compact)
+            (1e-6, plateau_cap)
+        elseif occursin("amplitude", compact) || compact == "amp"
+            (1e-6, max(amplitude * 5, 1.0))
+        elseif compact in ("q0", "h0")
+            (1e-6, 50.0)
+        elseif occursin("shape", compact) || compact in ("nu", "theta", "beta", "gamma", "m", "v")
+            (1e-6, 10.0)
         else
-            push!(lower, 0.0); push!(upper, 50.0)
+            (0.0, 50.0)
         end
+        push!(lower, bounds[1])
+        push!(upper, bounds[2])
     end
     return lower, upper
 end
@@ -304,7 +345,10 @@ function _batch_run_attempt(
     model_names::Vector{String},
     maxiters::Int,
     abstol::Float64,
-    smooth::Bool,
+    smooth_method::Symbol,
+    smooth_pt_avg::Int,
+    lowess_frac::Float64,
+    gaussian_h_mult::Float64,
     smooth_window::Int,
     optimizer_seed::Int,
 )
@@ -322,8 +366,11 @@ function _batch_run_attempt(
     opt_params = abstol > 0.0 ? (maxiters=maxiters, abstol=abstol) : (maxiters=maxiters,)
     opts = FitOptions(
         scattering_correction=false,
-        smooth=smooth,
-        smooth_method=:boxcar,
+        smooth=smooth_method != :none,
+        smooth_method=smooth_method,
+        smooth_pt_avg=smooth_pt_avg,
+        lowess_frac=lowess_frac,
+        gaussian_h_mult=gaussian_h_mult,
         boxcar_window=smooth_window,
         cut_stationary_phase=true,
         stationary_percentile_thr=0.05,
@@ -395,7 +442,18 @@ function loglin_stationary_nmax(
     return isfinite(nmax) ? nmax : NaN
 end
 
-function _batch_loglin_fields(t, y, label, experiment; pt_avg=7, pt_deriv=7, pt_min_win=7, threshold=0.9)
+function _batch_loglin_fields(
+    t, y, label, experiment;
+    type_of_smoothing="rolling_avg",
+    pt_avg=7,
+    pt_deriv=7,
+    pt_min_win=7,
+    type_of_win="maximum",
+    threshold=0.9,
+    start_exp_win_thr=0.05,
+    thr_lowess=0.05,
+    gaussian_h_mult=2.0,
+)
     out = Dict{String, Any}(
         "gr_loglin" => NaN,
         "gr_loglin_se" => NaN,
@@ -412,12 +470,15 @@ function _batch_loglin_fields(t, y, label, experiment; pt_avg=7, pt_deriv=7, pt_
     try
         raw = fitting_one_well_Log_Lin(
             Matrix(transpose(hcat(t, y))), label, experiment;
-            type_of_smoothing="rolling_avg",
+            type_of_smoothing=type_of_smoothing,
             pt_avg=pt_avg,
             pt_smoothing_derivative=pt_deriv,
             pt_min_size_of_win=pt_min_win,
-            type_of_win="maximum",
+            type_of_win=type_of_win,
             threshold_of_exp=threshold,
+            start_exp_win_thr=start_exp_win_thr,
+            thr_lowess=thr_lowess,
+            gaussian_h_mult=gaussian_h_mult,
         )
         params = raw[2]
         if length(params) >= 14 && params[7] !== missing
@@ -461,15 +522,31 @@ function _batch_fit_one(
     abstol::Float64=1e-15,
     smooth::Bool=false,
     smooth_window::Int=3,
+    smooth_method::Symbol=:none,
+    smooth_pt_avg::Int=7,
+    lowess_frac::Float64=0.05,
+    gaussian_h_mult::Float64=2.0,
     compute_loglin::Bool=false,
+    loglin_type_of_smoothing::String="rolling_avg",
     loglin_pt_avg::Int=7,
     loglin_pt_smoothing_derivative::Int=7,
     loglin_pt_min_size_of_win::Int=7,
+    loglin_type_of_win::String="maximum",
     loglin_threshold_of_exp::Float64=0.9,
+    loglin_start_exp_win_thr::Float64=0.05,
+    loglin_thr_lowess::Float64=0.05,
+    loglin_gaussian_h_mult::Float64=2.0,
 )
-    if smooth && (smooth_window < 3 || iseven(smooth_window))
+    resolved_smooth_method = smooth_method == :none && smooth ? :boxcar : smooth_method
+    resolved_smooth_method in (:none, :rolling_avg, :lowess, :gaussian, :boxcar) ||
+        throw(ArgumentError("Unknown smoothing method: $resolved_smooth_method"))
+    if resolved_smooth_method == :boxcar && (smooth_window < 3 || iseven(smooth_window))
         throw(ArgumentError("smooth_window must be an odd integer greater than or equal to 3"))
     end
+    smooth_pt_avg >= 3 || throw(ArgumentError("smooth_pt_avg must be at least 3"))
+    0.0 < lowess_frac <= 1.0 || throw(ArgumentError("lowess_frac must be in (0, 1]"))
+    gaussian_h_mult > 0.0 || throw(ArgumentError("gaussian_h_mult must be positive"))
+    smooth_enabled = resolved_smooth_method != :none
 
     prepared = _batch_prepare_curve(
         od_raw;
@@ -503,7 +580,8 @@ function _batch_fit_one(
             res = _batch_run_attempt(
                 opt, time_numeric, od_for_fit, shift,
                 subtract_blank, blank_value, label, model_name, model_names,
-                maxiters, abstol, smooth, smooth_window, attempt_seed,
+                maxiters, abstol, resolved_smooth_method, smooth_pt_avg,
+                lowess_frac, gaussian_h_mult, smooth_window, attempt_seed,
             )
             push!(outcomes, (optimizer=opt, run=run_idx, seed=attempt_seed, status="ok", loss=res.loss_rmse,
                 loss_rmse=res.loss_rmse, loss_re=res.loss_re, aic=res.aic, result=res))
@@ -534,9 +612,12 @@ function _batch_fit_one(
         "maxiters" => maxiters,
         "abstol" => abstol,
         "preprocessing" => Dict(
-            "smooth" => smooth,
-            "smooth_method" => smooth ? "boxcar" : "none",
+            "smooth" => smooth_enabled,
+            "smooth_method" => String(resolved_smooth_method),
             "smooth_window" => smooth_window,
+            "smooth_pt_avg" => smooth_pt_avg,
+            "lowess_frac" => lowess_frac,
+            "gaussian_h_mult" => gaussian_h_mult,
             "cut_stationary_phase" => true,
             "stationary_percentile_thr" => 0.05,
             "stationary_pt_smooth_derivative" => 10,
@@ -554,17 +635,22 @@ function _batch_fit_one(
             "loss_re" => o.loss_re, "aic" => o.aic) for o in outcomes],
     )
     od_subtracted_display !== nothing && (result["experimental_od_subtracted"] = od_subtracted_display)
-    if smooth
+    if smooth_enabled
         result["smoothed_time"] = win.preprocessed_time
         result["smoothed_od"] = win.preprocessed_od
     end
     if compute_loglin
         merge!(result, _batch_loglin_fields(
             time_numeric, od_for_fit, label, experiment;
+            type_of_smoothing=loglin_type_of_smoothing,
             pt_avg=loglin_pt_avg,
             pt_deriv=loglin_pt_smoothing_derivative,
             pt_min_win=loglin_pt_min_size_of_win,
+            type_of_win=loglin_type_of_win,
             threshold=loglin_threshold_of_exp,
+            start_exp_win_thr=loglin_start_exp_win_thr,
+            thr_lowess=loglin_thr_lowess,
+            gaussian_h_mult=loglin_gaussian_h_mult,
         ))
     end
     return result
@@ -586,9 +672,11 @@ minimized by Kinbiont, whereas `loss_rmse` is recomputed against the same
 preprocessed observations through the Kinbiont stationary-phase cutoff.
 GUIbiont selects the optimizer attempt with the lowest `loss_rmse`.
 
-Set `smooth=true` to apply the same centered moving average to every optimizer
-attempt before stationary-phase detection. `smooth_window` is the odd window
-width and defaults to 3 (one point on either side of the current point).
+Set `smooth=true` and choose `smooth_method=:rolling_avg`, `:lowess`, or
+`:gaussian` to apply the same smoothing to every optimizer attempt before
+stationary-phase detection. The corresponding parameter is `smooth_pt_avg`,
+`lowess_frac`, or `gaussian_h_mult`. The legacy centered average remains
+available through `smooth=true, smooth_window=3`.
 """
 function kinbiont_batch_fit(
     data::GrowthData;
@@ -606,19 +694,35 @@ function kinbiont_batch_fit(
     skip_flat_threshold::Float64=0.02,
     smooth::Bool=false,
     smooth_window::Int=3,
+    smooth_method::Symbol=:none,
+    smooth_pt_avg::Int=7,
+    lowess_frac::Float64=0.05,
+    gaussian_h_mult::Float64=2.0,
     compute_loglin::Bool=false,
+    loglin_type_of_smoothing::String="rolling_avg",
     loglin_pt_avg::Int=7,
     loglin_pt_smoothing_derivative::Int=7,
     loglin_pt_min_size_of_win::Int=7,
+    loglin_type_of_win::String="maximum",
     loglin_threshold_of_exp::Float64=0.9,
+    loglin_start_exp_win_thr::Float64=0.05,
+    loglin_thr_lowess::Float64=0.05,
+    loglin_gaussian_h_mult::Float64=2.0,
     blank_subtraction::Bool=false,
     blank_method::String="pointbypoint",
     blank_value::Real=0.0,
     blank_timeseries::Vector{Float64}=Float64[],
 )
-    if smooth && (smooth_window < 3 || iseven(smooth_window))
+    resolved_smooth_method = smooth_method == :none && smooth ? :boxcar : smooth_method
+    resolved_smooth_method in (:none, :rolling_avg, :lowess, :gaussian, :boxcar) ||
+        throw(ArgumentError("Unknown smoothing method: $resolved_smooth_method"))
+    if resolved_smooth_method == :boxcar && (smooth_window < 3 || iseven(smooth_window))
         throw(ArgumentError("smooth_window must be an odd integer greater than or equal to 3"))
     end
+    smooth_pt_avg >= 3 || throw(ArgumentError("smooth_pt_avg must be at least 3"))
+    0.0 < lowess_frac <= 1.0 || throw(ArgumentError("lowess_frac must be in (0, 1]"))
+    gaussian_h_mult > 0.0 || throw(ArgumentError("gaussian_h_mult must be positive"))
+    smooth_enabled = resolved_smooth_method != :none
 
     selected = isempty(labels) ? data.labels : labels
     results = Dict{String, Any}[]
@@ -666,13 +770,22 @@ function kinbiont_batch_fit(
                 optimizer_seed=optimizer_seed,
                 maxiters=maxiters,
                 abstol=abstol,
-                smooth=smooth,
+                smooth=smooth_enabled,
                 smooth_window=smooth_window,
+                smooth_method=resolved_smooth_method,
+                smooth_pt_avg=smooth_pt_avg,
+                lowess_frac=lowess_frac,
+                gaussian_h_mult=gaussian_h_mult,
                 compute_loglin=compute_loglin,
+                loglin_type_of_smoothing=loglin_type_of_smoothing,
                 loglin_pt_avg=loglin_pt_avg,
                 loglin_pt_smoothing_derivative=loglin_pt_smoothing_derivative,
                 loglin_pt_min_size_of_win=loglin_pt_min_size_of_win,
+                loglin_type_of_win=loglin_type_of_win,
                 loglin_threshold_of_exp=loglin_threshold_of_exp,
+                loglin_start_exp_win_thr=loglin_start_exp_win_thr,
+                loglin_thr_lowess=loglin_thr_lowess,
+                loglin_gaussian_h_mult=loglin_gaussian_h_mult,
             ))
         catch e
             push!(errors, "$label: $(string(e))")
@@ -685,8 +798,12 @@ function kinbiont_batch_fit(
         experiment=experiment,
         model=model_out,
         model_names=model_names_out,
-        smooth=smooth,
+        smooth=smooth_enabled,
+        smooth_method=resolved_smooth_method,
         smooth_window=smooth_window,
+        smooth_pt_avg=smooth_pt_avg,
+        lowess_frac=lowess_frac,
+        gaussian_h_mult=gaussian_h_mult,
         results=results,
         skipped=skipped,
         errors=errors,
@@ -766,6 +883,7 @@ function _batch_fit_loglin_one(
     threshold_of_exp::Float64=0.9,
     start_exp_win_thr::Float64=0.05,
     thr_lowess::Float64=0.05,
+    gaussian_h_mult::Float64=2.0,
     unblanked_floor::Float64=1e-4,
 )
     prepared = _batch_prepare_curve(
@@ -791,6 +909,7 @@ function _batch_fit_loglin_one(
         threshold_of_exp=threshold_of_exp,
         start_exp_win_thr=start_exp_win_thr,
         thr_lowess=thr_lowess,
+        gaussian_h_mult=gaussian_h_mult,
     )
     params = raw[2]
     result = Dict{String, Any}(
@@ -853,6 +972,7 @@ function kinbiont_fit_loglin(
     threshold_of_exp::Float64=0.9,
     start_exp_win_thr::Float64=0.05,
     thr_lowess::Float64=0.05,
+    gaussian_h_mult::Float64=2.0,
 )
     selected_label = isnothing(label) ? only(data.labels) : label
     idx = findfirst(==(selected_label), data.labels)
@@ -880,6 +1000,7 @@ function kinbiont_fit_loglin(
         threshold_of_exp,
         start_exp_win_thr,
         thr_lowess,
+        gaussian_h_mult,
     )
 end
 
@@ -928,6 +1049,7 @@ function kinbiont_batch_loglin(
     threshold_of_exp::Float64=0.9,
     start_exp_win_thr::Float64=0.05,
     thr_lowess::Float64=0.05,
+    gaussian_h_mult::Float64=2.0,
     skip_flat_threshold::Float64=0.02,
 )
     selected = isempty(labels) ? data.labels : labels
@@ -976,6 +1098,7 @@ function kinbiont_batch_loglin(
                 threshold_of_exp=threshold_of_exp,
                 start_exp_win_thr=start_exp_win_thr,
                 thr_lowess=thr_lowess,
+                gaussian_h_mult=gaussian_h_mult,
             ))
         catch e
             push!(errors, "$label: $(string(e))")

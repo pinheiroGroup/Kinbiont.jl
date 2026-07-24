@@ -901,6 +901,9 @@
                 derive_non_growing_blanks=true,
                 blank_trend_test=true,
                 blank_method=:pointbypoint,
+                detection_smooth=true,
+                detection_smooth_method=:rolling_avg,
+                detection_smooth_pt_avg=3,
             )
             @test gd.labels == ["exp_a/sample"]
             expected_times = collect(range(0.0, 4.0; length=10))
