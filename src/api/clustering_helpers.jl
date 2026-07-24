@@ -791,6 +791,7 @@ function prepare_clustering_data(;
     blank_trend_p_threshold::Float64 = 0.05,
     detection_smooth::Bool = false,
     detection_smooth_method::Symbol = :lowess,
+    detection_smooth_pt_avg::Int = 7,
     detection_lowess_frac::Float64 = 0.05,
     detection_gaussian_h_mult::Float64 = 2.0,
 )::GrowthData
@@ -862,6 +863,7 @@ function prepare_clustering_data(;
                 FitOptions(
                     smooth=true,
                     smooth_method=detection_smooth_method,
+                    smooth_pt_avg=detection_smooth_pt_avg,
                     lowess_frac=detection_lowess_frac,
                     gaussian_h_mult=detection_gaussian_h_mult,
                     cluster=false,
