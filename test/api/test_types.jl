@@ -51,6 +51,7 @@ end
     @test opts.opt_params == (;)
     @test opts.kmeans_seed == 42
     @test opts.kmedoids_seed == 42
+    @test opts.kmedoids_n_init == 10
     @test opts.optimizer_seed == 42
 end
 

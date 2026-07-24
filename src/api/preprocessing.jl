@@ -427,6 +427,24 @@ function _kmeans_best(X::AbstractMatrix{Float64}, k::Int, opts::FitOptions)
     return best
 end
 
+# Run k-medoids `opts.kmedoids_n_init` times and return the result with the
+# lowest medoid objective. Each run receives a fresh km++ initialization from
+# the same deterministic RNG stream.
+function _kmedoids_best(D::AbstractMatrix{Float64}, k::Int, opts::FitOptions)
+    rng    = MersenneTwister(opts.kmedoids_seed)
+    n_init = max(1, opts.kmedoids_n_init)
+    medoids = initseeds_by_costs(:kmpp, D, k; rng=rng)
+    best = kmedoids(D, k; init=medoids,
+                    maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol)
+    for _ in 2:n_init
+        medoids = initseeds_by_costs(:kmpp, D, k; rng=rng)
+        result = kmedoids(D, k; init=medoids,
+                          maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol)
+        result.totalcost < best.totalcost && (best = result)
+    end
+    return best
+end
+
 """
     _cluster(curves, times, opts) -> (labels, centroids, cost)
 
@@ -612,9 +630,7 @@ function _cluster_dispatch(
 
     elseif method == :kmedoids
         D       = _pairwise_euclidean(zscored)
-        rng     = MersenneTwister(opts.kmedoids_seed)
-        medoids = initseeds_by_costs(:kmpp, D, k; rng=rng)
-        result  = kmedoids(D, k; init=medoids, maxiter=opts.kmeans_max_iters, tol=opts.kmeans_tol)
+        result  = _kmedoids_best(D, k, opts)
         ids    = assignments(result)
         return ids, result.totalcost
 
