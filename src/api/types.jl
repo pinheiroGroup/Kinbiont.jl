@@ -191,6 +191,8 @@ Every field has a sensible default so users only override what they need.
   in `:dbscan`. Points below this threshold are labelled 0 (noise).
 - `kmeans_n_init::Int = 10`: number of times k-means is run with different random
   initialisations; the run with the lowest WCSS is kept.
+- `kmedoids_n_init::Int = 10`: number of times k-medoids is run with different
+  random initialisations; the run with the lowest medoid cost is kept.
 - `kmeans_max_iters::Int = 300`: maximum number of Lloyd iterations per k-means run.
 - `kmeans_tol::Float64 = 1e-6`: convergence tolerance (relative change in WCSS).
 - `kmeans_seed::Int = 42`: random seed for k-means initialisation.
@@ -261,6 +263,7 @@ diagnostic.
     cluster_dbscan_eps::Float64      = 1.0
     cluster_dbscan_minpts::Int       = 3
     kmeans_n_init::Int               = 10
+    kmedoids_n_init::Int              = 10
     kmeans_max_iters::Int            = 300
     kmeans_tol::Float64              = 1e-6
     kmeans_seed::Int                 = 42

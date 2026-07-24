@@ -483,6 +483,16 @@
         @test first_run.wcss == second_run.wcss
     end
 
+    @testset "cluster_method=:kmedoids supports multiple initializations" begin
+        opts = FitOptions(cluster=true, n_clusters=3, cluster_method=:kmedoids,
+                          cluster_trend_test=false, kmedoids_seed=42,
+                          kmedoids_n_init=3)
+        processed = preprocess(data, opts)
+        @test processed.clusters isa Vector{Int}
+        @test length(processed.clusters) == size(data.curves, 1)
+        @test all(1 .<= processed.clusters .<= 3)
+    end
+
     @testset "cluster_method=:hclust produces valid labels" begin
         opts = FitOptions(cluster=true, n_clusters=3, cluster_method=:hclust,
                           cluster_hclust_linkage=:ward, cluster_trend_test=false)
