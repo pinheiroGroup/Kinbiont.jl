@@ -413,6 +413,38 @@
         @test all(processed.clusters[6:8] .== n_k)
     end
 
+    @testset "Constant pre-screening uses the quantile tolerance threshold" begin
+        curves = vcat(
+            reshape(vcat(fill(0.10, 18), 0.119, 0.119), 1, :),
+            reshape(vcat(fill(0.10, 18), 0.120, 0.120), 1, :),
+            reshape(vcat(fill(0.10, 18), 0.121, 0.121), 1, :),
+            reshape(fill(0.20, 20), 1, :),
+        )
+
+        flagged = detect_non_growing_indices(
+            curves, collect(0.0:19.0);
+            prescreen_constant=true,
+            prescreen_tol=0.20,
+            prescreen_q_low=0.05,
+            prescreen_q_high=0.95,
+        )
+
+        @test flagged == [1, 2, 4]
+    end
+
+    @testset "Constant pre-screening flags low-signal curves" begin
+        curves = reshape(vcat(fill(0.001, 18), 0.009, 0.009), 1, :)
+        flagged = detect_non_growing_indices(
+            curves, collect(0.0:19.0);
+            prescreen_constant=true,
+            prescreen_tol=0.0,
+            prescreen_q_low=0.05,
+            prescreen_q_high=0.95,
+        )
+
+        @test flagged == [1]
+    end
+
     @testset "Constant pre-screening leaves k=1 as all-data baseline" begin
         flat_curves = hcat(fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),
                            fill(0.1, 3), fill(0.1, 3), fill(0.1, 3),
@@ -792,6 +824,22 @@
         q = cluster_quality_indices(data.curves, [1, 1, 2, 2, 2])
         @test haskey(q, "silhouette_mean")
         @test haskey(q, "davies_bouldin")
+
+        reassigned = reassign_non_growing(
+            [1, 1, 2, 2, 3], ["a", "b", "c", "d", "e"], ["b", "d"], 3,
+        )
+        @test reassigned == [1, 3, 2, 3, 3]
+        # Original vector is not mutated.
+        @test reassigned !== [1, 1, 2, 2, 3]
+
+        @test reassign_non_growing([1, 2], ["a", "b"], String[], 3) == [1, 2]
+
+        @test_throws ArgumentError reassign_non_growing(
+            [1, 2], ["a", "b"], ["missing_label"], 3,
+        )
+        @test_throws ArgumentError reassign_non_growing(
+            [1, 2, 3], ["a", "b"], String[], 3,
+        )
     end
 
     @testset "apply_blank_timeseries handles NaN blanks" begin

@@ -600,7 +600,7 @@ function detect_non_growing_indices(
     times::Vector{Float64};
     prescreen_constant::Bool=false,
     trend_test::Bool=false,
-    prescreen_tol::Float64=1.5,
+    prescreen_tol::Float64=0.5,
     prescreen_q_low::Float64=0.05,
     prescreen_q_high::Float64=0.95,
     trend_p_threshold::Float64=0.05,
@@ -756,9 +756,10 @@ end
 """
     _prescreen_constant(curves, opts) -> BitVector
 
-Identify non-growing (constant) curves using a quantile-ratio criterion.
-Curve `i` is flagged when its `q_high` quantile ≤ `tol_const × q_low` quantile,
-meaning its signal never grows meaningfully above its baseline.
+Identify non-growing curves from lower and upper quantiles. A curve is flagged
+when its upper quantile is at most `0.01`, when it is practically flat, or
+when its upper quantile is at most
+`q_low + tol_const * abs(q_low)`.
 """
 function _prescreen_constant(curves::Matrix{Float64}, opts::FitOptions)::BitVector
     W = size(curves, 1)
@@ -766,13 +767,11 @@ function _prescreen_constant(curves::Matrix{Float64}, opts::FitOptions)::BitVect
     for i in 1:W
         row = curves[i, :]
         lm  = quantile(row, opts.cluster_q_low)
-        hm  = quantile(row, opts.cluster_q_high)
-        const_mask[i] = if lm > 0
-            hm <= opts.cluster_tol_const * lm
-        else
-            # baseline is at or below zero — flat if the total range is negligible
-            abs(hm - lm) < 1e-6 * (abs(lm) + 1.0)
-        end
+        hm = quantile(row, opts.cluster_q_high)
+
+        low_signal = (hm - lm) <= 0.01
+        near_constant = hm <= lm + opts.cluster_tol_const * abs(lm)
+        const_mask[i] = low_signal || near_constant
     end
     return const_mask
 end

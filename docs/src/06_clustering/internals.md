@@ -187,7 +187,7 @@ For each curve, the code computes:
 If the low quantile is positive, a curve is classified as constant when:
 
 ```julia
-q_high <= cluster_tol_const * q_low
+q_high <= q_low + cluster_tol_const * abs(q_low)
 ```
 
 If the low quantile is non-positive, the code switches to a fallback rule based on whether the overall quantile range is negligible.
@@ -223,7 +223,7 @@ opts = FitOptions(
     cluster_prescreen_constant=true,
     cluster_q_low=0.10,
     cluster_q_high=0.90,
-    cluster_tol_const=1.9,
+    cluster_tol_const=0.9,
     cluster_trend_test=false,
     cluster_exp_prototype=false,
     kmeans_n_init=10,
@@ -602,7 +602,7 @@ opts_const = FitOptions(
     cluster_prescreen_constant=true,
     cluster_q_low=0.10,
     cluster_q_high=0.90,
-    cluster_tol_const=1.9,
+    cluster_tol_const=0.9,
     cluster_trend_test=false,
     cluster_exp_prototype=false,
     kmeans_n_init=10,

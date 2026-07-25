@@ -165,10 +165,10 @@ Every field has a sensible default so users only override what they need.
   `n_clusters - 1` groups on the remaining dynamic curves only. More biologically
   meaningful than the post-hoc `cluster_trend_test` because k-means never sees
   flat wells. Requires `n_clusters ≥ 2`.
-- `cluster_tol_const::Float64 = 1.5`: threshold for constant pre-screening.
+- `cluster_tol_const::Float64 = 0.5`: threshold for constant pre-screening.
   A curve is flagged as non-growing when its `cluster_q_high` quantile is ≤
-  `cluster_tol_const × cluster_q_low` quantile. Increase to be more permissive
-  (fewer constant calls); decrease to be stricter.
+  `cluster_q_low quantile + cluster_tol_const × |cluster_q_low quantile|`.
+  Increase to be more permissive (fewer constant calls); decrease to be stricter.
 - `cluster_q_low::Float64 = 0.05`: lower quantile used to estimate the baseline
   tail in constant pre-screening.
 - `cluster_q_high::Float64 = 0.95`: upper quantile used to estimate the signal
@@ -254,7 +254,7 @@ diagnostic.
     cluster_trend_test::Bool         = true
     cluster_trend_p_thr::Float64     = 0.05
     cluster_prescreen_constant::Bool = false
-    cluster_tol_const::Float64       = 1.5
+    cluster_tol_const::Float64       = 0.5
     cluster_q_low::Float64           = 0.05
     cluster_q_high::Float64          = 0.95
     cluster_exp_prototype::Bool      = false
