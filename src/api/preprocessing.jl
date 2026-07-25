@@ -769,10 +769,9 @@ function _prescreen_constant(curves::Matrix{Float64}, opts::FitOptions)::BitVect
         lm  = quantile(row, opts.cluster_q_low)
         hm = quantile(row, opts.cluster_q_high)
 
-        low_signal = hm <= 0.01
-        practically_flat = abs(hm - lm) <= 1e-6 * (abs(lm) + 1e-6)
+        low_signal = (hm - lm) <= 0.01
         near_constant = hm <= lm + (opts.cluster_tol_const - 1) * abs(lm)
-        const_mask[i] = low_signal || practically_flat || near_constant
+        const_mask[i] = low_signal || near_constant
     end
     return const_mask
 end

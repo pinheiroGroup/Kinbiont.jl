@@ -402,6 +402,39 @@ function derive_blank_from_non_growing_sources(
 end
 
 """
+    reassign_non_growing(cluster_ids, labels, transferred_labels, non_growing_id) -> Vector{Int}
+
+Return a copy of `cluster_ids` with every entry whose corresponding `labels`
+value appears in `transferred_labels` set to `non_growing_id`. This reproduces,
+from exported code, curves that a user manually moved into the non-growing
+cluster in GUIbiont after reviewing nearest-curve candidates pulled from the
+other clusters (including DBSCAN noise).
+
+Throws an `ArgumentError` if `cluster_ids` and `labels` differ in length, or if
+any `transferred_labels` entry is not present in `labels`.
+"""
+function reassign_non_growing(
+    cluster_ids::Vector{Int},
+    labels::Vector{String},
+    transferred_labels::Vector{String},
+    non_growing_id::Int,
+)::Vector{Int}
+    length(cluster_ids) == length(labels) || throw(ArgumentError(
+        "cluster_ids length $(length(cluster_ids)) != labels length $(length(labels))"
+    ))
+    label_idx = Dict(l => i for (i, l) in enumerate(labels))
+    missing_labels = filter(l -> !haskey(label_idx, l), transferred_labels)
+    isempty(missing_labels) || throw(ArgumentError(
+        "labels missing from cluster assignment: $(join(missing_labels, ", "))"
+    ))
+    new_ids = copy(cluster_ids)
+    for label in transferred_labels
+        new_ids[label_idx[label]] = non_growing_id
+    end
+    return new_ids
+end
+
+"""
     cluster_quality_indices(curves, ids; zscore_curves=true, max_pairwise_n=5000) -> Dict{String,Any}
 
 Compute clustering quality indices for `curves` (rows = curves) given cluster
@@ -1011,5 +1044,6 @@ export apply_grouped_blank_subtraction
 export derive_blank_from_non_growing
 export derive_blank_from_non_growing_sources
 export cluster_quality_indices
+export reassign_non_growing
 export prepare_clustering_data
 export load_experiment_data

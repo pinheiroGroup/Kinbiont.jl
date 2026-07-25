@@ -824,6 +824,22 @@
         q = cluster_quality_indices(data.curves, [1, 1, 2, 2, 2])
         @test haskey(q, "silhouette_mean")
         @test haskey(q, "davies_bouldin")
+
+        reassigned = reassign_non_growing(
+            [1, 1, 2, 2, 3], ["a", "b", "c", "d", "e"], ["b", "d"], 3,
+        )
+        @test reassigned == [1, 3, 2, 3, 3]
+        # Original vector is not mutated.
+        @test reassigned !== [1, 1, 2, 2, 3]
+
+        @test reassign_non_growing([1, 2], ["a", "b"], String[], 3) == [1, 2]
+
+        @test_throws ArgumentError reassign_non_growing(
+            [1, 2], ["a", "b"], ["missing_label"], 3,
+        )
+        @test_throws ArgumentError reassign_non_growing(
+            [1, 2, 3], ["a", "b"], String[], 3,
+        )
     end
 
     @testset "apply_blank_timeseries handles NaN blanks" begin
