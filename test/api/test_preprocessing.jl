@@ -424,7 +424,7 @@
         flagged = detect_non_growing_indices(
             curves, collect(0.0:19.0);
             prescreen_constant=true,
-            prescreen_tol=1.20,
+            prescreen_tol=0.20,
             prescreen_q_low=0.05,
             prescreen_q_high=0.95,
         )
@@ -437,7 +437,7 @@
         flagged = detect_non_growing_indices(
             curves, collect(0.0:19.0);
             prescreen_constant=true,
-            prescreen_tol=1.0,
+            prescreen_tol=0.0,
             prescreen_q_low=0.05,
             prescreen_q_high=0.95,
         )

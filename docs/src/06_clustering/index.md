@@ -110,7 +110,7 @@ lack a statistically significant linear trend.
 ### Strategy 2: `cluster_prescreen_constant` (recommended for noisy plates)
 
 Pre-screens before k-means using a quantile-ratio criterion. Curves where
-`q_high / q_low ≤ cluster_tol_const` (when `q_low > 0`) are pinned to label
+`q_high ≤ q_low + cluster_tol_const * abs(q_low)` (when `q_low > 0`) are pinned to label
 `n_clusters`; k-means then runs only on dynamic curves. More biologically
 meaningful because k-means never sees flat wells.
 
@@ -119,7 +119,7 @@ opts = FitOptions(
     cluster                    = true,
     n_clusters                 = 4,
     cluster_prescreen_constant = true,
-    cluster_tol_const          = 1.5,   # increase → fewer "constant" calls
+    cluster_tol_const          = 0.5,   # increase → fewer "constant" calls
     cluster_q_low              = 0.05,
     cluster_q_high             = 0.95,
 )
@@ -239,7 +239,7 @@ proc_plain = preprocess(data, FitOptions(
 # Mode B: constant pre-screening
 proc_const = preprocess(data, FitOptions(
     cluster=true, n_clusters=3,
-    cluster_prescreen_constant=true, cluster_tol_const=1.9,
+    cluster_prescreen_constant=true, cluster_tol_const=0.9,
     cluster_q_low=0.10, cluster_q_high=0.90,
     cluster_trend_test=false, cluster_exp_prototype=false,
     kmeans_seed=11, kmeans_n_init=10,
