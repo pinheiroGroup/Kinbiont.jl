@@ -1,0 +1,33 @@
+{
+  "title": "Kinbiont.jl",
+  "description": "A Julia framework for microbial growth data: preprocessing, model-based parameter inference, trajectory clustering and downstream analysis with interpretable machine learning.",
+  "upload_type": "software",
+  "license": "MIT",
+  "creators": [
+    {
+      "name": "Pinheiro, Fernanda",
+      "affiliation": "Human Technopole, Milan, Italy",
+      "orcid": "0000-0002-0132-0562"
+    },
+    {
+      "name": "Zanella Alvarenga, Edgar",
+      "affiliation": "Fuzuê Tech, Kraków, Poland",
+      "orcid": "0009-0002-7506-2540"
+    },
+    {
+      "name": "Oltolini, Edoardo",
+      "affiliation": "Human Technopole, Milan, Italy"
+    },
+    {
+      "name": "Angaroni, Fabrizio",
+      "orcid": "0000-0002-3375-6686"
+    }
+  ],
+  "keywords": [
+    "microbial growth",
+    "growth curves",
+    "parameter inference",
+    "clustering",
+    "Julia"
+  ]
+}
