@@ -1,0 +1,44 @@
+name: TagBot
+
+# Creates the git tag and GitHub release once a version is merged into the
+# General registry, so the tag always points at the exact tree that was
+# registered. Without this, registered versions exist with no corresponding
+# tag — which is how 1.3.1 and 1.4.0 ended up registered but untagged, and how
+# a hand-made tag can come to disagree with the registry.
+#
+# The GitHub release is also what triggers the Zenodo archive, so the DOI is
+# minted from the registered tree rather than from whatever main happened to
+# be at the time.
+
+on:
+  issue_comment:
+    types:
+      - created
+  workflow_dispatch:
+    inputs:
+      lookback:
+        default: "3"
+
+permissions:
+  actions: read
+  checks: read
+  contents: write
+  deployments: read
+  issues: read
+  discussions: read
+  packages: read
+  pages: read
+  pull-requests: read
+  repository-projects: read
+  security-events: read
+  statuses: read
+
+jobs:
+  TagBot:
+    if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: JuliaRegistries/TagBot@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh: ${{ secrets.DOCUMENTER_KEY }}

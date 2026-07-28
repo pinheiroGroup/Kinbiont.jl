@@ -24,7 +24,7 @@ authors:
     orcid: https://orcid.org/0000-0002-3375-6686
 repository-code: https://github.com/pinheiroGroup/Kinbiont.jl
 license: MIT
-version: 1.4.0
+version: 1.5.0
 date-released: '2026-07-28'
 doi: 10.5281/zenodo.15488335
 keywords:
