@@ -922,14 +922,27 @@ function _batch_fit_loglin_one(
         "blank_subtraction" => subtract_blank,
         "blank_method" => blank_method,
     )
-    if length(params) >= 14 && params[7] !== missing
-        result["gr_loglin"] = Float64(params[7])
+    gr_candidate = (length(params) >= 14 && params[7] !== missing) ?
+        Float64(params[7]) : NaN
+    r2_candidate = (length(params) >= 14 && params[14] !== missing) ?
+        Float64(params[14])^2 : NaN
+    # A perfectly flat (or data-starved) curve has a mathematically exact
+    # zero slope; the fit can return that as a tiny value on either side of
+    # zero depending on floating-point rounding, which is not reproducible
+    # across hardware/BLAS builds. 1e-6 h^-1 (doubling time ~693,000 h) is
+    # far below any physiologically meaningful growth rate and far above
+    # machine-epsilon noise (~1e-16), so it cleanly separates the two
+    # without touching real slow growers. Requiring a defined R^2
+    # additionally rejects fits with no meaningful exponential window.
+    MIN_GR_LOGLIN = 1e-6
+    if isfinite(gr_candidate) && gr_candidate > MIN_GR_LOGLIN && isfinite(r2_candidate)
+        result["gr_loglin"] = gr_candidate
         result["gr_loglin_se"] = Float64(params[8])
         result["gr_max_sliding"] = Float64(params[6])
         result["t_exp_start_loglin"] = Float64(params[3])
         result["t_exp_end_loglin"] = Float64(params[4])
         result["doubling_time_loglin"] = Float64(params[9])
-        result["R_squared_loglin"] = Float64(params[14])^2
+        result["R_squared_loglin"] = r2_candidate
         result["lag_loglin"] = length(params) >= 15 && params[15] !== missing ? Float64(params[15]) : NaN
         # Deliberately ignore legacy params[16] (curve q95).
         result["N_max_emp"] = loglin_stationary_nmax(
