@@ -1,10 +1,10 @@
 # examples/04_irregular_time_clustering.jl
 #
 # Validates IrregularGrowthData by running the standalone approach
-# (ported from newClusteringIdea.jl) and the KinBiont approach on the
+# (ported from newClusteringIdea.jl) and the Kinbiont approach on the
 # same synthetic data and comparing results.
 #
-# Run from KinBiont.jl root:
+# Run from Kinbiont.jl root:
 #   julia --project examples/04_irregular_time_clustering.jl
 
 using Random
@@ -184,9 +184,9 @@ println("K-means WCSS: $(km_sa.totalcost)")
 println("Cluster sizes: ", [sum(assign_sa .== c) for c in 1:K])
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Section B — KinBiont approach
+# Section B — Kinbiont approach
 # ─────────────────────────────────────────────────────────────────────────────
-println("\n=== Section B: KinBiont IrregularGrowthData approach ===")
+println("\n=== Section B: Kinbiont IrregularGrowthData approach ===")
 kb_data = IrregularGrowthData(values_list, times_list, true_labels; step=STEP)
 kb_opts = FitOptions(
     cluster              = true,
@@ -224,7 +224,7 @@ table = zeros(Int, K, K)
 for i in eachindex(assign_sa)
     table[assign_sa[i], assign_kb[i]] += 1
 end
-println("Contingency table (standalone rows × KinBiont cols):")
+println("Contingency table (standalone rows × Kinbiont cols):")
 for r in 1:K
     println("  SA cluster $r: ", table[r, :])
 end
